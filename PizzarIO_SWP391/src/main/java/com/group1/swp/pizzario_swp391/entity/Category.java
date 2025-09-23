@@ -8,17 +8,30 @@ import lombok.ToString;
 
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "Category")
 @Data
-@NoArgsConstructor
 @ToString
 public class Category {
 
+    @OneToMany(mappedBy = "category")
+    private List<Product> products;
+
+    public Category() {
+        products = new ArrayList<>();
+    }
+
+    public void addProduct(Product product) {
+        products.add(product);
+        product.setCategory(this);
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
     private String name;
     private String description;
@@ -33,6 +46,7 @@ public class Category {
     private LocalDateTime updatedAt;
 
     public Category(String name, String description, boolean isActive, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this();
         this.name = name;
         this.description = description;
         this.isActive = isActive;
