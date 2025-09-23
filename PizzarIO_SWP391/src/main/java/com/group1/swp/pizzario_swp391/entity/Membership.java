@@ -12,7 +12,7 @@ import java.util.List;
 @Table(name = "Membership")
 public class Membership {
 
-    @OneToMany(mappedBy = "")
+    @OneToMany(mappedBy = "membership")
     private List<Order> orders;
 
     @Id

@@ -2,6 +2,7 @@ package com.group1.swp.pizzario_swp391.entity;
 
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
+import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -9,7 +10,15 @@ import java.util.List;
 
 @Entity
 @Table(name = "Orders")
+@Data
 public class Order {
+
+    @ManyToOne
+    @JoinColumn(name = "created_by")
+    private Staff staff;
+
+    @OneToOne(mappedBy = "order")
+    private Session session;
 
     @ManyToOne
     @JoinColumn(name = "voucher_id")

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -16,6 +17,15 @@ public class Voucher {
 
     @OneToMany(mappedBy = "voucher")
     private List<Order> orders;
+
+    public Voucher() {
+        orders = new ArrayList<>();
+    }
+
+    public void addOrder(Order order) {
+        orders.add(order);
+        order.setVoucher(this);
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,6 +51,7 @@ public class Voucher {
     }
 
     public Voucher(String code, VoucherType type, double value, String description, int maxUses, int timesUsed, double minOrderAmount, LocalDateTime validFrom, LocalDateTime validTo, VoucherStatus voucherStatus) {
+        this();
         this.code = code;
         this.type = type;
         this.value = value;
