@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "Category")
+@Table(name = "Categories")
 @Data
 @ToString
 public class Category {
@@ -27,6 +27,11 @@ public class Category {
     public void addProduct(Product product) {
         products.add(product);
         product.setCategory(this);
+    }
+
+    public void removeProduct(Product product) {
+        products.remove(product);
+        product.setCategory(null);
     }
 
     @Id

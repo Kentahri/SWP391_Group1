@@ -7,13 +7,31 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Table(name = "Product")
+@Table(name = "Products")
 @Data
-@NoArgsConstructor
 @ToString
 public class Product {
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    private List<OrderItem> orderItems;
+
+    public Product() {
+        orderItems = new ArrayList<>();
+    }
+
+    public void addOrderItem(OrderItem orderItem) {
+        orderItems.add(orderItem);
+        orderItem.setProduct(this);
+    }
+
+    public void removeOrderItem(OrderItem orderItem) {
+        orderItems.remove(orderItem);
+        orderItem.setProduct(null);
+    }
 
     @ManyToOne
     @JoinColumn(name = "category_id")
@@ -21,7 +39,7 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
     private String name;
     private String description;
@@ -51,6 +69,7 @@ public class Product {
     private LocalDateTime updatedAt;
 
     public Product(String name, String description, String imageURL, double basePrice, double flashSalePrice, LocalDateTime flashSaleStart, LocalDateTime flashSaleEnd, boolean isActive, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this();
         this.name = name;
         this.description = description;
         this.imageURL = imageURL;
