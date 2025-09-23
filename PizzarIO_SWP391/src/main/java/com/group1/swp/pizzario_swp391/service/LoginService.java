@@ -22,4 +22,16 @@ public class LoginService {
                 .orElse(null);
     }
 
+    public void register(Account acc) {
+
+        if(loginRepository.existsByEmail(acc.getEmail())) {
+            throw new RuntimeException("Email đã tồn tại");
+        }
+//
+//        String hasded = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode(acc.getPassword());
+//        acc.setPassword(hasded);
+
+        loginRepository.save(acc);
+    }
+
 }

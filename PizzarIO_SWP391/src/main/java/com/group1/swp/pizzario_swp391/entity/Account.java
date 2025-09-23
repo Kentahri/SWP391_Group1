@@ -35,6 +35,12 @@ public class Account {
         this.password = password;
     }
 
+    public Account(String email, String password, String role) {
+        this.email = email;
+        this.password = password;
+        this.role = role;
+    }
+
     public int getId() {
         return id;
     }
