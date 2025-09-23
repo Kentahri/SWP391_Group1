@@ -81,4 +81,7 @@ public class Product {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
+
+    public void setCategory(Category category) {
+    }
 }

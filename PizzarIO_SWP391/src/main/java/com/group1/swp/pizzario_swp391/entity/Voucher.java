@@ -21,6 +21,9 @@ public class Voucher {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    public Voucher() {
+    }
+
     private String code;
     private VoucherType type;
     private double value;
