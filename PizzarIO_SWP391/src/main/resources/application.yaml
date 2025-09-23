@@ -19,4 +19,7 @@ spring:
     url:
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
 
-
+server:
+  port: 8080
+  servlet:
+    context-path: /pizzario
