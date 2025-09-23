@@ -5,6 +5,8 @@ import com.group1.swp.pizzario_swp391.repository.LoginRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class LoginService {
 
@@ -15,11 +17,11 @@ public class LoginService {
         this.loginRepository = loginRepository;
     }
 
-    public Account authenticate(Account acc) {
+    public Optional<Account> authenticate(String email, String pas) {
 
-        return loginRepository.findByEmail(acc.getEmail())
-                .filter(db -> java.util.Objects.equals(db.getPassword(), acc.getPassword()))
-                .orElse(null);
+        return loginRepository.findByEmail(email)
+                .filter(db -> java.util.Objects.equals(db.getPassword(), pas))
+                ;
     }
 
     public void register(Account acc) {

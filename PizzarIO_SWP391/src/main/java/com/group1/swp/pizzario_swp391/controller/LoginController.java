@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import jakarta.validation.Valid;
 
+import java.util.Optional;
+
 @Controller
 public class LoginController {
 
@@ -27,17 +29,6 @@ public class LoginController {
     }
 
 
-
-//    @PostMapping("/signIn")
-//    public String signIn(@ModelAttribute("account") @Valid Account account){
-//
-//        boolean ok = loginService.authenticate(account);
-//        if(ok){
-//            return "dashboard";
-//        }
-//        return "redirect:/login";
-//    }
-
     @GetMapping("/missing_pass")
     public String missingPassPage(Model model) {
         model.addAttribute("account", new Account());
@@ -45,38 +36,28 @@ public class LoginController {
     }
 
     @PostMapping("/signIn")
-    public String signIn(@ModelAttribute("account") @Valid Account account) {
+    public String signIn(@ModelAttribute("account") @Valid Account account, Model model) {
         System.out.println(account);
 
+        Optional<Account> authenticated = loginService.authenticate(account.getEmail(), account.getPassword());
 
-
-        Account authenticate = loginService.authenticate(account);
-        System.out.println(authenticate);
-        System.out.println(authenticate.getRole());
-
-            if(authenticate.getRole() != null && authenticate.getRole().equals("MANAGER")) {
-                return "dashboard";
-            }
-            else if(authenticate.getRole() != null && authenticate.getRole().equals("KITCHEN")) {
-                return "kitchen";
-            }
-            else if(authenticate.getRole() != null && authenticate.getRole().equals("CASHIER")) {
-                return "cashier";
-            }
-            else{
-
-                return "redirect:/login";
-            }
+        if (authenticated.isEmpty()) {
+            model.addAttribute("loginError", "Email hoặc mật khẩu không đúng");
+            return "login";
         }
 
+        Account authenticate = loginService.authenticate(account.getEmail(), account.getPassword()).orElse(null);
 
+        if(authenticate.getRole().equals("MANAGER")) {
+            return "dashboard";
+        }
+        else if(authenticate.getRole().equals("KITCHEN")) {
+            return "kitchen";
+        }
+        else {
+            return "cashier";
+        }
 
-//    @PostMapping("/missing_pass/send-code")
-//    public String sendCode(@Valid @ModelAttribute("forgotForm") Account account,
-//                           BindingResult br, RedirectAttributes ra) {
-//        if (br.hasErrors()) return "missing_pass";
-//
-//        ra.addFlashAttribute("successMsg", "Đã gửi mã xác thực tới email của bạn.");
-//        return "redirect:/missing_pass";
-//    }
+    }
+
 }
