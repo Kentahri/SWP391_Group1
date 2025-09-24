@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "Order")
+@Table(name = "[Order]")
 @Data
 public class Order {
 

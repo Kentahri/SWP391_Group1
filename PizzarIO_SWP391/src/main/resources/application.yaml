@@ -10,7 +10,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update   # gợi ý: 'update' an toàn hơn 'create'
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:

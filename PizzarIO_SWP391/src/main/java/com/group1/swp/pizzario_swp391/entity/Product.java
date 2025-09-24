@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "Product")
+@Table(name = "[Product]")
 @Data
 @ToString
 public class Product {

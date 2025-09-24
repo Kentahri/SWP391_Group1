@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "Staff")
+@Table(name = "[Staff]")
 @Data
 @ToString
 public class Staff {
