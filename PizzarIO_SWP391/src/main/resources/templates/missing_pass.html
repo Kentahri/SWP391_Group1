@@ -29,18 +29,28 @@
 
         <form th:action="@{/missing_pass/send-code}" method="post" th:object="${account}">
             <div class="field">
-                <label>Email đã đăng ký</label>
+                <label>Nhập email</label>
                 <div class="input-group">
                     <span class="input-group-text">
                         <!-- icon phong bì đơn giản bằng ký tự hoặc <i> nếu bạn dùng icon set -->
                         ✉
                     </span>
-                    <input type="email"
+                    <input type="text"
                            class="form-control"
                            placeholder="admin@restaurant.com"
                            th:field="*{email}"
                            required>
                 </div>
+
+                <div
+                    th:if="${#fields.hasErrors('email')}"
+                    th:errors="*{email}"
+                    class="text-danger"
+                ></div>
+
+                <div th:if="${errorMail}"
+                     th:text="${errorMail}"
+                     class="text-danger"></div>
 
             </div>
 

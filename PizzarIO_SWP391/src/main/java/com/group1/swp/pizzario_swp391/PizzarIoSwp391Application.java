@@ -16,7 +16,7 @@ public class PizzarIoSwp391Application {
         SpringApplication.run(PizzarIoSwp391Application.class, args);
     }
 
-    @Bean
+    //@Bean
     CommandLineRunner initData(StaffService service) {
         return (String[] args) -> {
             System.out.println("Runner chạy với: " + java.util.Arrays.toString(args));

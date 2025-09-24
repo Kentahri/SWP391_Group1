@@ -3,9 +3,7 @@ package com.group1.swp.pizzario_swp391.controller;
 
 
 import com.group1.swp.pizzario_swp391.entity.Staff;
-import com.group1.swp.pizzario_swp391.service.EmailService;
 import com.group1.swp.pizzario_swp391.service.LoginService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;

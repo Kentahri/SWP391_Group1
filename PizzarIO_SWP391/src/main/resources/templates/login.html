@@ -26,6 +26,9 @@
 
             <div th:if="${loginError}" class="alert alert-danger" th:text="${loginError}"></div>
             <form th:action="@{/signIn}" method="post" th:object="${account}">
+
+
+
                 <div class="field">
                     <label>Email</label>
                     <input  type="text" placeholder="admin@gmail.com" th:field="*{email}" >

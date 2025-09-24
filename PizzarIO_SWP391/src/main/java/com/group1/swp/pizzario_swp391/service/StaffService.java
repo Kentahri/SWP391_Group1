@@ -35,12 +35,11 @@ public class StaffService {
     }
 
     public Staff findByEmail(String email){
-        Staff staff = loginRepository.findByEmail(email).orElse(null);
+        return loginRepository.findByEmail(email).orElse(null);
+    }
 
-        if (staff == null) {
-            throw new IllegalArgumentException("Không tìm thấy nhân viên với email: " + email);
-        }
-        return staff;
+    public void updateStaff(Staff staff){
+        staffRepository.save(staff);
     }
 
 }

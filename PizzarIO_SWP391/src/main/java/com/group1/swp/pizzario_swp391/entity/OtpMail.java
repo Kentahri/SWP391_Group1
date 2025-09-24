@@ -31,9 +31,9 @@ public class OtpMail {
     @Column(nullable = false)
     private boolean isUsed = false;
 
-    public OtpMail(Staff staff, String otpCode, LocalDateTime expiresAt) {
-        this.staff = staff;
+    public OtpMail(String otpCode, LocalDateTime createdAt, LocalDateTime expiresAt) {
         this.otpCode = otpCode;
+        this.createdAt = createdAt;
         this.expiresAt = expiresAt;
     }
 }

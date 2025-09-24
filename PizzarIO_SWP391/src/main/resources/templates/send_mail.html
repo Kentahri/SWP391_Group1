@@ -38,10 +38,11 @@
 
     <form th:action="@{/missing_pass/verify}" method="post">
 
-      <label for="code">Mã xác thực</label>
-      <input id="code" name="code" placeholder="123456" inputmode="numeric" maxlength="6" required>
+      <input type="hidden" name="email" th:value="${accountEmail}">
 
-      <div class="subtext">Mã demo: <span th:text="${demoOtp}">123456</span></div>
+      <label for="code">Mã xác thực</label>
+      <input id="code" name="code" placeholder="Nhập code 6 số " inputmode="numeric" maxlength="6" required>
+
 
       <label for="newPass">Mật khẩu mới</label>
       <input id="newPass" type="password" name="newPassword" required>
@@ -50,6 +51,9 @@
       <input id="confirm" type="password" name="confirmPassword" required>
 
       <button type="submit">Đặt lại mật khẩu</button>
+
+      <div class="text-danger" th:if="${error}" th:text="${error}"></div>
+
     </form>
 
     <div class="back">
