@@ -3,18 +3,22 @@ package com.group1.swp.pizzario_swp391.entity;
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "Orders")
+@Table(name = "Order")
 @Data
-@ToString
 public class Order {
+
+    @ManyToOne
+    @JoinColumn(name = "created_by")
+    private Staff staff;
+
+    @OneToOne(mappedBy = "order")
+    private Session session;
 
     @ManyToOne
     @JoinColumn(name = "voucher_id")
@@ -71,20 +75,29 @@ public class Order {
     @Column(name = "tax-rate")
     private double taxRate;
 
-    public enum OrderType {
+    public void setVoucher(Voucher voucher) {
+    }
 
+    public void setMembership(Membership membership) {
+    }
+
+    public void setStaff(Staff staff) {
+    }
+
+    public enum OrderType {
+        DINE_IN, TAKE_AWAY
     }
 
     public enum OrderStatus {
-
+        PREPARING, SERVED, COMPLETED, CANCELLED
     }
 
     public enum PaymentStatus{
-
+        UNPAID, PENDING, PAID
     }
 
     public enum PaymentMethod{
-
+        QR, CASH, CREDIT_CARD
     }
 
 

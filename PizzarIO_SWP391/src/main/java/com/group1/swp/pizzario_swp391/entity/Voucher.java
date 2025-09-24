@@ -6,10 +6,11 @@ import lombok.Data;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "vouchers")
+@Table(name = "Voucher")
 @Data
 @ToString
 public class Voucher {
@@ -17,12 +18,18 @@ public class Voucher {
     @OneToMany(mappedBy = "voucher")
     private List<Order> orders;
 
+    public Voucher() {
+        orders = new ArrayList<>();
+    }
+
+    public void addOrder(Order order) {
+        orders.add(order);
+        order.setVoucher(this);
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    public Voucher() {
-    }
 
     private String code;
     private VoucherType type;
@@ -33,17 +40,13 @@ public class Voucher {
     private double minOrderAmount;
     private LocalDateTime validFrom;
     private LocalDateTime validTo;
-    private VoucherStatus voucherStatus;
+    private boolean isActive;
 
     public enum VoucherType {
-
+        PERCENTAGE, FIXED_AMOUNT
     }
 
-    public enum VoucherStatus {
-
-    }
-
-    public Voucher(String code, VoucherType type, double value, String description, int maxUses, int timesUsed, double minOrderAmount, LocalDateTime validFrom, LocalDateTime validTo, VoucherStatus voucherStatus) {
+    public Voucher(String code, VoucherType type, double value, String description, int maxUses, int timesUsed, double minOrderAmount, LocalDateTime validFrom, LocalDateTime validTo, boolean isActive) {
         this.code = code;
         this.type = type;
         this.value = value;
@@ -53,6 +56,6 @@ public class Voucher {
         this.minOrderAmount = minOrderAmount;
         this.validFrom = validFrom;
         this.validTo = validTo;
-        this.voucherStatus = voucherStatus;
+        this.isActive = isActive;
     }
 }

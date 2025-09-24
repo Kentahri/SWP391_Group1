@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "Categories")
+@Table(name = "Category")
 @Data
 @ToString
 public class Category {
