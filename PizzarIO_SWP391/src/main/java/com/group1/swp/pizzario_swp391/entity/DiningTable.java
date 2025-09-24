@@ -38,10 +38,20 @@ public class DiningTable {
     private int id;
 
     @Column(name = "table_type")
+    @Enumerated(EnumType.STRING)
     private TableType tableType;
 
     @Column(name = "table_status")
+    @Enumerated(EnumType.STRING)
     private TableStatus tableStatus;
+
+    @Column(name = "pos_x")
+    private int posX;
+
+    @Column(name = "pos_y")
+    private int posY;
+    private int height;
+    private int width;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
