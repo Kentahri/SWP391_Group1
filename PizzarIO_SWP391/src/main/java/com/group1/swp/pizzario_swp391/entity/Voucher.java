@@ -40,18 +40,13 @@ public class Voucher {
     private double minOrderAmount;
     private LocalDateTime validFrom;
     private LocalDateTime validTo;
-    private VoucherStatus voucherStatus;
+    private boolean isActive;
 
     public enum VoucherType {
-
+        PERCENTAGE, FIXED_AMOUNT
     }
 
-    public enum VoucherStatus {
-
-    }
-
-    public Voucher(String code, VoucherType type, double value, String description, int maxUses, int timesUsed, double minOrderAmount, LocalDateTime validFrom, LocalDateTime validTo, VoucherStatus voucherStatus) {
-        this();
+    public Voucher(String code, VoucherType type, double value, String description, int maxUses, int timesUsed, double minOrderAmount, LocalDateTime validFrom, LocalDateTime validTo, boolean isActive) {
         this.code = code;
         this.type = type;
         this.value = value;
@@ -61,6 +56,6 @@ public class Voucher {
         this.minOrderAmount = minOrderAmount;
         this.validFrom = validFrom;
         this.validTo = validTo;
-        this.voucherStatus = voucherStatus;
+        this.isActive = isActive;
     }
 }

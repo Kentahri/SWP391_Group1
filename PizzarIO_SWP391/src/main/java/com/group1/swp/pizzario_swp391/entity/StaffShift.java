@@ -39,6 +39,6 @@ public class StaffShift {
     private LocalDateTime checkOut;
 
     public enum Status{
-
+        SCHEDULED, PRESENT, LATE, ABSENT, LEFT
     }
 }

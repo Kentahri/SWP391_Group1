@@ -60,6 +60,6 @@ public class Membership {
     private LocalDateTime joinedAt;
 
     public enum MembershipTier{
-
+        BRONZE, SILVER, GOLD, PLATINUM
     }
 }

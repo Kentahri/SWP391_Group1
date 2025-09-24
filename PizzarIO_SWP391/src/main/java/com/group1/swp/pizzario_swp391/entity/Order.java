@@ -76,19 +76,19 @@ public class Order {
     private double taxRate;
 
     public enum OrderType {
-
+        DINE_IN, TAKE_AWAY
     }
 
     public enum OrderStatus {
-
+        PREPARING, SERVED, COMPLETED, CANCELLED
     }
 
     public enum PaymentStatus{
-
+        UNPAID, PENDING, PAID
     }
 
     public enum PaymentMethod{
-
+        QR, CASH, CREDIT_CARD
     }
 
 

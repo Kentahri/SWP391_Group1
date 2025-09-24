@@ -50,10 +50,10 @@ public class DiningTable {
     private LocalDateTime updatedAt;
 
     public enum TableType{
-
+        SMALL, BIG
     }
 
     public enum TableStatus{
-
+        AVAILABLE, OCCUPIED, RE
     }
 }
