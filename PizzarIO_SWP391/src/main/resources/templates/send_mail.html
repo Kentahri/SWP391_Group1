@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nhập mã xác thực</title>
   <style>
-    /* tối giản hết mức có thể */
     :root{ --ink:#1f2937; --sub:#6b7280; --line:#e5e7eb; --brand:#2563eb; }
     html,body{height:100%}
     body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:#f8fafc; color:var(--ink);}
@@ -22,7 +21,6 @@
     button{width:100%; height:44px; border:0; border-radius:10px; background:var(--brand); color:#fff; font-weight:700; margin-top:12px; cursor:pointer;}
     a{color:var(--sub); text-decoration:none; font-size:14px;}
     .back{text-align:center; margin-top:10px;}
-    /*small[th\\:errors]{color:#dc2626;}*/
   </style>
 </head>
 <body>
@@ -34,27 +32,24 @@
 
     <p class="hint">
       Email đã được gửi! Chúng tôi đã gửi mã xác thực 6 số đến
-      <span class="email" th:text="${email}">huymin78@gmail.com</span>
+      <span class="email" th:text="${accountEmail}">someone@ex.com</span>
     </p>
     <p class="hint" style="margin-top:-4px;">Không nhận được email? Kiểm tra spam hoặc thử lại sau 60 giây.</p>
 
-    <form th:action="@{/missing_pass/verify}" method="post" th:object="${account}">
+    <form th:action="@{/missing_pass/verify}" method="post">
+
       <label for="code">Mã xác thực</label>
-      <input id="code" name="code"  placeholder="123456" inputmode="numeric" maxlength="6" required>
+      <input id="code" name="code" placeholder="123456" inputmode="numeric" maxlength="6" required>
+
       <div class="subtext">Mã demo: <span th:text="${demoOtp}">123456</span></div>
 
       <label for="newPass">Mật khẩu mới</label>
-      <input id="newPass" type="password" name="newPassword" th:field="${account.setEmail()}" required>
+      <input id="newPass" type="password" name="newPassword" required>
 
       <label for="confirm">Xác nhận mật khẩu</label>
-      <input id="confirm" type="password" name="confirmPassword" th:field="*{confirmPassword}" required>
+      <input id="confirm" type="password" name="confirmPassword" required>
 
       <button type="submit">Đặt lại mật khẩu</button>
-
-      <!-- hiện lỗi nếu có -->
-<!--      <small th:if="${#fields.hasErrors('*')}" th:errors="*{code}"></small>-->
-<!--      <small th:if="${#fields.hasErrors('*')}" th:errors="*{newPassword}"></small>-->
-<!--      <small th:if="${#fields.hasErrors('*')}" th:errors="*{confirmPassword}"></small>-->
     </form>
 
     <div class="back">

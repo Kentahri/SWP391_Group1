@@ -1,7 +1,8 @@
 package com.group1.swp.pizzario_swp391.controller;
 
 
-import com.group1.swp.pizzario_swp391.entity.Account;
+
+import com.group1.swp.pizzario_swp391.entity.Staff;
 import com.group1.swp.pizzario_swp391.service.EmailService;
 import com.group1.swp.pizzario_swp391.service.LoginService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +21,6 @@ public class LoginController {
 
     private final LoginService loginService;
 
-    @Autowired
-    private EmailService emailService;
 
     public LoginController(LoginService loginService) {
         this.loginService = loginService;
@@ -30,26 +29,19 @@ public class LoginController {
     // localhost808/login
     @GetMapping("/login")
     public String showLogin(Model model){
-        model.addAttribute("account", new Account());
+        model.addAttribute("account", new Staff());
         return "login";
     }
 
 
     @GetMapping("/missing_pass")
     public String missingPassPage(Model model) {
-        model.addAttribute("account", new Account());
+        model.addAttribute("account", new Staff());
         return "missing_pass";
     }
 
-    @PostMapping("/missing_pass/send-code")
-    public String sendCodePage(@ModelAttribute Account account, Model model){
-        System.out.println("Find account " + account);
-        model.addAttribute("account", account);
-        return"send_mail";
-    }
-
     @PostMapping("/signIn")
-    public String signIn(@Valid @ModelAttribute("account") Account account,BindingResult result ,Model model) {
+    public String signIn(@Valid @ModelAttribute("account") Staff account,BindingResult result ,Model model) {
 
         if(result.hasErrors()){
             return "login";
@@ -57,24 +49,28 @@ public class LoginController {
 
         System.out.println(account);
 
-        Optional<Account> authenticated = loginService.authenticate(account.getEmail(), account.getPassword());
+        Optional<Staff> authenticated = loginService.authenticate(account.getEmail(), account.getPassword());
 
         if (authenticated.isEmpty()) {
             model.addAttribute("loginError", "Email hoặc mật khẩu không đúng");
             return "login";
         }
 
-        Account authenticate = loginService.authenticate(account.getEmail(), account.getPassword()).orElse(null);
+        Staff authenticate = loginService.authenticate(account.getEmail(), account.getPassword()).orElse(null);
 
-        if(authenticate.getRole().equals("MANAGER")) {
-            return "dashboard";
+        if (authenticate == null) {
+
+            return "redirect:/login";
         }
-        else if(authenticate.getRole().equals("KITCHEN")) {
-            return "kitchen";
-        }
-        else {
-            return "cashier";
-        }
+
+        System.out.println(authenticate);
+
+        return switch (authenticate.getRole()) {
+            case MANAGER -> "dashboard";
+            case KITCHEN -> "kitchen";
+            case CASHIER -> "cashier";
+            default -> "redirect:/login"; // fallback nếu role null hoặc không khớp
+        };
     }
 
 }

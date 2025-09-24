@@ -1,6 +1,7 @@
 package com.group1.swp.pizzario_swp391.service;
 
-import com.group1.swp.pizzario_swp391.entity.Account;
+
+import com.group1.swp.pizzario_swp391.entity.Staff;
 import com.group1.swp.pizzario_swp391.repository.LoginRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,14 +18,14 @@ public class LoginService {
         this.loginRepository = loginRepository;
     }
 
-    public Optional<Account> authenticate(String email, String pas) {
+    public Optional<Staff> authenticate(String email, String pas) {
 
         return loginRepository.findByEmail(email)
                 .filter(db -> java.util.Objects.equals(db.getPassword(), pas))
                 ;
     }
 
-    public void register(Account acc) {
+    public void register(Staff acc) {
 
         if(loginRepository.existsByEmail(acc.getEmail())) {
             throw new RuntimeException("Email đã tồn tại");
