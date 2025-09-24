@@ -14,9 +14,9 @@ spring:
       ddl-auto: create
 
   datasource:
-    username:
-    password:
-    url:
+    username: sa
+    password: 123
+    url: jdbc:sqlserver://localhost:1433;databaseName=swp_test;encrypt=true;trustServerCertificate=true
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
 
 server:
