@@ -18,35 +18,43 @@
     <title>Login</title>
 </head>
 <body>
-<div class="wrap">
-    <div class="card">
+    <div class="wrap">
+        <div class="card">
 
-        <h2 class="title">Đăng nhập</h2>
-        <p class="subtitle">Nhập thông tin tài khoản của bạn</p>
+            <h2 class="title">Đăng nhập</h2>
+            <p class="subtitle">Nhập thông tin tài khoản của bạn</p>
 
-        <div th:if="${loginError}" class="alert alert-danger" th:text="${loginError}"></div>
-        <form th:action="@{/signIn}" method="post" th:object="${account}">
-            <div class="field">
-                <label>Email</label>
-                <input  type="email" placeholder="admin@gmail.com" th:field="*{email}" required>
-            </div>
+            <div th:if="${loginError}" class="alert alert-danger" th:text="${loginError}"></div>
+            <form th:action="@{/signIn}" method="post" th:object="${account}">
+                <div class="field">
+                    <label>Email</label>
+                    <input  type="text" placeholder="admin@gmail.com" th:field="*{email}" >
+                    <div
+                        th:if ="${#fields.hasErrors('email')}"
+                        th:errors="*{email}"
+                        class="text-danger"
+                    ></div>
+                </div>
 
-            <div class="field">
-                <label>Mật khẩu</label>
-                <input type="password" placeholder="••••••••" th:field="*{password}" required>
-            </div>
+                <div class="field">
+                    <label>Mật khẩu</label>
+                    <input type="password" placeholder="••••••••" th:field="*{password}" required>
+                    <div th:if="${#fields.hasErrors('password')}"
+                         th:errors="*{password}"
+                         class="text-danger"></div>
+                </div>
 
-            <div class="row">
-                <label><input type="checkbox"> Ghi nhớ đăng nhập</label>
-                    <a th:href="@{/missing_pass}">Quên mật khẩu?</a>
-            </div>
+                <div class="row">
+                    <label><input type="checkbox"> Ghi nhớ đăng nhập</label>
+                        <a th:href="@{/missing_pass}">Quên mật khẩu?</a>
+                </div>
 
-            <input class="dang" type="submit" value="Đăng nhập"></input>
+                <input class="dang" type="submit" value="Đăng nhập"></input>
 
-        </form>
+            </form>
 
-        <div class="footer">© 2024 Restaurant Management System.</div>
+            <div class="footer">© 2024 Restaurant Management System.</div>
+        </div>
     </div>
-</div>
 </body>
 </html>

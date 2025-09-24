@@ -2,7 +2,9 @@ package com.group1.swp.pizzario_swp391.controller;
 
 
 import com.group1.swp.pizzario_swp391.entity.Account;
+import com.group1.swp.pizzario_swp391.service.EmailService;
 import com.group1.swp.pizzario_swp391.service.LoginService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -18,10 +20,14 @@ public class LoginController {
 
     private final LoginService loginService;
 
+    @Autowired
+    private EmailService emailService;
+
     public LoginController(LoginService loginService) {
         this.loginService = loginService;
     }
 
+    // localhost808/login
     @GetMapping("/login")
     public String showLogin(Model model){
         model.addAttribute("account", new Account());
@@ -35,8 +41,20 @@ public class LoginController {
         return "missing_pass";
     }
 
+    @PostMapping("/missing_pass/send-code")
+    public String sendCodePage(@ModelAttribute Account account, Model model){
+        System.out.println("Find account " + account);
+        model.addAttribute("account", account);
+        return"send_mail";
+    }
+
     @PostMapping("/signIn")
-    public String signIn(@ModelAttribute("account") @Valid Account account, Model model) {
+    public String signIn(@Valid @ModelAttribute("account") Account account,BindingResult result ,Model model) {
+
+        if(result.hasErrors()){
+            return "login";
+        }
+
         System.out.println(account);
 
         Optional<Account> authenticated = loginService.authenticate(account.getEmail(), account.getPassword());
@@ -57,7 +75,6 @@ public class LoginController {
         else {
             return "cashier";
         }
-
     }
 
 }
