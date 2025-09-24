@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vouchers - PizzarIO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>
+                        <i class="fas fa-ticket-alt me-2"></i>Vouchers Management
+                    </h2>
+                    <a th:href="@{/vouchers/create}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create New Voucher
+                    </a>
+                </div>
+
+                <!-- Success/Error Messages -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div th:if="${vouchers != null and !vouchers.empty}" class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Type</th>
+                                        <th>Value</th>
+                                        <th>Max Uses</th>
+                                        <th>Used</th>
+                                        <th>Min Order</th>
+                                        <th>Valid Period</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="voucher : ${vouchers}">
+                                        <td>
+                                            <strong th:text="${voucher.code}"></strong>
+                                        </td>
+                                        <td>
+                                            <span th:class="${voucher.type.name() == 'PERCENTAGE'} ? 'badge bg-info' : 'badge bg-warning'"
+                                                  th:text="${voucher.type}"></span>
+                                        </td>
+                                        <td>
+                                            <span th:if="${voucher.type.name() == 'PERCENTAGE'}" 
+                                                  th:text="${voucher.value} + '%'"></span>
+                                            <span th:if="${voucher.type.name() == 'FIXED_AMOUNT'}" 
+                                                  th:text="'$' + ${#numbers.formatDecimal(voucher.value, 1, 2)}"></span>
+                                        </td>
+                                        <td th:text="${voucher.maxUses}"></td>
+                                        <td th:text="${voucher.timesUsed}"></td>
+                                        <td th:text="'$' + ${#numbers.formatDecimal(voucher.minOrderAmount, 1, 2)}"></td>
+                                        <td>
+                                            <small>
+                                                <div th:text="${#temporals.format(voucher.validFrom, 'MM/dd/yyyy HH:mm')}"></div>
+                                                <div class="text-muted">to</div>
+                                                <div th:text="${#temporals.format(voucher.validTo, 'MM/dd/yyyy HH:mm')}"></div>
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <span th:if="${voucher.isActive}" 
+                                                  class="badge bg-success">Active</span>
+                                            <span th:unless="${voucher.isActive}" 
+                                                  class="badge bg-secondary">Inactive</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a th:href="@{/vouchers/{id}(id=${voucher.id})}" 
+                                                   class="btn btn-sm btn-outline-info" 
+                                                   title="View">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a th:href="@{/vouchers/{id}/edit(id=${voucher.id})}" 
+                                                   class="btn btn-sm btn-outline-warning" 
+                                                   title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <form th:action="@{/vouchers/{id}/deactivate(id=${voucher.id})}" 
+                                                      method="post" 
+                                                      th:if="${voucher.isActive}"
+                                                      class="d-inline">
+                                                    <button type="submit" 
+                                                            class="btn btn-sm btn-outline-secondary" 
+                                                            title="Deactivate"
+                                                            onclick="return confirm('Are you sure you want to deactivate this voucher?')">
+                                                        <i class="fas fa-toggle-off"></i>
+                                                    </button>
+                                                </form>
+                                                <form th:action="@{/vouchers/{id}/delete(id=${voucher.id})}" 
+                                                      method="post" 
+                                                      class="d-inline">
+                                                    <button type="submit" 
+                                                            class="btn btn-sm btn-outline-danger" 
+                                                            title="Delete"
+                                                            onclick="return confirm('Are you sure you want to delete this voucher? This action cannot be undone.')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div th:if="${vouchers == null or vouchers.empty}" class="text-center py-5">
+                            <i class="fas fa-ticket-alt fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No Vouchers Found</h4>
+                            <p class="text-muted">Start by creating your first voucher.</p>
+                            <a th:href="@{/vouchers/create}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Create First Voucher
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
