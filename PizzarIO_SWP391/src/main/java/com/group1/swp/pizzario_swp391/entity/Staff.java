@@ -10,10 +10,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "Staff")
+@Table(name = "staff")
 @Data
 @ToString
 public class Staff {
+
+    @OneToMany(mappedBy = "staff")
+    private List<OtpMail> otpMails;
+
+    public void addOtpMail(OtpMail otpMail) {
+        otpMails.add(otpMail);
+        otpMail.setStaff(this);
+    }
 
     @OneToMany(mappedBy = "staff")
     private List<StaffShift> shifts;
@@ -34,6 +42,7 @@ public class Staff {
     public Staff() {
         if (this.role == Role.CASHIER){orders = new ArrayList<>();}
         shifts = new ArrayList<>();
+        otpMails = new ArrayList<>();
     }
 
     public Staff(String name, LocalDateTime dateOfBirth, String phone, String address, String username, String password, String email, Role role, boolean isActive) {

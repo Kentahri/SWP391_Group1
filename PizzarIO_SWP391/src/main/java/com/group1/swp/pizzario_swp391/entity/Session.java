@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Session")
+@Table(name = "session")
 @Data
 @NoArgsConstructor
 public class Session {

@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Entity
-@Table(name = "Order_Item")
+@Table(name = "order_item")
 @Data
 @ToString
 @NoArgsConstructor
