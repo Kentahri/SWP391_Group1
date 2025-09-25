@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.ToString;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,7 +44,7 @@ public class Staff {
         otpMails = new ArrayList<>();
     }
 
-    public Staff(String name, LocalDateTime dateOfBirth, String phone, String address, String username, String password, String email, Role role, boolean isActive) {
+    public Staff(String name, LocalDate dateOfBirth, String phone, String address, String username, String password, String email, Role role, boolean isActive) {
         this();
         this.name = name;
         this.dateOfBirth = dateOfBirth;
@@ -63,7 +63,9 @@ public class Staff {
 
     private String name;
     @Column(name = "dob")
-    private LocalDateTime dateOfBirth;
+  
+    private LocalDate dateOfBirth;
+
     private String phone;
     private String address;
     private String username;
