@@ -1,11 +1,10 @@
 package com.group1.swp.pizzario_swp391.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.Valid;
 import lombok.Data;
 import lombok.ToString;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +35,7 @@ public class Staff {
         shifts = new ArrayList<>();
     }
 
-    public Staff(String name, LocalDateTime dateOfBirth, String phone, String address, String username, String password, String email, Role role, boolean isActive) {
+    public Staff(String name, LocalDate dateOfBirth, String phone, String address, String username, String password, String email, Role role, boolean isActive) {
         this();
         this.name = name;
         this.dateOfBirth = dateOfBirth;
@@ -54,12 +53,14 @@ public class Staff {
     private int id;
 
     private String name;
-    private LocalDateTime dateOfBirth;
+    @Column(name = "dob")
+    private LocalDate dateOfBirth;
     private String phone;
     private String address;
     private String username;
     private String password;
     private String email;
+    @Enumerated(EnumType.STRING)
     private Role role;
     private boolean isActive;
 
