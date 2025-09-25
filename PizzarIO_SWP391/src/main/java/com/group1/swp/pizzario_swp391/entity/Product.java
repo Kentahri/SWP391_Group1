@@ -3,7 +3,6 @@ package com.group1.swp.pizzario_swp391.entity;
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
@@ -11,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "product")
+@Table(name = "\"Product\"")
 @Data
 @ToString
 public class Product {

@@ -9,7 +9,7 @@ import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "otp_mail")
+@Table(name = "Otp_Mail")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @Data

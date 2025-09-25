@@ -1,7 +1,6 @@
 package com.group1.swp.pizzario_swp391.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.Valid;
 import lombok.Data;
 import lombok.ToString;
 
@@ -10,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "staff")
+@Table(name = "Staff")
 @Data
 @ToString
 public class Staff {

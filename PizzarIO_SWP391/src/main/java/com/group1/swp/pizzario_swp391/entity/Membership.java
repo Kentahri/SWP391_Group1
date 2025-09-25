@@ -2,7 +2,6 @@ package com.group1.swp.pizzario_swp391.entity;
 
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Email;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -10,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "membership")
+@Table(name = "Membership")
 @Data
 public class Membership {
 
