@@ -15,6 +15,14 @@ import java.util.List;
 public class Staff {
 
     @OneToMany(mappedBy = "staff")
+    private List<OtpMail> otpMails;
+
+    public void addOtpMail(OtpMail otpMail) {
+        otpMails.add(otpMail);
+        otpMail.setStaff(this);
+    }
+
+    @OneToMany(mappedBy = "staff")
     private List<StaffShift> shifts;
 
     public void addShift(StaffShift shift) {
@@ -33,6 +41,7 @@ public class Staff {
     public Staff() {
         if (this.role == Role.CASHIER){orders = new ArrayList<>();}
         shifts = new ArrayList<>();
+        otpMails = new ArrayList<>();
     }
 
     public Staff(String name, LocalDate dateOfBirth, String phone, String address, String username, String password, String email, Role role, boolean isActive) {
@@ -54,7 +63,9 @@ public class Staff {
 
     private String name;
     @Column(name = "dob")
+  
     private LocalDate dateOfBirth;
+
     private String phone;
     private String address;
     private String username;

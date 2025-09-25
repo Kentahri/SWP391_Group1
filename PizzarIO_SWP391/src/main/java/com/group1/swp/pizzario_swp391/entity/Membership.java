@@ -2,7 +2,6 @@ package com.group1.swp.pizzario_swp391.entity;
 
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Email;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -49,6 +48,7 @@ public class Membership {
     private String email;
 
     @Column(name = "membership_tier")
+    @Enumerated(EnumType.STRING)
     private MembershipTier membershipTier;
 
     private int points;

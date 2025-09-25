@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "vouchers")
+@Table(name = "Voucher")
 @Data
 @ToString
 public class Voucher {
@@ -32,6 +32,7 @@ public class Voucher {
     private Long id;
 
     private String code;
+    @Enumerated(EnumType.STRING)
     private VoucherType type;
     private double value;
     private String description;
