@@ -1,26 +1,26 @@
 package com.group1.swp.pizzario_swp391.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "otp_mail")
-@Data
+@Table(name = "Otp_Mail")
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
+@Data
 public class OtpMail {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "staff_id", nullable = false)
-    @ToString.Exclude @EqualsAndHashCode.Exclude
-    private Staff staff;
+    Staff staff;
+
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    int id;
 
     @Column(name = "otp_code", nullable = false, length = 10)
     private String otpCode;
@@ -34,9 +34,10 @@ public class OtpMail {
     @Column(nullable = false)
     private boolean isUsed = false;
 
-    public OtpMail(String otpCode, LocalDateTime createdAt, LocalDateTime expiresAt) {
+    public OtpMail(String otpCode, LocalDateTime createdAt, LocalDateTime expiresAt, boolean isUsed) {
         this.otpCode = otpCode;
         this.createdAt = createdAt;
         this.expiresAt = expiresAt;
+        this.isUsed = isUsed;
     }
 }

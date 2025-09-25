@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cập nhật Voucher</title>
+    <style>
+        :root { --bg: #f6f7fb; --card: #ffffff; --muted: #6b7280; --text: #0f172a; --accent: #2563eb; --accent2: #a78bfa; --border: #e5e7eb; }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            margin: 0;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+            background: var(--bg);
+            color: var(--text);
+        }
+        .container {
+            max-width: 500px;
+            margin: 40px auto;
+            padding: 24px;
+        }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+        .form-row { display: grid; gap: 10px; margin-bottom: 12px; }
+        label { font-size: 13px; color: var(--muted); }
+        select, input[type="text"], input[type="number"], input[type="datetime-local"] {
+            width: 100%;
+            background: #ffffff;
+            color: #111827;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            outline: none;
+        }
+        button[type="submit"], .primary-btn {
+            margin-top: 8px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        button[type="submit"]:hover, .primary-btn:hover { filter: brightness(1.05); }
+        .back-link { display: inline-block; margin-bottom: 16px; color: var(--accent); text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a th:href="@{/templates/voucher}" class="back-link">&larr; Quay lại danh sách voucher</a>
+    <div class="card">
+        <h2>Cập nhật Voucher</h2>
+        <form th:action="@{'/voucher/update/' + ${voucherId}}" method="post" th:object="${voucherDTO}">
+            <div class="form-row">
+                <label>Mã voucher</label>
+                <input type="text" th:field="*{code}" required />
+            </div>
+            <div class="form-row">
+                <label>Loại</label>
+                <select th:field="*{type}" required>
+                    <option th:each="type : ${voucherTypes}" th:value="${type}" th:text="${type}"></option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label>Giá trị</label>
+                <input type="number" th:field="*{value}" step="0.01" required />
+            </div>
+            <div class="form-row">
+                <label>Mô tả</label>
+                <input type="text" th:field="*{description}" />
+            </div>
+            <div class="form-row">
+                <label>Số lần sử dụng tối đa</label>
+                <input type="number" th:field="*{maxUses}" required />
+            </div>
+            <div class="form-row">
+                <label>Số lần đã sử dụng</label>
+                <input type="number" th:field="*{timesUsed}" required />
+            </div>
+            <div class="form-row">
+                <label>Giá trị đơn tối thiểu</label>
+                <input type="number" th:field="*{minOrderAmount}" step="0.01" required />
+            </div>
+            <div class="form-row">
+                <label>Ngày bắt đầu</label>
+                <input type="datetime-local" th:field="*{validFrom}" required />
+            </div>
+            <div class="form-row">
+                <label>Ngày kết thúc</label>
+                <input type="datetime-local" th:field="*{validTo}" required />
+            </div>
+            <div class="form-row">
+                <label>Hoạt động</label>
+                <select th:field="*{active}" required>
+                    <option th:value="true">Có</option>
+                    <option th:value="false">Không</option>
+                </select>
+            </div>
+            <button type="submit" class="primary-btn">Cập nhật</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

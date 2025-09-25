@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Vouchers</title>
+    <style>
+        /* Sử dụng lại style từ table.html */
+        :root { --bg: #f6f7fb; --card: #ffffff; --muted: #6b7280; --text: #0f172a; --accent: #2563eb; --accent2: #a78bfa; --border: #e5e7eb; }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            margin: 0;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+            background: var(--bg);
+            color: var(--text);
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 24px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            justify-content: space-between;
+        }
+        .badge {
+            background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(167,139,250,0.2));
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        h2 { margin: 0; font-weight: 700; letter-spacing: 0.2px; }
+        .subtitle { color: var(--muted); margin-top: 6px; }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+        @media (min-width: 820px) { .grid { grid-template-columns: 1.1fr 1fr; } }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+        .card h3 { margin: 0 0 12px 0; font-size: 18px; }
+        .form-row { display: grid; gap: 10px; }
+        label { font-size: 13px; color: var(--muted); }
+        select, input[type="text"], input[type="number"], input[type="datetime-local"] {
+            width: 100%;
+            background: #ffffff;
+            color: #111827;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            outline: none;
+        }
+        button[type="submit"], .primary-btn {
+            margin-top: 8px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        button[type="submit"]:hover, .primary-btn:hover { filter: brightness(1.05); }
+        .list { display: grid; gap: 12px; }
+        .list-item {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            background: #0b1220;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .inner-panel { background: #ecebeb; border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+        .pill { display: inline-flex; align-items: center; gap: 8px; background: #ffffff; border: 1px solid var(--border); color: #111827; padding: 6px 10px; border-radius: 999px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div style="display:flex; align-items:center; gap:12px">
+            <span class="badge">PizzarIO</span>
+        </div>
+        <button id="openAddVoucher" class="primary-btn" type="button">Thêm mới voucher</button>
+    </div>
+    <div class="grid">
+        <div class="card">
+            <div class="pill">🎟️ Danh sách voucher</div>
+            <div class="inner-panel" style="margin-top:12px">
+                <div class="list">
+                    <div th:each="voucher : ${vouchers}" class="list-item">
+                        <div>
+                            <b th:text="${voucher.code}"></b> - <span th:text="${voucher.type}"></span> - <span th:text="${voucher.value}"></span> - <span th:text="${voucher.description}"></span>
+                            <br/>
+                            <span>Valid: <span th:text="${#temporals.format(voucher.validFrom,'yyyy-MM-dd HH:mm')}"></span> - <span th:text="${#temporals.format(voucher.validTo,'yyyy-MM-dd HH:mm')}"></span></span>
+                            <br/>
+                            <span>Active: <span th:text="${voucher.active}"></span></span>
+                        </div>
+                        <div style="display:flex; gap:8px">
+                            <form th:action="@{'/voucher/delete/' + ${voucher.id}}" method="post">
+                                <button class="primary-btn" style="background:#ef4444">Delete</button>
+                            </form>
+                            <a th:href="@{'/voucher/edit/' + ${voucher.id}}" class="primary-btn">Update</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="pill">➕ Thêm voucher mới</div>
+            <form th:action="@{/voucher/add}" method="post" th:object="${voucherDTO}">
+                <div class="form-row">
+                    <label>Mã voucher</label>
+                    <input type="text" th:field="*{code}" required />
+                </div>
+                <div class="form-row">
+                    <label>Loại</label>
+                    <select th:field="*{type}" required>
+                        <option th:each="type : ${voucherTypes}" th:value="${type}" th:text="${type}"></option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label>Giá trị</label>
+                    <input type="number" th:field="*{value}" step="0.01" required />
+                </div>
+                <div class="form-row">
+                    <label>Mô tả</label>
+                    <input type="text" th:field="*{description}" />
+                </div>
+                <div class="form-row">
+                    <label>Số lần sử dụng tối đa</label>
+                    <input type="number" th:field="*{maxUses}" required />
+                </div>
+                <div class="form-row">
+                    <label>Số lần đã sử dụng</label>
+                    <input type="number" th:field="*{timesUsed}" required />
+                </div>
+                <div class="form-row">
+                    <label>Giá trị đơn tối thiểu</label>
+                    <input type="number" th:field="*{minOrderAmount}" step="0.01" required />
+                </div>
+                <div class="form-row">
+                    <label>Ngày bắt đầu</label>
+                    <input type="datetime-local" th:field="*{validFrom}" required />
+                </div>
+                <div class="form-row">
+                    <label>Ngày kết thúc</label>
+                    <input type="datetime-local" th:field="*{validTo}" required />
+                </div>
+                <div class="form-row">
+                    <label>Hoạt động</label>
+                    <select th:field="*{active}" required>
+                        <option th:value="true">Có</option>
+                        <option th:value="false">Không</option>
+                    </select>
+                </div>
+                <button type="submit" class="primary-btn">Thêm</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

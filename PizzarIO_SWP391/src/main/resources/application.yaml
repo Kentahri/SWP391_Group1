@@ -1,38 +1,25 @@
 spring:
   application:
-    name: PizzarIO_SWP391
-
-  datasource:
-    url: jdbc:sqlserver://localhost:1433;databaseName=SWP391;encrypt=false;trustServerCertificate=true
-    username: sa
-    password: 123
-    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
-
+    name: PizzarIO
   jpa:
     show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
     hibernate:
+      # Tuy chon thao tac voi CSDL:
+      #   "none": Khong lam gi ca - khong kiem tra, khong tao, khong cap nhat gi ca
+      #   "validate": Kiem tra bang co san co khop voi entity khong - neu lech thi bao loi
+      #   "update": Cap nhat schema: tao them bang/cot neu thieu, khong xoa gi ca
+      #   "create": Xoa toan bo bang cu roi tao bang moi tu dau
+      #   "create-drop": Tao bang khi chay app, xoa toan bo bang khi app dung
+      #   "drop": (Hiem dung) Xoa toan bo bang khi app khoi dong - khong tao lai bang
       ddl-auto: none
 
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: huymin78@gmail.com
-    password: dechwhdiznudjzrn
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-            required: true
-          ssl:
-            trust: smtp.gmail.com
+  datasource:
+    username: quan
+    password: 123456
+    url: jdbc:sqlserver://localhost:1433;databaseName=swp_test;encrypt=true;trustServerCertificate=true
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
 
-logging:
-  level:
-    org.springframework: INFO
-    org.hibernate: INFO
-    com.luv2code: DEBUG
+server:
+  port: 8080
+  servlet:
+    context-path: /pizzario
