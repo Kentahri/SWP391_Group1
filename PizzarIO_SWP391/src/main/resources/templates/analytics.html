@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Analytics • Admin Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="logo">🍕</div>
+            <div class="brand-text"><strong>Admin</strong><span>Quản lý nhà hàng</span></div>
+        </div>
+        <nav class="nav">
+            <a class="nav-link active" th:href="@{/admin/analytics}">Số liệu phân tích</a>
+            <a class="nav-link" th:href="@{/admin/products}">Sản phẩm</a>
+            <a class="nav-link" th:href="@{/admin/categories}"> Danh mục</a>
+            <a class="nav-link" th:href="@{/admin/vouchers}">Voucher</a>
+            <a class="nav-link" th:href="@{/admin/staff}">Nhân viên</a>
+            <a class="nav-link" th:href="@{/admin/shifts}">Ca làm việc</a>
+            <a class="nav-link" th:href="@{/admin/complaints}"> Khiếu nại</a>
+            <a class="nav-link" th:href="@{/admin/inventory}"> Kho hàng</a>
+            <a class="nav-link" th:href="@{/admin/settings}">Cài đặt</a>
+        </nav>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+        <header class="page-header">
+            <div>
+                <h1>Admin Dashboard</h1>
+                <p class="muted">Quản lý nhà hàng</p>
+            </div>
+            <div class="userbox">
+                <div class="avatar">M</div>
+                <div class="who">
+                    <!-- TODO bind: tên người đăng nhập -->
+                    <strong id="currentUser">—</strong>
+                    <!-- TODO bind: vai trò -->
+                    <span id="currentRole" class="muted">—</span>
+                </div>
+            </div>
+        </header>
+
+        <section>
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin:6px 0 14px">
+                <div>
+                    <h2>Số liệu phân tích về kênh</h2>
+                    <p class="muted">
+                        Chỉ số thời gian •
+                        <!-- TODO bind: nhãn khoảng thời gian (ví dụ: 28 ngày qua) -->
+                        <span id="rangeLabel">—</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- KPI (4 thẻ) -->
+            <div class="grid four">
+                <article class="card">
+                    <div class="card-title"> Doanh thu</div>
+                    <!-- TODO bind: tổng doanh thu -->
+                    <div class="card-value" id="kpiRevenue">—</div>
+                    <!-- TODO bind: % so với kỳ trước, thêm class 'up' hoặc 'down' -->
+                    <div class="trend" id="kpiRevenueDelta">—</div>
+                </article>
+
+                <article class="card">
+                    <div class="card-title"> Đơn hàng</div>
+                    <!-- TODO bind: tổng đơn -->
+                    <div class="card-value" id="kpiOrders">—</div>
+                    <!-- TODO bind: % so với kỳ trước -->
+                    <div class="trend" id="kpiOrdersDelta">—</div>
+                </article>
+
+                <article class="card">
+                    <div class="card-title"> Khách mới</div>
+                    <!-- TODO bind: số khách mới -->
+                    <div class="card-value" id="kpiNewCustomers">—</div>
+                    <!-- TODO bind: % so với kỳ trước -->
+                    <div class="trend" id="kpiNewCustomersDelta">—</div>
+                </article>
+
+                <article class="card">
+                    <div class="card-title"> Giá trị TB</div>
+                    <!-- TODO bind: AOV -->
+                    <div class="card-value" id="kpiAOV">—</div>
+                    <!-- TODO bind: % so với kỳ trước -->
+                    <div class="trend" id="kpiAOVDelta">—</div>
+                </article>
+            </div>
+
+            <div class="main-analytics" style="margin-top:14px">
+                <!-- Biểu đồ đường -->
+                <article class="card">
+                    <div class="card-title">Doanh thu theo ngày</div>
+                    <!-- TODO bind: data-series(JSON) + data-axis để JS vẽ chart -->
+                    <div id="lineChart" class="chart-area" data-series="" data-axis="">
+                        <div class="fake-line"></div>
+                    </div>
+                    <!-- TODO bind: nhãn trục X -->
+                    <div class="axis-note muted"><span id="chartXAxisLabel">—</span></div>
+                </article>
+
+                <!-- Cột phải -->
+                <aside style="display:flex; flex-direction:column; gap:14px">
+                    <article class="card">
+                        <div class="card-title">Thời gian thực</div>
+                        <div class="list">
+                            <!-- TODO bind: đơn hôm nay -->
+                            <div class="row"><span class="muted">Đơn hàng hôm nay</span><strong class="big" id="todayOrders">—</strong></div>
+                            <!-- TODO bind: doanh thu hôm nay -->
+                            <div class="row"><span class="muted">Doanh thu hôm nay</span><strong class="big green" id="todayRevenue">—</strong></div>
+                        </div>
+                    </article>
+
+                    <article class="card">
+                        <div class="card-title">Xem chi tiết khách hàng</div>
+                        <div class="list">
+                            <!-- TODO bind: KH mới hôm nay -->
+                            <div class="row"><span class="muted">Khách hàng mới</span><strong id="todayNewCustomers">—</strong></div>
+                            <!-- TODO bind: KH quay lại -->
+                            <div class="row"><span class="muted">Khách hàng quay lại</span><strong id="todayReturning">—</strong></div>
+                            <!-- TODO bind: tỷ lệ giữ chân -->
+                            <div class="row"><span class="muted">Tỷ lệ giữ chân</span><strong id="retentionRate">—</strong></div>
+                        </div>
+                    </article>
+
+                    <article class="card">
+                        <div class="card-title">Nội dung nổi bật</div>
+                        <!-- TODO bind: top 4 sản phẩm (name, orders, views) -->
+                        <ol class="top-list" id="topProducts">
+                            <li><span>—</span><em>—</em></li>
+                            <li><span>—</span><em>—</em></li>
+                            <li><span>—</span><em>—</em></li>
+                            <li><span>—</span><em>—</em></li>
+                        </ol>
+                    </article>
+                </aside>
+            </div>
+
+            <!-- Vùng dưới: 3 cards -->
+            <div class="grid three" style="margin-top:14px">
+                <article class="card">
+                    <div class="card-title">Top sản phẩm bán chạy</div>
+                    <!-- TODO bind: bảng top sản phẩm -->
+                    <table class="table" id="tableTopProducts">
+                        <thead><tr><th>Sản phẩm</th><th>Đơn</th><th>Doanh thu</th></tr></thead>
+                        <tbody>
+                        <tr><td>—</td><td>—</td><td>—</td></tr>
+                        </tbody>
+                    </table>
+                </article>
+
+                <article class="card">
+                    <div class="card-title">Thống kê đơn hàng</div>
+                    <!-- TODO bind: completedRate, cancelRate, avgDeliveryTime -->
+                    <ul class="top-list" style="padding-left:18px">
+                        <li>Tỷ lệ hoàn thành: <strong id="completedRate">—</strong></li>
+                        <li>Tỷ lệ hủy: <strong id="cancelRate">—</strong></li>
+                        <li>Thời gian giao TB: <strong id="avgDeliveryTime">—</strong></li>
+                    </ul>
+                </article>
+
+                <article class="card">
+                    <div class="card-title">Doanh thu 7 ngày gần nhất</div>
+                    <!-- TODO bind: data-series(JSON) để vẽ chart cột -->
+                    <div id="barChart" class="chart-area bars" data-series="">
+                        <div class="fake-bars">
+                            <i style="height:20%"></i><i style="height:40%"></i><i style="height:30%"></i>
+                            <i style="height:50%"></i><i style="height:35%"></i><i style="height:45%"></i><i style="height:38%"></i>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>
