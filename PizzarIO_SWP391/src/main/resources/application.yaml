@@ -11,7 +11,7 @@ spring:
       #   "create": Xoa toan bo bang cu roi tao bang moi tu dau
       #   "create-drop": Tao bang khi chay app, xoa toan bo bang khi app dung
       #   "drop": (Hiem dung) Xoa toan bo bang khi app khoi dong - khong tao lai bang
-      ddl-auto: create
+      ddl-auto: none
 
   datasource:
     username: sa

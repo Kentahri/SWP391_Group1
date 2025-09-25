@@ -3,13 +3,12 @@ package com.group1.swp.pizzario_swp391.entity;
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
 import lombok.Data;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "orders")
+@Table(name = "customer_order")
 @Data
 public class Order {
 
@@ -42,7 +41,7 @@ public class Order {
     }
 
     public Order() {
-        orderItems = new ArrayList<OrderItem>();
+        orderItems = new ArrayList<>();
     }
 
     @Id
