@@ -3,8 +3,8 @@ spring:
     name: PizzarIO
 
   datasource:
-    url: jdbc:sqlserver://34.61.158.204:1433;databaseName=PizzarIO;encrypt=true;trustServerCertificate=true;
-    username: sqlserver
+    url: jdbc:sqlserver://localhost:1433;databaseName=PizzarIO;encrypt=true;trustServerCertificate=true;
+    username: sa
     password: sa
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
 
