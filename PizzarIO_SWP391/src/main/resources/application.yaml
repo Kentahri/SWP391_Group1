@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: PizzarIO_SWP391
+
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=SWP391;encrypt=false;trustServerCertificate=true
+    username: sa
+    password: 123
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    hibernate:
+      ddl-auto: none
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: huymin78@gmail.com
+    password: dechwhdiznudjzrn
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            trust: smtp.gmail.com
+
+logging:
+  level:
+    org.springframework: INFO
+    org.hibernate: INFO
+    com.luv2code: DEBUG
