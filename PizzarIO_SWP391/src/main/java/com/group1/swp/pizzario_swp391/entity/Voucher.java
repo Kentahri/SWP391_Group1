@@ -32,6 +32,7 @@ public class Voucher {
     private Long id;
 
     private String code;
+    @Enumerated(EnumType.STRING)
     private VoucherType type;
     private double value;
     private String description;

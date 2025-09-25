@@ -49,6 +49,7 @@ public class Membership {
     private String email;
 
     @Column(name = "membership_tier")
+    @Enumerated(EnumType.STRING)
     private MembershipTier membershipTier;
 
     private int points;
