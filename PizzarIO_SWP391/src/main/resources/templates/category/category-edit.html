@@ -9,7 +9,7 @@
 <body>
 <div class="container mt-5">
     <h2>Sửa Category</h2>
-    <form th:action="@{'/categories/update/' + ${category.id}}" method="post" th:object="${category}">
+    <form th:action="@{'/categories/edit/' + ${category.id}}" method="post" th:object="${category}">
         <div class="mb-3">
             <label class="form-label">Tên Category</label>
             <input type="text" th:field="*{name}" class="form-control" required>

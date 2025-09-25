@@ -1,42 +1,42 @@
 package com.group1.swp.pizzario_swp391.mapper;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import com.group1.swp.pizzario_swp391.dto.CategoryResponse;
+import com.group1.swp.pizzario_swp391.dto.CreateCategoryRequest;
+import com.group1.swp.pizzario_swp391.dto.UpdateCategoryRequest;
+import com.group1.swp.pizzario_swp391.entity.Category;
 
-/**
- * Factory class to provide access to all mappers
- * This follows the Factory pattern and provides a centralized way to access mappers
- */
-@Component
 public class MapperFactory {
     
-    @Autowired
-    private VoucherMapper voucherMapper;
-    
-    @Autowired
-    private VoucherMapperAdvanced voucherMapperAdvanced;
-    
-    /**
-     * Get the standard VoucherMapper
-     * @return VoucherMapper instance
-     */
-    public VoucherMapper getVoucherMapper() {
-        return voucherMapper;
+
+    public static CategoryResponse toCategoryResponse(Category category) {
+        if (category == null) {
+            return null;
+        }
+        return CategoryResponse.builder()
+                .id(category.getId())
+                .name(category.getName())
+                .description(category.getDescription())
+                .isActive(category.isActive())
+                .build();
     }
-    
-    /**
-     * Get the advanced VoucherMapper
-     * @return VoucherMapperAdvanced instance
-     */
-    public VoucherMapperAdvanced getVoucherMapperAdvanced() {
-        return voucherMapperAdvanced;
+
+    public static Category toCategoryEntity(CreateCategoryRequest request) {
+        if (request == null) {
+            return null;
+        }
+        Category category = new Category();
+        category.setName(request.getName());
+        category.setDescription(request.getDescription());
+        category.setActive(request.isActive());
+        return category;
     }
-    
-    /**
-     * Get the standard VoucherMapper as interface
-     * @return VoucherMapperInterface instance
-     */
-    public VoucherMapperInterface getVoucherMapperInterface() {
-        return voucherMapper;
+
+    public static void updateCategoryFromRequest(Category category, UpdateCategoryRequest request) {
+        if (category == null || request == null) {
+            return;
+        }
+        category.setName(request.getName());
+        category.setDescription(request.getDescription());
+        category.setActive(request.isActive());
     }
 }

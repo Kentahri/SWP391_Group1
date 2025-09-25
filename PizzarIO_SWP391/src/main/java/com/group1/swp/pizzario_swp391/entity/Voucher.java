@@ -29,30 +29,17 @@ public class Voucher {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Long id;
 
     private String code;
     private VoucherType type;
     private double value;
     private String description;
-
-    @Column(name = "max_uses", nullable = false)
     private int maxUses;
-
-    @Column(name = "times_used", nullable = false)
     private int timesUsed;
-
-    @Column(name = "min_order_amount", nullable = false)
     private double minOrderAmount;
-
-    @Column(name = "valid_from", nullable = false)
     private LocalDateTime validFrom;
-
-    @Column(name = "valid_to", nullable = false)
     private LocalDateTime validTo;
-
-    @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
     public enum VoucherType {
@@ -71,5 +58,4 @@ public class Voucher {
         this.validTo = validTo;
         this.isActive = isActive;
     }
-    
 }
