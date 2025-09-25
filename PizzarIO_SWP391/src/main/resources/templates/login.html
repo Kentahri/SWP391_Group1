@@ -25,6 +25,7 @@
             <p class="subtitle">Nhập thông tin tài khoản của bạn</p>
 
             <div th:if="${loginError}" class="alert alert-danger" th:text="${loginError}"></div>
+            <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
             <form th:action="@{/signIn}" method="post" th:object="${account}">
 
 

@@ -40,6 +40,7 @@ public class Staff {
     private boolean isActive;
 
     @OneToMany(mappedBy = "staff", cascade = CascadeType.ALL)
+    @ToString.Exclude @EqualsAndHashCode.Exclude
     private List<OtpMail> otpMails;
 
     public Staff(String name, LocalDateTime dateOfBirth, String phone, String address, String username, String password, String email, Role role, boolean isActive) {

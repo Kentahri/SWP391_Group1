@@ -2,7 +2,9 @@ package com.group1.swp.pizzario_swp391.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 
@@ -17,6 +19,7 @@ public class OtpMail {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "staff_id", nullable = false)
+    @ToString.Exclude @EqualsAndHashCode.Exclude
     private Staff staff;
 
     @Column(name = "otp_code", nullable = false, length = 10)

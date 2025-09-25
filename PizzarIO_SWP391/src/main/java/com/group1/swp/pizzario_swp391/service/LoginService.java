@@ -30,11 +30,12 @@ public class LoginService {
         if(loginRepository.existsByEmail(acc.getEmail())) {
             throw new RuntimeException("Email đã tồn tại");
         }
-//
-//        String hasded = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode(acc.getPassword());
-//        acc.setPassword(hasded);
 
         loginRepository.save(acc);
+    }
+
+    public Staff findByEmail(String email){
+        return loginRepository.findByEmail(email).orElseThrow();// sẽ ném ra NoSuchElementException nếu null
     }
 
 }

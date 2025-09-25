@@ -1,7 +1,5 @@
 package com.group1.swp.pizzario_swp391.controller;
 
-
-
 import com.group1.swp.pizzario_swp391.entity.Staff;
 import com.group1.swp.pizzario_swp391.service.LoginService;
 import org.springframework.stereotype.Controller;
@@ -45,8 +43,6 @@ public class LoginController {
             return "login";
         }
 
-        System.out.println(account);
-
         Optional<Staff> authenticated = loginService.authenticate(account.getEmail(), account.getPassword());
 
         if (authenticated.isEmpty()) {
@@ -60,8 +56,6 @@ public class LoginController {
 
             return "redirect:/login";
         }
-
-        System.out.println(authenticate);
 
         return switch (authenticate.getRole()) {
             case MANAGER -> "dashboard";

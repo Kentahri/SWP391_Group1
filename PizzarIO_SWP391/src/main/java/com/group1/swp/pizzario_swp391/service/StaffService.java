@@ -31,6 +31,7 @@ public class StaffService {
         }
 
         staff.setPassword(password);
+
         staffRepository.save(staff);
     }
 
