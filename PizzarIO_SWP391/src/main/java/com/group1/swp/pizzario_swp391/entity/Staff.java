@@ -54,12 +54,14 @@ public class Staff {
     private int id;
 
     private String name;
+    @Column(name = "dob")
     private LocalDateTime dateOfBirth;
     private String phone;
     private String address;
     private String username;
     private String password;
     private String email;
+    @Enumerated(EnumType.STRING)
     private Role role;
     private boolean isActive;
 
