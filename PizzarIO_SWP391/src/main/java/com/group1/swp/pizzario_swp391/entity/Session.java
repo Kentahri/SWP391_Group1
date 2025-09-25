@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Session")
+@Table(name = "[Session]")
 @Data
 @NoArgsConstructor
 public class Session {
@@ -36,5 +36,8 @@ public class Session {
         this.isClosed = isClosed;
         this.createdAt = createdAt;
         this.closedAt = closedAt;
+    }
+
+    public void setTable(DiningTable diningTable) {
     }
 }

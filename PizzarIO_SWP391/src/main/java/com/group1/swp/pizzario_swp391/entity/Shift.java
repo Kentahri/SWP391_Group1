@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "Shift")
+@Table(name = "[Shift]")
 @Data
 public class Shift {
 
