@@ -37,7 +37,7 @@ public class LoginController {
     }
 
     @PostMapping("/signIn")
-    public String signIn(@Valid @ModelAttribute("account") Staff account,BindingResult result ,Model model) {
+    public String signIn(@Valid @ModelAttribute("account") Staff account,BindingResult result ,Model model) { //StaffDTO
 
         if(result.hasErrors()){
             return "login";
