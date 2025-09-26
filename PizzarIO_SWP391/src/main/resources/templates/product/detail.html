@@ -14,7 +14,7 @@
         <div class="card-body">
             <h5 class="card-title" th:text="${product.name}"></h5>
             <p class="card-text" th:text="${product.description}"></p>
-            <p><strong>Category ID:</strong> <span th:text="${product.categoryId}"></span></p>
+            <p><strong>Category ID:</strong> <span th:text="${product.category.name}"></span></p>
             <p><strong>Giá gốc:</strong> <span th:text="${product.basePrice}"></span></p>
             <p><strong>Giá Flash:</strong> <span th:text="${product.flashSalePrice}"></span></p>
             <p><strong>Bắt đầu:</strong> <span th:text="${product.flashSaleStart}"></span></p>
@@ -24,9 +24,12 @@
         </div>
     </div>
 
-    <a th:href="@{/products}" class="btn btn-secondary mt-3">Quay lại</a>
+    <a th:href="@{/product}" class="btn btn-secondary mt-3">Quay lại</a>
 </div>
 </body>
 </html>
+
+
+
 
 

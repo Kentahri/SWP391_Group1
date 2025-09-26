@@ -1,0 +1,28 @@
+package com.group1.swp.pizzario_swp391.dto;
+
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+import java.time.LocalDateTime;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class CategoryDTO {
+    @NotBlank(message = "Tên danh mục không được để trống")
+    @Size(max = 100, message = "Tên danh mục không được vượt quá 100 ký tự")
+    String name;
+
+    @Size(max = 500, message = "Mô tả không được vượt quá 500 ký tự")
+    String description;
+
+    boolean isActive;
+
+    LocalDateTime createdAt;
+    LocalDateTime updatedAt;
+    
+}

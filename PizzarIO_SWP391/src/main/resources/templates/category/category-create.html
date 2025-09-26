@@ -9,7 +9,7 @@
 <body>
 <div class="container mt-5">
     <h2>Thêm Category mới</h2>
-    <form th:action="@{/categories/create}" method="post" th:object="${category}">
+    <form th:action="@{/category/create}" method="post" th:object="${category}">
         <div class="mb-3">
             <label class="form-label">Tên Category</label>
             <input type="text" th:field="*{name}" class="form-control" placeholder="Pizza" required>
@@ -26,7 +26,7 @@
         </div>
 
         <button type="submit" class="btn btn-success">Lưu</button>
-        <a th:href="@{/categories}" class="btn btn-secondary">Hủy</a>
+        <a th:href="@{/category}" class="btn btn-secondary">Hủy</a>
     </form>
 </div>
 </body>

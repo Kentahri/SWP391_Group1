@@ -9,7 +9,7 @@
 <body>
 <div class="container mt-5">
     <h2 class="mb-3">Danh sách Category</h2>
-    <a th:href="@{/categories/create}" class="btn btn-primary mb-3">+ Thêm Category</a>
+    <a th:href="@{/category/create}" class="btn btn-primary mb-3">+ Thêm Category</a>
 
     <table class="table table-bordered">
         <thead>
@@ -28,8 +28,8 @@
             <td th:text="${cat.description}"></td>
             <td th:text="${cat.active ? 'Yes' : 'No'}"></td>
             <td>
-                <a th:href="@{'/categories/edit/' + ${cat.id}}" class="btn btn-warning btn-sm">Sửa</a>
-                <form th:action="@{'/categories/delete/' + ${cat.id}}" method="post" style="display:inline;">
+                <a th:href="@{'/category/edit/' + ${cat.id}}" class="btn btn-warning btn-sm">Sửa</a>
+                <form th:action="@{'/category/delete/' + ${cat.id}}" method="post" style="display:inline;">
                     <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
                 </form>
             </td>
