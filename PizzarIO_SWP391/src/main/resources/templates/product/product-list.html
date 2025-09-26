@@ -12,7 +12,7 @@
 <body>
 <div class="container mt-5">
     <h2 class="mb-3">Danh sách Sản phẩm</h2>
-    <a th:href="@{/products/create}" class="btn btn-primary mb-3">+ Thêm Sản phẩm</a>
+    <a th:href="@{/product/create}" class="btn btn-primary mb-3">+ Thêm Sản phẩm</a>
 
     <table class="table table-bordered">
         <thead>
@@ -36,11 +36,11 @@
             </td>
             <td th:text="${#numbers.formatDecimal(p.basePrice, 0, 'COMMA', 0, 'POINT')}"></td>
             <td th:text="${#numbers.formatDecimal(p.flashSalePrice, 0, 'COMMA', 0, 'POINT')}"></td>
-            <td th:text="${p.categoryId}"></td>
-            <td th:text="${p.active ? 'Yes' : 'No'}"></td>
+            <td th:text="${p.category.name}"></td>
+            <td th:text="${p.isActive ? 'Yes' : 'No'}"></td>
             <td>
-                <a th:href="@{'/products/edit/' + ${p.id}}" class="btn btn-warning btn-sm">Sửa</a>
-                <form th:action="@{'/products/delete/' + ${p.id}}" method="post" style="display:inline;">
+                <a th:href="@{'/product/edit/' + ${p.id}}" class="btn btn-warning btn-sm">Sửa</a>
+                <form th:action="@{'/product/delete/' + ${p.id}}" method="post" style="display:inline;">
                     <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
                 </form>
             </td>
@@ -50,5 +50,8 @@
 </div>
 </body>
 </html>
+
+
+
 
 

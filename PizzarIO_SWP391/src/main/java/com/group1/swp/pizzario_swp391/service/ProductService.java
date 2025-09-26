@@ -1,74 +1,68 @@
 package com.group1.swp.pizzario_swp391.service;
 
-import com.group1.swp.pizzario_swp391.dto.CreateProductRequest;
-import com.group1.swp.pizzario_swp391.dto.ProductResponse;
-import com.group1.swp.pizzario_swp391.dto.UpdateProductRequest;
-import com.group1.swp.pizzario_swp391.entity.Category;
+import com.group1.swp.pizzario_swp391.dto.ProductDTO;
+import com.group1.swp.pizzario_swp391.entity.Category; // Thêm import này
 import com.group1.swp.pizzario_swp391.entity.Product;
-import com.group1.swp.pizzario_swp391.mapper.MapperFactory;
-import com.group1.swp.pizzario_swp391.repository.CategoryRepository;
+import com.group1.swp.pizzario_swp391.mapper.ProductMapper;
+import com.group1.swp.pizzario_swp391.repository.CategoryRepository; // Thêm import này
 import com.group1.swp.pizzario_swp391.repository.ProductRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor
 public class ProductService {
+    ProductRepository productRepository;
+    ProductMapper productMapper;
+    CategoryRepository categoryRepository; // Thêm CategoryRepository
 
-    static final String PRODUCT_NOT_FOUND = "Product not found";
-    static final String CATEGORY_NOT_FOUND = "Category not found";
-
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private CategoryRepository categoryRepository;
-
-    public List<ProductResponse> getAll() {
-        return productRepository.findAll().stream()
-                .map(MapperFactory::toProductResponse)
-                .collect(Collectors.toList());
+    public List<Product> getAllProducts() {
+        return productRepository.findAll();
     }
 
-    public ProductResponse getById(Long id) {
+    public Optional<Product> getById(Long id) {
+        return productRepository.findById(id);
+    }
+
+    public void createProduct(ProductDTO productDTO) {
+        LocalDateTime now = LocalDateTime.now();
+        productDTO.setCreatedAt(now);
+        productDTO.setUpdatedAt(now);
+
+        Product product = productMapper.toProduct(productDTO);
+
+        // Tìm kiếm Category dựa trên categoryId từ DTO
+        Category category = categoryRepository.findById(productDTO.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Category not found with ID: " + productDTO.getCategoryId()));
+        product.setCategory(category); // Gán Category vào Product
+
+        productRepository.save(product);
+    }
+
+    public void updateProduct(Long id, ProductDTO productDTO) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(PRODUCT_NOT_FOUND));
-        return MapperFactory.toProductResponse(product);
-    }
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        productDTO.setUpdatedAt(LocalDateTime.now());
+        productMapper.updateProduct(product,productDTO);
 
-    public ProductResponse create(CreateProductRequest request) {
-        Category category = null;
-        if (request.getCategoryId() != null) {
-            category = categoryRepository.findById(request.getCategoryId())
-                    .orElseThrow(() -> new RuntimeException(CATEGORY_NOT_FOUND));
+        // Cập nhật Category nếu categoryId được cung cấp và khác với category hiện tại
+        if (productDTO.getCategoryId() != null && !productDTO.getCategoryId().equals(product.getCategory().getId())) {
+            Category category = categoryRepository.findById(productDTO.getCategoryId())
+                    .orElseThrow(() -> new RuntimeException("Category not found with ID: " + productDTO.getCategoryId()));
+            product.setCategory(category);
         }
-        Product product = MapperFactory.toProductEntity(request, category);
-        product.setCreatedAt(LocalDateTime.now());
-        product.setUpdatedAt(LocalDateTime.now());
-        Product saved = productRepository.save(product);
-        return MapperFactory.toProductResponse(saved);
+
+        productRepository.save(product);
     }
 
-    public ProductResponse update(Long id, UpdateProductRequest request) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(PRODUCT_NOT_FOUND));
-        Category category = null;
-        if (request.getCategoryId() != null) {
-            category = categoryRepository.findById(request.getCategoryId())
-                    .orElseThrow(() -> new RuntimeException(CATEGORY_NOT_FOUND));
-        }
-        MapperFactory.updateProductFromRequest(product, request, category);
-        product.setUpdatedAt(LocalDateTime.now());
-        Product saved = productRepository.save(product);
-        return MapperFactory.toProductResponse(saved);
-    }
-
-    public void delete(Long id) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(PRODUCT_NOT_FOUND));
-        productRepository.delete(product);
+    public void deleteProduct(Long id) {
+        productRepository.deleteById(id);
     }
 }
