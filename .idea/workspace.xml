@@ -4,73 +4,72 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f1bec10f-678e-4b5c-9d60-63879222d838" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PizzarIO_SWP391/src/main/java/com/group1/swp/pizzario_swp391/entity/Voucher.java" beforeDir="false" afterPath="$PROJECT_DIR$/PizzarIO_SWP391/src/main/java/com/group1/swp/pizzario_swp391/entity/Voucher.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PizzarIO_SWP391/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/PizzarIO_SWP391/src/main/resources/application.yaml" afterDir="false" />
+    <list default="true" id="7b4d0b49-bc35-4b17-a326-c6826471cc29" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/PizzarIO_SWP391/src/main/java/com/group1/swp/pizzario_swp391/controller/StaffController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/PizzarIO_SWP391/src/main/java/com/group1/swp/pizzario_swp391/dto/StaffRequestDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/PizzarIO_SWP391/src/main/java/com/group1/swp/pizzario_swp391/dto/StaffResponseDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/PizzarIO_SWP391/src/main/java/com/group1/swp/pizzario_swp391/dto/StaffUpdateDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/PizzarIO_SWP391/src/main/java/com/group1/swp/pizzario_swp391/repository/StaffRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/PizzarIO_SWP391/src/main/java/com/group1/swp/pizzario_swp391/service/StaffService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="package.json" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
-  &quot;history&quot;: [
-    {
-      &quot;assignee&quot;: &quot;VuietKie&quot;
-    }
-  ],
   &quot;lastFilter&quot;: {
-    &quot;assignee&quot;: &quot;VuietKie&quot;
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Kentahri&quot;
   }
 }</component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/Kentahri/SWP391_Group1.git&quot;,
-    &quot;accountId&quot;: &quot;a565008d-f9f2-4a43-8832-7233b62733c8&quot;
+    &quot;accountId&quot;: &quot;30fe0ef5-0a4b-4850-b68d-e3bc4e30f63b&quot;
   }
 }</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 4
 }</component>
-  <component name="ProjectId" id="334uS2RVxKuEjdiDJ7OGrX26tes" />
+  <component name="ProjectId" id="334vAJCaq2tK87xrsZas9dNEcv0" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;hiepne&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;Quan&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/HocTap/Semester_5/SWP391/SWP391_Group1&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/anhqu/SWP391_Group1&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
-  <component name="RunManager">
-    <configuration name="PizzarIoSwp391Application" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
-      <option name="ALTERNATIVE_JRE_PATH" value="24" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
-      <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
-      <option name="SPRING_BOOT_MAIN_CLASS" value="com.group1.swp.pizzario_swp391.PizzarIoSwp391Application" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -81,22 +80,17 @@
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="f1bec10f-678e-4b5c-9d60-63879222d838" name="Changes" comment="" />
-      <created>1758588662925</created>
+      <changelist id="7b4d0b49-bc35-4b17-a326-c6826471cc29" name="Changes" comment="" />
+      <created>1758589014047</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1758588662925</updated>
-      <workItem from="1758588713216" duration="1920000" />
-      <workItem from="1758679406023" duration="734000" />
-      <workItem from="1758680155627" duration="35000" />
-      <workItem from="1758680198806" duration="56000" />
-      <workItem from="1758680265505" duration="179000" />
-      <workItem from="1758680454913" duration="114000" />
-      <workItem from="1758680578062" duration="3012000" />
-      <workItem from="1758684063846" duration="243000" />
-      <workItem from="1758684405773" duration="156000" />
-      <workItem from="1758684583269" duration="1616000" />
-      <workItem from="1758686404370" duration="201000" />
+      <updated>1758589014047</updated>
+      <workItem from="1758589015940" duration="961000" />
+      <workItem from="1758679315611" duration="222000" />
+      <workItem from="1758679552708" duration="930000" />
+      <workItem from="1758681672876" duration="1419000" />
+      <workItem from="1758684551804" duration="32000" />
+      <workItem from="1758684593953" duration="2112000" />
     </task>
     <servers />
   </component>
@@ -113,5 +107,9 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>

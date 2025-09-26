@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nhập mã xác thực</title>
+  <style>
+    :root{ --ink:#1f2937; --sub:#6b7280; --line:#e5e7eb; --brand:#2563eb; }
+    html,body{height:100%}
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:#f8fafc; color:var(--ink);}
+    .wrap{min-height:100%; display:grid; place-items:center; padding:16px;}
+    .card{width:100%; max-width:420px; background:#fff; border:1px solid var(--line); border-radius:12px; padding:18px;}
+    h1{font-size:20px; margin:4px 0 8px; text-align:center;}
+    .hint{color:var(--sub); font-size:14px; text-align:center; margin:0 0 12px;}
+    .ok{display:flex; justify-content:center; margin:8px 0 10px;}
+    .ok i{width:40px;height:40px;border-radius:50%; background:#e8f7ee; display:grid;place-items:center; font-weight:700; color:#16a34a;}
+    .email{font-weight:700;}
+    label{display:block; font-size:14px; margin:10px 0 6px;}
+    input{width:100%; box-sizing:border-box; height:42px; padding:8px 10px; border:1px solid var(--line); border-radius:10px; font-size:14px;}
+    .subtext{color:var(--sub); font-size:12px; margin-top:6px;}
+    button{width:100%; height:44px; border:0; border-radius:10px; background:var(--brand); color:#fff; font-weight:700; margin-top:12px; cursor:pointer;}
+    a{color:var(--sub); text-decoration:none; font-size:14px;}
+    .back{text-align:center; margin-top:10px;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>Nhập mã xác thực</h1>
+
+    <div class="ok"><i>✔</i></div>
+
+    <p class="hint">
+      Email đã được gửi! Chúng tôi đã gửi mã xác thực 6 số đến
+      <span class="email" th:text="${accountEmail}">someone@ex.com</span>
+    </p>
+    <p class="hint" style="margin-top:-4px;">Không nhận được email? Kiểm tra spam hoặc thử lại sau 60 giây.</p>
+
+    <form th:action="@{/missing_pass/verify}" method="post">
+
+      <input type="hidden" name="email" th:value="${accountEmail}">
+
+      <label for="code">Mã xác thực</label>
+      <input id="code" name="code" placeholder="Nhập code 6 số " inputmode="numeric" maxlength="6" required>
+
+
+      <label for="newPass">Mật khẩu mới</label>
+      <input id="newPass" type="password" name="newPassword" required>
+
+      <label for="confirm">Xác nhận mật khẩu</label>
+      <input id="confirm" type="password" name="confirmPassword" required>
+
+      <button type="submit">Đặt lại mật khẩu</button>
+
+      <div class="text-danger" th:if="${error}" th:text="${error}"></div>
+
+    </form>
+
+    <div class="back">
+      <a th:href="@{/login}">← Quay về đăng nhập</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

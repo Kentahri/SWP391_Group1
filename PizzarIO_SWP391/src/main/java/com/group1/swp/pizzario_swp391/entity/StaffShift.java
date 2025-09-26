@@ -34,7 +34,10 @@ public class StaffShift {
     @Column(name = "work_date")
     private LocalDateTime workDate;
 
+    @Enumerated(EnumType.STRING)
     private Status status;
+
+
     private LocalDateTime checkIn;
     private LocalDateTime checkOut;
 

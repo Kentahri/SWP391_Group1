@@ -3,13 +3,12 @@ package com.group1.swp.pizzario_swp391.entity;
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
 import lombok.Data;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "[Order]")
+@Table(name = "customer_order")
 @Data
 public class Order {
 
@@ -42,7 +41,7 @@ public class Order {
     }
 
     public Order() {
-        orderItems = new ArrayList<OrderItem>();
+        orderItems = new ArrayList<>();
     }
 
     @Id
@@ -61,28 +60,23 @@ public class Order {
     private LocalDateTime updatedAt;
 
     @Column(name = "order_status")
+    @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
 
     @Column(name = "order_type")
+    @Enumerated(EnumType.STRING)
     private OrderType orderType;
 
     @Column(name = "payment_method")
+    @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
 
     @Column(name = "payment_status")
+    @Enumerated(EnumType.STRING)
     private PaymentStatus paymentStatus;
 
     @Column(name = "tax-rate")
     private double taxRate;
-
-    public void setVoucher(Voucher voucher) {
-    }
-
-    public void setMembership(Membership membership) {
-    }
-
-    public void setStaff(Staff staff) {
-    }
 
     public enum OrderType {
         DINE_IN, TAKE_AWAY
