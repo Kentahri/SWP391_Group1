@@ -10,12 +10,12 @@ public class DashBoardController {
 
     @GetMapping("/analytics")
     public String getFormAnalytics(){
-        return "analytics";
+        return "admin_page/analytics";
     }
 
     @GetMapping("/shifts")
     public String getFormShift(){
-        return "shift_management";
+        return "admin_page/shift_management";
     }
 
 }

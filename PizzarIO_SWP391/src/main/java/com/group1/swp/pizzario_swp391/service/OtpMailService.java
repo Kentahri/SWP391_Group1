@@ -10,7 +10,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+
 import java.time.LocalDateTime;
 import java.util.Random;
 
@@ -49,7 +49,7 @@ public class OtpMailService {
 
         OtpMail otp = new OtpMail(code, LocalDateTime.now(), LocalDateTime.now().plusMinutes(3));
 
-        staff.addOtp(otp);
+        staff.addOtpMail(otp);
         staffRepo.save(staff);
 
         return otp;
