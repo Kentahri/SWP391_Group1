@@ -9,15 +9,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "Staff")
+@Table(name = "[Staff]")
 @Data
 @ToString
 public class Staff {
 
-    @OneToMany(mappedBy = "staff")
+    @OneToMany(mappedBy = "staff", cascade = CascadeType.ALL)
     private List<OtpMail> otpMails;
 
     public void addOtpMail(OtpMail otpMail) {
+        if(otpMails == null){
+            otpMails = new ArrayList<>();
+        }
         otpMails.add(otpMail);
         otpMail.setStaff(this);
     }

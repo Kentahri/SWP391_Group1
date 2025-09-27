@@ -16,7 +16,7 @@ public class PizzarIoSwp391Application {
         SpringApplication.run(PizzarIoSwp391Application.class, args);
     }
 
-    //@Bean
+    @Bean
     CommandLineRunner initData(StaffService service) {
         return (String[] args) -> {
             System.out.println("Runner chạy với: " + java.util.Arrays.toString(args));
@@ -24,7 +24,7 @@ public class PizzarIoSwp391Application {
             // 3 nhân viên mẫu
             Staff s1 = new Staff(
                     "Nguyễn Văn A",
-                    java.time.LocalDateTime.of(1995, 5, 10, 0, 0),
+                    java.time.LocalDate.of(1995, 5, 10),
                     "0901234567",
                     "Hà Nội",
                     "cashier01",
@@ -36,7 +36,7 @@ public class PizzarIoSwp391Application {
 
             Staff s2 = new Staff(
                     "Trần Thị B",
-                    java.time.LocalDateTime.of(1992, 8, 20, 0, 0),
+                    java.time.LocalDate.of(1992, 8, 20),
                     "0907654321",
                     "TP.HCM",
                     "manager01",
@@ -48,7 +48,7 @@ public class PizzarIoSwp391Application {
 
             Staff s3 = new Staff(
                     "Lê Hữu C",
-                    java.time.LocalDateTime.of(1998, 1, 15, 0, 0),
+                    java.time.LocalDate.of(1998, 1, 15),
                     "0912345678",
                     "Đà Nẵng",
                     "kitchen01",
@@ -57,6 +57,7 @@ public class PizzarIoSwp391Application {
                     Staff.Role.KITCHEN,
                     true
             );
+
 
             // Lưu dữ liệu
             service.add(s1);

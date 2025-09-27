@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Entity
-@Table(name = "Order_Item")
+@Table(name = "[Order_Item]")
 @Data
 @ToString
 @NoArgsConstructor
@@ -41,7 +41,13 @@ public class OrderItem {
     @Column(name = "total_price")
     private double totalPrice;
 
-    public enum OrderItemStatus{
+    public void setOrder(Order order) {
+    }
+
+    public void setProduct(Product product) {
+    }
+
+    public enum OrderItemStatus {
         PENDING, PREPARING, SERVED, CANCELLED
     }
 

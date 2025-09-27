@@ -39,14 +39,14 @@ public class OtpEmailController {
         String subject = "Otp Code Mail";
 
         if (br.hasErrors()) {
-            return "missing_pass"; // có account + BindingResult cho Thymeleaf
+            return "authenticate/missing_pass"; // có account + BindingResult cho Thymeleaf
         }
 
         Staff staff = staffService.findByEmail(email);
 
         if(staff == null){
             model.addAttribute("errorMail", "Mail chưa được đăng kí hoặc chưa tồn tại");
-            return "missing_pass";
+            return "authenticate/missing_pass";
         }
 
         OtpMail otp = otpEmailService.createNewOtp(staff.getId());
@@ -60,13 +60,13 @@ public class OtpEmailController {
         model.addAttribute("accountEmail", staff.getEmail());
         model.addAttribute("demoOtp", otp);
 
-        return "send_mail";
+        return "authenticate/send_mail";
     }
 
     @GetMapping("/missing_pass/verify")
     public String showVerify(@ModelAttribute("accountEmail") String email, Model model) {
         model.addAttribute("accountEmail", email);
-        return "send_mail";
+        return "authenticate/send_mail";
     }
 
 
@@ -91,7 +91,7 @@ public class OtpEmailController {
             if(otpEmailService.checkExpireOtp(lastestOtp)){
                 ra.addFlashAttribute("accountEmail", email);
                 ra.addFlashAttribute("error", "Otp đã hết hạn. Hãy làm lại bước quên mật khẩu");
-                 return "redirect:/missing_pass/verify";
+                return "redirect:/missing_pass/verify";
             }
 
             if (otpEmailService.checkUsedOtp(lastestOtp)){

@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Staff_Shift")
+@Table(name = "[Staff_Shift]")
 @Data
 @NoArgsConstructor
 public class StaffShift {
@@ -40,6 +40,12 @@ public class StaffShift {
 
     private LocalDateTime checkIn;
     private LocalDateTime checkOut;
+
+    public void setShift(Object o) {
+    }
+
+    public void setStaff(Staff staff) {
+    }
 
     public enum Status{
         SCHEDULED, PRESENT, LATE, ABSENT, LEFT
