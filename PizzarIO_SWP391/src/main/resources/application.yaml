@@ -15,8 +15,8 @@ spring:
 
   datasource:
     username: sa
-    password: 123
-    url: jdbc:sqlserver://localhost:1433;databaseName=SWP391;encrypt=true;trustServerCertificate=true
+    password: sa
+    url: jdbc:sqlserver://localhost:1433;databaseName=PizzarIO;encrypt=true;trustServerCertificate=true
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
   mail:
     host: smtp.gmail.com

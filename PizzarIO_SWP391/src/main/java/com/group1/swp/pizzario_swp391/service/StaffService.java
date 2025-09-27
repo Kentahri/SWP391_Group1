@@ -22,7 +22,7 @@ public class StaffService {
     StaffMapper staffMapper;
 
     public void createNewStaff(StaffDTO staffDTO) {
-        Staff staff =staffMapper.toStaff(staffDTO);
+        Staff staff = staffMapper.toStaff(staffDTO);
 
         if (staffRepository.existsByEmail(staff.getEmail())) {
             throw new IllegalArgumentException("Email đã được sử dụng");
@@ -48,8 +48,8 @@ public class StaffService {
         staffRepository.deleteById(id);
     }
 
-    public void updateStaff(int id,StaffDTO staffDTO) {
-        Staff staff = staffRepository.findById(id).orElseThrow(()-> new RuntimeException("Staff not found"));
+    public void updateStaff(int id, StaffDTO staffDTO) {
+        Staff staff = staffRepository.findById(id).orElseThrow(() -> new RuntimeException("Staff not found"));
         // Kiểm tra trùng email (loại trừ chính staff hiện tại)
         if (staffRepository.existsByEmailAndIdNot(staffDTO.getEmail(), id)) {
             throw new IllegalArgumentException("Email đã tồn tại!");
@@ -59,11 +59,11 @@ public class StaffService {
         if (staffRepository.existsByPhoneAndIdNot(staffDTO.getPhone(), id)) {
             throw new IllegalArgumentException("Số điện thoại đã tồn tại!");
         }
-        staffMapper.updateStaff(staff,staffDTO);
+        staffMapper.updateStaff(staff, staffDTO);
         staffRepository.save(staff);
     }
 
-    public void add(Staff staff){
+    public void add(Staff staff) {
         staffRepository.save(staff);
     }
 
@@ -79,11 +79,11 @@ public class StaffService {
         staffRepository.save(staff);
     }
 
-    public Staff findByEmail(String email){
+    public Staff findByEmail(String email) {
         return loginRepository.findByEmail(email).orElse(null);
     }
 
-    public void updateStaff(Staff staff){
+    public void updateStaff(Staff staff) {
         staffRepository.save(staff);
     }
 

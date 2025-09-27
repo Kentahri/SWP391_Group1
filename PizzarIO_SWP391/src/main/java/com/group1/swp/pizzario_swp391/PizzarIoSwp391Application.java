@@ -1,7 +1,9 @@
 package com.group1.swp.pizzario_swp391;
 
 
+import com.group1.swp.pizzario_swp391.entity.Category;
 import com.group1.swp.pizzario_swp391.entity.Staff;
+import com.group1.swp.pizzario_swp391.service.CategoryService;
 import com.group1.swp.pizzario_swp391.service.LoginService;
 import com.group1.swp.pizzario_swp391.service.StaffService;
 import org.springframework.boot.CommandLineRunner;
@@ -57,12 +59,28 @@ public class PizzarIoSwp391Application {
                     Staff.Role.KITCHEN,
                     true
             );
+            Staff s4 = new Staff(
+                    "Lê Hữu D",
+                    java.time.LocalDate.of(1998, 1, 15),
+                    "0912345678",
+                    "Đà Nẵng",
+                    "kitchen01",
+                    "123456",
+                    "vinhngoc172005@gmail.com",
+                    Staff.Role.KITCHEN,
+                    true
+            );
+
 
 
             // Lưu dữ liệu
             service.add(s1);
             service.add(s2);
             service.add(s3);
+            service.add(s4);
+
+
+
 
             // Nếu bạn vẫn muốn tạo Account riêng, giữ các dòng dưới (tuỳ hệ thống của bạn):
             // Account account4 = new Account("huy@gmail.com", "123456", "MANAGER");
