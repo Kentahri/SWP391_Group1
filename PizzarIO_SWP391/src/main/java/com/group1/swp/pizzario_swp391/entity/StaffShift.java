@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -37,7 +38,6 @@ public class StaffShift {
     @Enumerated(EnumType.STRING)
     private Status status;
 
-
     private LocalDateTime checkIn;
     private LocalDateTime checkOut;
 
@@ -47,7 +47,9 @@ public class StaffShift {
     public void setStaff(Staff staff) {
     }
 
-    public enum Status{
+    public enum Status {
         SCHEDULED, PRESENT, LATE, ABSENT, LEFT
     }
+
+    private BigDecimal hourlyWage;
 }
