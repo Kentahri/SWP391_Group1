@@ -25,24 +25,24 @@ public class TableController {
         model.addAttribute("tableStatuses", DiningTable.TableStatus.values());
         model.addAttribute("tableConditions", DiningTable.TableCondition.values());
         model.addAttribute("tables", tableService.getAllTables());
-        return "table";
+        return "admin_page/table_management";
     }
 
     @PostMapping("/add")
     public String createNewTable(@ModelAttribute TableDTO tableDTO) {
         tableService.createNewTable(tableDTO);
-        return "redirect:/table";
+        return "redirect:admin_page/table_management";
     }
 
     @PostMapping("/delete/{id}")
     public String deleteTable(@PathVariable int id) {
         tableService.deleteTable(id);
-        return "redirect:/table";
+        return "redirect:admin_page/table_management";
     }
 
     @PostMapping("/update/{id}")
     public String updateTable(@PathVariable int id, @ModelAttribute TableDTO tableDTO) {
         tableService.updateTable(id, tableDTO);
-        return "redirect:/table";
+        return "redirect:admin_page/table_management";
     }
 }

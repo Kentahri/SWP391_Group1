@@ -60,7 +60,7 @@ public class LoginController {
         return switch (authenticate.getRole()) {
             case MANAGER -> "dashboard";
             case KITCHEN -> "kitchen";
-            case CASHIER -> "cashier";
+            case CASHIER -> "cashier-page/cashier";
             default -> "redirect:authenticate/login"; // fallback nếu role null hoặc không khớp
         };
     }
