@@ -16,6 +16,8 @@ spring:
   datasource:
     username: quan
     password: 123456
+    username: sa
+    password: 123
     url: jdbc:sqlserver://localhost:1433;databaseName=swp_test;encrypt=true;trustServerCertificate=true
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
 
