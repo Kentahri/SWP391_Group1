@@ -23,7 +23,7 @@ public class VoucherController {
         model.addAttribute("voucherTypes", Voucher.VoucherType.values());
         model.addAttribute("voucherDTO", new VoucherDTO());
         model.addAttribute("vouchers", voucherService.getAllVouchers());
-        return "voucher/voucher";
+        return "admin_page/voucher/voucher";
     }
 
     @GetMapping("/edit/{id}")
@@ -45,7 +45,7 @@ public class VoucherController {
         model.addAttribute("voucherDTO", voucherDTO);
         model.addAttribute("voucherId", id);
         model.addAttribute("voucherTypes", Voucher.VoucherType.values());
-        return "voucher/voucher_edit";
+        return "admin_page/voucher/voucher_edit";
     }
 
     @PostMapping("/add")

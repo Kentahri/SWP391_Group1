@@ -25,20 +25,20 @@ public class ProductController {
     @GetMapping
     public String list(Model model) {
         model.addAttribute("products", productService.getAllProducts());
-        return "product/product-list";
+        return "admin_page/product/product-list";
     }
 
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, Model model) {
         model.addAttribute("product", productService.getById(id).orElseThrow());
-        return "product/detail";
+        return "admin_page/product/detail";
     }
 
     @GetMapping("/create")
     public String createForm(Model model) {
         model.addAttribute("product", new ProductDTO());
         model.addAttribute("categories", categoryService.getAllCategories());
-        return "product/product-create";
+        return "admin_page/product/product-create";
     }
 
     @PostMapping("/create")
@@ -64,7 +64,7 @@ public class ProductController {
         model.addAttribute("productDTO", productDTO);
         model.addAttribute("productId", product.getId());
         model.addAttribute("categories", categoryService.getAllCategories());
-        return "product/product-edit";
+        return "admin_page/product/product-edit";
     }
 
     @PostMapping("/edit/{id}")

@@ -12,6 +12,7 @@ import java.time.LocalDate;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class StaffDTO {
+
     String name;
     LocalDate dateOfBirth;
     String phone;
