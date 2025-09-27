@@ -53,7 +53,7 @@
 </head>
 <body>
 <div class="container">
-    <a th:href="@{/templates/voucher}" class="back-link">&larr; Quay lại danh sách voucher</a>
+    <a th:href="@{/voucher}" class="back-link">&larr; Quay lại danh sách voucher</a>
     <div class="card">
         <h2>Cập nhật Voucher</h2>
         <form th:action="@{'/voucher/update/' + ${voucherId}}" method="post" th:object="${voucherDTO}">

@@ -22,13 +22,13 @@ public class CategoryController {
     @GetMapping
     public String listCategories(Model model) {
         model.addAttribute("categories", categoryService.getAllCategories());
-        return "category/category-list";
+        return "admin_page/category/category-list";
     }
 
     @GetMapping("/create")
     public String createForm(Model model) {
         model.addAttribute("category", new CategoryDTO());
-        return "category/category-create";
+        return "admin_page/category/category-create";
     }
 
     @PostMapping("/create")
@@ -47,7 +47,7 @@ public class CategoryController {
                 .build();
         model.addAttribute("categoryDTO", categoryDTO);
         model.addAttribute("catId", category.getId());
-        return "category/category-edit";
+        return "admin_page/category/category-edit";
     }
 
     @PostMapping("/edit/{id}")

@@ -27,7 +27,7 @@ public class StaffController {
         List<Staff> staffs = staffService.getAllStaff();
         model.addAttribute("staffs", staffs);
         model.addAttribute("roles", Staff.Role.values());
-        return "staff/list";
+        return "admin_page/staff/list";
     }
 
     // CREATE: show form
@@ -35,7 +35,7 @@ public class StaffController {
     public String showCreateForm(Model model) {
         model.addAttribute("staff", new StaffDTO());
         model.addAttribute("roles", Staff.Role.values());
-        return "staff/create";
+        return "admin_page/staff/create";
     }
 
     // CREATE: save staff
@@ -70,7 +70,7 @@ public class StaffController {
         model.addAttribute("staff", staffDTO);
         model.addAttribute("staffID", id);
         model.addAttribute("roles", Staff.Role.values());
-        return "staff/edit";
+        return "admin_page/staff/edit";
     }
 
     // UPDATE: save update

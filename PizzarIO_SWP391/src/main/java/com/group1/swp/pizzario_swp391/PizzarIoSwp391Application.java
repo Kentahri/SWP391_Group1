@@ -21,7 +21,7 @@ public class PizzarIoSwp391Application {
     @Bean
     CommandLineRunner initData(StaffService service) {
         return (String[] args) -> {
-            System.out.println("Runner chạy với: " + java.util.Arrays.toString(args));
+//            System.out.println("Runner chạy với: " + java.util.Arrays.toString(args));
 
             // 3 nhân viên mẫu
             Staff s1 = new Staff(
