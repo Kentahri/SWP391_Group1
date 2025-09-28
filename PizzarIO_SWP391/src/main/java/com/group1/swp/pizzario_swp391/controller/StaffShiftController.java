@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -49,17 +48,32 @@ public class StaffShiftController {
     }
 
     @GetMapping("/staff_shifts/create")
-    public String getFormStaffShift(Model model) {
+    public String getFormStaffShift(
+            @RequestParam(required = false) Integer editId,
+            Model model) {
         List<Staff> staffs = staffService.getAllStaff();
         List<Shift> shift = shiftService.getAllShift();
         model.addAttribute("shifts", shift);
         model.addAttribute("staffs", staffs);
-        model.addAttribute("staffShift", new StaffShift());
+
+        if (editId != null) {
+            // Chế độ edit - load dữ liệu cũ
+            StaffShift staffShift = staffShiftService.getById(editId);
+            model.addAttribute("staffShift", staffShift);
+            model.addAttribute("editId", editId);
+            model.addAttribute("isEdit", true);
+        } else {
+            // Chế độ tạo mới
+            model.addAttribute("staffShift", new StaffShift());
+            model.addAttribute("isEdit", false);
+        }
+
         return "admin_page/shift/create";
     }
 
     @PostMapping("/staff_shifts/create")
     public String createStaffShift(
+            @RequestParam(required = false) Integer editId,
             @RequestParam Integer staffId,
             @RequestParam Integer shiftId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate workDate,
@@ -72,7 +86,13 @@ public class StaffShiftController {
                 .orElseThrow(() -> new IllegalArgumentException("Staff not found"));
         Shift shift = shiftService.getShiftById(shiftId); // nhớ xử lý null nếu có
 
-        StaffShift ss = new StaffShift();
+        StaffShift ss;
+        if (editId != null) {
+            ss = staffShiftService.getById(editId);
+        } else {
+            ss = new StaffShift();
+        }
+
         ss.setStaff(staff);
         ss.setShift(shift);
         ss.setWorkDate(workDate.atStartOfDay()); // nếu field entity là LocalDateTime; hoặc đổi entity sang LocalDate
@@ -82,18 +102,26 @@ public class StaffShiftController {
         ss.setCheckIn(shift.getStartTime());
         ss.setCheckOut(shift.getEndTime());
 
-        staffShiftService.create(ss);
-        ra.addFlashAttribute("msg", "Tạo phân công thành công");
+        if (editId != null) {
+            staffShiftService.update(ss);
+            ra.addFlashAttribute("msg", "Cập nhật phân công thành công");
+        } else {
+            staffShiftService.create(ss);
+            ra.addFlashAttribute("msg", "Tạo phân công thành công");
+        }
+
         return "redirect:/admin/staff_shifts"; // giữ prefix /admin khi redirect
     }
 
     @PostMapping("/staff_shifts/delete/{id}")
-    public String deleteStaffShift(@PathVariable int id, RedirectAttributes ra){
+    public String deleteStaffShift(@PathVariable int id, RedirectAttributes ra) {
         staffShiftService.delete(id);
         ra.addFlashAttribute("msg", "Xóa phân công thành công");
         return "redirect:/admin/staff_shifts";
     }
 
-//    @GetMapping("/staff_shifts/update/{id}")
-//    public String updateStaffShift(@Model )
+    @GetMapping("/staff_shifts/edit/{id}")
+    public String updateStaffShift(@PathVariable int id, Model model) {
+        return "redirect:/admin/staff_shifts/create?editId=" + id;
+    }
 }

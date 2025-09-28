@@ -24,6 +24,15 @@ public class StaffShiftService {
         staffShiftRepository.save(staffShift);
     }
 
+    public StaffShift getById(int id) {
+        return staffShiftRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("StaffShift not found"));
+    }
+
+    public void update(StaffShift staffShift) {
+        staffShiftRepository.save(staffShift);
+    }
+
     public void delete(int id) {
 
         StaffShift staffShift = staffShiftRepository.findById(id)
