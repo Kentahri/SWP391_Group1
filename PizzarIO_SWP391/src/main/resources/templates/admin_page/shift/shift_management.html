@@ -1,276 +1,54 @@
-<!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Ca làm việc • Admin Dashboard</title>
-    <link rel="stylesheet" th:href="@{/css/styles.css}" />
-    <!-- CSS riêng cho modal form -->
-    <link rel="stylesheet" th:href="@{/css/shifts-form.css}" />
-  </head>
-  <body>
-    <div class="app">
-      <!-- SIDEBAR -->
-      <aside class="sidebar">
-        <div class="brand">
-          <div class="logo">🍕</div>
-          <div class="brand-text">
-            <strong>Admin</strong><span>Quản lý nhà hàng</span>
-          </div>
-        </div>
-        <nav class="nav">
-          <a class="nav-link" th:href="@{/admin/analytics}">
-            Số liệu phân tích</a
-          >
-          <a class="nav-link" th:href="@{/admin/products}"> Sản phẩm</a>
-          <a class="nav-link" th:href="@{/admin/categories}"> Danh mục</a>
-          <a class="nav-link" th:href="@{/admin/vouchers}"> Voucher</a>
-          <a class="nav-link" th:href="@{/admin/staff}"> Nhân viên</a>
-          <a class="nav-link active" th:href="@{/admin/shifts}"> Ca làm việc</a>
-          <a class="nav-link" th:href="@{/admin/complaints}"> Khiếu nại</a>
-          <a class="nav-link" th:href="@{/admin/inventory}"> Kho hàng</a>
-          <a class="nav-link" th:href="@{/admin/settings}"> Cài đặt</a>
-        </nav>
-      </aside>
+<!doctype html>
+<html lang="en"  xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <h1>Staff List</h1>
+    <div th:if="${msg}" class="error" th:text="${msg}"></div>
 
-      <!-- MAIN -->
-      <main class="main">
-        <!-- Title + primary CTA -->
-        <header class="page-header">
-          <div>
-            <h1>Quản lý ca làm việc</h1>
-            <p class="muted">Phân ca và theo dõi thời gian làm việc</p>
-          </div>
-          <!-- Mở modal tạo ca (no JS) -->
-          <label for="openShiftModal" class="btn-primary" id="btnCreateShift"
-            >＋ Thêm ca làm việc</label
-          >
-        </header>
+    <a th:href="@{/admin/staff_shifts/create}" class="primary-btn">➕ Add New Staff</a>
 
-        <!-- KPI (pastel) -->
-        <section class="kpi-ribbon">
-          <article class="kpi-card tone-blue">
-            <div class="kpi-meta">
-              <div class="kpi-label">Tổng ca làm việc</div>
-              <!-- TODO bind: tổng số ca -->
-              <div class="kpi-value" id="kpiTotalShifts">—</div>
-            </div>
-          </article>
-          <article class="kpi-card tone-green">
-            <div class="kpi-meta">
-              <div class="kpi-label">Tổng giờ làm</div>
-              <!-- TODO bind: tổng giờ -->
-              <div class="kpi-value" id="kpiTotalHours">—</div>
-            </div>
-          </article>
-          <article class="kpi-card tone-purple">
-            <div class="kpi-meta">
-              <div class="kpi-label">Tổng lương</div>
-              <!-- TODO bind: tổng lương -->
-              <div class="kpi-value" id="kpiTotalPayroll">—</div>
-            </div>
-          </article>
-          <article class="kpi-card tone-orange">
-            <div class="kpi-meta">
-              <div class="kpi-label">Ca hoàn thành</div>
-              <!-- TODO bind: completed/total -->
-              <div class="kpi-value" id="kpiCompletedRatio">—</div>
-            </div>
-          </article>
-        </section>
-
-        <!-- Toolbar: lịch + filter -->
-        <section class="card toolbar toolbar-soft">
-          <div class="toolbar-left">
-            <!-- TODO action: về tuần trước -->
-            <button class="btn-ghost" id="btnPrevWeek" type="button">
-              ◀ Tuần trước
-            </button>
-          </div>
-          <div class="toolbar-center">
-            <!-- TODO bind: dải ngày tuần -->
-            <div class="toolbar-title" id="weekRange">—/—/— – —/—/—</div>
-            <div class="muted small">Tuần hiện tại</div>
-          </div>
-          <div class="toolbar-right">
-            <!-- TODO: bộ lọc nhân viên -->
-            <button class="chip" id="filterStaff" type="button">
-              Tất cả nhân viên ▾
-            </button>
-            <!-- TODO: bộ lọc loại ca -->
-            <button class="chip" id="filterShiftType" type="button">
-              Tất cả ca ▾
-            </button>
-            <!-- TODO action: tuần sau -->
-            <button class="btn-ghost" id="btnNextWeek" type="button">
-              Tuần sau ▶
-            </button>
-          </div>
-        </section>
-
-        <!-- Lịch 7 cột -->
-        <section class="calendar card">
-          <!-- Day headers -->
-          <div class="calendar-days">
-            <!-- TODO bind: tên + ngày số -->
-            <div class="day-pill">CN <span id="d0" class="muted">—</span></div>
-            <div class="day-pill">T2 <span id="d1" class="muted">—</span></div>
-            <div class="day-pill">T3 <span id="d2" class="muted">—</span></div>
-            <div class="day-pill">T4 <span id="d3" class="muted">—</span></div>
-            <div class="day-pill">T5 <span id="d4" class="muted">—</span></div>
-            <div class="day-pill">T6 <span id="d5" class="muted">—</span></div>
-            <div class="day-pill">T7 <span id="d6" class="muted">—</span></div>
-          </div>
-
-          <!-- Grid columns -->
-          <div class="calendar-grid">
-            <!-- Mỗi cột là 1 ngày, backend loop ca và append .shift -->
-            <div class="day-col" id="col-0">
-              <!-- TODO: loop shifts day 0 -->
-            </div>
-            <div class="day-col" id="col-1">
-              <!-- TODO: loop shifts day 1 -->
-            </div>
-            <div class="day-col" id="col-2">
-              <!-- TODO: loop shifts day 2 -->
-            </div>
-            <div class="day-col" id="col-3">
-              <!-- TODO: loop shifts day 3 -->
-            </div>
-            <div class="day-col" id="col-4">
-              <!-- TODO: loop shifts day 4 -->
-            </div>
-            <div class="day-col" id="col-5">
-              <!-- TODO: loop shifts day 5 -->
-            </div>
-            <div class="day-col" id="col-6">
-              <!-- TODO: loop shifts day 6 -->
-            </div>
-          </div>
-
-          <!-- MẪU thẻ ca (không render): dùng để tham khảo cấu trúc khi backend render -->
-          <template id="shiftSample">
-            <article class="shift tone-morning">
-              <div class="shift-head">
-                <span class="shift-type">Sáng</span>
-                <span class="shift-actions">✏️ 🗑️</span>
-              </div>
-              <div class="shift-staff">Tên nhân viên</div>
-              <div class="shift-time">06:00 – 14:00</div>
-              <div class="shift-foot">
-                <span class="badge done">Hoàn thành</span>
-                <span class="pay">320.000đ</span>
-              </div>
-            </article>
-          </template>
-          <!-- TODO Backend: khi render server-side, tạo <article class="shift ..."> tương tự và chèn vào #col-0..6 -->
-        </section>
-
-        <!-- ===== Modal Thêm ca (no JS, toggle bằng checkbox) ===== -->
-        <input
-          type="checkbox"
-          id="openShiftModal"
-          class="modal-toggle"
-          hidden
-        />
-
-        <div class="modal" aria-hidden="true">
-          <label class="modal-backdrop" for="openShiftModal"></label>
-
-          <div
-            class="modal-card"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="shiftModalTitle"
-          >
-            <div class="modal-head">
-              <h3 id="shiftModalTitle">Thêm ca làm việc mới</h3>
-              <label for="openShiftModal" class="modal-close" aria-label="Đóng"
-                >✕</label
-              >
-            </div>
-
-            <!-- TODO backend: đổi th:action tới endpoint tạo ca -->
-            <form
-              class="simple-form"
-              th:action="@{/admin/shifts}"
-              method="post"
-            >
-              <!-- TODO: bật CSRF nếu dùng Spring Security -->
-              <!-- <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/> -->
-
-              <div class="form-row">
-                <div class="form-field">
-                  <label for="fDate">Ngày</label>
-                  <!-- TODO bind/validate: LocalDate yyyy-MM-dd -->
-                  <input id="fDate" name="date" type="date" required />
-                </div>
-
-                <div class="form-field">
-                  <label for="fType">Loại ca</label>
-                  <!-- TODO backend: loop option loại ca (SÁNG/CHIỀU/TỐI) -->
-                  <select id="fType" name="shiftType" required>
-                    <option value="" selected disabled>Chọn ca</option>
-                    <option value="MORNING">Sáng</option>
-                    <option value="AFTERNOON">Chiều</option>
-                    <option value="EVENING">Tối</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-field">
-                  <label for="fStart">Giờ bắt đầu</label>
-                  <!-- TODO bind: LocalTime HH:mm -->
-                  <input id="fStart" name="startTime" type="time" required />
-                </div>
-                <div class="form-field">
-                  <label for="fEnd">Giờ kết thúc</label>
-                  <!-- TODO validate: end > start -->
-                  <input id="fEnd" name="endTime" type="time" required />
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-field">
-                  <label for="fStaff">Nhân viên</label>
-                  <!-- TODO backend: th:each danh sách nhân viên -->
-                  <select id="fStaff" name="staffId" required>
-                    <option value="" selected disabled>Chọn nhân viên</option>
-                    <!-- <option th:each="s : ${staffList}" th:value="${s.id}" th:text="${s.fullName}"></option> -->
-                  </select>
-                </div>
-
-                <div class="form-field">
-                  <label for="fWage">Lương theo giờ (VND)</label>
-                  <!-- TODO default theo nhân viên/ca; backend kiểm tra số hợp lệ -->
-                  <input
-                    id="fWage"
-                    name="hourlyWage"
-                    type="number"
-                    min="0"
-                    step="1000"
-                    placeholder="35000"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div class="form-actions">
-                <button type="submit" class="btn-primary" id="btnSubmitShift">
-                  Thêm ca
-                </button>
-                <!-- Đóng modal không submit -->
-                <label for="openShiftModal" class="btn-ghost">Hủy</label>
-              </div>
-
-              <!-- TODO: hiển thị lỗi validate của server -->
-              <!-- <p class="form-error" th:if="${#fields.hasErrors('*')}" th:text="${#fields.errors('*')}"></p> -->
-            </form>
-          </div>
-        </div>
-        <!-- ===== /Modal ===== -->
-      </main>
-    </div>
-  </body>
+    <table>
+      <thead>
+      <tr>
+        <th>ID</th>
+        <th>Ngày</th>
+        <th>Ca</th>
+        <th>Giờ</th>
+        <th>Nhân viên</th>
+        <th>Trạng thái</th>
+        <th>Check-in</th>
+        <th>Check-out</th>
+        <th>Lương/giờ</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="r : ${rows}">
+        <td th:text="${r.id}"></td>
+        <td th:text="${r.workDate}"></td>
+        <td th:text="${r.shift.shiftName}"></td>
+        <td th:text="${#temporals.format(r.shift.startTime,'HH:mm')} + ' - ' + ${#temporals.format(r.shift.endTime,'HH:mm')}"></td>
+        <td th:text="${r.staff.name}"></td> <td> <span th:text="${r.status}"></span>
+      </td> <td th:text="${r.checkIn != null ? #temporals.format(r.checkIn,'HH:mm dd/MM') : '—'}"></td>
+        <td th:text="${r.checkOut != null ? #temporals.format(r.checkOut,'HH:mm dd/MM') : '—'}"></td>
+        <td class="money" th:text="${#numbers.formatInteger(r.hourlyWage,0) + ' ₫'}"></td>
+        <td class="actions">
+          <a th:href="@{'/admin/staff_shifts/edit/' + ${r.id}}" class="primary-btn" style="padding:6px 10px;">Edit</a>
+          <form th:action="@{'/admin/staff_shifts/delete/' + ${r.id}}" method="post">
+            <button type="submit" class="delete-btn">Delete</button>
+          </form>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</body>
 </html>

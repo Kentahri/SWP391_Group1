@@ -8,5 +8,6 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring")
 public interface ShiftMapper {
     Shift toShift(ShiftDTO shiftDTO);
+
     void updateShift(@MappingTarget Shift shift, ShiftDTO shiftDTO);
 }

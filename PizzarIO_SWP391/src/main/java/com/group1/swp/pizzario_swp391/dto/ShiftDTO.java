@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ShiftDTO {
 
+    private Integer id;
     private String shiftName;
     private LocalDateTime startTime;
     private LocalDateTime endTime;

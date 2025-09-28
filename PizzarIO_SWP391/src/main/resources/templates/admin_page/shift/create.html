@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Create StaffShift</title>
+</head>
+<body>
+<h1>CREATE SHIFT_STAFF</h1>
+
+<div class="container">
+    <div class="card">
+        <h1>Create Staff</h1>
+
+        <div th:if="${error}" class="error" th:text="${error}"></div>
+
+
+        <form th:action="@{/admin/staff_shifts/create}" th:object="${staffShift}" method="post">
+
+        <!-- Ngày làm -->
+            <div class="form-row">
+                <label>Ngày làm</label>
+                <input type="date" th:field="*{workDate}" required/>
+            </div>
+
+            <div class="form-row">
+                <label>Loại ca</label>
+                <select name="shiftId" required>
+                    <option value="" disabled selected>-- Chọn ca --</option>
+                    <option th:each="sh : ${shifts}"
+                            th:value="${sh.id}"
+                            th:text="${sh.shiftName} + ' (' + ${#temporals.format(sh.startTime,'HH:mm')} + '-' + ${#temporals.format(sh.endTime,'HH:mm')} + ')'">
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label>Nhân viên</label>
+                <select name="staffId" required>
+                    <option value="" disabled selected>-- Chọn nhân viên --</option>
+                    <option th:each="st : ${staffs}" th:value="${st.id}" th:text="${st.name}"></option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label>Lương/giờ</label>
+                <input type="number" min="0" step="1000" th:field="*{hourlyWage}" />
+            </div>
+
+            <div class="form-row">
+                <label>Trạng thái</label>
+                <select name="status" required>
+                    <option th:each="st : ${T(com.group1.swp.pizzario_swp391.entity.StaffShift.Status).values()}"
+                            th:value="${st}"
+                            th:text="${st}">                <!-- hoặc hiển thị tiếng Việt tùy ý -->
+                    </option>
+                </select>
+            </div>
+
+
+            <button type="submit">Save</button>
+        </form>
+
+        <a class="back-link" th:href="@{/admin/staff_shifts}">⬅ Back to List</a>
+    </div>
+</div>
+</body>
+</html>

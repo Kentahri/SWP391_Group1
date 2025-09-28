@@ -6,9 +6,7 @@ import com.group1.swp.pizzario_swp391.service.StaffService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
 
-import java.time.LocalDate;
 
 @SpringBootApplication
 public class PizzarIoSwp391Application {
@@ -17,14 +15,14 @@ public class PizzarIoSwp391Application {
         SpringApplication.run(PizzarIoSwp391Application.class, args);
     }
 
-    @Bean
+    //@Bean
     CommandLineRunner initData(StaffService service) {
         return (String[] args) -> {
 //            System.out.println("Runner chạy với: " + java.util.Arrays.toString(args));
 
             // 3 nhân viên mẫu
             Staff s1 = new Staff(
-                    "Nguyễn Văn A",
+                    "Nguyen Van A",
                     java.time.LocalDate.of(1995, 5, 10),
                     "0901234567",
                     "Hà Nội",
@@ -36,7 +34,7 @@ public class PizzarIoSwp391Application {
             );
 
             Staff s2 = new Staff(
-                    "Trần Thị B",
+                    "Tran Thi B",
                     java.time.LocalDate.of(1992, 8, 20),
                     "0907654321",
                     "TP.HCM",
@@ -48,7 +46,7 @@ public class PizzarIoSwp391Application {
             );
 
             Staff s3 = new Staff(
-                    "Lê Hữu C",
+                    "Le Huu C",
                     java.time.LocalDate.of(1998, 1, 15),
                     "0912345678",
                     "Đà Nẵng",
