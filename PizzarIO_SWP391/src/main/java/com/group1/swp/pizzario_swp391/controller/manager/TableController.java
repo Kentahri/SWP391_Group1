@@ -1,12 +1,12 @@
-package com.group1.swp.pizzario_swp391.controller;
+package com.group1.swp.pizzario_swp391.controller.manager;
 
+import com.group1.swp.pizzario_swp391.dto.table.TableDTO;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import com.group1.swp.pizzario_swp391.dto.TableDTO;
 import com.group1.swp.pizzario_swp391.entity.DiningTable;
 import com.group1.swp.pizzario_swp391.service.TableService;
 
@@ -31,18 +31,18 @@ public class TableController {
     @PostMapping("/add")
     public String createNewTable(@ModelAttribute TableDTO tableDTO) {
         tableService.createNewTable(tableDTO);
-        return "redirect:admin_page/table_management";
+        return "redirect:/table";
     }
 
     @PostMapping("/delete/{id}")
     public String deleteTable(@PathVariable int id) {
         tableService.deleteTable(id);
-        return "redirect:admin_page/table_management";
+        return "redirect:/table";
     }
 
     @PostMapping("/update/{id}")
     public String updateTable(@PathVariable int id, @ModelAttribute TableDTO tableDTO) {
         tableService.updateTable(id, tableDTO);
-        return "redirect:admin_page/table_management";
+        return "redirect:/table";
     }
 }

@@ -1,6 +1,6 @@
 package com.group1.swp.pizzario_swp391.service;
 
-import com.group1.swp.pizzario_swp391.dto.TableDTO;
+import com.group1.swp.pizzario_swp391.dto.table.TableDTO;
 import com.group1.swp.pizzario_swp391.entity.DiningTable;
 import com.group1.swp.pizzario_swp391.mapper.TableMapper;
 import com.group1.swp.pizzario_swp391.repository.TableRepository;
@@ -54,8 +54,5 @@ public class TableService {
         table.setUpdatedAt(LocalDateTime.now());
         tableRepository.save(table);
     }
-
-
-
 
 }
