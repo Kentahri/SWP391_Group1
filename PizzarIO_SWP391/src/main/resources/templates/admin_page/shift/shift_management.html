@@ -1,11 +1,62 @@
 <!doctype html>
-<html lang="en"  xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+  <title>Staff List</title>
+  <style>
+    body {
+      background: #fff;
+      color: #000;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: #fff;
+    }
+    th, td {
+      border: 1px solid #000;
+      padding: 8px 10px;
+      text-align: left;
+    }
+    th {
+      background: #f2f2f2;
+    }
+    .primary-btn, .delete-btn {
+      display: inline-block;
+      padding: 6px 12px;
+      border: 1px solid #000;
+      background: #fff;
+      color: #000;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .primary-btn:hover,
+    .delete-btn:hover {
+      background: #000;
+      color: #fff;
+    }
+    .error {
+      color: red;
+      margin-bottom: 10px;
+    }
+    .actions {
+      display: flex;
+      gap: 5px;
+    }
+  </style>
 </head>
 <body>
 <div class="container">
@@ -27,6 +78,7 @@
         <th>Check-in</th>
         <th>Check-out</th>
         <th>Lương/giờ</th>
+        <th>Hành động</th>
       </tr>
       </thead>
       <tbody>
@@ -34,13 +86,14 @@
         <td th:text="${r.id}"></td>
         <td th:text="${r.workDate}"></td>
         <td th:text="${r.shift.shiftName}"></td>
-        <td th:text="${#temporals.format(r.shift.startTime,'HH:mm')} + ' - ' + ${#temporals.format(r.shift.endTime,'HH:mm')}"></td>
-        <td th:text="${r.staff.name}"></td> <td> <span th:text="${r.status}"></span>
-      </td> <td th:text="${r.checkIn != null ? #temporals.format(r.checkIn,'HH:mm dd/MM') : '—'}"></td>
+        <td th:text="${#temporals.format(r.shift.startTime,'HH:mm') + ' - ' + #temporals.format(r.shift.endTime,'HH:mm')}"></td>
+        <td th:text="${r.staff.name}"></td>
+        <td><span th:text="${r.status}"></span></td>
+        <td th:text="${r.checkIn != null ? #temporals.format(r.checkIn,'HH:mm dd/MM') : '—'}"></td>
         <td th:text="${r.checkOut != null ? #temporals.format(r.checkOut,'HH:mm dd/MM') : '—'}"></td>
         <td class="money" th:text="${#numbers.formatInteger(r.hourlyWage,0) + ' ₫'}"></td>
         <td class="actions">
-          <a th:href="@{'/admin/staff_shifts/edit/' + ${r.id}}" class="primary-btn" style="padding:6px 10px;">Edit</a>
+          <a th:href="@{'/admin/staff_shifts/edit/' + ${r.id}}" class="primary-btn">Edit</a>
           <form th:action="@{'/admin/staff_shifts/delete/' + ${r.id}}" method="post">
             <button type="submit" class="delete-btn">Delete</button>
           </form>

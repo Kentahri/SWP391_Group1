@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -84,7 +85,7 @@ public class StaffShiftController {
             RedirectAttributes ra) {
         Staff staff = staffService.getStaffById(staffId)
                 .orElseThrow(() -> new IllegalArgumentException("Staff not found"));
-        Shift shift = shiftService.getShiftById(shiftId); // nhớ xử lý null nếu có
+        Shift shift = shiftService.getShiftById(shiftId);
 
         StaffShift ss;
         if (editId != null) {
@@ -121,7 +122,50 @@ public class StaffShiftController {
     }
 
     @GetMapping("/staff_shifts/edit/{id}")
-    public String updateStaffShift(@PathVariable int id, Model model) {
-        return "redirect:/admin/staff_shifts/create?editId=" + id;
+    public String showEditForm(@PathVariable int id, Model model) {
+        StaffShift staffShift = staffShiftService.getById(id);
+        model.addAttribute("staffs", staffService.getAllStaff());
+        model.addAttribute("shifts", shiftService.getAllShift());
+        model.addAttribute("staffShift", staffShift);
+        return "admin_page/shift/edit";
     }
+
+    @PostMapping("/staff_shifts/edit/{id}")
+    public String updateStaffShift(
+            @PathVariable int id,
+            @RequestParam Integer staffId,
+            @RequestParam Integer shiftId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate workDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime endTime,
+            @RequestParam(required = false) Integer hourlyWage,
+            @RequestParam(defaultValue = "ASSIGNED") StaffShift.Status status,
+            RedirectAttributes ra) {
+
+        StaffShift ss = staffShiftService.getById(id);
+        Staff staff = staffService.getStaffById(staffId)
+                .orElseThrow(() -> new IllegalArgumentException("Staff not found"));
+        Shift shift = shiftService.getShiftById(shiftId);
+        if (shift == null) {
+            throw new IllegalArgumentException("Shift not found");
+        }
+
+        // Ghép ngày làm với giờ ca (tránh lệch ngày nếu startTime/endTime của Shift đang là LocalDateTime)
+        LocalDateTime checkIn  = LocalDateTime.of(workDate, shift.getStartTime().toLocalTime());
+        LocalDateTime checkOut = LocalDateTime.of(workDate, shift.getEndTime().toLocalTime());
+
+        ss.setStaff(staff);
+        ss.setShift(shift);
+        ss.setWorkDate(workDate.atStartOfDay());
+        ss.setCheckIn(checkIn);
+        ss.setCheckOut(checkOut);
+        ss.setHourlyWage(hourlyWage != null ? hourlyWage : ss.getHourlyWage());
+        ss.setStatus(status);
+
+        staffShiftService.update(ss);
+        ra.addFlashAttribute("msg", "Cập nhật phân công thành công");
+        return "redirect:/admin/staff_shifts";
+    }
+
+
 }

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Edit StaffShift</title></head>
+<body>
+<h1>Edit Staff Shift</h1>
+
+<div class="container">
+  <div class="card">
+    <div th:if="${error}" class="error" th:text="${error}"></div>
+
+    <form th:action="@{/admin/staff_shifts/edit/{id}(id=${staffShift.id})}" method="post">
+      <!-- Nếu bật CSRF, bỏ comment dòng dưới -->
+      <!-- <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/> -->
+
+      <!-- Ngày làm -->
+      <div class="form-row">
+        <label>Ngày làm</label>
+        <input type="date" name="workDate"
+               th:value="${staffShift.workDate != null ? #temporals.format(staffShift.workDate,'yyyy-MM-dd') : ''}"
+               required>
+      </div>
+
+      <!-- Ca -->
+      <div class="form-row">
+        <label>Loại ca</label>
+        <select name="shiftId" required>
+          <option th:each="sh : ${shifts}"
+                  th:value="${sh.id}"
+                  th:selected="${staffShift.shift != null and staffShift.shift.id == sh.id}"
+                  th:text="${sh.shiftName + ' (' + #temporals.format(sh.startTime,'HH:mm') + '-' + #temporals.format(sh.endTime,'HH:mm') + ')'}">
+          </option>
+        </select>
+      </div>
+
+      <!-- Nhân viên -->
+      <div class="form-row">
+        <label>Nhân viên</label>
+        <select name="staffId" required>
+          <option th:each="st : ${staffs}"
+                  th:value="${st.id}"
+                  th:selected="${staffShift.staff != null and staffShift.staff.id == st.id}"
+                  th:text="${st.name}">
+          </option>
+        </select>
+      </div>
+
+      <!-- Lương/giờ -->
+      <div class="form-row">
+        <label>Lương/giờ</label>
+        <input type="number" name="hourlyWage" min="0" step="1000"
+               th:value="${staffShift.hourlyWage}">
+      </div>
+
+      <!-- Trạng thái -->
+      <div class="form-row">
+        <label>Trạng thái</label>
+        <select name="status" required>
+          <option th:each="st : ${T(com.group1.swp.pizzario_swp391.entity.StaffShift.Status).values()}"
+                  th:value="${st}"
+                  th:selected="${staffShift.status != null and staffShift.status.name() == st.name()}"
+                  th:text="${st}">
+          </option>
+        </select>
+      </div>
+
+      <button type="submit">Update</button>
+      <a class="back-link" th:href="@{/admin/staff_shifts}">⬅ Back to List</a>
+    </form>
+  </div>
+</div>
+</body>
+</html>
