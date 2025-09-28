@@ -84,14 +84,14 @@
       <tbody>
       <tr th:each="r : ${rows}">
         <td th:text="${r.id}"></td>
-        <td th:text="${r.workDate}"></td>
+        <td th:text="${#temporals.format(r.workDate, 'dd-MM-yyyy')}"></td>
         <td th:text="${r.shift.shiftName}"></td>
         <td th:text="${#temporals.format(r.shift.startTime,'HH:mm') + ' - ' + #temporals.format(r.shift.endTime,'HH:mm')}"></td>
         <td th:text="${r.staff.name}"></td>
         <td><span th:text="${r.status}"></span></td>
-        <td th:text="${r.checkIn != null ? #temporals.format(r.checkIn,'HH:mm dd/MM') : '—'}"></td>
-        <td th:text="${r.checkOut != null ? #temporals.format(r.checkOut,'HH:mm dd/MM') : '—'}"></td>
-        <td class="money" th:text="${#numbers.formatInteger(r.hourlyWage,0) + ' ₫'}"></td>
+        <td th:text="${#temporals.format(r.checkIn,'HH:mm')}"></td>
+        <td th:text="${#temporals.format(r.checkOut, 'HH:mm')}"></td>
+        <td class="money" th:text="${r.hourlyWage} + 'đ'"></td>
         <td class="actions">
           <a th:href="@{'/admin/staff_shifts/edit/' + ${r.id}}" class="primary-btn">Edit</a>
           <form th:action="@{'/admin/staff_shifts/delete/' + ${r.id}}" method="post">

@@ -16,23 +16,23 @@ public class ShiftController {
 
     private final ShiftService service;
 
-    // Trang duy nhất: hiện danh sách + form (thêm/sửa)
+
     @GetMapping
     public String list(Model model,
-            @RequestParam(value = "editId", required = false) Integer editId) {
+            @RequestParam(required = false) Integer editId) {
 
         model.addAttribute("shifts", service.getAllShift());
 
-        // Nếu có editId thì nạp form = shift cần sửa, ngược lại form trống
+
         if (editId != null) {
             Shift shift = service.getShiftById(editId);
-            // Convert Shift entity to ShiftDTO for form
+
             ShiftDTO form = ShiftDTO.builder()
                     .shiftName(shift.getShiftName())
                     .startTime(shift.getStartTime())
                     .endTime(shift.getEndTime())
                     .build();
-            form.setId(shift.getId()); // Set ID for update
+            form.setId(shift.getId());
             model.addAttribute("form", form);
         } else {
             model.addAttribute("form", new ShiftDTO());
@@ -41,7 +41,7 @@ public class ShiftController {
         return "admin_page/shift/shift-list";
     }
 
-    // Lưu (thêm hoặc cập nhật) — dùng chung 1 endpoint POST
+
     @PostMapping
     public String save(@ModelAttribute("form") ShiftDTO form, RedirectAttributes redirectAttributes) {
         try {
@@ -63,7 +63,7 @@ public class ShiftController {
                 return "redirect:/shift";
             }
 
-            // Nếu form.id == null => thêm mới; có id => cập nhật
+
             if (form.getId() == null || form.getId() == 0) {
                 service.createShift(form);
                 redirectAttributes.addFlashAttribute("successMessage", "Ca làm việc đã được thêm thành công!");

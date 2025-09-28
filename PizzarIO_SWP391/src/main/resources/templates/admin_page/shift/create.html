@@ -9,13 +9,13 @@
         <div th:if="${error}" class="error" th:text="${error}"></div>
 
         <form th:action="@{/admin/staff_shifts/create}" method="post">
-            <!-- Ngày làm -->
+
             <div class="form-row">
                 <label>Ngày làm</label>
                 <input type="date" name="workDate" required>
             </div>
 
-            <!-- Ca -->
+
             <div class="form-row">
                 <label>Loại ca</label>
                 <select name="shiftId" required>
@@ -25,7 +25,7 @@
                 </select>
             </div>
 
-            <!-- Nhân viên -->
+
             <div class="form-row">
                 <label>Nhân viên</label>
                 <select name="staffId" required>

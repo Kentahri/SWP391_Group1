@@ -39,11 +39,7 @@ public class StaffShiftController {
             @RequestParam(required = false) Integer staffId,
             Model model) {
         List<StaffShift> rows = staffShiftService.search(from, to, shiftId, staffId);
-        List<Staff> staffs = staffService.getAllStaff();
-        List<Shift> shift = shiftService.getAllShift();
-        model.addAttribute("shifts", shift);
         model.addAttribute("rows", rows);
-        model.addAttribute("staffs", staffs);
 
         return "admin_page/shift/shift_management";
     }
@@ -78,10 +74,8 @@ public class StaffShiftController {
             @RequestParam Integer staffId,
             @RequestParam Integer shiftId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate workDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime endTime,
             @RequestParam(required = false) Integer hourlyWage,
-            @RequestParam(defaultValue = "ASSIGNED") StaffShift.Status status,
+            @RequestParam(required = false) StaffShift.Status status,
             RedirectAttributes ra) {
         Staff staff = staffService.getStaffById(staffId)
                 .orElseThrow(() -> new IllegalArgumentException("Staff not found"));
@@ -89,8 +83,10 @@ public class StaffShiftController {
 
         StaffShift ss;
         if (editId != null) {
+            System.out.println("edit");
             ss = staffShiftService.getById(editId);
         } else {
+            System.out.println("create");
             ss = new StaffShift();
         }
 
@@ -107,11 +103,12 @@ public class StaffShiftController {
             staffShiftService.update(ss);
             ra.addFlashAttribute("msg", "Cập nhật phân công thành công");
         } else {
+            System.out.println(editId);
             staffShiftService.create(ss);
             ra.addFlashAttribute("msg", "Tạo phân công thành công");
         }
 
-        return "redirect:/admin/staff_shifts"; // giữ prefix /admin khi redirect
+        return "redirect:/admin/staff_shifts";
     }
 
     @PostMapping("/staff_shifts/delete/{id}")

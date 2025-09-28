@@ -9,10 +9,7 @@
     <div th:if="${error}" class="error" th:text="${error}"></div>
 
     <form th:action="@{/admin/staff_shifts/edit/{id}(id=${staffShift.id})}" method="post">
-      <!-- Nếu bật CSRF, bỏ comment dòng dưới -->
-      <!-- <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/> -->
 
-      <!-- Ngày làm -->
       <div class="form-row">
         <label>Ngày làm</label>
         <input type="date" name="workDate"
@@ -20,7 +17,6 @@
                required>
       </div>
 
-      <!-- Ca -->
       <div class="form-row">
         <label>Loại ca</label>
         <select name="shiftId" required>
@@ -32,7 +28,6 @@
         </select>
       </div>
 
-      <!-- Nhân viên -->
       <div class="form-row">
         <label>Nhân viên</label>
         <select name="staffId" required>
@@ -44,14 +39,14 @@
         </select>
       </div>
 
-      <!-- Lương/giờ -->
+
       <div class="form-row">
         <label>Lương/giờ</label>
         <input type="number" name="hourlyWage" min="0" step="1000"
                th:value="${staffShift.hourlyWage}">
       </div>
 
-      <!-- Trạng thái -->
+
       <div class="form-row">
         <label>Trạng thái</label>
         <select name="status" required>
