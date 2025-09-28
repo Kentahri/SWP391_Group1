@@ -17,8 +17,7 @@ public class Session {
     @JoinColumn(name = "table_id")
     private DiningTable table;
 
-    @OneToOne
-    @JoinColumn(name = "order_id")
+    @OneToOne(mappedBy = "session")
     private Order order;
 
     @Id

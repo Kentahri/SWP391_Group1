@@ -47,13 +47,12 @@ public class Staff {
         otpMails = new ArrayList<>();
     }
 
-    public Staff(String name, LocalDate dateOfBirth, String phone, String address, String username, String password, String email, Role role, boolean isActive) {
+    public Staff(String name, LocalDate dateOfBirth, String phone, String address, String password, String email, Role role, boolean isActive) {
         this();
         this.name = name;
         this.dateOfBirth = dateOfBirth;
         this.phone = phone;
         this.address = address;
-        this.username = username;
         this.password = password;
         this.email = email;
         this.role = role;
@@ -71,7 +70,6 @@ public class Staff {
 
     private String phone;
     private String address;
-    private String username;
     private String password;
     private String email;
     @Enumerated(EnumType.STRING)
