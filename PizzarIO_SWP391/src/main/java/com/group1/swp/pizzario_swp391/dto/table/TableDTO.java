@@ -1,4 +1,4 @@
-package com.group1.swp.pizzario_swp391.dto;
+package com.group1.swp.pizzario_swp391.dto.table;
 
 import com.group1.swp.pizzario_swp391.entity.DiningTable;
 import lombok.*;
