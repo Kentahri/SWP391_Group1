@@ -19,6 +19,7 @@
         <tr>
             <th>ID</th>
             <th>Tên</th>
+            <th>Mô tả</th>
             <th>Ảnh</th>
             <th>Giá gốc</th>
             <th>Giá Flash</th>
@@ -34,6 +35,7 @@
             <td>
                 <img th:if="${p.imageURL}" th:src="${p.imageURL}" class="img-thumb" alt="img">
             </td>
+            <td th:text="${p.description}"></td>
             <td th:text="${#numbers.formatDecimal(p.basePrice, 0, 'COMMA', 0, 'POINT')}"></td>
             <td th:text="${#numbers.formatDecimal(p.flashSalePrice, 0, 'COMMA', 0, 'POINT')}"></td>
             <td th:text="${p.category.name}"></td>
