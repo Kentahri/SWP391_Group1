@@ -1,4 +1,4 @@
-package com.group1.swp.pizzario_swp391.dto;
+package com.group1.swp.pizzario_swp391.dto.staff;
 
 import com.group1.swp.pizzario_swp391.entity.Staff;
 import lombok.*;
@@ -17,10 +17,8 @@ public class StaffDTO {
     LocalDate dateOfBirth;
     String phone;
     String address;
-    String username;
     String password;
     String email;
     Staff.Role role;
     boolean active;
-
 }
