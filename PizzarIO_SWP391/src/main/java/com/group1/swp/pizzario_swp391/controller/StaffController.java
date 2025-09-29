@@ -57,12 +57,11 @@ public class StaffController {
     public String edit(Model model, @PathVariable int id) {
         Staff staff = staffService.getStaffById(id).orElseThrow(() -> new RuntimeException("Staff id " + id + " not found"));
         StaffDTO staffDTO = StaffDTO.builder()
-                .name(staff.getName()).
-                dateOfBirth(staff.getDateOfBirth())
+                .name(staff.getName())
+                .dateOfBirth(staff.getDateOfBirth())
                 .phone(staff.getPhone())
                 .address(staff.getAddress())
                 .username(staff.getUsername())
-                .password(staff.getPassword())
                 .email(staff.getEmail())
                 .role(staff.getRole())
                 .active(staff.isActive())
