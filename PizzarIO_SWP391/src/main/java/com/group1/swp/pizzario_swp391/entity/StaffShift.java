@@ -3,6 +3,7 @@ package com.group1.swp.pizzario_swp391.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
@@ -37,17 +38,21 @@ public class StaffShift {
     @Enumerated(EnumType.STRING)
     private Status status;
 
-
     private LocalDateTime checkIn;
     private LocalDateTime checkOut;
 
-    public void setShift(Object o) {
+    public void setShift(Shift o) {
+        this.shift = o;
     }
 
     public void setStaff(Staff staff) {
+        this.staff = staff;
     }
 
-    public enum Status{
+    public enum Status {
         SCHEDULED, PRESENT, LATE, ABSENT, LEFT
     }
+
+    private int hourlyWage;
+
 }
