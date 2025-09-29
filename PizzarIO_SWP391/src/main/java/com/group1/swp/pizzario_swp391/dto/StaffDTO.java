@@ -13,6 +13,7 @@ import java.time.LocalDate;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class StaffDTO {
+
     String name;
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     LocalDate dateOfBirth;

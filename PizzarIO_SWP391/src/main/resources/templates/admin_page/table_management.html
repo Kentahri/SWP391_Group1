@@ -232,21 +232,18 @@
                     tiles.forEach(t => t.classList.remove('selected'));
                     this.classList.add('selected');
 
-                    const ds = this.dataset; // {type, createdAt, updatedAt, condition}
+                    const ds = this.dataset;
                     document.getElementById('detailType').textContent       = ds.type || '';
                     document.getElementById('detailCreatedAt').textContent  = ds.createdAt || '';
                     document.getElementById('detailUpdatedAt').textContent  = ds.updatedAt || '';
                     document.getElementById('detailCondition').textContent  = ds.condition || '';
                     document.getElementById('tableName').textContent   = 'Bàn ' + (ds.id || '');
                     
-                    // Set current table ID for update
                     currentTableId = ds.id;
                     
-                    // Set form actions
                     deleteForm.action = deleteBase + ds.id;
                     updateForm.action = updateBase + ds.id;
                     
-                    // Pre-fill update form with current values
                     document.getElementById('updateTableType').value = ds.type || '';
                     document.getElementById('updateTableCondition').value = ds.condition || '';
                     
@@ -290,7 +287,7 @@
 	                <div>Condition: <span id="detailCondition"></span></div>
 	                
 	                
-	                <div style="margin-top:auto; display:flex; justify-content:space-between" id="tableActions">
+	                <div style="margin-top:auto; display:flex; justify-content:space-between" id="tableActions" th:if="${!tables.isEmpty()}">
 		                <form id="deleteForm" method="post">
 			                <button class="primary-btn" style="background:#ef4444">Delete</button>
 		                </form>

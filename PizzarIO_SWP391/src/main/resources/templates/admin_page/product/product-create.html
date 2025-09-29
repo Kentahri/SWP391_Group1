@@ -9,7 +9,7 @@
 <body>
 <div class="container mt-5">
     <h2>Thêm Sản phẩm mới</h2>
-    <form th:action="@{/products/create}" method="post" th:object="${product}">
+    <form th:action="@{/product/create}" method="post" th:object="${product}">
         <div class="mb-3">
             <label class="form-label">Tên</label>
             <input type="text" th:field="*{name}" class="form-control" required>
@@ -60,11 +60,14 @@
         </div>
 
         <button type="submit" class="btn btn-success">Lưu</button>
-        <a th:href="@{/products}" class="btn btn-secondary">Hủy</a>
+        <a th:href="@{/product}" class="btn btn-secondary">Hủy</a>
     </form>
 
 </div>
 </body>
 </html>
+
+
+
 
 

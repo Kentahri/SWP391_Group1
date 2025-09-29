@@ -1,66 +1,81 @@
 package com.group1.swp.pizzario_swp391.controller;
 
-import com.group1.swp.pizzario_swp391.dto.CreateProductRequest;
-import com.group1.swp.pizzario_swp391.dto.ProductResponse;
-import com.group1.swp.pizzario_swp391.dto.UpdateProductRequest;
+import com.group1.swp.pizzario_swp391.dto.ProductDTO;
+import com.group1.swp.pizzario_swp391.entity.Product;
 import com.group1.swp.pizzario_swp391.service.CategoryService;
 import com.group1.swp.pizzario_swp391.service.ProductService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 @Controller
-@RequestMapping("/products")
+@RequestMapping("/product")
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor
 public class ProductController {
 
-    @Autowired
-    private ProductService productService;
+    ProductService productService;
 
-    @Autowired
-    private CategoryService categoryService;
+    CategoryService categoryService;
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("products", productService.getAll());
-        return "product/product-list";
+        model.addAttribute("products", productService.getAllProducts());
+        return "admin_page/product/product-list";
     }
 
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, Model model) {
-        model.addAttribute("product", productService.getById(id));
-        return "product/detail";
+        model.addAttribute("product", productService.getById(id).orElseThrow());
+        return "admin_page/product/detail";
     }
 
     @GetMapping("/create")
     public String createForm(Model model) {
-        model.addAttribute("product", new CreateProductRequest());
+        model.addAttribute("product", new ProductDTO());
         model.addAttribute("categories", categoryService.getAllCategories());
-        return "product/product-create";
+        return "admin_page/product/product-create";
     }
 
     @PostMapping("/create")
-    public String create(@ModelAttribute CreateProductRequest request) {
-        ProductResponse created = productService.create(request);
-        return "redirect:/products";
+    public String create(@Valid @ModelAttribute ProductDTO productDTO) {
+        productService.createProduct(productDTO);
+        return "redirect:/product";
     }
 
     @GetMapping("/edit/{id}")
     public String editForm(@PathVariable Long id, Model model) {
-        model.addAttribute("product", productService.getById(id));
+        Product product = productService.getById(id).orElseThrow(() -> new RuntimeException("Product not found"));;
+        ProductDTO productDTO = ProductDTO.builder()
+                .name(product.getName())
+                .description(product.getDescription())
+                .basePrice(product.getBasePrice())
+                .flashSalePrice(product.getFlashSalePrice())
+                .flashSaleStart(product.getFlashSaleStart())
+                .flashSaleEnd(product.getFlashSaleEnd())
+                .categoryId(product.getCategory().getId())
+                .isActive(product.isActive())
+                .imageURL(product.getImageURL())
+                .build();
+        model.addAttribute("productDTO", productDTO);
+        model.addAttribute("productId", product.getId());
         model.addAttribute("categories", categoryService.getAllCategories());
-        return "product/product-edit";
+        return "admin_page/product/product-edit";
     }
 
     @PostMapping("/edit/{id}")
-    public String update(@PathVariable Long id, @ModelAttribute UpdateProductRequest request) {
-        ProductResponse updated = productService.update(id, request);
-        return "redirect:/products";
+    public String update(@PathVariable Long id, @Valid @ModelAttribute ProductDTO productDTO) {
+        productService.updateProduct(id, productDTO);
+        return "redirect:/product";
     }
 
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable Long id) {
-        productService.delete(id);
-        return "redirect:/products";
+        productService.deleteProduct(id);
+        return "redirect:/product";
     }
 }
