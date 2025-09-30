@@ -48,7 +48,7 @@ public class StaffShiftController {
     public String getFormStaffShift(
             @RequestParam(required = false) Integer editId,
             Model model) {
-        List<Staff> staffs = staffService.getAllStaff();
+        List<Staff> staffs = staffService.getAll();
         List<Shift> shift = shiftService.getAllShift();
         model.addAttribute("shifts", shift);
         model.addAttribute("staffs", staffs);
@@ -77,8 +77,7 @@ public class StaffShiftController {
             @RequestParam(required = false) Integer hourlyWage,
             @RequestParam(required = false) StaffShift.Status status,
             RedirectAttributes ra) {
-        Staff staff = staffService.getStaffById(staffId)
-                .orElseThrow(() -> new IllegalArgumentException("Staff not found"));
+        Staff staff = staffService.getById(staffId);
         Shift shift = shiftService.getShiftById(shiftId);
 
         StaffShift ss;
@@ -140,8 +139,7 @@ public class StaffShiftController {
             RedirectAttributes ra) {
 
         StaffShift ss = staffShiftService.getById(id);
-        Staff staff = staffService.getStaffById(staffId)
-                .orElseThrow(() -> new IllegalArgumentException("Staff not found"));
+        Staff staff = staffService.getById(staffId);
         Shift shift = shiftService.getShiftById(shiftId);
         if (shift == null) {
             throw new IllegalArgumentException("Shift not found");
