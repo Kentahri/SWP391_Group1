@@ -1,50 +1,73 @@
 package com.group1.swp.pizzario_swp391.service;
 
-import com.group1.swp.pizzario_swp391.dto.CategoryDTO;
-import com.group1.swp.pizzario_swp391.entity.Category;
-import com.group1.swp.pizzario_swp391.mapper.CategoryMapper;
-import com.group1.swp.pizzario_swp391.repository.CategoryRepository;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
+import lombok.AccessLevel;
+import org.springframework.stereotype.Service;
+import com.group1.swp.pizzario_swp391.dto.category.CategoryCreateDTO;
+import com.group1.swp.pizzario_swp391.dto.category.CategoryDetailDTO;
+import com.group1.swp.pizzario_swp391.dto.category.CategoryResponseDTO;
+import com.group1.swp.pizzario_swp391.dto.category.CategoryUpdateDTO;
+import com.group1.swp.pizzario_swp391.entity.Category;
+import com.group1.swp.pizzario_swp391.mapper.CategoryResponseMapper;
+import com.group1.swp.pizzario_swp391.repository.CategoryRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class CategoryService {
     CategoryRepository categoryRepository;
-    CategoryMapper categoryMapper;
+    CategoryResponseMapper categoryMapper;
 
     static final String CATEGORY_NOT_FOUND = "Category not found";
 
-    public void createCategory(CategoryDTO categoryDTO) {
+    public void createCategory(CategoryCreateDTO createDTO) {
+        Category category = categoryMapper.toEntity(createDTO);
         LocalDateTime now = LocalDateTime.now();
-        categoryDTO.setCreatedAt(now);
-        categoryDTO.setUpdatedAt(now);
-        Category category = categoryMapper.toCategory(categoryDTO);
+        category.setCreatedAt(now);
+        category.setUpdatedAt(now);
         categoryRepository.save(category);
     }
 
-    public List<Category> getAllCategories() {
-        return categoryRepository.findAll();
+    public List<CategoryResponseDTO> getAllCategories() {
+        List<Category> categories = categoryRepository.findAll();
+        return categories.stream()
+                .map(categoryMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public Optional<Category> getCategoryById(Long id) {
-        return categoryRepository.findById(id);
+    public CategoryDetailDTO getCategoryById(Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(CATEGORY_NOT_FOUND));
+        return categoryMapper.toDetailDTO(category);
+    }
+    
+    public CategoryUpdateDTO getCategoryForUpdate(Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(CATEGORY_NOT_FOUND));
+        return CategoryUpdateDTO.builder()
+                .name(category.getName())
+                .description(category.getDescription())
+                .isActive(category.isActive())
+                .build();
     }
 
-    public void updateCategory(Long id, CategoryDTO categoryDTO) {
-        Category category = categoryRepository.findById(id).orElseThrow(() -> new RuntimeException(CATEGORY_NOT_FOUND));
-        categoryMapper.updateCategory(category, categoryDTO);
+    public void updateCategory(Long id, CategoryUpdateDTO updateDTO) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(CATEGORY_NOT_FOUND));
+        categoryMapper.updateEntity(category, updateDTO);
+        category.setUpdatedAt(LocalDateTime.now());
         categoryRepository.save(category);
     }
 
     public void deleteCategory(Long id) {
+        if (!categoryRepository.existsById(id)) {
+            throw new RuntimeException(CATEGORY_NOT_FOUND);
+        }
         categoryRepository.deleteById(id);
     }
 }

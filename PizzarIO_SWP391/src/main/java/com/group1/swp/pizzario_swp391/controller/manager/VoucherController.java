@@ -1,12 +1,12 @@
-package com.group1.swp.pizzario_swp391.controller;
+package com.group1.swp.pizzario_swp391.controller.manager;
 
+import com.group1.swp.pizzario_swp391.dto.voucher.VoucherDTO;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import com.group1.swp.pizzario_swp391.dto.VoucherDTO;
 import com.group1.swp.pizzario_swp391.entity.Voucher;
 import com.group1.swp.pizzario_swp391.service.VoucherService;
 

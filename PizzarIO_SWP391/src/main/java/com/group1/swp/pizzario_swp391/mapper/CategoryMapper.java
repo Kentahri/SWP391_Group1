@@ -1,9 +1,11 @@
 package com.group1.swp.pizzario_swp391.mapper;
 
-import com.group1.swp.pizzario_swp391.dto.CategoryDTO;
-import com.group1.swp.pizzario_swp391.entity.Category;
+import com.group1.swp.pizzario_swp391.dto.category.CategoryDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
+
+
+import com.group1.swp.pizzario_swp391.entity.Category;
 
 @Mapper(componentModel = "spring")
 public interface CategoryMapper {

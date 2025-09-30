@@ -1,6 +1,7 @@
 package com.group1.swp.pizzario_swp391.mapper;
 
-import com.group1.swp.pizzario_swp391.dto.ProductDTO;
+
+import com.group1.swp.pizzario_swp391.dto.product.ProductDTO;
 import com.group1.swp.pizzario_swp391.entity.Product;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
