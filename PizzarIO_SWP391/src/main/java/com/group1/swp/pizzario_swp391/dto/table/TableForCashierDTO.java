@@ -16,8 +16,7 @@ import lombok.experimental.FieldDefaults;
 public class TableForCashierDTO {
     
     int id;
-    
     TableStatus tableStatus;
-    
     int capacity;
 }
+
