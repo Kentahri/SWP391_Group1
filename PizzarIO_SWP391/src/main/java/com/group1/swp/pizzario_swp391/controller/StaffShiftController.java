@@ -21,7 +21,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Map;
 
 @Controller
 @RequestMapping("/admin")
@@ -55,8 +54,6 @@ public class StaffShiftController {
 
         List<StaffResponseDTO> staffs = staffService.getAllStaff();
 
-        List<Staff> staffs = staffService.getAll();
-
         List<Shift> shift = shiftService.getAllShift();
         model.addAttribute("shifts", shift);
         model.addAttribute("staffs", staffs);
@@ -85,14 +82,11 @@ public class StaffShiftController {
             @RequestParam(required = false) Integer hourlyWage,
             @RequestParam(required = false) StaffShift.Status status,
 
-            RedirectAttributes ra, Map map) {
+            RedirectAttributes ra) {
         StaffResponseDTO staffDTO = staffService.getStaffById(staffId);
 
         Staff staff = mapperResponse.toStaff(staffDTO);
 
-
-            RedirectAttributes ra) {
-        Staff staff = staffService.getById(staffId);
 
         Shift shift = shiftService.getShiftById(shiftId);
 
@@ -155,12 +149,9 @@ public class StaffShiftController {
             RedirectAttributes ra) {
 
         StaffShift ss = staffShiftService.getById(id);
-
         StaffResponseDTO staffDTO = staffService.getStaffById(staffId);
 
         Staff staff = mapperResponse.toStaff(staffDTO);
-
-        Staff staff = staffService.getById(staffId);
 
         Shift shift = shiftService.getShiftById(shiftId);
         if (shift == null) {
