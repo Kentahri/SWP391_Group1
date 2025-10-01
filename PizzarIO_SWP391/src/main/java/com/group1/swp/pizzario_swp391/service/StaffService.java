@@ -3,6 +3,7 @@ package com.group1.swp.pizzario_swp391.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import com.group1.swp.pizzario_swp391.dto.staff.StaffCreateDTO;
@@ -23,11 +24,22 @@ import lombok.experimental.FieldDefaults;
 public class StaffService {
     StaffRepository staffRepository;
     LoginRepository loginRepository;
+    @Qualifier("staffResponseMapper")
     StaffResponseMapper staffMapper;
+
+
 
     static final String STAFF_NOT_FOUND = "Staff not found";
     static final String EMAIL_ALREADY_EXISTS = "Email đã được sử dụng";
     static final String PHONE_ALREADY_EXISTS = "Số điện thoại đã được sử dụng";
+
+    public List<Staff> getAll() {
+        return staffRepository.findAll();
+    }
+
+    public Staff getById(int id) {
+        return staffRepository.findById(id).orElse(null);
+    }
 
     public List<StaffResponseDTO> getAllStaff() {
         List<Staff> staffList = staffRepository.findAll();
