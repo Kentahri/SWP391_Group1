@@ -7,6 +7,8 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: none
+  devtools:
+    add-properties: true
 
   datasource:
     username: ${DB_USERNAME}
