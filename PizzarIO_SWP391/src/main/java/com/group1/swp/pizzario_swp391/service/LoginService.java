@@ -25,15 +25,6 @@ public class LoginService {
                 ;
     }
 
-    public void register(Staff acc) {
-
-        if(loginRepository.existsByEmail(acc.getEmail())) {
-            throw new RuntimeException("Email đã tồn tại");
-        }
-
-        loginRepository.save(acc);
-    }
-
     public Staff findByEmail(String email){
         return loginRepository.findByEmail(email).orElseThrow();// sẽ ném ra NoSuchElementException nếu null
     }

@@ -29,4 +29,6 @@ public interface StaffResponseMapper {
     @Mapping(target = "shifts", ignore = true)
     @Mapping(target = "orders", ignore = true)
     void updateEntity(@MappingTarget Staff staff, StaffUpdateDTO updateDTO);
+
+    Staff toStaff(StaffResponseDTO staffResponseDTO);
 }

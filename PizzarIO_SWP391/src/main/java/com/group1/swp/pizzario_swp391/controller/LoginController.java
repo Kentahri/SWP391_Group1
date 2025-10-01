@@ -1,7 +1,9 @@
 package com.group1.swp.pizzario_swp391.controller;
 
+import com.group1.swp.pizzario_swp391.dto.staff.StaffLoginDTO;
 import com.group1.swp.pizzario_swp391.entity.Staff;
 import com.group1.swp.pizzario_swp391.service.LoginService;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -24,8 +26,9 @@ public class LoginController {
 
     // localhost808/login
     @GetMapping("/login")
-    public String showLogin(Model model){
-        model.addAttribute("account", new Staff());
+    public String form(Model model, CsrfToken token) {
+        model.addAttribute("_csrf", token);
+        model.addAttribute("authen", new StaffLoginDTO());
         return "authenticate/login";
     }
 
@@ -36,33 +39,33 @@ public class LoginController {
         return "authenticate/missing_pass";
     }
 
-    @PostMapping("/signIn")
-    public String signIn(@Valid @ModelAttribute("account") Staff account,BindingResult result ,Model model) { //StaffDTO
-
-        if(result.hasErrors()){
-            return "authenticate/login";
-        }
-
-        Optional<Staff> authenticated = loginService.authenticate(account.getEmail(), account.getPassword());
-
-        if (authenticated.isEmpty()) {
-            model.addAttribute("loginError", "Email hoặc mật khẩu không đúng");
-            return "authenticate/login";
-        }
-
-        Staff authenticate = loginService.authenticate(account.getEmail(), account.getPassword()).orElse(null);
-
-        if (authenticate == null) {
-
-            return "redirect:authenticate/login";
-        }
-
-        return switch (authenticate.getRole()) {
-            case MANAGER -> "dashboard";
-            case KITCHEN -> "kitchen";
-            case CASHIER -> "cashier-page/cashier";
-            default -> "redirect:authenticate/login"; // fallback nếu role null hoặc không khớp
-        };
-    }
+//    @PostMapping("/signIn")
+//    public String signIn(@Valid @ModelAttribute("account") Staff account,BindingResult result ,Model model) { //StaffDTO
+//
+//        if(result.hasErrors()){
+//            return "authenticate/login";
+//        }
+//
+//        Optional<Staff> authenticated = loginService.authenticate(account.getEmail(), account.getPassword());
+//
+//        if (authenticated.isEmpty()) {
+//            model.addAttribute("loginError", "Email hoặc mật khẩu không đúng");
+//            return "authenticate/login";
+//        }
+//
+//        Staff authenticate = loginService.authenticate(account.getEmail(), account.getPassword()).orElse(null);
+//
+//        if (authenticate == null) {
+//
+//            return "redirect:authenticate/login";
+//        }
+//
+//        return switch (authenticate.getRole()) {
+//            case MANAGER -> "dashboard";
+//            case KITCHEN -> "kitchen";
+//            case CASHIER -> "cashier-page/cashier";
+//            default -> "redirect:authenticate/login"; // fallback nếu role null hoặc không khớp
+//        };
+//    }
 
 }

@@ -2,9 +2,14 @@ package com.group1.swp.pizzario_swp391.controller.manager;
 
 import java.util.List;
 
+
 import com.group1.swp.pizzario_swp391.dto.staff.StaffDTO;
+
+import jakarta.validation.Valid;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,14 +27,13 @@ import lombok.RequiredArgsConstructor;
 
 
 @Controller
-@RequestMapping("/staff")
 @RequiredArgsConstructor
 public class StaffController {
 
     final StaffService staffService;
 
     // READ: list all staff
-    @GetMapping
+    @GetMapping("admin/staff")
     public String listStaffs(Model model) {
         List<StaffResponseDTO> staffs = staffService.getAllStaff();
         model.addAttribute("staffs", staffs);
@@ -37,30 +41,38 @@ public class StaffController {
         return "admin_page/staff/list";
     }
 
-    // CREATE: show form
-    @GetMapping("/create")
-    public String showCreateForm(Model model) {
+    @GetMapping("create")
+    public String createForm(Model model) {
         model.addAttribute("staff", new StaffCreateDTO());
         model.addAttribute("roles", Staff.Role.values());
+        model.addAttribute("formTitle", "Create Staff");
         return "admin_page/staff/create";
     }
 
-    // CREATE: save staff
+    // CREATE SUBMIT: POST /staff/create
     @PostMapping("/create")
-    public String createStaff(@ModelAttribute StaffCreateDTO staffCreateDTO, RedirectAttributes redirectAttributes) {
-        try {
-            staffService.createNewStaff(staffCreateDTO);
-            redirectAttributes.addFlashAttribute("success", "Tạo staff thành công!");
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/staff/create";
+    public String create(@Valid @ModelAttribute("staff") StaffCreateDTO dto,
+                         BindingResult bindingResult,
+                         Model model,
+                         RedirectAttributes ra) {
+
+        // ❗ Khi có lỗi validate, QUAY LẠI đúng view "staff/create"
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("roles", Staff.Role.values());
+            model.addAttribute("formTitle", "Create Staff");
+            return "admin_page/staff/create";
         }
-        return "redirect:/staff";
+
+        staffService.createNewStaff(dto);
+        ra.addFlashAttribute("success", "Created staff successfully");
+        // PRG: điều hướng về trang list
+            return "redirect:admin/staff";
     }
 
     // UPDATE: show edit form
     @GetMapping("edit/{id}")
     public String edit(Model model, @PathVariable int id) {
+
         StaffUpdateDTO staffUpdateDTO = staffService.getStaffForUpdate(id);
         model.addAttribute("staff", staffUpdateDTO);
         StaffResponseDTO staff = staffService.getStaffById(id);

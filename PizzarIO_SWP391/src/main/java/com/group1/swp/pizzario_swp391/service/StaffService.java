@@ -3,7 +3,12 @@ package com.group1.swp.pizzario_swp391.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
 import com.group1.swp.pizzario_swp391.dto.staff.StaffDTO;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.group1.swp.pizzario_swp391.dto.staff.StaffCreateDTO;
@@ -24,11 +29,22 @@ import lombok.experimental.FieldDefaults;
 public class StaffService {
     StaffRepository staffRepository;
     LoginRepository loginRepository;
+    @Qualifier("staffResponseMapper")
     StaffResponseMapper staffMapper;
+
+    PasswordEncoder passwordEncoder;
 
     static final String STAFF_NOT_FOUND = "Staff not found";
     static final String EMAIL_ALREADY_EXISTS = "Email đã được sử dụng";
     static final String PHONE_ALREADY_EXISTS = "Số điện thoại đã được sử dụng";
+
+    public List<Staff> getAll() {
+        return staffRepository.findAll();
+    }
+
+    public Staff getById(int id) {
+        return staffRepository.findById(id).orElse(null);
+    }
 
     public List<StaffResponseDTO> getAllStaff() {
         List<Staff> staffList = staffRepository.findAll();
@@ -67,6 +83,8 @@ public class StaffService {
         }
 
         Staff staff = staffMapper.toEntity(createDTO);
+        String encodedPassword = passwordEncoder.encode(createDTO.getPassword());
+        staff.setPassword(encodedPassword);
         staffRepository.save(staff);
     }
 
@@ -93,7 +111,6 @@ public class StaffService {
         staffRepository.deleteById(id);
     }
 
-    // Keep existing methods for authentication and other features
     public void updateStaff(int id, StaffDTO staffDTO) {
         Staff staff = staffRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Staff not found"));
@@ -135,7 +152,10 @@ public class StaffService {
         if (staff == null) {
             throw new IllegalArgumentException("Không tìm thấy nhân viên với email: " + email);
         }
-        staff.setPassword(password);
+
+        String encodedPassword = passwordEncoder.encode(password);
+
+        staff.setPassword(encodedPassword);
         staffRepository.save(staff);
     }
 
