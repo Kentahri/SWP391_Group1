@@ -32,13 +32,13 @@
         <tr th:each="p : ${products}">
             <td th:text="${p.id}"></td>
             <td th:text="${p.name}"></td>
+            <td th:text="${p.description}"></td>
             <td>
                 <img th:if="${p.imageURL}" th:src="${p.imageURL}" class="img-thumb" alt="img">
             </td>
-            <td th:text="${p.description}"></td>
             <td th:text="${#numbers.formatDecimal(p.basePrice, 0, 'COMMA', 0, 'POINT')}"></td>
             <td th:text="${#numbers.formatDecimal(p.flashSalePrice, 0, 'COMMA', 0, 'POINT')}"></td>
-            <td th:text="${p.category.name}"></td>
+            <td th:text="${p.categoryName}"></td>
             <td th:text="${p.isActive ? 'Yes' : 'No'}"></td>
             <td>
                 <a th:href="@{'/product/edit/' + ${p.id}}" class="btn btn-warning btn-sm">Sửa</a>
