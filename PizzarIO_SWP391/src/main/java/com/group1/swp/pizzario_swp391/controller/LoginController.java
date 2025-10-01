@@ -33,7 +33,7 @@ public class LoginController {
     @GetMapping("/missing_pass")
     public String missingPassPage(Model model) {
         model.addAttribute("account", new Staff());
-        return "authenticate/missing_pass";
+        return "authenticate/mis`sing_pass";
     }
 
     @PostMapping("/signIn")

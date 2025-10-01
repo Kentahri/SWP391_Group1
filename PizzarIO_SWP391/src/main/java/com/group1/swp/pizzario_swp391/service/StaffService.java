@@ -3,6 +3,7 @@ package com.group1.swp.pizzario_swp391.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.group1.swp.pizzario_swp391.dto.staff.StaffDTO;
 import org.springframework.stereotype.Service;
 
 import com.group1.swp.pizzario_swp391.dto.staff.StaffCreateDTO;
@@ -92,10 +93,6 @@ public class StaffService {
         staffRepository.deleteById(id);
     }
 
-<<<<<<< HEAD
-    // Keep existing methods for authentication and other features
-    public void add(Staff staff) {
-=======
     public void updateStaff(int id, StaffDTO staffDTO) {
         Staff staff = staffRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Staff not found"));
@@ -115,7 +112,6 @@ public class StaffService {
         staff.setDateOfBirth(staffDTO.getDateOfBirth());
         staff.setPhone(staffDTO.getPhone());
         staff.setAddress(staffDTO.getAddress());
-        staff.setUsername(staffDTO.getUsername());
         staff.setEmail(staffDTO.getEmail());
         staff.setRole(staffDTO.getRole());
         staff.setActive(staffDTO.isActive());
@@ -130,7 +126,6 @@ public class StaffService {
 
 
     public void add(Staff staff){
->>>>>>> b5f3b4399d69cea13dabd1fadcf58d0656aff882
         staffRepository.save(staff);
     }
 

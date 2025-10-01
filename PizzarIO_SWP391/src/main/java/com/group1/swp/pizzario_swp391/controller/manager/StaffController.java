@@ -2,6 +2,7 @@ package com.group1.swp.pizzario_swp391.controller.manager;
 
 import java.util.List;
 
+import com.group1.swp.pizzario_swp391.dto.staff.StaffDTO;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -60,23 +61,20 @@ public class StaffController {
     // UPDATE: show edit form
     @GetMapping("edit/{id}")
     public String edit(Model model, @PathVariable int id) {
-<<<<<<< HEAD:PizzarIO_SWP391/src/main/java/com/group1/swp/pizzario_swp391/controller/manager/StaffController.java
+
         StaffUpdateDTO staffUpdateDTO = staffService.getStaffForUpdate(id);
         model.addAttribute("staff", staffUpdateDTO);
-=======
-        Staff staff = staffService.getStaffById(id).orElseThrow(() -> new RuntimeException("Staff id " + id + " not found"));
+        StaffResponseDTO staff = staffService.getStaffById(id);
         StaffDTO staffDTO = StaffDTO.builder()
                 .name(staff.getName())
                 .dateOfBirth(staff.getDateOfBirth())
                 .phone(staff.getPhone())
                 .address(staff.getAddress())
-                .username(staff.getUsername())
                 .email(staff.getEmail())
                 .role(staff.getRole())
                 .active(staff.isActive())
                 .build();
         model.addAttribute("staff", staffDTO);
->>>>>>> b5f3b4399d69cea13dabd1fadcf58d0656aff882:PizzarIO_SWP391/src/main/java/com/group1/swp/pizzario_swp391/controller/StaffController.java
         model.addAttribute("staffID", id);
         model.addAttribute("roles", Staff.Role.values());
         return "admin_page/staff/edit";
