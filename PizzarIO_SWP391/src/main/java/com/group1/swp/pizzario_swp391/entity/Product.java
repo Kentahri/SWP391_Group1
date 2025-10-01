@@ -1,9 +1,7 @@
 package com.group1.swp.pizzario_swp391.entity;
 
 import jakarta.persistence.*;
-import jakarta.persistence.Table;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
@@ -14,7 +12,7 @@ import java.util.List;
 @Table(name = "[Product]")
 @Data
 @ToString
-public class Product {
+public class Product{
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<OrderItem> orderItems;

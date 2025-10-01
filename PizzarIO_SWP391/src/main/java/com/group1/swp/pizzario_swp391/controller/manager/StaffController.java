@@ -1,30 +1,25 @@
 package com.group1.swp.pizzario_swp391.controller.manager;
 
-import java.util.List;
-
-import jakarta.validation.Valid;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
 import com.group1.swp.pizzario_swp391.dto.staff.StaffCreateDTO;
+import com.group1.swp.pizzario_swp391.dto.staff.StaffDTO;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffUpdateDTO;
 import com.group1.swp.pizzario_swp391.entity.Staff;
 import com.group1.swp.pizzario_swp391.service.StaffService;
-
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
 
 
 @Controller
 @RequestMapping("/staff")
 @RequiredArgsConstructor
-public class StaffController {
+public class StaffController{
 
     final StaffService staffService;
 
@@ -61,23 +56,24 @@ public class StaffController {
     // UPDATE: show edit form
     @GetMapping("edit/{id}")
     public String edit(Model model, @PathVariable int id) {
-<<<<<<< HEAD:PizzarIO_SWP391/src/main/java/com/group1/swp/pizzario_swp391/controller/manager/StaffController.java
+//<<<<<<< HEAD:PizzarIO_SWP391/src/main/java/com/group1/swp/pizzario_swp391/controller/manager/StaffController.java
         StaffUpdateDTO staffUpdateDTO = staffService.getStaffForUpdate(id);
         model.addAttribute("staff", staffUpdateDTO);
-=======
+//=======
         Staff staff = staffService.getStaffById(id).orElseThrow(() -> new RuntimeException("Staff id " + id + " not found"));
         StaffDTO staffDTO = StaffDTO.builder()
                 .name(staff.getName())
                 .dateOfBirth(staff.getDateOfBirth())
                 .phone(staff.getPhone())
                 .address(staff.getAddress())
-                .username(staff.getUsername())
+//                .username(staff.getUsername())
                 .email(staff.getEmail())
                 .role(staff.getRole())
                 .active(staff.isActive())
                 .build();
         model.addAttribute("staff", staffDTO);
->>>>>>> b5f3b4399d69cea13dabd1fadcf58d0656aff882:PizzarIO_SWP391/src/main/java/com/group1/swp/pizzario_swp391/controller/StaffController.java
+//>>>>>>>b5f3b4399d69cea13dabd1fadcf58d0656aff882:
+//        PizzarIO_SWP391 / src / main / java / com / group1 / swp / pizzario_swp391 / controller / StaffController.java
         model.addAttribute("staffID", id);
         model.addAttribute("roles", Staff.Role.values());
         return "admin_page/staff/edit";
