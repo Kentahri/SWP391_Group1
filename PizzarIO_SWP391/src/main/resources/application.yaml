@@ -27,9 +27,16 @@ spring:
             required: true
           ssl:
             trust: smtp.gmail.com
+  profiles:
+    active: prod
 
 server:
   port: ${SERVER_PORT}
   servlet:
     context-path: ${SERVER_CONTEXT_PATH}
 
+logging:
+  level:
+    org:
+      thymeleaf: DEBUG
+      thymeleaf.TemplateEngine: DEBUG
