@@ -52,7 +52,11 @@ public class StaffShiftController {
     public String getFormStaffShift(
             @RequestParam(required = false) Integer editId,
             Model model) {
+
         List<StaffResponseDTO> staffs = staffService.getAllStaff();
+
+        List<Staff> staffs = staffService.getAll();
+
         List<Shift> shift = shiftService.getAllShift();
         model.addAttribute("shifts", shift);
         model.addAttribute("staffs", staffs);
@@ -80,10 +84,15 @@ public class StaffShiftController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate workDate,
             @RequestParam(required = false) Integer hourlyWage,
             @RequestParam(required = false) StaffShift.Status status,
+
             RedirectAttributes ra, Map map) {
         StaffResponseDTO staffDTO = staffService.getStaffById(staffId);
 
         Staff staff = mapperResponse.toStaff(staffDTO);
+
+
+            RedirectAttributes ra) {
+        Staff staff = staffService.getById(staffId);
 
         Shift shift = shiftService.getShiftById(shiftId);
 
@@ -146,9 +155,13 @@ public class StaffShiftController {
             RedirectAttributes ra) {
 
         StaffShift ss = staffShiftService.getById(id);
+
         StaffResponseDTO staffDTO = staffService.getStaffById(staffId);
 
         Staff staff = mapperResponse.toStaff(staffDTO);
+
+        Staff staff = staffService.getById(staffId);
+
         Shift shift = shiftService.getShiftById(shiftId);
         if (shift == null) {
             throw new IllegalArgumentException("Shift not found");

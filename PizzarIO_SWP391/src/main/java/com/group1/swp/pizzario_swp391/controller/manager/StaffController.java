@@ -2,7 +2,11 @@ package com.group1.swp.pizzario_swp391.controller.manager;
 
 import java.util.List;
 
+
 import com.group1.swp.pizzario_swp391.dto.staff.StaffDTO;
+
+import jakarta.validation.Valid;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,7 +51,7 @@ public class StaffController {
 
     // CREATE: save staff
     @PostMapping("/create")
-    public String createStaff(@ModelAttribute StaffCreateDTO staffCreateDTO, RedirectAttributes redirectAttributes) {
+    public String createStaff(@Valid @ModelAttribute StaffCreateDTO staffCreateDTO, RedirectAttributes redirectAttributes) {
         try {
             staffService.createNewStaff(staffCreateDTO);
             redirectAttributes.addFlashAttribute("success", "Tạo staff thành công!");
