@@ -10,6 +10,12 @@
 </head>
 <body>
 	<h2>CASHIER</h2>
-	<a th:href="@{/login}">Back to Home Pape</a>
+	<form th:action="@{/logout}" method="post">
+		<input type="hidden"
+			   th:if="${_csrf != null}"
+			   th:name="${_csrf.parameterName}"
+			   th:value="${_csrf.token}" />
+		<button type="submit">Logout</button>
+	</form>
 </body>
 </html>

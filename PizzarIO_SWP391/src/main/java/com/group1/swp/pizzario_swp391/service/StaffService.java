@@ -8,6 +8,7 @@ import com.group1.swp.pizzario_swp391.dto.staff.StaffDTO;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.group1.swp.pizzario_swp391.dto.staff.StaffCreateDTO;
@@ -31,7 +32,7 @@ public class StaffService {
     @Qualifier("staffResponseMapper")
     StaffResponseMapper staffMapper;
 
-
+    PasswordEncoder passwordEncoder;
 
     static final String STAFF_NOT_FOUND = "Staff not found";
     static final String EMAIL_ALREADY_EXISTS = "Email đã được sử dụng";
@@ -82,6 +83,8 @@ public class StaffService {
         }
 
         Staff staff = staffMapper.toEntity(createDTO);
+        String encodedPassword = passwordEncoder.encode(createDTO.getPassword());
+        staff.setPassword(encodedPassword);
         staffRepository.save(staff);
     }
 
@@ -149,7 +152,10 @@ public class StaffService {
         if (staff == null) {
             throw new IllegalArgumentException("Không tìm thấy nhân viên với email: " + email);
         }
-        staff.setPassword(password);
+
+        String encodedPassword = passwordEncoder.encode(password);
+
+        staff.setPassword(encodedPassword);
         staffRepository.save(staff);
     }
 

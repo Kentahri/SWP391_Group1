@@ -25,6 +25,14 @@
             <a class="nav-link" th:href="@{/admin/inventory}"> Kho hàng</a>
             <a class="nav-link" th:href="@{/admin/settings}">Cài đặt</a>
         </nav>
+
+        <form th:action="@{/logout}" method="post">
+            <input type="hidden"
+                   th:if="${_csrf != null}"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}" />
+            <button type="submit">Logout</button>
+        </form>
     </aside>
 
     <!-- MAIN -->
@@ -176,6 +184,8 @@
                 </article>
             </div>
         </section>
+
+
     </main>
 </div>
 </body>
