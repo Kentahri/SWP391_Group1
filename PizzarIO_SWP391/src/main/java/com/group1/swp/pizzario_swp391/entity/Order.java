@@ -16,7 +16,8 @@ public class Order {
     @JoinColumn(name = "created_by")
     private Staff staff;
 
-    @OneToOne(mappedBy = "order")
+    @OneToOne
+    @JoinColumn(name = "session_id")
     private Session session;
 
     @ManyToOne

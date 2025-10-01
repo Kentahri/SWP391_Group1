@@ -26,40 +26,42 @@
 
         <div th:if="${error}" class="error" th:text="${error}"></div>
 
-        <form th:action="@{/staff/create}" th:object="${staff}" method="post">
+        <form th:action="@{/create}" th:object="${staff}" method="post">
+
             <div class="form-row">
                 <label>Name</label>
                 <input type="text" th:field="*{name}" required/>
+                <div class="error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
             </div>
 
             <div class="form-row">
                 <label>Date of Birth</label>
                 <input type="date" th:field="*{dateOfBirth}" required/>
+                <div class="error" th:if="${#fields.hasErrors('dateOfBirth')}" th:errors="*{dateOfBirth}"></div>
             </div>
 
             <div class="form-row">
                 <label>Phone</label>
                 <input type="text" th:field="*{phone}" required/>
+                <div class="error" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></div>
             </div>
 
             <div class="form-row">
                 <label>Address</label>
-                <input type="text" th:field="*{address}" />
-            </div>
-
-            <div class="form-row">
-                <label>Username</label>
-                <input type="text" th:field="*{username}" required/>
+                <input type="text" th:field="*{address}"/>
+                <div class="error" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></div>
             </div>
 
             <div class="form-row">
                 <label>Password</label>
                 <input type="password" th:field="*{password}" required/>
+                <div class="error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
             </div>
 
             <div class="form-row">
                 <label>Email</label>
                 <input type="email" th:field="*{email}" required/>
+                <div class="error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
             </div>
 
             <div class="form-row">
@@ -67,14 +69,17 @@
                 <select th:field="*{role}" required>
                     <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"></option>
                 </select>
+                <div class="error" th:if="${#fields.hasErrors('role')}" th:errors="*{role}"></div>
             </div>
 
             <div class="form-row">
                 <label><input type="checkbox" th:field="*{active}"/> Active</label>
+                <div class="error" th:if="${#fields.hasErrors('active')}" th:errors="*{active}"></div>
             </div>
 
             <button type="submit">Save</button>
         </form>
+
 
         <a class="back-link" th:href="@{/staff}">⬅ Back to List</a>
     </div>

@@ -6,7 +6,7 @@ spring:
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: none
 
   datasource:
     username: ${DB_USERNAME}
@@ -27,9 +27,16 @@ spring:
             required: true
           ssl:
             trust: smtp.gmail.com
+  profiles:
+    active: dev
 
 server:
   port: ${SERVER_PORT}
   servlet:
     context-path: ${SERVER_CONTEXT_PATH}
 
+logging:
+  level:
+    org:
+      thymeleaf: DEBUG
+      thymeleaf.TemplateEngine: DEBUG

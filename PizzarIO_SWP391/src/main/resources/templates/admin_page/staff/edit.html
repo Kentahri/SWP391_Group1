@@ -87,7 +87,7 @@
         <p th:text="${error}"></p>
     </div>
 
-    <form th:action="@{'/staff/edit/' + ${staffID}}" th:object="${staff}" method="post">
+    <form th:action="@{'/edit/' + ${staffID}}" th:object="${staff}" method="post">
         <div>
             <label>Name:</label>
             <input type="text" th:field="*{name}" required/>
@@ -107,12 +107,7 @@
             <label>Address:</label>
             <input type="text" th:field="*{address}" />
         </div>
-
-        <div>
-            <label>Username:</label>
-            <input type="text" th:field="*{username}" required/>
-        </div>
-
+        
         <div>
             <label>Email:</label>
             <input type="email" th:field="*{email}" required/>

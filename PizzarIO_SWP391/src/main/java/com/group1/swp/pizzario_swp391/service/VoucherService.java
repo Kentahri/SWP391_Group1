@@ -1,6 +1,7 @@
 package com.group1.swp.pizzario_swp391.service;
 
-import com.group1.swp.pizzario_swp391.dto.VoucherDTO;
+
+import com.group1.swp.pizzario_swp391.dto.voucher.VoucherDTO;
 import com.group1.swp.pizzario_swp391.entity.Voucher;
 import com.group1.swp.pizzario_swp391.mapper.VoucherMapper;
 import com.group1.swp.pizzario_swp391.repository.VoucherRepository;

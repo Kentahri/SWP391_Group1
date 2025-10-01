@@ -1,49 +1,90 @@
-/* ===== Modal toggle (no JS) ===== */
-.modal{display:none}
-.modal-toggle:checked ~ .modal{display:block}
-
-/* backdrop */
-.modal{position:fixed; inset:0; z-index:50}
-.modal-backdrop{
-    position:absolute; inset:0; background:rgba(15,23,42,.45); backdrop-filter: blur(2px);
+/* === Theme tối giản: nền trắng, chữ đen === */
+html, body {
+  background:#fff;
+  color:#111;
 }
 
-/* card */
-.modal-card{
-    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-    width:min(640px, 92vw); background:#ffffff; color:#0f172a;
-    border:1px solid #e5e7eb; border-radius:16px; box-shadow:0 16px 40px rgba(0,0,0,.18);
-    padding:16px 16px 14px;
-}
-.modal-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px}
-.modal-head h3{margin:0; font-size:18px}
-.modal-close{cursor:pointer; opacity:.6; font-size:20px; line-height:1}
-.modal-close:hover{opacity:1}
-
-/* form layout */
-.simple-form{display:flex; flex-direction:column; gap:12px}
-.form-row{display:grid; grid-template-columns: 1fr 1fr; gap:12px}
-@media (max-width:640px){ .form-row{grid-template-columns:1fr} }
-
-.form-field{display:flex; flex-direction:column; gap:6px}
-.form-field label{font-size:13px; color:#374151}
-.form-field input,
-.form-field select{
-    height:42px; padding:0 12px; border:1px solid #e5e7eb; border-radius:10px; background:#fff;
-    color:#0f172a; outline:none;
-}
-.form-field input:focus, .form-field select:focus{
-    border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.15);
+/* Giữ sidebar đơn giản, màu xám nhạt */
+.sidebar{
+  background:#f6f6f6;
+  border-right:1px solid #e5e5e5;
 }
 
-.form-actions{display:flex; gap:10px; margin-top:6px; justify-content:flex-start}
-.btn-primary{
-    display:inline-block; padding:10px 14px; border-radius:10px;
-    background:#111827; color:#fff; border:1px solid #0b1220; cursor:pointer;
-}
-.btn-ghost{
-    display:inline-block; padding:10px 14px; border-radius:10px;
-    background:#f3f4f6; color:#111827; border:1px solid #e5e7eb; cursor:pointer;
+/* Lưới layout như cũ: 240px sidebar + phần nội dung */
+.app{ display:grid; grid-template-columns:240px 1fr; min-height:100vh; }
+
+/* ===== Center nội dung ===== */
+/* Không cần thêm thẻ wrapper mới; căn giữa trực tiếp header và bảng */
+.page-header,
+.table{
+  width:min(1100px, 96vw);   /* giới hạn độ rộng để đọc dễ */
+  margin-inline:auto;        /* căn giữa theo chiều ngang */
 }
 
-.form-error{color:#dc2626; font-size:13px; margin-top:4px}
+/* Header gọn nhẹ, trái–phải */
+.page-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 8px; background:transparent;
+}
+.page-header__left h1{ margin:0 0 4px; font-size:22px; font-weight:700; }
+.muted{ color:#666; }
+
+/* Nút đơn sắc */
+.btn{
+  appearance:none; border:1px solid #111; background:#fff; color:#111;
+  padding:8px 12px; border-radius:8px; cursor:pointer;
+}
+.btn:hover{ background:#f2f2f2; }
+.btn-primary{ border-color:#111; }
+
+/* Bảng tối giản, viền xám nhạt, header xám rất nhẹ */
+.table{
+  border:1px solid #e5e5e5; border-radius:12px; border-collapse:separate; border-spacing:0;
+  background:#fff; box-shadow:none;
+}
+.table thead th{
+  background:#f7f7f7; color:#111; font-weight:600;
+  padding:12px 14px; border-bottom:1px solid #e5e5e5; text-align:left;
+}
+.table tbody td{
+  padding:12px 14px; border-bottom:1px solid #f0f0f0; color:#111;
+}
+.table tbody tr:hover{ background:#fafafa; }
+.table .money{ font-variant-numeric:tabular-nums; }
+.empty{ color:#666; text-align:center; }
+
+/* Hành động (Sửa/Xóa) đơn sắc */
+.actions{ display:flex; align-items:center; gap:8px; }
+.actions a{ color:#111; text-decoration:underline; }
+.actions button{ background:#fff; color:#111; border:1px solid #111; border-radius:6px; padding:4px 8px; }
+.actions button:hover{ background:#f2f2f2; }
+
+/* Modal nền trắng, chữ đen */
+.modal.hidden{ display:none; }
+.modal{ position:fixed; inset:0; display:grid; place-items:center; z-index:50; }
+.modal-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.25); }
+.modal-dialog{
+  position:relative; width:min(560px, 96vw); background:#fff; color:#111;
+  border:1px solid #e5e5e5; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.1); overflow:hidden;
+}
+.modal-header{ display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-bottom:1px solid #eaeaea; background:#fff; }
+.modal-header h3{ margin:0; font-size:18px; }
+.close{ background:transparent; border:0; font-size:22px; color:#333; cursor:pointer; }
+.modal-body{ padding:16px; display:grid; gap:12px; }
+.modal-footer{ padding:12px 16px; border-top:1px solid #eaeaea; display:flex; justify-content:flex-end; gap:8px; }
+
+/* Form đơn giản */
+.field{ display:flex; flex-direction:column; gap:6px; }
+.field span{ color:#555; font-size:12px; }
+input[type="date"], input[type="number"], select{
+  width:100%; padding:10px 12px; border:1px solid #dcdcdc; border-radius:8px;
+  background:#fff; color:#111; outline:none;
+}
+input:focus, select:focus{ border-color:#111; box-shadow:0 0 0 2px rgba(0,0,0,.08); }
+
+/* Responsive: vẫn giữ căn giữa */
+@media (max-width: 980px){
+  .app{ grid-template-columns:1fr; }
+  .sidebar{ position:sticky; top:0; z-index:10; border-bottom:1px solid #e5e5e5; }
+  .page-header{ padding:12px 8px; }
+}
