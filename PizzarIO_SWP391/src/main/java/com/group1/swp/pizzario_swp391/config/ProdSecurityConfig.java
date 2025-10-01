@@ -42,7 +42,7 @@ public class ProdSecurityConfig {
     ) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/webjars/**", "/css/**", "/images/**", "/js/**").permitAll()
+                        .requestMatchers("/login", "/webjars/**", "/css/**", "/images/**", "/js/**", "/guest").permitAll()
                         .requestMatchers("/manager/**").hasRole("MANAGER")
                         .requestMatchers("/kitchen/**").hasRole("KITCHEN")
                         .requestMatchers("/cashier/**").hasRole("CASHIER")
