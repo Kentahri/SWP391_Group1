@@ -1,14 +1,24 @@
 package com.group1.swp.pizzario_swp391.controller.manager;
 
-import com.group1.swp.pizzario_swp391.dto.table.TableDTO;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.group1.swp.pizzario_swp391.dto.table.TableCreateDTO;
+import com.group1.swp.pizzario_swp391.dto.table.TableManagementDTO;
+import com.group1.swp.pizzario_swp391.entity.DiningTable;
+import com.group1.swp.pizzario_swp391.service.TableService;
+
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import com.group1.swp.pizzario_swp391.entity.DiningTable;
-import com.group1.swp.pizzario_swp391.service.TableService;
+
 
 @Controller
 @RequestMapping("/table")
@@ -18,31 +28,52 @@ public class TableController {
 
     TableService tableService;
 
+    /**
+     * Hiển thị trang quản lý bàn
+     */
     @GetMapping
     public String table(Model model) {
-        model.addAttribute("tableTypes", DiningTable.TableType.values());
-        model.addAttribute("tableDTO", new TableDTO());
-        model.addAttribute("tableStatuses", DiningTable.TableStatus.values());
+        model.addAttribute("tableCreateDTO", new TableCreateDTO());
+        model.addAttribute("tableManagementDTO", new TableManagementDTO());
         model.addAttribute("tableConditions", DiningTable.TableCondition.values());
         model.addAttribute("tables", tableService.getAllTables());
         return "admin_page/table_management";
     }
 
+    /**
+     * Tạo bàn mới - chỉ nhập capacity
+     * Hệ thống tự set status=AVAILABLE, condition=NEW
+     */
     @PostMapping("/add")
-    public String createNewTable(@ModelAttribute TableDTO tableDTO) {
-        tableService.createNewTable(tableDTO);
+    public String createNewTable(@Valid @ModelAttribute TableCreateDTO tableCreateDTO, 
+                                 BindingResult result, 
+                                 Model model) {
+        if (result.hasErrors()) {
+            model.addAttribute("tableManagementDTO", new TableManagementDTO());
+            model.addAttribute("tableConditions", DiningTable.TableCondition.values());
+            model.addAttribute("tables", tableService.getAllTables());
+            return "admin_page/table_management";
+        }
+        tableService.createNewTable(tableCreateDTO);
         return "redirect:/table";
     }
 
-    @PostMapping("/delete/{id}")
-    public String deleteTable(@PathVariable int id) {
-        tableService.deleteTable(id);
-        return "redirect:/table";
-    }
-
+    /**
+     * Cập nhật bàn - chỉ cập nhật capacity và tableCondition
+     * TableStatus do Cashier quản lý
+     */
     @PostMapping("/update/{id}")
-    public String updateTable(@PathVariable int id, @ModelAttribute TableDTO tableDTO) {
-        tableService.updateTable(id, tableDTO);
+    public String updateTable(@PathVariable int id, 
+                              @Valid @ModelAttribute TableManagementDTO tableManagementDTO,
+                              BindingResult result,
+                              Model model) {
+        if (result.hasErrors()) {
+            model.addAttribute("tableCreateDTO", new TableCreateDTO());
+            model.addAttribute("tableConditions", DiningTable.TableCondition.values());
+            model.addAttribute("tables", tableService.getAllTables());
+            return "admin_page/table_management";
+        }
+        tableService.updateTable(id, tableManagementDTO);
         return "redirect:/table";
     }
 }

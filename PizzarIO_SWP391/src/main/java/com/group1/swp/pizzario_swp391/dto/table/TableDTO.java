@@ -5,16 +5,20 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
 
+/**
+ * Base DTO chứa tất cả các trường của Table trừ ID
+ * Dùng chung cho các DTO khác kế thừa
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class TableDTO {
-
-     DiningTable.TableType tableType;
+     private int id;
      DiningTable.TableStatus tableStatus;
      DiningTable.TableCondition tableCondition;
      LocalDateTime createdAt;
      LocalDateTime updatedAt;
+     int capacity;
 }
