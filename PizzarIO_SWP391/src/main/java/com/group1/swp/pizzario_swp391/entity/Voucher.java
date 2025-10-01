@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.ToString;
+import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -36,6 +37,8 @@ public class Voucher {
     @Enumerated(EnumType.STRING)
     private VoucherType type;
     private double value;
+
+    @Nationalized
     private String description;
 
     @Column(name = "max_uses", nullable = false)

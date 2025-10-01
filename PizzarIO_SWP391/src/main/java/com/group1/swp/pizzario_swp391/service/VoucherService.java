@@ -29,6 +29,10 @@ public class VoucherService {
         return voucherRepository.findAll();
     }
 
+    public List<Voucher> getVouchersSort(){
+        return voucherRepository.findAllVoucherOrderByValidFromAsc();
+    }
+
     public Optional<Voucher> getVoucherById(Long id) {
         return voucherRepository.findById(id);
     }

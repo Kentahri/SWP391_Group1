@@ -22,7 +22,7 @@ public class VoucherController {
     public String voucher(Model model) {
         model.addAttribute("voucherTypes", Voucher.VoucherType.values());
         model.addAttribute("voucherDTO", new VoucherDTO());
-        model.addAttribute("vouchers", voucherService.getAllVouchers());
+        model.addAttribute("vouchers", voucherService.getVouchersSort());
         return "admin_page/voucher/voucher";
     }
 

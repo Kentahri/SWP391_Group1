@@ -74,7 +74,7 @@
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 12px;
-            background: #0b1220;
+            background: #ffffff;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -105,9 +105,9 @@
                             <span>Active: <span th:text="${voucher.active}"></span></span>
                         </div>
                         <div style="display:flex; gap:8px">
-                            <form th:action="@{'/voucher/delete/' + ${voucher.id}}" method="post">
-                                <button class="primary-btn" style="background:#ef4444">Delete</button>
-                            </form>
+<!--                            <form th:action="@{'/voucher/delete/' + ${voucher.id}}" method="post">-->
+<!--                                <button class="primary-btn" style="background:#ef4444">Delete</button>-->
+<!--                            </form>-->
                             <a th:href="@{'/voucher/edit/' + ${voucher.id}}" class="primary-btn">Update</a>
                         </div>
                     </div>
