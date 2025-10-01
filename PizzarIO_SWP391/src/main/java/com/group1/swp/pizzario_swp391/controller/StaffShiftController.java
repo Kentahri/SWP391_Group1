@@ -1,8 +1,10 @@
 package com.group1.swp.pizzario_swp391.controller;
 
+import com.group1.swp.pizzario_swp391.dto.staff.StaffResponseDTO;
 import com.group1.swp.pizzario_swp391.entity.Shift;
 import com.group1.swp.pizzario_swp391.entity.Staff;
 import com.group1.swp.pizzario_swp391.entity.StaffShift;
+import com.group1.swp.pizzario_swp391.mapper.StaffResponseMapper;
 import com.group1.swp.pizzario_swp391.service.ShiftService;
 import com.group1.swp.pizzario_swp391.service.StaffService;
 import com.group1.swp.pizzario_swp391.service.StaffShiftService;
@@ -19,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/admin")
@@ -30,6 +33,7 @@ public class StaffShiftController {
 
     StaffService staffService;
     ShiftService shiftService;
+    StaffResponseMapper mapperResponse;
 
     @GetMapping("/staff_shifts")
     public String listStaffShifts(
@@ -48,7 +52,11 @@ public class StaffShiftController {
     public String getFormStaffShift(
             @RequestParam(required = false) Integer editId,
             Model model) {
+
+        List<StaffResponseDTO> staffs = staffService.getAllStaff();
+
         List<Staff> staffs = staffService.getAll();
+
         List<Shift> shift = shiftService.getAllShift();
         model.addAttribute("shifts", shift);
         model.addAttribute("staffs", staffs);
@@ -76,8 +84,16 @@ public class StaffShiftController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate workDate,
             @RequestParam(required = false) Integer hourlyWage,
             @RequestParam(required = false) StaffShift.Status status,
+
+            RedirectAttributes ra, Map map) {
+        StaffResponseDTO staffDTO = staffService.getStaffById(staffId);
+
+        Staff staff = mapperResponse.toStaff(staffDTO);
+
+
             RedirectAttributes ra) {
         Staff staff = staffService.getById(staffId);
+
         Shift shift = shiftService.getShiftById(shiftId);
 
         StaffShift ss;
@@ -139,7 +155,13 @@ public class StaffShiftController {
             RedirectAttributes ra) {
 
         StaffShift ss = staffShiftService.getById(id);
+
+        StaffResponseDTO staffDTO = staffService.getStaffById(staffId);
+
+        Staff staff = mapperResponse.toStaff(staffDTO);
+
         Staff staff = staffService.getById(staffId);
+
         Shift shift = shiftService.getShiftById(shiftId);
         if (shift == null) {
             throw new IllegalArgumentException("Shift not found");

@@ -1,21 +1,26 @@
 package com.group1.swp.pizzario_swp391.service;
 
-import com.group1.swp.pizzario_swp391.dto.staff.StaffCreateDTO;
+import java.util.List;
+import java.util.stream.Collectors;
+
+
 import com.group1.swp.pizzario_swp391.dto.staff.StaffDTO;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+
+import org.springframework.stereotype.Service;
+
+import com.group1.swp.pizzario_swp391.dto.staff.StaffCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffUpdateDTO;
 import com.group1.swp.pizzario_swp391.entity.Staff;
 import com.group1.swp.pizzario_swp391.mapper.StaffResponseMapper;
 import com.group1.swp.pizzario_swp391.repository.LoginRepository;
 import com.group1.swp.pizzario_swp391.repository.StaffRepository;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -103,10 +108,6 @@ public class StaffService {
         staffRepository.deleteById(id);
     }
 
-//<<<<<<< HEAD
-    // Keep existing methods for authentication and other features
-//    public void add(Staff staff) {
-//=======
     public void updateStaff(int id, StaffDTO staffDTO) {
         Staff staff = staffRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Staff not found"));
@@ -126,7 +127,6 @@ public class StaffService {
         staff.setDateOfBirth(staffDTO.getDateOfBirth());
         staff.setPhone(staffDTO.getPhone());
         staff.setAddress(staffDTO.getAddress());
-//        staff.setUsername(staffDTO.getUsername());
         staff.setEmail(staffDTO.getEmail());
         staff.setRole(staffDTO.getRole());
         staff.setActive(staffDTO.isActive());
@@ -141,7 +141,6 @@ public class StaffService {
 
 
     public void add(Staff staff){
-//>>>>>>> b5f3b4399d69cea13dabd1fadcf58d0656aff882
         staffRepository.save(staff);
     }
 
