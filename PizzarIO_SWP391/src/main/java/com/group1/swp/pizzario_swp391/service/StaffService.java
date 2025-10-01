@@ -104,8 +104,45 @@ public class StaffService {
         staffRepository.deleteById(id);
     }
 
+<<<<<<< HEAD
     // Keep existing methods for authentication and other features
     public void add(Staff staff) {
+=======
+    public void updateStaff(int id, StaffDTO staffDTO) {
+        Staff staff = staffRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Staff not found"));
+
+        // Kiểm tra trùng email (loại trừ chính staff hiện tại)
+        if (staffRepository.existsByEmailAndIdNot(staffDTO.getEmail(), id)) {
+            throw new IllegalArgumentException("Email đã tồn tại!");
+        }
+
+        // Kiểm tra trùng số điện thoại
+        if (staffRepository.existsByPhoneAndIdNot(staffDTO.getPhone(), id)) {
+            throw new IllegalArgumentException("Số điện thoại đã tồn tại!");
+        }
+
+        // ✅ Tự update field thay vì dùng mapper, để kiểm soát password
+        staff.setName(staffDTO.getName());
+        staff.setDateOfBirth(staffDTO.getDateOfBirth());
+        staff.setPhone(staffDTO.getPhone());
+        staff.setAddress(staffDTO.getAddress());
+        staff.setUsername(staffDTO.getUsername());
+        staff.setEmail(staffDTO.getEmail());
+        staff.setRole(staffDTO.getRole());
+        staff.setActive(staffDTO.isActive());
+
+        // 🔑 Chỉ update password nếu DTO có giá trị
+        if (staffDTO.getPassword() != null && !staffDTO.getPassword().isBlank()) {
+            staff.setPassword(staffDTO.getPassword());
+        }
+
+        staffRepository.save(staff);
+    }
+
+
+    public void add(Staff staff){
+>>>>>>> b5f3b4399d69cea13dabd1fadcf58d0656aff882
         staffRepository.save(staff);
     }
 
