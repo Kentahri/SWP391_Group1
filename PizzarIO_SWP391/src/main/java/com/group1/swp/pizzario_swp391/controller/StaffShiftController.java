@@ -1,5 +1,6 @@
 package com.group1.swp.pizzario_swp391.controller;
 
+import com.group1.swp.pizzario_swp391.dto.ShiftDTO;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffResponseDTO;
 import com.group1.swp.pizzario_swp391.entity.Shift;
 import com.group1.swp.pizzario_swp391.entity.Staff;
@@ -54,7 +55,7 @@ public class StaffShiftController {
 
         List<StaffResponseDTO> staffs = staffService.getAllStaff();
 
-        List<Shift> shift = shiftService.getAllShift();
+        List<ShiftDTO> shift = shiftService.getAllShift();
         model.addAttribute("shifts", shift);
         model.addAttribute("staffs", staffs);
 
@@ -74,48 +75,8 @@ public class StaffShiftController {
     }
 
     @PostMapping("/staff_shifts/create")
-    public String createStaffShift(
-            @RequestParam(required = false) Integer editId,
-            @RequestParam Integer staffId,
-            @RequestParam Integer shiftId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate workDate,
-            @RequestParam(required = false) Integer hourlyWage,
-            @RequestParam(required = false) StaffShift.Status status,
+    public String createStaffShift() {
 
-            RedirectAttributes ra) {
-        StaffResponseDTO staffDTO = staffService.getStaffById(staffId);
-
-        Staff staff = mapperResponse.toStaff(staffDTO);
-
-
-        Shift shift = shiftService.getShiftById(shiftId);
-
-        StaffShift ss;
-        if (editId != null) {
-            System.out.println("edit");
-            ss = staffShiftService.getById(editId);
-        } else {
-            System.out.println("create");
-            ss = new StaffShift();
-        }
-
-        ss.setStaff(staff);
-        ss.setShift(shift);
-        ss.setWorkDate(workDate.atStartOfDay()); // nếu field entity là LocalDateTime; hoặc đổi entity sang LocalDate
-        ss.setHourlyWage(hourlyWage);
-        ss.setStatus(status);
-
-        ss.setCheckIn(shift.getStartTime());
-        ss.setCheckOut(shift.getEndTime());
-
-        if (editId != null) {
-            staffShiftService.update(ss);
-            ra.addFlashAttribute("msg", "Cập nhật phân công thành công");
-        } else {
-            System.out.println(editId);
-            staffShiftService.create(ss);
-            ra.addFlashAttribute("msg", "Tạo phân công thành công");
-        }
 
         return "redirect:/admin/staff_shifts";
     }
@@ -136,44 +97,44 @@ public class StaffShiftController {
         return "admin_page/shift/edit";
     }
 
-    @PostMapping("/staff_shifts/edit/{id}")
-    public String updateStaffShift(
-            @PathVariable int id,
-            @RequestParam Integer staffId,
-            @RequestParam Integer shiftId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate workDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime endTime,
-            @RequestParam(required = false) Integer hourlyWage,
-            @RequestParam(defaultValue = "ASSIGNED") StaffShift.Status status,
-            RedirectAttributes ra) {
-
-        StaffShift ss = staffShiftService.getById(id);
-        StaffResponseDTO staffDTO = staffService.getStaffById(staffId);
-
-        Staff staff = mapperResponse.toStaff(staffDTO);
-
-        Shift shift = shiftService.getShiftById(shiftId);
-        if (shift == null) {
-            throw new IllegalArgumentException("Shift not found");
-        }
-
-        // Ghép ngày làm với giờ ca (tránh lệch ngày nếu startTime/endTime của Shift đang là LocalDateTime)
-        LocalDateTime checkIn  = LocalDateTime.of(workDate, shift.getStartTime().toLocalTime());
-        LocalDateTime checkOut = LocalDateTime.of(workDate, shift.getEndTime().toLocalTime());
-
-        ss.setStaff(staff);
-        ss.setShift(shift);
-        ss.setWorkDate(workDate.atStartOfDay());
-        ss.setCheckIn(checkIn);
-        ss.setCheckOut(checkOut);
-        ss.setHourlyWage(hourlyWage != null ? hourlyWage : ss.getHourlyWage());
-        ss.setStatus(status);
-
-        staffShiftService.update(ss);
-        ra.addFlashAttribute("msg", "Cập nhật phân công thành công");
-        return "redirect:/admin/staff_shifts";
-    }
+//    @PostMapping("/staff_shifts/edit/{id}")
+//    public String updateStaffShift(
+//            @PathVariable int id,
+//            @RequestParam Integer staffId,
+//            @RequestParam Integer shiftId,
+//            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate workDate,
+//            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime startTime,
+//            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime endTime,
+//            @RequestParam(required = false) Integer hourlyWage,
+//            @RequestParam(defaultValue = "ASSIGNED") StaffShift.Status status,
+//            RedirectAttributes ra) {
+//
+//        StaffShift ss = staffShiftService.getById(id);
+//        StaffResponseDTO staffDTO = staffService.getStaffById(staffId);
+//
+//        Staff staff = mapperResponse.toStaff(staffDTO);
+//
+//        ShiftDTO shift = shiftService.getShiftById(shiftId);
+//        if (shift == null) {
+//            throw new IllegalArgumentException("Shift not found");
+//        }
+//
+//        // Ghép ngày làm với giờ ca (tránh lệch ngày nếu startTime/endTime của Shift đang là LocalDateTime)
+//        LocalDateTime checkIn  = LocalDateTime.of(workDate, shift.getStartTime().toLocalTime());
+//        LocalDateTime checkOut = LocalDateTime.of(workDate, shift.getEndTime().toLocalTime());
+//
+//        ss.setStaff(staff);
+//        ss.setShift(shift);
+//        ss.setWorkDate(workDate.atStartOfDay());
+//        ss.setCheckIn(checkIn);
+//        ss.setCheckOut(checkOut);
+//        ss.setHourlyWage(hourlyWage != null ? hourlyWage : ss.getHourlyWage());
+//        ss.setStatus(status);
+//
+//        staffShiftService.update(ss);
+//        ra.addFlashAttribute("msg", "Cập nhật phân công thành công");
+//        return "redirect:/admin/staff_shifts";
+//    }
 
 
 }

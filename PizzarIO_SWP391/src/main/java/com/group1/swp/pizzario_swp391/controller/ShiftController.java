@@ -1,5 +1,6 @@
 package com.group1.swp.pizzario_swp391.controller;
 
+import com.group1.swp.pizzario_swp391.annotation.AdminController;
 import com.group1.swp.pizzario_swp391.dto.ShiftDTO;
 import com.group1.swp.pizzario_swp391.entity.Shift;
 import com.group1.swp.pizzario_swp391.service.ShiftService;
@@ -9,84 +10,84 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Arrays;
+import java.util.List;
+
+@AdminController
 @Controller
-@RequestMapping("/shift")
 @RequiredArgsConstructor
 public class ShiftController {
 
     private final ShiftService service;
 
-
-    @GetMapping
-    public String list(Model model,
-            @RequestParam(required = false) Integer editId) {
+    @GetMapping("/shifts")
+    public String list(Model model) {
 
         model.addAttribute("shifts", service.getAllShift());
 
 
-        if (editId != null) {
-            Shift shift = service.getShiftById(editId);
-
-            ShiftDTO form = ShiftDTO.builder()
-                    .shiftName(shift.getShiftName())
-                    .startTime(shift.getStartTime())
-                    .endTime(shift.getEndTime())
-                    .build();
-            form.setId(shift.getId());
-            model.addAttribute("form", form);
-        } else {
-            model.addAttribute("form", new ShiftDTO());
-        }
-
         return "admin_page/shift/shift-list";
     }
 
+    @GetMapping("/shift/create")
+    public String formCreate(Model model){
 
-    @PostMapping
-    public String save(@ModelAttribute("form") ShiftDTO form, RedirectAttributes redirectAttributes) {
-        try {
-            // Validation
-            if (form.getShiftName() == null || form.getShiftName().trim().isEmpty()) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Tên ca không được để trống!");
-                return "redirect:/shift";
-            }
+        model.addAttribute("shift", new ShiftDTO());
 
-            if (form.getStartTime() == null || form.getEndTime() == null) {
-                redirectAttributes.addFlashAttribute("errorMessage",
-                        "Thời gian bắt đầu và kết thúc không được để trống!");
-                return "redirect:/shift";
-            }
+        List<String> labels = Arrays.stream(Shift.ShiftType.values())
+                .map(Enum::name)
+                .toList();
 
-            if (form.getStartTime().isAfter(form.getEndTime())) {
-                redirectAttributes.addFlashAttribute("errorMessage",
-                        "Thời gian bắt đầu phải trước thời gian kết thúc!");
-                return "redirect:/shift";
-            }
+        model.addAttribute("label", labels);
 
-
-            if (form.getId() == null || form.getId() == 0) {
-                service.createShift(form);
-                redirectAttributes.addFlashAttribute("successMessage", "Ca làm việc đã được thêm thành công!");
-            } else {
-                service.updateShift(form.getId(), form);
-                redirectAttributes.addFlashAttribute("successMessage", "Ca làm việc đã được cập nhật thành công!");
-            }
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi xảy ra: " + e.getMessage());
-        }
-        return "redirect:/shift";
+        return "admin_page/shift/create";
     }
 
+    @PostMapping("/shift/create")
+    public String save(@ModelAttribute("shift") ShiftDTO shift, RedirectAttributes redirectAttributes) {
+
+        service.createShift(shift);
+
+        redirectAttributes.addFlashAttribute("message", "Tạo thành công");
+
+        return "redirect:/admin/shifts";
+
+    }
+
+    @GetMapping("/shift/edit/{id}")
+    public String update(@PathVariable Integer id, Model model) {
+
+        ShiftDTO shift = service.getShiftById(id);
+
+        List<String> labels = Arrays.stream(Shift.ShiftType.values())
+                .map(Enum::name)
+                .toList();
+
+        model.addAttribute("label", labels);
+
+        model.addAttribute("shift", shift);
+        System.out.println(shift);
+
+        return "admin_page/shift/create";
+    }
+
+    @PostMapping("/shift/edit/{id}")
+    public String updateShift(@ModelAttribute("shift") ShiftDTO shiftDTO,@PathVariable int id, RedirectAttributes redirectAttributes){
+
+        service.updateShift(id, shiftDTO);
+
+        redirectAttributes.addFlashAttribute("message", "Update thành công");
+
+        return "redirect:/admin/shifts";
+    }
     // Xóa
-    @PostMapping("/{id}/delete")
+    @GetMapping("/shift/delete/{id}")
     public String delete(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
-        try {
-            service.deleteShift(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Ca làm việc đã được xóa thành công!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Có lỗi xảy ra khi xóa: " + e.getMessage());
-        }
-        return "redirect:/shift";
+
+        service.deleteShift(id);
+
+        redirectAttributes.addFlashAttribute("message", "Delete thành công");
+        return "redirect:/admin/shifts";
     }
 
 }
