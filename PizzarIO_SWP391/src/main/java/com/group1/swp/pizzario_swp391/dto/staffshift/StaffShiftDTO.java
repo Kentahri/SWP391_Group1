@@ -12,9 +12,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StaffShiftDTO {
-    private Long staffId;
-    private Long shiftId;
-
+    private Integer staffId;
+    private Integer shiftId;
     // Ngày làm, trạng thái ca làm, lương/giờ
     private LocalDate workDate;
     private String status; // ví dụ: SCHEDULED, CHECKED_IN, CHECKED_OUT
