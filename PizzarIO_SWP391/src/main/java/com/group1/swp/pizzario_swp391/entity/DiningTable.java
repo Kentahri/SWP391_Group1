@@ -33,22 +33,18 @@ public class DiningTable {
         sessionList = new ArrayList<>();
     }
 
-    public DiningTable(TableType tableType, TableStatus tableStatus, TableCondition tableCondition, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public DiningTable(TableStatus tableStatus, TableCondition tableCondition, LocalDateTime createdAt, LocalDateTime updatedAt, int capacity) {
         this();
-        this.tableType = tableType;
         this.tableStatus = tableStatus;
         this.tableCondition = tableCondition;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.capacity = capacity;
     }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-
-    @Column(name = "table_type")
-    @Enumerated(EnumType.STRING)
-    private TableType tableType;
 
     @Column(name = "table_status")
     @Enumerated(EnumType.STRING)
@@ -64,9 +60,7 @@ public class DiningTable {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public enum TableType{
-        SMALL, BIG
-    }
+    private int capacity;
 
     public enum TableStatus{
         AVAILABLE, OCCUPIED, RESERVED, WAITING_PAYMENT
