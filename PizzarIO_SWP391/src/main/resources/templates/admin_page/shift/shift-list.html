@@ -11,7 +11,7 @@
 
     <div th:text="${message}"></div>
 
-    <a class="primary-btn" th:href="@{/admin/shift/create}">Thêm ca làm việc</a>
+    <a class="primary-btn" th:href="@{/manager/shift/create}">Thêm ca làm việc</a>
     <table border="1">
         <thead>
         <tr>
@@ -29,10 +29,10 @@
             <td th:text="${shift.startTime}">08:00</td>
             <td th:text="${shift.endTime}">12:00</td>
             <td>
-                <a class="primary-btn" th:href="@{'/admin/shift/edit/' + ${shift.id}}">Sửa</a>
+                <a class="primary-btn" th:href="@{'/manager/shift/edit/' + ${shift.id}}">Sửa</a>
 
                 <a class="primary-btn"
-                   th:href="@{'/admin/shift/delete/' + ${shift.id}}"
+                   th:href="@{'/manager/shift/delete/' + ${shift.id}}"
                    th:onclick="|return confirm('Bạn có chắc chắn muốn xóa ca #${shift.id}?');|">Xóa</a>
 
             </td>

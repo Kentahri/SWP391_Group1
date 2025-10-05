@@ -49,8 +49,9 @@ public class StaffShiftService {
     }
 
     @Transactional
-    public void update(StaffShiftDTO staffShiftDTO) {
-        StaffShift staffShift = staffShiftMapper.toStaffShift(staffShiftDTO);
+    public void update(StaffShiftDTO staffShiftDTO, int id) {
+        StaffShift staffShift = staffShiftRepository.findById(id).orElseThrow(() -> new RuntimeException("STAFF SHIFT NOT FOUND"));
+
 
         staffShift.setStaff(staffRepository.findById(staffShiftDTO.getStaffId()).orElseThrow(() -> new RuntimeException("Staff not found")));
         staffShift.setShift(shiftRepository.findById(staffShiftDTO.getShiftId()).orElseThrow(() -> new RuntimeException("Shift not found")));

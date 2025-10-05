@@ -9,8 +9,8 @@
 
 <form th:object="${shift}"
       th:action="${shift.id} != null ?
-                  @{/admin/shift/edit/{id}(id=${shift.id})} :
-                  @{/admin/shift/create}"
+                  @{/manager/shift/edit/{id}(id=${shift.id})} :
+                  @{/manager/shift/create}"
       method="post">
 
     <input type="hidden" th:field="*{id}"/>  <!-- rất quan trọng cho update -->

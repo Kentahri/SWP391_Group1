@@ -9,11 +9,13 @@ import com.group1.swp.pizzario_swp391.mapper.StaffResponseMapper;
 import com.group1.swp.pizzario_swp391.service.ShiftService;
 import com.group1.swp.pizzario_swp391.service.StaffService;
 import com.group1.swp.pizzario_swp391.service.StaffShiftService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -66,17 +68,25 @@ public class StaffShiftController {
     }
 
     @PostMapping("/staff_shifts/create")
-    public String createStaffShift(@ModelAttribute("staffShift") StaffShiftDTO staffShiftDTO,
-                                   RedirectAttributes ra) {
+    public String createStaffShift(@Valid @ModelAttribute("staffShift") StaffShiftDTO staffShiftDTO,
+                                   BindingResult bindingResult,
+                                   RedirectAttributes ra, Model model) {
 
-        System.out.println("tao ne  " + staffShiftDTO);
+        model.addAttribute("isEdit", false);
+
+        if (bindingResult.hasErrors()) {
+            // Trả về lại form để hiển thị lỗi + giữ dữ liệu đã nhập
+            model.addAttribute("staffs", staffService.getAllStaff());
+            model.addAttribute("shifts", shiftService.getAllShift());
+            return "admin_page/staff_shift/edit";
+        }
 
 
-        staffShiftService.update(staffShiftDTO);
+        staffShiftService.create(staffShiftDTO);
 
         ra.addFlashAttribute("message", "Create successfully");
 
-        return "redirect:/admin/staff_shifts";
+        return "redirect:/manager/staff_shifts";
     }
 
     @PostMapping("/staff_shifts/delete/{id}")
@@ -97,17 +107,23 @@ public class StaffShiftController {
     }
 
     @PostMapping("/staff_shifts/edit/{id}")
-    public String updateStaffShift(@PathVariable("id") int id, @ModelAttribute("staffShift") StaffShiftDTO staffShiftDTO,
+    public String updateStaffShift(@PathVariable("id") int id, @Valid @ModelAttribute("staffShift") StaffShiftDTO staffShiftDTO, BindingResult bindingResult, Model model,
                                    RedirectAttributes ra) {
 
-        System.out.println("tao ne  " + staffShiftDTO);
+        model.addAttribute("isEdit", true);
+        model.addAttribute("editId", id);
 
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("staffs", staffService.getAllStaff());
+            model.addAttribute("shifts", shiftService.getAllShift());
+            return "admin_page/staff_shift/edit";
+        }
 
-        staffShiftService.update(staffShiftDTO);
+        staffShiftService.update(staffShiftDTO, id);
 
         ra.addFlashAttribute("message", "Update successfully");
 
-        return "redirect:/admin/staff_shifts";
+        return "redirect:/manager/staff_shifts";
     }
 
 

@@ -3,6 +3,7 @@ package com.group1.swp.pizzario_swp391.controller.manager;
 import java.util.List;
 
 
+import com.group1.swp.pizzario_swp391.annotation.AdminController;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffDTO;
 
 import jakarta.validation.Valid;
@@ -28,12 +29,13 @@ import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequiredArgsConstructor
+@AdminController
 public class StaffController {
 
     final StaffService staffService;
 
     // READ: list all staff
-    @GetMapping("admin/staff")
+    @GetMapping("/staff")
     public String listStaffs(Model model) {
         List<StaffResponseDTO> staffs = staffService.getAllStaff();
         model.addAttribute("staffs", staffs);
@@ -41,7 +43,7 @@ public class StaffController {
         return "admin_page/staff/list";
     }
 
-    @GetMapping("create")
+    @GetMapping("/create")
     public String createForm(Model model) {
         model.addAttribute("staff", new StaffCreateDTO());
         model.addAttribute("roles", Staff.Role.values());
@@ -70,7 +72,7 @@ public class StaffController {
     }
 
     // UPDATE: show edit form
-    @GetMapping("edit/{id}")
+    @GetMapping("/edit/{id}")
     public String edit(Model model, @PathVariable int id) {
 
         StaffUpdateDTO staffUpdateDTO = staffService.getStaffForUpdate(id);

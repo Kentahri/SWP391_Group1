@@ -65,7 +65,7 @@
         <h1>Staff Shift List</h1>
         <div th:if="${msg}" class="error" th:text="${msg}"></div>
 
-        <a th:href="@{/admin/staff_shifts/create}" class="primary-btn"
+        <a th:href="@{/manager/staff_shifts/create}" class="primary-btn"
           >➕ Add Staff Shift</a
         >
 
@@ -99,12 +99,12 @@
               <td class="money" th:text="${r.hourlyWage} + 'đ'"></td>
               <td class="actions">
                 <a
-                  th:href="@{/admin/staff_shifts/create(editId=${r.id})}"
+                  th:href="@{/manager/staff_shifts/create(editId=${r.id})}"
                   class="primary-btn"
                   >Edit</a
                 >
                 <form
-                  th:action="@{'/admin/staff_shifts/delete/' + ${r.id}}"
+                  th:action="@{'/manager/staff_shifts/delete/' + ${r.id}}"
                   method="post"
                 >
                   <button type="submit" class="delete-btn">Delete</button>
