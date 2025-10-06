@@ -10,7 +10,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import javax.management.RuntimeMBeanException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -24,37 +23,39 @@ public class StaffShiftService {
     private final StaffRepository staffRepository;
     private final ShiftRepository shiftRepository;
 
-
     public List<StaffShift> search(LocalDate from, LocalDate to, Integer shiftId, Integer staffId) {
         return staffShiftRepository.search(from, to, shiftId, staffId);
     }
-
 
     @Transactional
     public void create(StaffShiftDTO staffShiftDTO) {
 
         StaffShift staffShift = staffShiftMapper.toStaffShift(staffShiftDTO);
 
-        staffShift.setStaff(staffRepository.findById(staffShiftDTO.getStaffId()).orElseThrow(() -> new RuntimeException("Staff not found")));
-        staffShift.setShift(shiftRepository.findById(staffShiftDTO.getShiftId()).orElseThrow(() -> new RuntimeException("Shift not found")));
+        staffShift.setStaff(staffRepository.findById(staffShiftDTO.getStaffId())
+                .orElseThrow(() -> new RuntimeException("Staff not found")));
+        staffShift.setShift(shiftRepository.findById(staffShiftDTO.getShiftId())
+                .orElseThrow(() -> new RuntimeException("Shift not found")));
 
         staffShiftRepository.save(staffShift);
 
     }
 
     public StaffShiftDTO getById(int id) {
-        StaffShift staffShift =  staffShiftRepository.findById(id)
+        StaffShift staffShift = staffShiftRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("StaffShift not found"));
         return staffShiftMapper.toStaffShiftDTO(staffShift);
     }
 
     @Transactional
     public void update(StaffShiftDTO staffShiftDTO, int id) {
-        StaffShift staffShift = staffShiftRepository.findById(id).orElseThrow(() -> new RuntimeException("STAFF SHIFT NOT FOUND"));
+        StaffShift staffShift = staffShiftRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("STAFF SHIFT NOT FOUND"));
 
-
-        staffShift.setStaff(staffRepository.findById(staffShiftDTO.getStaffId()).orElseThrow(() -> new RuntimeException("Staff not found")));
-        staffShift.setShift(shiftRepository.findById(staffShiftDTO.getShiftId()).orElseThrow(() -> new RuntimeException("Shift not found")));
+        staffShift.setStaff(staffRepository.findById(staffShiftDTO.getStaffId())
+                .orElseThrow(() -> new RuntimeException("Staff not found")));
+        staffShift.setShift(shiftRepository.findById(staffShiftDTO.getShiftId())
+                .orElseThrow(() -> new RuntimeException("Shift not found")));
 
         staffShiftMapper.updateStaffShift(staffShift, staffShiftDTO);
 
@@ -63,7 +64,8 @@ public class StaffShiftService {
 
     public void delete(int id) {
 
-       StaffShift staffShift = staffShiftRepository.findById(id).orElseThrow(() -> new RuntimeException("STAFFSHIFT NOT FOUND"));
+        StaffShift staffShift = staffShiftRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("STAFFSHIFT NOT FOUND"));
 
         staffShiftRepository.delete(staffShift);
 

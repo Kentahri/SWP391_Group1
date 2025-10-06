@@ -4,8 +4,6 @@ import com.group1.swp.pizzario_swp391.annotation.AdminController;
 import com.group1.swp.pizzario_swp391.dto.ShiftDTO;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.staffshift.StaffShiftDTO;
-import com.group1.swp.pizzario_swp391.entity.StaffShift;
-import com.group1.swp.pizzario_swp391.mapper.StaffResponseMapper;
 import com.group1.swp.pizzario_swp391.service.ShiftService;
 import com.group1.swp.pizzario_swp391.service.StaffService;
 import com.group1.swp.pizzario_swp391.service.StaffShiftService;
@@ -31,7 +29,7 @@ public class StaffShiftController {
 
     StaffService staffService;
     ShiftService shiftService;
-    StaffResponseMapper mapperResponse;
+    // removed unused mapperResponse
 
     @GetMapping("/staff_shifts")
     public String listStaffShifts(Model model) {
@@ -39,7 +37,6 @@ public class StaffShiftController {
         model.addAttribute("rows", rows);
         return "admin_page/staff_shift/shift_management";
     }
-
 
     @GetMapping("/staff_shifts/create")
     public String createFormStaffShift(
@@ -69,8 +66,8 @@ public class StaffShiftController {
 
     @PostMapping("/staff_shifts/create")
     public String createStaffShift(@Valid @ModelAttribute("staffShift") StaffShiftDTO staffShiftDTO,
-                                   BindingResult bindingResult,
-                                   RedirectAttributes ra, Model model) {
+            BindingResult bindingResult,
+            RedirectAttributes ra, Model model) {
 
         model.addAttribute("isEdit", false);
 
@@ -80,7 +77,6 @@ public class StaffShiftController {
             model.addAttribute("shifts", shiftService.getAllShift());
             return "admin_page/staff_shift/edit";
         }
-
 
         staffShiftService.create(staffShiftDTO);
 
@@ -92,9 +88,8 @@ public class StaffShiftController {
     @PostMapping("/staff_shifts/delete/{id}")
     public String deleteStaffShift(@PathVariable int id, RedirectAttributes ra) {
         staffShiftService.delete(id);
-        System.out.println(id);
         ra.addFlashAttribute("msg", "Xóa phân công thành công");
-        return "redirect:/admin/staff_shifts";
+        return "redirect:staff_shifts";
     }
 
     @GetMapping("/staff_shifts/edit/{id}")
@@ -107,8 +102,9 @@ public class StaffShiftController {
     }
 
     @PostMapping("/staff_shifts/edit/{id}")
-    public String updateStaffShift(@PathVariable("id") int id, @Valid @ModelAttribute("staffShift") StaffShiftDTO staffShiftDTO, BindingResult bindingResult, Model model,
-                                   RedirectAttributes ra) {
+    public String updateStaffShift(@PathVariable("id") int id,
+            @Valid @ModelAttribute("staffShift") StaffShiftDTO staffShiftDTO, BindingResult bindingResult, Model model,
+            RedirectAttributes ra) {
 
         model.addAttribute("isEdit", true);
         model.addAttribute("editId", id);
@@ -125,6 +121,5 @@ public class StaffShiftController {
 
         return "redirect:/manager/staff_shifts";
     }
-
 
 }

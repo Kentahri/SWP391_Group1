@@ -68,7 +68,7 @@ public class StaffController {
         staffService.createNewStaff(dto);
         ra.addFlashAttribute("success", "Created staff successfully");
         // PRG: điều hướng về trang list
-            return "redirect:admin/staff";
+        return "redirect:staff";
     }
 
     // UPDATE: show edit form

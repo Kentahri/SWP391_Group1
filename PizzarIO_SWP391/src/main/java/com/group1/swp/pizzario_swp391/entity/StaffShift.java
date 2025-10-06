@@ -3,8 +3,7 @@ package com.group1.swp.pizzario_swp391.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
-
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -21,7 +20,7 @@ public class StaffShift {
     @JoinColumn(name = "shift_id")
     private Shift shift;
 
-    public StaffShift(LocalDateTime workDate, Status status, LocalDateTime checkIn, LocalDateTime checkOut) {
+    public StaffShift(LocalDate workDate, Status status, LocalDateTime checkIn, LocalDateTime checkOut) {
         this.workDate = workDate;
         this.status = status;
         this.checkIn = checkIn;
@@ -33,7 +32,7 @@ public class StaffShift {
     private int id;
 
     @Column(name = "work_date")
-    private LocalDateTime workDate;
+    private LocalDate workDate;
 
     @Enumerated(EnumType.STRING)
     private Status status;

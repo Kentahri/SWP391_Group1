@@ -50,7 +50,7 @@ public class ShiftController {
 
         redirectAttributes.addFlashAttribute("message", "Tạo thành công");
 
-        return "redirect:/admin/shifts";
+        return "redirect:/manager/shifts";
 
     }
 
@@ -78,7 +78,7 @@ public class ShiftController {
 
         redirectAttributes.addFlashAttribute("message", "Update thành công");
 
-        return "redirect:/admin/shifts";
+        return "redirect:/manager/shifts";
     }
     // Xóa
     @GetMapping("/shift/delete/{id}")
@@ -87,7 +87,7 @@ public class ShiftController {
         service.deleteShift(id);
 
         redirectAttributes.addFlashAttribute("message", "Delete thành công");
-        return "redirect:/admin/shifts";
+        return "redirect:/manager/shifts";
     }
 
 }
