@@ -12,6 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
 // ProdSecurityConfig.java
 @Profile("!dev")
@@ -25,21 +26,16 @@ public class ProdSecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // (tuỳ chọn) điều hướng theo role sau khi đăng nhập
     @Bean
     AuthenticationSuccessHandler roleBasedSuccessHandler(LoginService audit) {
         return (req, res, auth) -> {
             String email = auth.getName();
-            log.info("Tao ne: " + email);
             try {
-                log.info("tao vao được đây rồi");
                 boolean checkedIn = audit.recordLoginByEmail(email);
-                log.info(checkedIn + " tao đúng");
                 // tuỳ chọn: gắn cờ session để hiện toast ở UI
                 req.getSession().setAttribute("CHECKIN_RESULT", checkedIn ? "OK" : "SKIPPED");
             } catch (Exception ex) {
                 // Không để lỗi check-in phá vỡ đăng nhập/redirect
-                log.info("tao sai");
                 req.getSession().setAttribute("CHECKIN_RESULT", "ERROR");
             }
             var a = auth.getAuthorities();
@@ -51,10 +47,21 @@ public class ProdSecurityConfig {
     }
 
     @Bean
+    LogoutSuccessHandler auditLogoutSuccessHandler(LoginService audit) {
+        return (request, response, authentication) -> {
+            if (authentication != null) {
+                audit.recordLogoutByEmail(authentication.getName());
+            }
+            response.sendRedirect(request.getContextPath() + "/login?logout");
+        };
+    }
+
+    @Bean
     SecurityFilterChain prodFilter(
             HttpSecurity http,
             UserDetailsService userDetailsService,
-            AuthenticationSuccessHandler roleBasedSuccessHandler) throws Exception {
+            AuthenticationSuccessHandler roleBasedSuccessHandler,
+            LogoutSuccessHandler auditLogoutSuccessHandler) throws Exception {
         http
                 .userDetailsService(userDetailsService)
                 .authorizeHttpRequests(auth -> auth
@@ -74,7 +81,7 @@ public class ProdSecurityConfig {
                         .permitAll())
                 .logout(l -> l
                         .logoutUrl("/logout") // URL để gửi logout
-                        .logoutSuccessUrl("/login?logout")
+                        .logoutSuccessHandler(auditLogoutSuccessHandler)
                         .invalidateHttpSession(true) // huỷ session
                         .clearAuthentication(true) // xoá SecurityContext
                         .deleteCookies("JSESSIONID") // xoá cookie phiên

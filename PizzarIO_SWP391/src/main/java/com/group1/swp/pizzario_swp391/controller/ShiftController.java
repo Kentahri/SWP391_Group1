@@ -1,6 +1,6 @@
 package com.group1.swp.pizzario_swp391.controller;
 
-import com.group1.swp.pizzario_swp391.annotation.AdminController;
+import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import com.group1.swp.pizzario_swp391.dto.ShiftDTO;
 import com.group1.swp.pizzario_swp391.entity.Shift;
 import com.group1.swp.pizzario_swp391.service.ShiftService;
@@ -13,7 +13,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.Arrays;
 import java.util.List;
 
-@AdminController
+@ManagerUrl
 @Controller
 @RequiredArgsConstructor
 public class ShiftController {

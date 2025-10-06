@@ -1,6 +1,6 @@
 package com.group1.swp.pizzario_swp391.controller;
 
-import com.group1.swp.pizzario_swp391.annotation.AdminController;
+import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import com.group1.swp.pizzario_swp391.dto.ShiftDTO;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.staffshift.StaffShiftDTO;
@@ -21,7 +21,7 @@ import java.util.List;
 
 @Controller
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@AdminController
+@ManagerUrl
 @RequiredArgsConstructor
 public class StaffShiftController {
 

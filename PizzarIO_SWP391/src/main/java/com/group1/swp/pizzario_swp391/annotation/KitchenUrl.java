@@ -11,6 +11,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Controller
-@RequestMapping("/manager")
-public @interface AdminController {
+@RequestMapping("/kitchen")
+public @interface KitchenUrl {
 }

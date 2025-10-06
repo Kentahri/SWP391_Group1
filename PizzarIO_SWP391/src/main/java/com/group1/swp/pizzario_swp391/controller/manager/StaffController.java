@@ -3,7 +3,7 @@ package com.group1.swp.pizzario_swp391.controller.manager;
 import java.util.List;
 
 
-import com.group1.swp.pizzario_swp391.annotation.AdminController;
+import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffDTO;
 
 import jakarta.validation.Valid;
@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.group1.swp.pizzario_swp391.dto.staff.StaffCreateDTO;
@@ -29,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequiredArgsConstructor
-@AdminController
+@ManagerUrl
 public class StaffController {
 
     final StaffService staffService;

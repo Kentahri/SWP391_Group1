@@ -53,4 +53,22 @@ public class LoginService {
         return true;
     }
 
+    public void recordLogoutByEmail(String email) {
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+
+        Staff staff = this.findByEmail(email);
+        StaffShift staffShift = staffShiftRepository.findCurrentShiftByStaffId(staff.getId(), today).get();
+
+        if (now.isBefore(staffShift.getShift().getEndTime().toLocalTime())){
+            staffShift.setStatus(StaffShift.Status.SCHEDULED);
+        }
+        else{
+            staffShift.setStatus(StaffShift.Status.LEFT);
+        }
+
+        staffShift.setCheckOut(LocalDateTime.now());
+        staffShiftRepository.save(staffShift);
+    }
+
 }
