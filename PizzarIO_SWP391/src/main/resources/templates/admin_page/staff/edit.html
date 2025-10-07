@@ -87,7 +87,7 @@
         <p th:text="${error}"></p>
     </div>
 
-    <form th:action="@{'/edit/' + ${staffID}}" th:object="${staff}" method="post">
+    <form th:action="@{'/manager/edit/' + ${staffID}}" th:object="${staff}" method="post">
         <div>
             <label>Name:</label>
             <input type="text" th:field="*{name}" required/>
@@ -127,7 +127,7 @@
         <button type="submit">Update</button>
     </form>
 
-    <a class="back-link" th:href="@{/staff}">⬅ Back to List</a>
+    <a class="back-link" th:href="@{/manager/staff}">⬅ Back to List</a>
 </div>
 </body>
 

@@ -21,12 +21,16 @@ public class ShiftService {
 
     private final StaffShiftRepository staffShiftRepo;
 
-    public List<Shift> getAllShift() {
-        return shiftRepository.findAll();
+    public List<ShiftDTO> getAllShift() {
+        List<ShiftDTO> list = shiftMapper.toShiftDTOs( shiftRepository.findAll());
+        return list;
     }
 
-    public Shift getShiftById(int id) {
-        return shiftRepository.findById(id).orElseThrow(() -> new RuntimeException("Shift not existed"));
+    public ShiftDTO getShiftById(int id) {
+        Shift shift =  shiftRepository.findById(id).orElseThrow(() -> new RuntimeException("Shift not existed"));
+        ShiftDTO dto = shiftMapper.toShiftDTO(shift);
+
+        return dto;
     }
 
     public Shift createShift(ShiftDTO shiftDTO) {
@@ -38,16 +42,14 @@ public class ShiftService {
         return shiftRepository.save(shift);
     }
 
+    @Transactional
     public void updateShift(int id, ShiftDTO shiftDTO) {
-        Shift shift = this.getShiftById(id);
-
+        Shift shift = shiftRepository.findById(id).orElseThrow(() -> new RuntimeException("Shift not found"));
         LocalDateTime now = LocalDateTime.now();
-
         shiftDTO.setCreatedAt(now);
 
         shiftMapper.updateShift(shift, shiftDTO);
 
-        shiftRepository.save(shift);
     }
 
     public void deleteShift(int id) {

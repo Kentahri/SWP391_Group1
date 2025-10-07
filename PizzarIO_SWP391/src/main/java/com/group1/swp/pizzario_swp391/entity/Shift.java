@@ -1,10 +1,9 @@
 package com.group1.swp.pizzario_swp391.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -32,8 +31,7 @@ public class Shift {
         staffShifts = new ArrayList<>();
     }
 
-    public Shift(String shiftName, LocalDateTime startTime, LocalDateTime endTime, LocalDateTime createdAt) {
-        this();
+    public Shift(ShiftType shiftName, LocalDateTime startTime, LocalDateTime endTime, LocalDateTime createdAt) {
         this.shiftName = shiftName;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -44,8 +42,14 @@ public class Shift {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    private String shiftName;
+    @Enumerated(EnumType.STRING)
+    private ShiftType shiftName;
+
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private LocalDateTime createdAt;
+
+    public enum ShiftType {
+        SANG, CHIEU, TOI
+    }
 }
