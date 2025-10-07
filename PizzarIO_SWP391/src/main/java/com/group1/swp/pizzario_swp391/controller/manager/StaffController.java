@@ -3,6 +3,7 @@ package com.group1.swp.pizzario_swp391.controller.manager;
 import java.util.List;
 
 
+import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffDTO;
 
 import jakarta.validation.Valid;
@@ -14,7 +15,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.group1.swp.pizzario_swp391.dto.staff.StaffCreateDTO;
@@ -28,12 +28,13 @@ import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequiredArgsConstructor
+@ManagerUrl
 public class StaffController {
 
     final StaffService staffService;
 
     // READ: list all staff
-    @GetMapping("admin/staff")
+    @GetMapping("/staff")
     public String listStaffs(Model model) {
         List<StaffResponseDTO> staffs = staffService.getAllStaff();
         model.addAttribute("staffs", staffs);
@@ -41,7 +42,7 @@ public class StaffController {
         return "admin_page/staff/list";
     }
 
-    @GetMapping("create")
+    @GetMapping("/create")
     public String createForm(Model model) {
         model.addAttribute("staff", new StaffCreateDTO());
         model.addAttribute("roles", Staff.Role.values());
@@ -66,11 +67,11 @@ public class StaffController {
         staffService.createNewStaff(dto);
         ra.addFlashAttribute("success", "Created staff successfully");
         // PRG: điều hướng về trang list
-            return "redirect:admin/staff";
+        return "redirect:staff";
     }
 
     // UPDATE: show edit form
-    @GetMapping("edit/{id}")
+    @GetMapping("/edit/{id}")
     public String edit(Model model, @PathVariable int id) {
 
         StaffUpdateDTO staffUpdateDTO = staffService.getStaffForUpdate(id);

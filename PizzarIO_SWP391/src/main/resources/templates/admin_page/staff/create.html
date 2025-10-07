@@ -26,7 +26,7 @@
 
         <div th:if="${error}" class="error" th:text="${error}"></div>
 
-        <form th:action="@{/create}" th:object="${staff}" method="post">
+        <form th:action="@{/manager/create}" th:object="${staff}" method="post">
 
             <div class="form-row">
                 <label>Name</label>
@@ -81,7 +81,7 @@
         </form>
 
 
-        <a class="back-link" th:href="@{/staff}">⬅ Back to List</a>
+        <a class="back-link" th:href="@{/manager/staff}">⬅ Back to List</a>
     </div>
 </div>
 </body>
