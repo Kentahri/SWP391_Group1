@@ -3,11 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <title>Đăng nhập</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
     <link rel="stylesheet" th:href="@{/css/login.css}" />
   </head>
   <body class="min-vh-100 d-flex align-items-center py-4">
-    <div class="container">`
+    <div class="container">
+      `
 
       <div class="card shadow mx-auto login-card">
         <div class="card-body p-4">
@@ -20,7 +26,12 @@
           </div>
 
           <!-- Thông báo lỗi/thoát -->
-          <div th:if="${param.error}" th:utext="${session.LOGIN_ERROR_MSG}" class="alert alert-danger" role="alert">
+          <div
+            th:if="${param.error}"
+            th:utext="${session.LOGIN_ERROR_MSG}"
+            class="alert alert-danger"
+            role="alert"
+          >
             Sai email hoặc mật khẩu
           </div>
 
@@ -67,7 +78,6 @@
               Đăng nhập
             </button>
           </form>
-
         </div>
       </div>
     </div>
