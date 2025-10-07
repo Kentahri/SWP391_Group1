@@ -20,8 +20,12 @@ public class DevSecurityConfig {
     @Bean
     SecurityFilterChain filter(HttpSecurity http) throws Exception {
         http
-                .authorizeHttpRequests(a -> a.anyRequest().permitAll())
-                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(a -> a
+                        .requestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**").permitAll()
+                        .anyRequest().permitAll())
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**")
+                        .disable())
                 .formLogin(form -> form.disable())   // tắt trang login mặc định
                 .httpBasic(b -> b.disable())         // tắt HTTP Basic
                 .logout(l -> l.disable());           // (tuỳ chọn) tắt logout
