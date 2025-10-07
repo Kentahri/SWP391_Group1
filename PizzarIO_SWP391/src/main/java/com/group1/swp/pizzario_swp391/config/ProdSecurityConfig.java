@@ -1,7 +1,5 @@
 package com.group1.swp.pizzario_swp391.config;
 
-import com.group1.swp.pizzario_swp391.service.LoginService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -13,6 +11,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
+
+import com.group1.swp.pizzario_swp391.service.LoginService;
+
+import lombok.extern.slf4j.Slf4j;
 
 // ProdSecurityConfig.java
 @Profile("!dev")
@@ -66,12 +68,14 @@ public class ProdSecurityConfig {
                 .userDetailsService(userDetailsService)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/webjars/**", "/css/**", "/images/**", "/js/**", "/guest",
-                                "/missing_pass/**")
+                                "/missing_pass/**", "/ws/**", "/app/**", "/topic/**", "/queue/**")
                         .permitAll()
                         .requestMatchers("/manager/**").hasRole("MANAGER")
                         .requestMatchers("/kitchen/**").hasRole("KITCHEN")
                         .requestMatchers("/cashier/**").hasRole("CASHIER")
                         .anyRequest().authenticated())
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**"))
                 .formLogin(f -> f
                         .loginPage("/login")
                         .usernameParameter("email") // <input name="email">
