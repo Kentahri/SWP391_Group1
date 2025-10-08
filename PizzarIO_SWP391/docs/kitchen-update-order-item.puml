@@ -1,0 +1,61 @@
+@startuml KitchenUpdateOrderItem
+title Bếp Update Món - WebSocket Flow
+
+actor "Kitchen\nManager" as Kitchen
+actor "Cashier" as Cashier
+actor "Guest\n(Bàn 5)" as Guest
+participant "Backend\n(WebSocket)" as Backend
+database "Database" as DB
+
+== Initial State ==
+Kitchen -> Backend: Connect /ws-kitchen
+activate Kitchen
+Kitchen -> Backend: Subscribe to kitchen queue
+
+Cashier -> Backend: Connect /ws-cashier
+activate Cashier
+Cashier -> Backend: Subscribe /topic/order-items
+
+Guest -> Backend: Connect /ws-guest
+activate Guest
+note over Guest: Guest đã chọn bàn 5\nsessionId = "abc-123"\nđang ngồi đợi món
+Guest -> Backend: Subscribe /queue/guest-abc-123
+
+== Order hiện tại của bàn 5 ==
+note over DB
+Order ID: 50 (Bàn 5)
+Items:
+  - Pizza Margherita: PREPARING
+  - Coca Cola: SERVED
+  - Salad: PENDING
+end note
+
+== Kitchen Update: Pizza Xong ==
+Kitchen -> Backend: SEND /app/kitchen/update-order-item\norderItemId: 101, newStatus: SERVED\nkitchenStaffId: chef-01, note: Extra cheese
+
+Backend -> DB: SELECT * FROM OrderItem WHERE id=101
+DB --> Backend: OrderItem\nid: 101, orderId: 50\nproductName: Pizza Margherita\noldStatus: PREPARING
+
+Backend -> DB: UPDATE OrderItem SET status=SERVED\nWHERE id=101
+DB --> Backend: Updated
+
+Backend -> DB: SELECT tableId FROM Order\nJOIN Session ON Order.sessionId = Session.id\nWHERE Order.id = 50
+DB --> Backend: tableId = 5, sessionId = abc-123
+
+Backend -> Cashier: /topic/order-items\norderItemId: 101, orderId: 50, tableId: 5\nproductName: Pizza Margherita\noldStatus: PREPARING, newStatus: SERVED
+note over Cashier: Cashier thấy:\nBàn 5 - Pizza xong rồi!\n
+
+Backend -> Guest: /queue/guest-abc-123\ntype: ORDER_ITEM_UPDATE\norderItemId: 101\nproductName: Pizza Margherita\nstatus: SERVED
+note over Guest: Guest thấy trên tablet:\n[OK] Pizza Margherita - Đã xong\n[OK] Coca Cola - Đã phục vụ\n[...] Salad - Đang chờ
+
+== Toàn bộ order tracking (Option A) ==
+Guest -> Backend: SEND /app/guest/get-order-status
+Backend -> DB: SELECT * FROM OrderItem\nWHERE orderId = 50
+DB --> Backend: All items
+
+Backend -> Guest: /queue/guest-abc-123\norderId: 50\nPizza: SERVED (progress 100)\nCoca: SERVED (progress 100)\nSalad: PENDING (progress 0)
+
+note over Guest: Guest thấy progress bar:\nPizza: 100%\nCoca: 100%\nSalad: 0%
+
+@enduml
+
