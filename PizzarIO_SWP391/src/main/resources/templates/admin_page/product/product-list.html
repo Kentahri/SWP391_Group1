@@ -36,7 +36,7 @@
             </td>
             <td th:text="${#numbers.formatDecimal(p.basePrice, 0, 'COMMA', 0, 'POINT')}"></td>
             <td th:text="${#numbers.formatDecimal(p.flashSalePrice, 0, 'COMMA', 0, 'POINT')}"></td>
-            <td th:text="${p.category.name}"></td>
+            <td th:text="${p.categoryName}"></td>
             <td th:text="${p.isActive ? 'Yes' : 'No'}"></td>
             <td>
                 <a th:href="@{'/product/edit/' + ${p.id}}" class="btn btn-warning btn-sm">Sửa</a>

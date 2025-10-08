@@ -2,7 +2,6 @@ package com.group1.swp.pizzario_swp391.controller.manager;
 
 import java.util.List;
 
-
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffDTO;
 
@@ -24,7 +23,6 @@ import com.group1.swp.pizzario_swp391.entity.Staff;
 import com.group1.swp.pizzario_swp391.service.StaffService;
 
 import lombok.RequiredArgsConstructor;
-
 
 @Controller
 @RequiredArgsConstructor
@@ -53,9 +51,9 @@ public class StaffController {
     // CREATE SUBMIT: POST /staff/create
     @PostMapping("/create")
     public String create(@Valid @ModelAttribute("staff") StaffCreateDTO dto,
-                         BindingResult bindingResult,
-                         Model model,
-                         RedirectAttributes ra) {
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes ra) {
 
         // ❗ Khi có lỗi validate, QUAY LẠI đúng view "staff/create"
         if (bindingResult.hasErrors()) {
@@ -95,8 +93,8 @@ public class StaffController {
     // UPDATE: save update
     @PostMapping("/edit/{id}")
     public String updateStaff(@PathVariable int id,
-                              @ModelAttribute StaffUpdateDTO staffUpdateDTO,
-                              RedirectAttributes redirectAttributes) {
+            @ModelAttribute StaffUpdateDTO staffUpdateDTO,
+            RedirectAttributes redirectAttributes) {
         try {
             staffService.updateStaff(id, staffUpdateDTO);
             redirectAttributes.addFlashAttribute("success", "Cập nhật thành công!");

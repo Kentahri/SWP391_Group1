@@ -2,6 +2,7 @@ package com.group1.swp.pizzario_swp391.controller.manager;
 
 import java.util.List;
 
+import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import lombok.AccessLevel;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -39,7 +40,7 @@ public class ProductController {
         return "admin_page/product/product-list";
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/detail/{id}")
     public String detail(@PathVariable Long id, Model model) {
         ProductResponseDTO product = productService.getProductById(id);
         model.addAttribute("product", product);
@@ -54,10 +55,10 @@ public class ProductController {
         return "admin_page/product/product-create";
     }
 
-    @PostMapping("/create")
+    @PostMapping("/product/create")
     public String create(@Valid @ModelAttribute ProductCreateDTO productCreateDTO) {
         productService.createProduct(productCreateDTO);
-        return "redirect:/product";
+        return "redirect:/manager/products";
     }
 
     @GetMapping("/edit/{id}")
@@ -70,10 +71,10 @@ public class ProductController {
         return "admin_page/product/product-edit";
     }
 
-    @PostMapping("/edit/{id}")
+    @PostMapping("/product/edit/{id}")
     public String update(@PathVariable Long id, @Valid @ModelAttribute ProductUpdateDTO productUpdateDTO) {
         productService.updateProduct(id, productUpdateDTO);
-        return "redirect:/product";
+        return "redirect:/manager/products";
     }
 
     @PostMapping("/delete/{id}")

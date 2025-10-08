@@ -76,14 +76,15 @@ public class ProductService {
     public void updateProduct(Long id, ProductUpdateDTO updateDTO) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(PRODUCT_NOT_FOUND));
-        
+
         productMapper.updateEntity(product, updateDTO);
         product.setUpdatedAt(LocalDateTime.now());
 
         // Update category if changed
         if (updateDTO.getCategoryId() != null) {
             Category category = categoryRepository.findById(updateDTO.getCategoryId())
-                    .orElseThrow(() -> new RuntimeException(CATEGORY_NOT_FOUND + " with ID: " + updateDTO.getCategoryId()));
+                    .orElseThrow(
+                            () -> new RuntimeException(CATEGORY_NOT_FOUND + " with ID: " + updateDTO.getCategoryId()));
             product.setCategory(category);
         }
 
