@@ -58,8 +58,7 @@ gradient.addColorStop(1, "rgba(14, 165, 233, 0)"); // Trong suốt ở dưới
 // Tạo label với ngày đầu và ngày cuối
 const startDate = labelsLine.length > 0 ? labelsLine[0] : "";
 const endDate = labelsLine.length > 0 ? labelsLine[labelsLine.length - 2] : "";
-const revenueLabel =
- `Doanh thu (${startDate} - ${endDate})`;
+const revenueLabel = `Doanh thu (${startDate} - ${endDate})`;
 
 const dataLine = {
   labels: labelsLine,

@@ -62,18 +62,30 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Hàm tải dữ liệu cho khoảng thời gian cố định (7 hoặc 28 ngày)
 function loadDataForRange(days) {
-  const url = "/pizzario/manager/analytics?days=" + days;
   console.log(`Đang tải dữ liệu cho ${days} ngày qua...`);
-  console.log("Redirecting to:", url);
-  window.location.href = url;
+  submitForm({ days: days });
 }
 
 // Hàm tải dữ liệu cho khoảng thời gian tùy chỉnh
 function loadDataForCustomRange(startDate, endDate) {
   console.log(`Đang tải dữ liệu từ ${startDate} đến ${endDate}...`);
-  window.location.href =
-    "/pizzario/manager/analytics?startDate=" +
-    startDate +
-    "&endDate=" +
-    endDate;
+  submitForm({ startDate: startDate, endDate: endDate });
+}
+
+// Hàm helper để submit form với POST
+function submitForm(params) {
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = "/pizzario/manager/analytics";
+
+  for (const [key, value] of Object.entries(params)) {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = key;
+    input.value = value;
+    form.appendChild(input);
+  }
+
+  document.body.appendChild(form);
+  form.submit();
 }

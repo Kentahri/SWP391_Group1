@@ -85,7 +85,7 @@
                 </option>
                 <option
                   value="28"
-                  th:selected="${selectedDays != null && selectedDays == 28}"
+                  th:selected="${selectedDays == null || selectedDays == 28}"
                 >
                   28 ngày qua
                 </option>
@@ -113,12 +113,7 @@
           <div class="grid four">
             <article class="card">
               <div class="card-title">Doanh thu</div>
-              <p
-                class="kpi-value"
-                th:text="${analytics.totalRevenue}"
-              >
-                0đ
-              </p>
+              <p class="kpi-value" th:text="${analytics.totalRevenue}">0đ</p>
               <p
                 class="kpi-delta"
                 th:classappend="${analytics.revenueDelta >= 0 ? 'positive' : 'negative'}"
@@ -135,66 +130,49 @@
 
             <article class="card">
               <div class="card-title">Đơn hàng</div>
+              <p class="kpi-value" th:text="${analytics.totalOrders()}">0đ</p>
               <p
-                      class="kpi-value"
-                      th:text="${analytics.totalOrders()}"
-              >
-                0đ
-              </p>
-              <p
-                      class="kpi-delta"
-                      th:classappend="${analytics.totalOrders() >= 0 ? 'positive' : 'negative'}"
+                class="kpi-delta"
+                th:classappend="${analytics.totalOrders() >= 0 ? 'positive' : 'negative'}"
               >
                 <span
-                        th:text="${analytics.ordersDelta() >= 0 ? '↑' : '↓'}"
+                  th:text="${analytics.ordersDelta() >= 0 ? '↑' : '↓'}"
                 ></span>
                 <span
-                        th:text="${#numbers.formatDecimal(analytics.ordersDelta(), 1, 2)}"
-                >0</span
+                  th:text="${#numbers.formatDecimal(analytics.ordersDelta(), 1, 2)}"
+                  >0</span
                 >%
               </p>
             </article>
 
             <article class="card">
               <div class="card-title">Khách mới</div>
+              <p class="kpi-value" th:text="${analytics.newCustomers()}">0đ</p>
               <p
-                      class="kpi-value"
-                      th:text="${analytics.newCustomers()}"
-              >
-                0đ
-              </p>
-              <p
-                      class="kpi-delta"
-                      th:classappend="${analytics.newCustomersDelta() >= 0 ? 'positive' : 'negative'}"
+                class="kpi-delta"
+                th:classappend="${analytics.newCustomersDelta() >= 0 ? 'positive' : 'negative'}"
               >
                 <span
-                        th:text="${analytics.newCustomersDelta >= 0 ? '↑' : '↓'}"
+                  th:text="${analytics.newCustomersDelta >= 0 ? '↑' : '↓'}"
                 ></span>
                 <span
-                        th:text="${#numbers.formatDecimal(analytics.newCustomersDelta, 1, 2)}"
-                >0</span
+                  th:text="${#numbers.formatDecimal(analytics.newCustomersDelta, 1, 2)}"
+                  >0</span
                 >%
               </p>
             </article>
 
             <article class="card">
               <div class="card-title">Giá trị TB</div>
+              <p class="kpi-value" th:text="${analytics.aov()}">0đ</p>
               <p
-                      class="kpi-value"
-                      th:text="${analytics.aov()}"
+                class="kpi-delta"
+                th:classappend="${analytics.aovDelta() >= 0 ? 'positive' : 'negative'}"
               >
-                0đ
-              </p>
-              <p
-                      class="kpi-delta"
-                      th:classappend="${analytics.aovDelta() >= 0 ? 'positive' : 'negative'}"
-              >
+                <span th:text="${analytics.aovDelta >= 0 ? '↑' : '↓'}"></span>
                 <span
-                        th:text="${analytics.aovDelta >= 0 ? '↑' : '↓'}"
-                ></span>
-                <span
-                        th:text="${#numbers.formatDecimal(analytics.aovDelta, 1, 2)}"
-                >0</span
+                  th:text="${#numbers.formatDecimal(analytics.aovDelta, 1, 2)}"
+                  >0</span
                 >%
               </p>
             </article>
