@@ -1,0 +1,75 @@
+@startuml GuestSelectTable
+title Guest Chọn Bàn - WebSocket Flow
+
+actor "Guest A\n(Tablet A)" as GuestA
+actor "Guest B\n(Tablet B)" as GuestB
+actor "Guest C\n(Tablet C)" as GuestC
+actor "Cashier" as Cashier
+participant "Backend\n(WebSocket)" as Backend
+database "Database" as DB
+
+== Initial State ==
+GuestA -> Backend: Connect /ws-guest
+activate GuestA
+Backend --> GuestA: sessionId = "abc-123"
+GuestA -> Backend: Subscribe /topic/tables-guest
+GuestA -> Backend: Subscribe /queue/guest-abc-123
+
+GuestB -> Backend: Connect /ws-guest
+activate GuestB
+Backend --> GuestB: sessionId = "def-456"
+GuestB -> Backend: Subscribe /topic/tables-guest
+
+GuestC -> Backend: Connect /ws-guest
+activate GuestC
+Backend --> GuestC: sessionId = "ghi-789"
+GuestC -> Backend: Subscribe /topic/tables-guest
+
+Cashier -> Backend: Connect /ws-cashier
+activate Cashier
+Cashier -> Backend: Subscribe /topic/tables-cashier
+Cashier -> Backend: Subscribe /topic/order-items
+
+== Guest A Chọn Bàn 5 ==
+GuestA -> Backend: SEND /app/guest/select-table\n{tableId: 5, sessionId: "abc-123", guestCount: 4}
+
+Backend -> DB: SELECT * FROM Dining_Table WHERE id=5\n(version=10, status=AVAILABLE)
+DB --> Backend: Table data
+
+alt Table Available
+    Backend -> DB: INSERT INTO Session\n(tableId=5, isClosed=false)
+    DB --> Backend: sessionId (DB) = 100
+    
+    Backend -> DB: UPDATE Dining_Table\nSET status='OCCUPIED', version=11\nWHERE id=5 AND version=10
+    DB --> Backend: 1 row affected (SUCCESS)
+    
+    note over Backend: Optimistic Lock Success!
+    
+    ' Broadcast to Cashier
+    Backend -> Cashier: /topic/tables-cashier\n{\n  type: "TABLE_OCCUPIED",\n  tableId: 5,\n  oldStatus: "AVAILABLE",\n  newStatus: "OCCUPIED",\n  updatedBy: "Guest-abc-123"\n}
+    note over Cashier: Cashier thấy:\n"Bàn 5 đã được chọn"
+    
+    ' Broadcast to ALL Tablets
+    Backend -> GuestA: /topic/tables-guest\n{tableId: 5, status: "OCCUPIED"}
+    Backend -> GuestB: /topic/tables-guest\n{tableId: 5, status: "OCCUPIED"}
+    Backend -> GuestC: /topic/tables-guest\n{tableId: 5, status: "OCCUPIED"}
+    note over GuestB, GuestC: Tablets B, C thấy:\n"Bàn 5 không còn"\n→ Disable button
+    
+    ' Confirm to Guest A
+    Backend -> GuestA: /queue/guest-abc-123\n{\n  type: "SUCCESS",\n  tableId: 5,\n  sessionId: 100,\n  message: "Bạn đã chọn bàn số 5 thành công"\n}
+    note over GuestA: Guest A thấy:\n"Chọn bàn thành công!\nChuyển sang menu đặt món"
+    
+else Table Already Taken (Optimistic Lock Conflict)
+    Backend -> DB: UPDATE Dining_Table...\nWHERE id=5 AND version=10
+    DB --> Backend: 0 rows affected (CONFLICT!)
+    
+    note over Backend: Another guest selected first!\nOptimisticLockException
+    
+    Backend -> DB: SELECT available tables
+    DB --> Backend: [1, 2, 4, 6, 7]
+    
+    Backend -> GuestA: /queue/guest-abc-123\n{\n  type: "CONFLICT",\n  message: "Bàn đã được chọn bởi khách khác",\n  availableTables: [1,2,4,6,7]\n}
+    note over GuestA: Guest A thấy:\n"Bàn đã hết, vui lòng chọn bàn khác"
+end
+
+@enduml

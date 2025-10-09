@@ -1,0 +1,55 @@
+@startuml CashierReleaseTable
+title Cashier Giải Phóng Bàn - WebSocket Flow
+
+actor "Cashier" as Cashier
+actor "Tablet A" as TabletA
+actor "Tablet B" as TabletB
+participant "Backend\n(WebSocket)" as Backend
+database "Database" as DB
+
+== Cashier Đang Subscribe ==
+Cashier -> Backend: Connected to /ws-cashier
+activate Cashier
+Cashier -> Backend: Subscribe /topic/tables-cashier
+
+TabletA -> Backend: Connected to /ws-guest
+activate TabletA
+TabletA -> Backend: Subscribe /topic/tables-guest
+
+TabletB -> Backend: Connected to /ws-guest
+activate TabletB
+TabletB -> Backend: Subscribe /topic/tables-guest
+
+== Bàn 7 Đã Thanh Toán (Status = WAITING_PAYMENT) ==
+note over Cashier: Cashier xác nhận:\nKhách bàn 7 đã thanh toán
+
+Cashier -> Backend: SEND /app/cashier/release-table\ntableId: 7, staffId: cashier-01\nreason: Payment completed
+
+Backend -> DB: SELECT * FROM Dining_Table WHERE id=7
+DB --> Backend: {id:7, status: WAITING_PAYMENT, version:25}
+
+alt Status = WAITING_PAYMENT or RESERVED
+    note over Backend: Business Rule:\nChỉ giải phóng WAITING_PAYMENT\nhoặc RESERVED
+    
+    Backend -> DB: UPDATE Session SET isClosed=true, closedAt=NOW()\nWHERE tableId=7 AND isClosed=false
+    DB --> Backend: Session closed
+    
+    Backend -> DB: UPDATE Dining_Table SET status=AVAILABLE, version=26\nWHERE id=7
+    DB --> Backend: 1 row updated
+    
+    Backend -> Cashier: /topic/tables-cashier\ntype: TABLE_RELEASED, tableId: 7\noldStatus: WAITING_PAYMENT, newStatus: AVAILABLE\nmessage: Bàn 7 đã được giải phóng
+    note over Cashier: Cashier thấy:\nBàn 7 đã trống (màu xanh)
+    
+    Backend -> TabletA: /topic/tables-guest\ntableId: 7, status: AVAILABLE
+    Backend -> TabletB: /topic/tables-guest\ntableId: 7, status: AVAILABLE
+    note over TabletA, TabletB: Tablets thấy:\nBàn 7 đã trống\n(Enable nút Chọn bàn 7)
+    
+else Status = OCCUPIED (Khách chưa thanh toán)
+    note over Backend: Business Rule Violation:\nKhông thể giải phóng bàn OCCUPIED
+    
+    Backend -> Cashier: /queue/cashier-cashier-01\ntype: ERROR\nmessage: Không thể giải phóng bàn với trạng thái OCCUPIED
+    note over Cashier: Cashier thấy:\nLỗi: Khách chưa thanh toán
+end
+
+@enduml
+
