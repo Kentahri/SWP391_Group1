@@ -12,11 +12,14 @@ import java.util.List;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-    @Query("""
-                    select o from Order o
-                    where o.orderStatus = 'COMPLETED' AND o.paymentStatus = 'PAID'
-                    AND o.createdAt >= :start and o.createdAt < :end
-            """)
-    List<Order> findInRangeAndPaid(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+        @Query("""
+                                select o from Order o
+                                where o.orderStatus = 'COMPLETED' AND o.paymentStatus = 'PAID'
+                                AND o.createdAt >= :start and o.createdAt < :end
+                        """)
+        List<Order> findInRangeAndPaid(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
+        Order findFirstByMembership_IdOrderByCreatedAtAsc(Long membershipId);
+
+        Long countByMembership_Id(Long membershipId);
 }

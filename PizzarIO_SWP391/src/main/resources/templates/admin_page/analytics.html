@@ -4,7 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Analytics • Admin Dashboard</title>
-    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin_page/analytics.css}" />
   </head>
   <body>
     <div class="app">
@@ -60,21 +61,51 @@
         </header>
 
         <section>
-          <div
-            style="
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-end;
-              margin: 6px 0 14px;
-            "
-          >
+          <div class="analytics-header">
             <div>
               <h2>Số liệu phân tích về kênh</h2>
               <p class="muted">
                 Chỉ số thời gian •
-                <!-- TODO bind: nhãn khoảng thời gian (ví dụ: 28 ngày qua) -->
-                <span id="rangeLabel">—</span>
+                <span
+                  id="rangeLabel"
+                  th:text="${dateRangeLabel} ?: '28 ngày qua'"
+                  >28 ngày qua</span
+                >
               </p>
+            </div>
+
+            <!-- Dropdown chọn khoảng thời gian -->
+            <div class="time-range-wrapper">
+              <select id="timeRangeSelect">
+                <option
+                  value="7"
+                  th:selected="${selectedDays != null && selectedDays == 7}"
+                >
+                  7 ngày qua
+                </option>
+                <option
+                  value="28"
+                  th:selected="${selectedDays != null && selectedDays == 28}"
+                >
+                  28 ngày qua
+                </option>
+                <option value="custom" th:selected="${isCustomRange}">
+                  Tùy chỉnh
+                </option>
+              </select>
+
+              <!-- Date pickers cho tùy chỉnh -->
+              <div id="customDateRange">
+                <div class="date-field">
+                  <label>Từ ngày:</label>
+                  <input type="date" id="startDate" />
+                </div>
+                <div class="date-field">
+                  <label>Đến ngày:</label>
+                  <input type="date" id="endDate" />
+                </div>
+                <button id="applyCustomDate">Áp dụng</button>
+              </div>
             </div>
           </div>
 
@@ -82,58 +113,106 @@
           <div class="grid four">
             <article class="card">
               <div class="card-title">Doanh thu</div>
-              <!-- TODO bind: tổng doanh thu -->
-              <div class="card-value" id="kpiRevenue">—</div>
-              <!-- TODO bind: % so với kỳ trước, thêm class 'up' hoặc 'down' -->
-              <div class="trend" id="kpiRevenueDelta">—</div>
+              <p
+                class="kpi-value"
+                th:text="${analytics.totalRevenue}"
+              >
+                0đ
+              </p>
+              <p
+                class="kpi-delta"
+                th:classappend="${analytics.revenueDelta >= 0 ? 'positive' : 'negative'}"
+              >
+                <span
+                  th:text="${analytics.revenueDelta >= 0 ? '↑' : '↓'}"
+                ></span>
+                <span
+                  th:text="${#numbers.formatDecimal(analytics.revenueDelta, 1, 2)}"
+                  >0</span
+                >%
+              </p>
             </article>
 
             <article class="card">
               <div class="card-title">Đơn hàng</div>
-              <!-- TODO bind: tổng đơn -->
-              <div class="card-value" id="kpiOrders">—</div>
-              <!-- TODO bind: % so với kỳ trước -->
-              <div class="trend" id="kpiOrdersDelta">—</div>
+              <p
+                      class="kpi-value"
+                      th:text="${analytics.totalOrders()}"
+              >
+                0đ
+              </p>
+              <p
+                      class="kpi-delta"
+                      th:classappend="${analytics.totalOrders() >= 0 ? 'positive' : 'negative'}"
+              >
+                <span
+                        th:text="${analytics.ordersDelta() >= 0 ? '↑' : '↓'}"
+                ></span>
+                <span
+                        th:text="${#numbers.formatDecimal(analytics.ordersDelta(), 1, 2)}"
+                >0</span
+                >%
+              </p>
             </article>
 
             <article class="card">
               <div class="card-title">Khách mới</div>
-              <!-- TODO bind: số khách mới -->
-              <div class="card-value" id="kpiNewCustomers">—</div>
-              <!-- TODO bind: % so với kỳ trước -->
-              <div class="trend" id="kpiNewCustomersDelta">—</div>
+              <p
+                      class="kpi-value"
+                      th:text="${analytics.newCustomers()}"
+              >
+                0đ
+              </p>
+              <p
+                      class="kpi-delta"
+                      th:classappend="${analytics.newCustomersDelta() >= 0 ? 'positive' : 'negative'}"
+              >
+                <span
+                        th:text="${analytics.newCustomersDelta >= 0 ? '↑' : '↓'}"
+                ></span>
+                <span
+                        th:text="${#numbers.formatDecimal(analytics.newCustomersDelta, 1, 2)}"
+                >0</span
+                >%
+              </p>
             </article>
 
             <article class="card">
               <div class="card-title">Giá trị TB</div>
-              <!-- TODO bind: AOV -->
-              <div class="card-value" id="kpiAOV">—</div>
-              <!-- TODO bind: % so với kỳ trước -->
-              <div class="trend" id="kpiAOVDelta">—</div>
+              <p
+                      class="kpi-value"
+                      th:text="${analytics.aov()}"
+              >
+                0đ
+              </p>
+              <p
+                      class="kpi-delta"
+                      th:classappend="${analytics.aovDelta() >= 0 ? 'positive' : 'negative'}"
+              >
+                <span
+                        th:text="${analytics.aovDelta >= 0 ? '↑' : '↓'}"
+                ></span>
+                <span
+                        th:text="${#numbers.formatDecimal(analytics.aovDelta, 1, 2)}"
+                >0</span
+                >%
+              </p>
             </article>
           </div>
 
-          <div class="main-analytics" style="margin-top: 14px">
+          <div class="main-analytics">
             <!-- Biểu đồ đường -->
             <article class="card">
-              <div class="card-title">Doanh thu theo ngày</div>
-              <!-- TODO bind: data-series(JSON) + data-axis để JS vẽ chart -->
-              <div
-                id="lineChart"
-                class="chart-area"
-                data-series=""
-                data-axis=""
-              >
-                <div class="fake-line"></div>
-              </div>
-              <!-- TODO bind: nhãn trục X -->
-              <div class="axis-note muted">
-                <span id="chartXAxisLabel">—</span>
+              <div class="card-title">Doanh thu theo thời gian</div>
+              <div class="chartCard">
+                <div class="chartBox">
+                  <canvas id="myChartLine"></canvas>
+                </div>
               </div>
             </article>
 
             <!-- Cột phải -->
-            <aside style="display: flex; flex-direction: column; gap: 14px">
+            <aside class="analytics-sidebar">
               <article class="card">
                 <div class="card-title">Thời gian thực</div>
                 <div class="list">
@@ -170,22 +249,11 @@
                   </div>
                 </div>
               </article>
-
-              <article class="card">
-                <div class="card-title">Nội dung nổi bật</div>
-                <!-- TODO bind: top 4 sản phẩm (name, orders, views) -->
-                <ol class="top-list" id="topProducts">
-                  <li><span>—</span><em>—</em></li>
-                  <li><span>—</span><em>—</em></li>
-                  <li><span>—</span><em>—</em></li>
-                  <li><span>—</span><em>—</em></li>
-                </ol>
-              </article>
             </aside>
           </div>
 
           <!-- Vùng dưới: 3 cards -->
-          <div class="grid three" style="margin-top: 14px">
+          <div class="grid three bottom-grid">
             <article class="card">
               <div class="card-title">Top sản phẩm bán chạy</div>
               <!-- TODO bind: bảng top sản phẩm -->
@@ -210,7 +278,7 @@
             <article class="card">
               <div class="card-title">Thống kê đơn hàng</div>
               <!-- TODO bind: completedRate, cancelRate, avgDeliveryTime -->
-              <ul class="top-list" style="padding-left: 18px">
+              <ul class="top-list order-stats-list">
                 <li>Tỷ lệ hoàn thành: <strong id="completedRate">—</strong></li>
                 <li>Tỷ lệ hủy: <strong id="cancelRate">—</strong></li>
                 <li>
@@ -232,7 +300,6 @@
         </section>
       </main>
     </div>
-    
 
     <script
       type="text/javascript"
@@ -242,12 +309,18 @@
     <script th:inline="javascript">
       /*<![CDATA[*/
       window.CHART_DATA = {
-          labels: /*[[${labels}]]*/ [],
-          data: /*[[${data}]]*/ []
+        // Bar Chart Data
+        labels_bar: /*[[${labels_bar}]]*/ [],
+        data_bar: /*[[${data_bar}]]*/ [],
+
+        // Line Chart Data
+        labels_Line: /*[[${labels_Line}]]*/ [],
+        data_Line: /*[[${data_Line}]]*/ [],
       };
       /*]]>*/
     </script>
 
+    <script th:src="@{/js/date-range-filter.js}"></script>
     <script th:src="@{/js/chart-data.js}" defer></script>
   </body>
 </html>
