@@ -7,6 +7,8 @@ import com.group1.swp.pizzario_swp391.entity.Membership;
 import com.group1.swp.pizzario_swp391.entity.Order;
 import com.group1.swp.pizzario_swp391.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -66,10 +68,26 @@ public class DataAnalyticsReportService {
         return ((current - previous) * 100.0) / previous;
     }
 
-    // Top sản phẩm
-    public List<ProductStatsDTO> getTopProducts(LocalDate start, LocalDate end) {
-        // TODO: JOIN order_items, products, GROUP BY product_id
-        return new ArrayList<>();
+    
+    public List<ProductStatsDTO> getTopBestSellingProducts() {
+        Pageable topFive = PageRequest.of(0, 5);
+        List<ProductStatsDTO> products = orderRepository.findTopBestSellingProducts(topFive);
+
+        
+        List<ProductStatsDTO> result = new ArrayList<>();
+        for (int i = 0; i < products.size(); i++) {
+            ProductStatsDTO product = products.get(i);
+            
+            ProductStatsDTO newProduct = new ProductStatsDTO(
+                    (long) (i + 1), // topId: thứ hạng
+                    product.productName(),
+                    product.orderCount(),
+                    product.quantitySold(),
+                    product.totalRevenue());
+            result.add(newProduct);
+        }
+
+        return result;
     }
 
     public AnalyticsDTO getAnalyticsData(LocalDate startDate, LocalDate endDate) {
@@ -103,15 +121,15 @@ public class DataAnalyticsReportService {
         Long prevNewCustomers = countNewCustomers(previousOrders, prevStartDate);
         Double newCustomersDelta = calculateDelta(newCustomers, prevNewCustomers);
 
-        Long aov = totalOrders > 0
-                ? totalRevenue / totalOrders
-                : 0;
-        Long prevAov = prevOrders > 0
-                ? prevRevenue / prevOrders
-                : 0;
+        Long aov = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+        Long prevAov = prevOrders > 0 ? prevRevenue / prevOrders : 0;
         Double aovDelta = calculateDelta(aov, prevAov);
 
-        return new AnalyticsDTO(totalRevenue, revenueDelta, totalOrders, ordersDelta, newCustomers, newCustomersDelta, aov, aovDelta);
+        Long oldCustomer = currentOrders.size() - newCustomers;
+        Double retentionRate = oldCustomer / (double) currentOrders.size() * 100;
+
+        return new AnalyticsDTO(totalRevenue, revenueDelta, totalOrders, ordersDelta, newCustomers, newCustomersDelta,
+                aov, aovDelta, oldCustomer, retentionRate);
     }
 
     private Long countNewCustomers(List<Order> orders, LocalDate startDate) {

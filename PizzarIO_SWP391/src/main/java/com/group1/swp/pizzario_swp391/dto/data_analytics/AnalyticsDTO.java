@@ -26,8 +26,7 @@ public record AnalyticsDTO(
         Long todayRevenue,
 
         // Xem chi tiết đơn
-        Integer todayNewCustomers,
-        Integer todayReturningCustomers,
+        Long oldCustomers,
 
         // Tỷ lệ giữ chân khách hàng
         Double retentionRate,
@@ -37,15 +36,15 @@ public record AnalyticsDTO(
         Double cancelRate,
         String avgDeliveryTime) {
 
-    public AnalyticsDTO(Long totalRevenue, Double revenueDelta, Long totalOrders, Double ordersDelta, Long newCustomers, Double newCustomersDelta, Long aov, Double aovDelta) {
+    public AnalyticsDTO(Long totalRevenue, Double revenueDelta, Long totalOrders, Double ordersDelta, Long newCustomers, Double newCustomersDelta, Long aov, Double aovDelta, Long oldCustomer, Double retentionRate) {
         this(
                 totalRevenue, revenueDelta,
                 totalOrders,  ordersDelta,
                 newCustomers, newCustomersDelta,          // newCustomers, newCustomersDelta
                 aov,      aovDelta,   // aov, aovDelta
                 0L, 0L,          // todayOrders, todayRevenue
-                0, 0,            // todayNewCustomers, todayReturningCustomers
-                0.0,             // retentionRate
+                oldCustomer,            // todayNewCustomers, todayReturningCustomers
+                retentionRate,             // retentionRate
                 0.0, 0.0,        // completedRate, cancelRate
                 "-"              // avgDeliveryTime
         );

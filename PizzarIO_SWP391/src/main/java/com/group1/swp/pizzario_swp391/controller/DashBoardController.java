@@ -2,6 +2,7 @@ package com.group1.swp.pizzario_swp391.controller;
 
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import com.group1.swp.pizzario_swp391.dto.data_analytics.AnalyticsDTO;
+import com.group1.swp.pizzario_swp391.dto.data_analytics.ProductStatsDTO;
 import com.group1.swp.pizzario_swp391.dto.data_analytics.SalesDTO;
 import com.group1.swp.pizzario_swp391.service.DataAnalyticsReportService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @ManagerUrl
 @RequiredArgsConstructor
@@ -41,6 +44,13 @@ public class DashBoardController {
         AnalyticsDTO analytics = dataAnalyticsReportService.getAnalyticsData(start, end);
         model.addAttribute("analytics", analytics);
 
+        // Top sản phẩm bán chạy nhất (tất cả thời gian)
+        List<ProductStatsDTO> topProducts = dataAnalyticsReportService.getTopBestSellingProducts();
+        model.addAttribute("topProducts", topProducts);
+
+        // Mặc định 28 ngày
+        model.addAttribute("selectedDays", 28);
+
         return "admin_page/analytics";
     }
 
@@ -56,10 +66,12 @@ public class DashBoardController {
         if (startDate != null && endDate != null) {
             start = startDate;
             end = endDate;
-            selectedDays = null; // custom range
+            // Tính số ngày giữa startDate và endDate
+            selectedDays = (int) ChronoUnit.DAYS.between(start, end);
         } else if (days != null) {
             end = LocalDate.now();
             start = end.minusDays(days);
+            selectedDays = days;
         } else {
             end = LocalDate.now();
             start = end.minusDays(28);
@@ -78,6 +90,10 @@ public class DashBoardController {
                 LocalDate.now());
         model.addAttribute("labels_bar", barChartData.label());
         model.addAttribute("data_bar", barChartData.data());
+
+        // Top 5 sản phẩm bán chạy nhất (tất cả thời gian)
+        List<ProductStatsDTO> topProducts = dataAnalyticsReportService.getTopBestSellingProducts();
+        model.addAttribute("topProducts", topProducts);
 
         // Thông tin khoảng thời gian (hiển thị trên UI)
         model.addAttribute("dateRangeLabel", formatDateRange(start, end, days));

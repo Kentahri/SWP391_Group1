@@ -2,7 +2,7 @@ package com.group1.swp.pizzario_swp391.dto.data_analytics;
 
 
 public record ProductStatsDTO(
-        Long productId,
+        Long topId,
         String productName,
         Integer orderCount,
         Integer quantitySold,

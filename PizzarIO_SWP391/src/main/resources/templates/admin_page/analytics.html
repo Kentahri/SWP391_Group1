@@ -113,7 +113,12 @@
           <div class="grid four">
             <article class="card">
               <div class="card-title">Doanh thu</div>
-              <p class="kpi-value" th:text="${analytics.totalRevenue}">0đ</p>
+              <p
+                class="kpi-value"
+                th:text="${#numbers.formatDecimal(analytics.totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'"
+              >
+                0 đ
+              </p>
               <p
                 class="kpi-delta"
                 th:classappend="${analytics.revenueDelta >= 0 ? 'positive' : 'negative'}"
@@ -125,6 +130,12 @@
                   th:text="${#numbers.formatDecimal(analytics.revenueDelta, 1, 2)}"
                   >0</span
                 >%
+                <span
+                  class="comparison-text"
+                  th:text="${selectedDays != null ? 'so với ' + selectedDays + ' ngày trước' : 'so với 28 ngày trước'}"
+                >
+                  so với 28 ngày trước
+                </span>
               </p>
             </article>
 
@@ -142,6 +153,12 @@
                   th:text="${#numbers.formatDecimal(analytics.ordersDelta(), 1, 2)}"
                   >0</span
                 >%
+                <span
+                  class="comparison-text"
+                  th:text="${selectedDays != null ? 'so với ' + selectedDays + ' ngày trước' : 'so với 28 ngày trước'}"
+                >
+                  so với 28 ngày trước
+                </span>
               </p>
             </article>
 
@@ -159,12 +176,23 @@
                   th:text="${#numbers.formatDecimal(analytics.newCustomersDelta, 1, 2)}"
                   >0</span
                 >%
+                <span
+                  class="comparison-text"
+                  th:text="${selectedDays != null ? 'so với ' + selectedDays + ' ngày trước' : 'so với 28 ngày trước'}"
+                >
+                  so với 28 ngày trước
+                </span>
               </p>
             </article>
 
             <article class="card">
               <div class="card-title">Giá trị TB</div>
-              <p class="kpi-value" th:text="${analytics.aov()}">0đ</p>
+              <p
+                class="kpi-value"
+                th:text="${#numbers.formatDecimal(analytics.aov(), 0, 'COMMA', 0, 'POINT')} + ' đ'"
+              >
+                0 đ
+              </p>
               <p
                 class="kpi-delta"
                 th:classappend="${analytics.aovDelta() >= 0 ? 'positive' : 'negative'}"
@@ -174,6 +202,12 @@
                   th:text="${#numbers.formatDecimal(analytics.aovDelta, 1, 2)}"
                   >0</span
                 >%
+                <span
+                  class="comparison-text"
+                  th:text="${selectedDays != null ? 'so với ' + selectedDays + ' ngày trước' : 'so với 28 ngày trước'}"
+                >
+                  so với 28 ngày trước
+                </span>
               </p>
             </article>
           </div>
@@ -202,7 +236,9 @@
                   <!-- TODO bind: doanh thu hôm nay -->
                   <div class="row">
                     <span class="muted">Doanh thu hôm nay</span
-                    ><strong class="big green" id="todayRevenue">—</strong>
+                    ><strong class="big green revenue-amount" id="todayRevenue"
+                      >—</strong
+                    >
                   </div>
                 </div>
               </article>
@@ -213,56 +249,75 @@
                   <!-- TODO bind: KH mới hôm nay -->
                   <div class="row">
                     <span class="muted">Khách hàng mới</span
-                    ><strong id="todayNewCustomers">—</strong>
+                    ><strong
+                      id="todayNewCustomers"
+                      th:text="${analytics.newCustomers()}"
+                      >—</strong
+                    >
                   </div>
                   <!-- TODO bind: KH quay lại -->
                   <div class="row">
                     <span class="muted">Khách hàng quay lại</span
-                    ><strong id="todayReturning">—</strong>
+                    ><strong
+                      id="todayReturning"
+                      th:text="${analytics.oldCustomers()}"
+                      >—</strong
+                    >
                   </div>
                   <!-- TODO bind: tỷ lệ giữ chân -->
                   <div class="row">
                     <span class="muted">Tỷ lệ giữ chân</span
-                    ><strong id="retentionRate">—</strong>
+                    ><strong
+                      id="retentionRate"
+                      th:text="${analytics.retentionRate()}"
+                      >—</strong
+                    >
                   </div>
                 </div>
               </article>
             </aside>
           </div>
 
-          <!-- Vùng dưới: 3 cards -->
-          <div class="grid three bottom-grid">
+          <!-- Vùng dưới: 2 cards -->
+          <div class="grid two bottom-grid">
             <article class="card">
               <div class="card-title">Top sản phẩm bán chạy</div>
-              <!-- TODO bind: bảng top sản phẩm -->
               <table class="table" id="tableTopProducts">
                 <thead>
                   <tr>
+                    <th>#</th>
                     <th>Sản phẩm</th>
                     <th>Đơn</th>
+                    <th>Số lượng</th>
                     <th>Doanh thu</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>—</td>
-                    <td>—</td>
-                    <td>—</td>
+                  <tr th:if="${topProducts == null || topProducts.isEmpty()}">
+                    <td colspan="5" style="text-align: center">
+                      Chưa có dữ liệu
+                    </td>
+                  </tr>
+                  <tr th:each="product : ${topProducts}">
+                    <td th:text="${product.topId}">1</td>
+                    <td class="product-name" th:text="${product.productName}">
+                      Pizza Margherita
+                    </td>
+                    <td class="text-center" th:text="${product.orderCount}">
+                      0
+                    </td>
+                    <td class="text-center" th:text="${product.quantitySold}">
+                      0
+                    </td>
+                    <td
+                      class="revenue-cell"
+                      th:text="${#numbers.formatDecimal(product.totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'"
+                    >
+                      0 đ
+                    </td>
                   </tr>
                 </tbody>
               </table>
-            </article>
-
-            <article class="card">
-              <div class="card-title">Thống kê đơn hàng</div>
-              <!-- TODO bind: completedRate, cancelRate, avgDeliveryTime -->
-              <ul class="top-list order-stats-list">
-                <li>Tỷ lệ hoàn thành: <strong id="completedRate">—</strong></li>
-                <li>Tỷ lệ hủy: <strong id="cancelRate">—</strong></li>
-                <li>
-                  Thời gian giao TB: <strong id="avgDeliveryTime">—</strong>
-                </li>
-              </ul>
             </article>
 
             <article class="card">
