@@ -28,13 +28,12 @@ import lombok.RequiredArgsConstructor;
 @Controller
 @RequiredArgsConstructor
 @ManagerUrl
-@RequestMapping("/staff")
 public class StaffController {
 
     final StaffService staffService;
 
     // READ: list all staff
-    @GetMapping
+    @GetMapping("/staff")
     public String listStaffs(Model model) {
         List<StaffResponseDTO> staffs = staffService.getAllStaff();
         model.addAttribute("staffs", staffs);
@@ -42,7 +41,7 @@ public class StaffController {
         return "admin_page/staff/list";
     }
 
-    @GetMapping("/create")
+    @GetMapping("/staff/create")
     public String createForm(Model model) {
         model.addAttribute("staff", new StaffCreateDTO());
         model.addAttribute("roles", Staff.Role.values());
@@ -51,7 +50,7 @@ public class StaffController {
     }
 
     // CREATE SUBMIT: POST /staff/create
-    @PostMapping("/create")
+    @PostMapping("/staff/create")
     public String create(@Valid @ModelAttribute("staff") StaffCreateDTO dto,
             BindingResult bindingResult,
             Model model,
@@ -71,7 +70,7 @@ public class StaffController {
     }
 
     // UPDATE: show edit form
-    @GetMapping("/edit/{id}")
+    @GetMapping("/staff/edit/{id}")
     public String edit(Model model, @PathVariable int id) {
 
         StaffUpdateDTO staffUpdateDTO = staffService.getStaffForUpdate(id);
@@ -93,7 +92,7 @@ public class StaffController {
     }
 
     // UPDATE: save update
-    @PostMapping("/edit/{id}")
+    @PostMapping("/staff/edit/{id}")
     public String updateStaff(@PathVariable int id,
             @ModelAttribute StaffUpdateDTO staffUpdateDTO,
             RedirectAttributes redirectAttributes) {
@@ -108,7 +107,7 @@ public class StaffController {
     }
 
     // DELETE
-    @PostMapping("/delete/{id}")
+    @PostMapping("/staff/delete/{id}")
     public String deleteStaff(@PathVariable int id) {
         staffService.deleteStaffById(id);
         return "redirect:/manager/staff";

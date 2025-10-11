@@ -9,39 +9,7 @@
   <body>
     <div class="app">
       <!-- SIDEBAR -->
-      <aside class="sidebar">
-        <div class="brand">
-          <div class="logo">🍕</div>
-          <div class="brand-text">
-            <strong>Admin</strong><span>Quản lý nhà hàng</span>
-          </div>
-        </div>
-        <nav class="nav">
-          <a class="nav-link" th:href="@{/manager/analytics}"
-            >Số liệu phân tích</a
-          >
-          <a class="nav-link active" th:href="@{/manager/categories}"
-            >Danh mục</a
-          >
-          <a class="nav-link" th:href="@{/manager/products}">Sản phẩm</a>
-          <a class="nav-link" th:href="@{/manager/vouchers}">Voucher</a>
-          <a class="nav-link" th:href="@{/manager/staff}">Nhân viên</a>
-          <a class="nav-link" th:href="@{/manager/shifts}">Ca làm việc</a>
-          <a class="nav-link" th:href="@{/manager/complaints}">Khiếu nại</a>
-          <a class="nav-link" th:href="@{/manager/inventory}">Kho hàng</a>
-          <a class="nav-link" th:href="@{/manager/settings}">Cài đặt</a>
-        </nav>
-
-        <form th:action="@{/logout}" method="post">
-          <input
-            type="hidden"
-            th:if="${_csrf != null}"
-            th:name="${_csrf.parameterName}"
-            th:value="${_csrf.token}"
-          />
-          <button type="submit">Logout</button>
-        </form>
-      </aside>
+      <div th:insert="~{fragments/sidebar :: sidebar('categories')}"></div>
 
       <!-- MAIN -->
       <main class="main">

@@ -1,5 +1,6 @@
 package com.group1.swp.pizzario_swp391.controller.manager;
 
+import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import com.group1.swp.pizzario_swp391.dto.voucher.VoucherDTO;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -11,14 +12,14 @@ import com.group1.swp.pizzario_swp391.entity.Voucher;
 import com.group1.swp.pizzario_swp391.service.VoucherService;
 
 @Controller
-@RequestMapping("/voucher")
+@ManagerUrl
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class VoucherController {
 
     VoucherService voucherService;
 
-    @GetMapping
+    @GetMapping("/vouchers")
     public String voucher(Model model) {
         model.addAttribute("voucherTypes", Voucher.VoucherType.values());
         model.addAttribute("voucherDTO", new VoucherDTO());
@@ -26,43 +27,43 @@ public class VoucherController {
         return "admin_page/voucher/voucher";
     }
 
-    @GetMapping("/edit/{id}")
+    @GetMapping("/vouchers/edit/{id}")
     public String editVoucher(@PathVariable Long id, Model model) {
         Voucher voucher = voucherService.getVoucherById(id)
-            .orElseThrow(() -> new RuntimeException("Voucher not found"));
+                .orElseThrow(() -> new RuntimeException("Voucher not found"));
         VoucherDTO voucherDTO = VoucherDTO.builder()
-            .code(voucher.getCode())
-            .type(voucher.getType())
-            .value(voucher.getValue())
-            .description(voucher.getDescription())
-            .maxUses(voucher.getMaxUses())
-            .timesUsed(voucher.getTimesUsed())
-            .minOrderAmount(voucher.getMinOrderAmount())
-            .validFrom(voucher.getValidFrom())
-            .validTo(voucher.getValidTo())
-            .isActive(voucher.isActive())
-            .build();
+                .code(voucher.getCode())
+                .type(voucher.getType())
+                .value(voucher.getValue())
+                .description(voucher.getDescription())
+                .maxUses(voucher.getMaxUses())
+                .timesUsed(voucher.getTimesUsed())
+                .minOrderAmount(voucher.getMinOrderAmount())
+                .validFrom(voucher.getValidFrom())
+                .validTo(voucher.getValidTo())
+                .isActive(voucher.isActive())
+                .build();
         model.addAttribute("voucherDTO", voucherDTO);
         model.addAttribute("voucherId", id);
         model.addAttribute("voucherTypes", Voucher.VoucherType.values());
         return "admin_page/voucher/voucher_edit";
     }
 
-    @PostMapping("/add")
+    @PostMapping("/vouchers/add")
     public String createNewVoucher(@ModelAttribute VoucherDTO voucherDTO) {
         voucherService.createNewVoucher(voucherDTO);
-        return "redirect:/voucher";
+        return "redirect:/manager/vouchers";
     }
 
-    @PostMapping("/delete/{id}")
+    @PostMapping("/vouchers/delete/{id}")
     public String deleteVoucher(@PathVariable Long id) {
         voucherService.deleteVoucher(id);
-        return "redirect:/voucher";
+        return "redirect:/manager/vouchers";
     }
 
-    @PostMapping("/update/{id}")
+    @PostMapping("/vouchers/update/{id}")
     public String updateVoucher(@PathVariable Long id, @ModelAttribute VoucherDTO voucherDTO) {
         voucherService.updateVoucher(id, voucherDTO);
-        return "redirect:/voucher";
+        return "redirect:/manager/vouchers";
     }
 }
