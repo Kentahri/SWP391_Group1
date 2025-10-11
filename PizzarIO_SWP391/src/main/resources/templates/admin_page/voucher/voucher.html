@@ -74,13 +74,51 @@
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 12px;
-            background: #0b1220;
+            background: #ffffff;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         .inner-panel { background: #ecebeb; border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
         .pill { display: inline-flex; align-items: center; gap: 8px; background: #ffffff; border: 1px solid var(--border); color: #111827; padding: 6px 10px; border-radius: 999px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+        .toast-error {
+            position: fixed;
+            top: 32px;
+            left: 0; right: 0;
+            margin: 0 auto;
+            z-index: 9999;
+            max-width: 420px;
+            padding: 16px 24px;
+            background: #fee2e2;
+            color: #b91c1c;
+            font-weight: 600;
+            text-align: center;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(190,26,26,0.09);
+            animation: fadeInScale 0.5s;
+        }
+        .toast-success {
+            position: fixed;
+            top: 32px;
+            left: 0; right: 0;
+            margin: 0 auto;
+            z-index: 9999;
+            max-width: 420px;
+            padding: 16px 24px;
+            background: #dcfce7;
+            color: #166534;
+            font-weight: 600;
+            text-align: center;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(22,101,52,0.09);
+            animation: fadeInScale 0.5s;
+        }
+        @keyframes fadeInScale {
+            0% { opacity: 0; transform: scale(0.85); }
+            100% { opacity: 1; transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -91,6 +129,8 @@
         </div>
         <button id="openAddVoucher" class="primary-btn" type="button">Thêm mới voucher</button>
     </div>
+    <div th:if="${errorMessage}" class="toast-error" th:text="${errorMessage}"></div>
+    <div th:if="${successMessage}" class="toast-success" th:text="${successMessage}"></div>
     <div class="grid">
         <div class="card">
             <div class="pill">🎟️ Danh sách voucher</div>
@@ -105,9 +145,9 @@
                             <span>Active: <span th:text="${voucher.active}"></span></span>
                         </div>
                         <div style="display:flex; gap:8px">
-                            <form th:action="@{'/voucher/delete/' + ${voucher.id}}" method="post">
-                                <button class="primary-btn" style="background:#ef4444">Delete</button>
-                            </form>
+<!--                            <form th:action="@{'/voucher/delete/' + ${voucher.id}}" method="post">-->
+<!--                                <button class="primary-btn" style="background:#ef4444">Delete</button>-->
+<!--                            </form>-->
                             <a th:href="@{'/voucher/edit/' + ${voucher.id}}" class="primary-btn">Update</a>
                         </div>
                     </div>
@@ -167,5 +207,19 @@
         </div>
     </div>
 </div>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    if (document.querySelector('.toast-error')) {
+        setTimeout(function() {
+            document.querySelector('.toast-error').style.display = 'none';
+        }, 4500);
+    }
+    if (document.querySelector('.toast-success')) {
+        setTimeout(function() {
+            document.querySelector('.toast-success').style.display = 'none';
+        }, 3500);
+    }
+    /*]]>*/
+</script>
 </body>
 </html>
