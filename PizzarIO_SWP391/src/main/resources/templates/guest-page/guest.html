@@ -7,8 +7,39 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
     <title>GUEST</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script th:src="@{/js/guest-websocket.js}"></script>
+    <style>
+        body { font-family: Segoe UI, sans-serif; padding: 20px; }
+        .tables { display: grid; grid-template-columns: repeat(3, 120px); gap: 12px; }
+        .t { background:#eee; padding: 12px; border-radius: 8px; cursor: pointer; text-align: center; }
+        .guest-result { margin-top:12px; }
+        .guest-result.success { color: #2e7d32; }
+        .guest-result.error { color: #c62828; }
+    </style>
 </head>
 <body>
 <h2>GUEST</h2>
+<div id="guest-result" class="guest-result">Chọn 1 bàn bất kỳ</div>
+<div class="tables">
+    <div class="t" onclick="guestSelectTable(1)">Bàn 1</div>
+    <div class="t" onclick="guestSelectTable(2)">Bàn 2</div>
+    <div class="t" onclick="guestSelectTable(3)">Bàn 3</div>
+    <div class="t" onclick="guestSelectTable(4)">Bàn 4</div>
+    <div class="t" onclick="guestSelectTable(5)">Bàn 5</div>
+    <div class="t" onclick="guestSelectTable(6)">Bàn 6</div>
+    <div class="t" onclick="guestSelectTable(7)">Bàn 7</div>
+    <div class="t" onclick="guestSelectTable(8)">Bàn 8</div>
+    <div class="t" onclick="guestSelectTable(9)">Bàn 9</div>
+    <div class="t" onclick="guestSelectTable(10)">Bàn 10</div>
+ </div>
+
+<script th:inline="javascript">
+    window.APP_CTX = /*[[@{/}]]*/ '/';
+    window.addEventListener('DOMContentLoaded', function(){
+        initGuestWebSocket();
+    });
+ </script>
 </body>
 </html>
