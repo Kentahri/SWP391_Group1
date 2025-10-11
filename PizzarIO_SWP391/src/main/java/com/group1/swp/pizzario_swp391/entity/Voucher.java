@@ -36,6 +36,8 @@ public class Voucher {
     @Enumerated(EnumType.STRING)
     private VoucherType type;
     private double value;
+
+    @Column(columnDefinition = "NVARCHAR(256)")
     private String description;
 
     @Column(name = "max_uses", nullable = false)

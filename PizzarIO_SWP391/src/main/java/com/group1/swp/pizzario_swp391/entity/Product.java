@@ -41,7 +41,9 @@
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
+        @Column(columnDefinition = "NVARCHAR(50)")
         private String name;
+        @Column(columnDefinition = "NVARCHAR(256)")
         private String description;
 
         @Column(name = "img_url")
@@ -82,7 +84,4 @@
             this.updatedAt = updatedAt;
         }
 
-        public void setCategory(Category category) {
-            this.category = category;
-        }
     }

@@ -34,6 +34,7 @@ public class OrderItem {
     @Column(name = "unit_price")
     private double unitPrice;
     private int quantity;
+    @Column(columnDefinition = "NVARCHAR(256)")
     private String note;
 
     @Enumerated(EnumType.STRING)
@@ -46,14 +47,6 @@ public class OrderItem {
 
     @Column(name = "total_price")
     private double totalPrice;
-
-    public void setOrder(Order order) {
-        this.order = order;
-    }
-
-    public void setProduct(Product product) {
-        this.product = product;
-    }
 
     public enum OrderItemStatus {
         PENDING, PREPARING, SERVED, CANCELLED

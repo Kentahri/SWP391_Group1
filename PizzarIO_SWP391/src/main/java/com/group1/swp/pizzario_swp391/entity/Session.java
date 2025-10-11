@@ -44,7 +44,4 @@ public class Session {
         this.closedAt = closedAt;
     }
 
-    public void setTable(DiningTable diningTable) {
-        this.table = diningTable;
-    }
 }

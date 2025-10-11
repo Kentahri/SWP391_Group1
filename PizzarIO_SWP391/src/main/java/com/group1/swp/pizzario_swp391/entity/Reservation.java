@@ -42,7 +42,7 @@ public class Reservation {
     @Column(nullable = false)
     private String phone;
 
-    @Column(nullable = false)
+    @Column(columnDefinition = "NVARCHAR(256)", nullable = false)
     private String name;
 
     public enum Status {
