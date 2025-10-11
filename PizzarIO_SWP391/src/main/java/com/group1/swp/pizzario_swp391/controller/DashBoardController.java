@@ -23,7 +23,7 @@ public class DashBoardController {
 
     private final DataAnalyticsReportService dataAnalyticsReportService;
 
-    @GetMapping
+    @GetMapping("/analytics")
     public String getFormAnalytics(Model model) {
 
         LocalDate end = LocalDate.now();

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.group1.swp.pizzario_swp391.dto.staff.StaffCreateDTO;
@@ -27,12 +28,13 @@ import lombok.RequiredArgsConstructor;
 @Controller
 @RequiredArgsConstructor
 @ManagerUrl
+@RequestMapping("/staff")
 public class StaffController {
 
     final StaffService staffService;
 
     // READ: list all staff
-    @GetMapping("/staff")
+    @GetMapping
     public String listStaffs(Model model) {
         List<StaffResponseDTO> staffs = staffService.getAllStaff();
         model.addAttribute("staffs", staffs);
@@ -65,7 +67,7 @@ public class StaffController {
         staffService.createNewStaff(dto);
         ra.addFlashAttribute("success", "Created staff successfully");
         // PRG: điều hướng về trang list
-        return "redirect:staff";
+        return "redirect:/manager/staff";
     }
 
     // UPDATE: show edit form
@@ -100,15 +102,15 @@ public class StaffController {
             redirectAttributes.addFlashAttribute("success", "Cập nhật thành công!");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/staff/edit/" + id;
+            return "redirect:/manager/staff/edit/" + id;
         }
-        return "redirect:/staff";
+        return "redirect:/manager/staff";
     }
 
     // DELETE
     @PostMapping("/delete/{id}")
     public String deleteStaff(@PathVariable int id) {
         staffService.deleteStaffById(id);
-        return "redirect:/staff";
+        return "redirect:/manager/staff";
     }
 }
