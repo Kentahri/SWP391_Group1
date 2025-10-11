@@ -22,6 +22,34 @@ public class VoucherService {
     VoucherMapper voucherMapper;
 
     public void createNewVoucher(VoucherDTO voucherDTO) {
+        // Validate type & value
+        if (voucherDTO.getType() == null) {
+            throw new IllegalArgumentException("Bạn phải chọn loại voucher.");
+        }
+        double value = voucherDTO.getValue();
+        switch (voucherDTO.getType()) {
+            case PERCENTAGE:
+                if (value <= 0 || value >= 100) {
+                    throw new IllegalArgumentException("Với voucher phần trăm, giá trị phải lớn hơn 0 và nhỏ hơn 100.");
+                }
+                break;
+            case FIXED_AMOUNT:
+                if (value <= 0) {
+                    throw new IllegalArgumentException("Với voucher số tiền, giá trị phải lớn hơn 0.");
+                }
+                break;
+        }
+        // Validate validFrom, validTo
+        if (voucherDTO.getValidFrom() == null || voucherDTO.getValidTo() == null) {
+            throw new IllegalArgumentException("Bạn phải nhập đủ ngày bắt đầu và kết thúc");
+        }
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        if (voucherDTO.getValidFrom().isBefore(now) || voucherDTO.getValidTo().isBefore(now)) {
+            throw new IllegalArgumentException("Ngày bắt đầu và ngày kết thúc không được ở trong quá khứ.");
+        }
+        if (!voucherDTO.getValidTo().isAfter(voucherDTO.getValidFrom())) {
+            throw new IllegalArgumentException("Ngày kết thúc phải sau ngày bắt đầu.");
+        }
         Voucher voucher = voucherMapper.toVoucher(voucherDTO);
         voucherRepository.save(voucher);
     }
@@ -43,6 +71,34 @@ public class VoucherService {
     }
 
     public void updateVoucher(Long id, VoucherDTO voucherDTO) {
+        // Validate type & value
+        if (voucherDTO.getType() == null) {
+            throw new IllegalArgumentException("Bạn phải chọn loại voucher.");
+        }
+        double value = voucherDTO.getValue();
+        switch (voucherDTO.getType()) {
+            case PERCENTAGE:
+                if (value <= 0 || value >= 100) {
+                    throw new IllegalArgumentException("Với voucher phần trăm, giá trị phải lớn hơn 0 và nhỏ hơn 100.");
+                }
+                break;
+            case FIXED_AMOUNT:
+                if (value <= 0) {
+                    throw new IllegalArgumentException("Với voucher số tiền, giá trị phải lớn hơn 0.");
+                }
+                break;
+        }
+        // Validate validFrom, validTo
+        if (voucherDTO.getValidFrom() == null || voucherDTO.getValidTo() == null) {
+            throw new IllegalArgumentException("Bạn phải nhập đủ ngày bắt đầu và kết thúc");
+        }
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        if (voucherDTO.getValidFrom().isBefore(now) || voucherDTO.getValidTo().isBefore(now)) {
+            throw new IllegalArgumentException("Ngày bắt đầu và ngày kết thúc không được ở trong quá khứ.");
+        }
+        if (!voucherDTO.getValidTo().isAfter(voucherDTO.getValidFrom())) {
+            throw new IllegalArgumentException("Ngày kết thúc phải sau ngày bắt đầu.");
+        }
         Voucher voucher = voucherRepository.findById(id).orElseThrow(() -> new RuntimeException("Voucher not found"));
         voucherMapper.updateVoucher(voucher, voucherDTO);
         voucherRepository.save(voucher);

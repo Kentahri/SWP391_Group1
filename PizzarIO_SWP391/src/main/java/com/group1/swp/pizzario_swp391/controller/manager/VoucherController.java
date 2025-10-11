@@ -9,6 +9,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import com.group1.swp.pizzario_swp391.entity.Voucher;
 import com.group1.swp.pizzario_swp391.service.VoucherService;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/voucher")
@@ -49,9 +50,18 @@ public class VoucherController {
     }
 
     @PostMapping("/add")
-    public String createNewVoucher(@ModelAttribute VoucherDTO voucherDTO) {
-        voucherService.createNewVoucher(voucherDTO);
-        return "redirect:/voucher";
+    public String createNewVoucher(@ModelAttribute VoucherDTO voucherDTO, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            voucherService.createNewVoucher(voucherDTO);
+            redirectAttributes.addFlashAttribute("successMessage", "Tạo voucher thành công!");
+            return "redirect:/voucher";
+        } catch (Exception ex) {
+            model.addAttribute("voucherTypes", Voucher.VoucherType.values());
+            model.addAttribute("vouchers", voucherService.getVouchersSort());
+            model.addAttribute("voucherDTO", voucherDTO); // Để giữ lại dữ liệu form vừa nhập
+            model.addAttribute("errorMessage", "Không thể tạo voucher vì: " + ex.getMessage());
+            return "admin_page/voucher/voucher";
+        }
     }
 
     @PostMapping("/delete/{id}")
@@ -61,8 +71,17 @@ public class VoucherController {
     }
 
     @PostMapping("/update/{id}")
-    public String updateVoucher(@PathVariable Long id, @ModelAttribute VoucherDTO voucherDTO) {
-        voucherService.updateVoucher(id, voucherDTO);
-        return "redirect:/voucher";
+    public String updateVoucher(@PathVariable Long id, @ModelAttribute VoucherDTO voucherDTO, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            voucherService.updateVoucher(id, voucherDTO);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật voucher thành công!");
+            return "redirect:/voucher";
+        } catch (Exception ex) {
+            model.addAttribute("voucherDTO", voucherDTO);
+            model.addAttribute("voucherId", id);
+            model.addAttribute("voucherTypes", Voucher.VoucherType.values());
+            model.addAttribute("errorMessage", "Không thể cập nhật voucher vì: " + ex.getMessage());
+            return "admin_page/voucher/voucher_edit";
+        }
     }
 }

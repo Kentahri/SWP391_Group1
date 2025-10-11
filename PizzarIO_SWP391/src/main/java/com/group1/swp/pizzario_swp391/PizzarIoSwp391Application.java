@@ -47,7 +47,7 @@ public class PizzarIoSwp391Application {
                     "0912345678",
                     "Đà Nẵng",
                     "123456",
-                    "hiep@gmail.com",
+                    "vuhiep27082005@gmail.com",
                     Staff.Role.KITCHEN,
                     true
             );
