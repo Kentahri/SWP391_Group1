@@ -40,14 +40,6 @@ public class StaffShift {
     private LocalDateTime checkIn;
     private LocalDateTime checkOut;
 
-    public void setShift(Shift o) {
-        this.shift = o;
-    }
-
-    public void setStaff(Staff staff) {
-        this.staff = staff;
-    }
-
     public enum Status {
         SCHEDULED, PRESENT, LATE, ABSENT, LEFT
     }
