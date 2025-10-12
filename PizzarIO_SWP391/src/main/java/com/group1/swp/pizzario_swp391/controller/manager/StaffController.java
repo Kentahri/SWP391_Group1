@@ -4,17 +4,14 @@ import java.util.List;
 
 
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
-import com.group1.swp.pizzario_swp391.dto.staff.StaffDTO;
+import com.group1.swp.pizzario_swp391.exception.ValidationException;
 
 import jakarta.validation.Valid;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.group1.swp.pizzario_swp391.dto.staff.StaffCreateDTO;
@@ -64,29 +61,23 @@ public class StaffController {
             return "admin_page/staff/create";
         }
 
-        staffService.createNewStaff(dto);
-        ra.addFlashAttribute("success", "Created staff successfully");
-        // PRG: điều hướng về trang list
-        return "redirect:staff";
+        try {
+            staffService.createNewStaff(dto);
+            ra.addFlashAttribute("success", "Created staff successfully");
+            return "redirect:staff";
+        } catch (ValidationException e) {
+            model.addAttribute("roles", Staff.Role.values());
+            model.addAttribute("formTitle", "Create Staff");
+            model.addAttribute("error", e.getMessage());
+            return "admin_page/staff/create";
+        }
     }
 
     // UPDATE: show edit form
     @GetMapping("/edit/{id}")
     public String edit(Model model, @PathVariable int id) {
-
         StaffUpdateDTO staffUpdateDTO = staffService.getStaffForUpdate(id);
         model.addAttribute("staff", staffUpdateDTO);
-        StaffResponseDTO staff = staffService.getStaffById(id);
-        StaffDTO staffDTO = StaffDTO.builder()
-                .name(staff.getName())
-                .dateOfBirth(staff.getDateOfBirth())
-                .phone(staff.getPhone())
-                .address(staff.getAddress())
-                .email(staff.getEmail())
-                .role(staff.getRole())
-                .active(staff.isActive())
-                .build();
-        model.addAttribute("staff", staffDTO);
         model.addAttribute("staffID", id);
         model.addAttribute("roles", Staff.Role.values());
         return "admin_page/staff/edit";
@@ -95,22 +86,34 @@ public class StaffController {
     // UPDATE: save update
     @PostMapping("/edit/{id}")
     public String updateStaff(@PathVariable int id,
-                              @ModelAttribute StaffUpdateDTO staffUpdateDTO,
+                              @Valid @ModelAttribute StaffUpdateDTO staffUpdateDTO,
+                              BindingResult bindingResult,
+                              Model model,
                               RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("staff", staffUpdateDTO);
+            model.addAttribute("roles", Staff.Role.values());
+            model.addAttribute("staffID", id);
+            return "admin_page/staff/edit";
+        }
+        
         try {
             staffService.updateStaff(id, staffUpdateDTO);
             redirectAttributes.addFlashAttribute("success", "Cập nhật thành công!");
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/staff/edit/" + id;
+            return "redirect:staff";
+        } catch (ValidationException e) {
+            model.addAttribute("staff", staffUpdateDTO);
+            model.addAttribute("roles", Staff.Role.values());
+            model.addAttribute("staffID", id);
+            model.addAttribute("error", e.getMessage());
+            return "admin_page/staff/edit";
         }
-        return "redirect:/staff";
     }
 
     // DELETE
     @PostMapping("/delete/{id}")
     public String deleteStaff(@PathVariable int id) {
         staffService.deleteStaffById(id);
-        return "redirect:/staff";
+        return "redirect:staff";
     }
 }
