@@ -60,7 +60,7 @@ public class Product {
     private LocalDateTime flashSaleEnd;
 
     @Column(name = "is_active")
-    private boolean isActive;
+    private boolean active;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -69,7 +69,7 @@ public class Product {
     private LocalDateTime updatedAt;
 
     public Product(String name, String description, String imageURL, double basePrice, double flashSalePrice,
-            LocalDateTime flashSaleStart, LocalDateTime flashSaleEnd, boolean isActive, LocalDateTime createdAt,
+            LocalDateTime flashSaleStart, LocalDateTime flashSaleEnd, boolean active, LocalDateTime createdAt,
             LocalDateTime updatedAt) {
         this();
         this.name = name;
@@ -79,7 +79,7 @@ public class Product {
         this.flashSalePrice = flashSalePrice;
         this.flashSaleStart = flashSaleStart;
         this.flashSaleEnd = flashSaleEnd;
-        this.isActive = isActive;
+        this.active = active;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }

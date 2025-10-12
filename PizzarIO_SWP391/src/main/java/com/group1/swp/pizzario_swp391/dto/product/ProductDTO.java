@@ -25,7 +25,8 @@ public class ProductDTO {
     String description;
 
     @Size(max = 500, message = "URL hình ảnh không được vượt quá 500 ký tự")
-    // @URL(message = "URL hình ảnh không hợp lệ") // Có thể thêm nếu bạn muốn kiểm tra định dạng URL cơ bản
+    // @URL(message = "URL hình ảnh không hợp lệ") // Có thể thêm nếu bạn muốn kiểm
+    // tra định dạng URL cơ bản
     String imageURL;
 
     @NotNull(message = "Giá cơ bản không được để trống")
@@ -35,13 +36,14 @@ public class ProductDTO {
     @Min(value = 0, message = "Giá khuyến mãi phải lớn hơn hoặc bằng 0")
     double flashSalePrice;
 
-    // Các kiểm tra liên quan đến flashSaleStart và flashSaleEnd thường được xử lý tốt hơn ở tầng Service
+    // Các kiểm tra liên quan đến flashSaleStart và flashSaleEnd thường được xử lý
+    // tốt hơn ở tầng Service
     // hoặc bằng một custom annotation nếu logic phức tạp.
     LocalDateTime flashSaleStart;
     LocalDateTime flashSaleEnd;
 
-    boolean isActive;
-    
+    boolean active;
+
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
 }

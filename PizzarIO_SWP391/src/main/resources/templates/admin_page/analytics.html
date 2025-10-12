@@ -25,7 +25,7 @@
               <!-- TODO bind: tên người đăng nhập -->
               <strong id="currentUser">—</strong>
               <!-- TODO bind: vai trò -->
-              <span id="currentRole" class="muted">—</span>
+              <span id="currentRole" class="muted"></span>
             </div>
           </div>
         </header>
@@ -36,32 +36,16 @@
               <h2>Số liệu phân tích về kênh</h2>
               <p class="muted">
                 Chỉ số thời gian •
-                <span
-                  id="rangeLabel"
-                  th:text="${dateRangeLabel} ?: '28 ngày qua'"
-                  >28 ngày qua</span
-                >
+                <span id="rangeLabel" th:text="${dateRangeLabel} ?: '28 ngày qua'">28 ngày qua</span>
               </p>
             </div>
 
             <!-- Dropdown chọn khoảng thời gian -->
             <div class="time-range-wrapper">
               <select id="timeRangeSelect">
-                <option
-                  value="7"
-                  th:selected="${selectedDays != null && selectedDays == 7}"
-                >
-                  7 ngày qua
-                </option>
-                <option
-                  value="28"
-                  th:selected="${selectedDays == null || selectedDays == 28}"
-                >
-                  28 ngày qua
-                </option>
-                <option value="custom" th:selected="${isCustomRange}">
-                  Tùy chỉnh
-                </option>
+                <option value="7" th:selected="${selectedDays != null && selectedDays == 7}">7 ngày qua</option>
+                <option value="28" th:selected="${selectedDays == null || selectedDays == 28}">28 ngày qua</option>
+                <option value="custom" th:selected="${isCustomRange}"> Tùy chỉnh </option>
               </select>
 
               <!-- Date pickers cho tùy chỉnh -->
@@ -103,9 +87,8 @@
                 <span
                   class="comparison-text"
                   th:text="${selectedDays != null ? 'so với ' + selectedDays + ' ngày trước' : 'so với 28 ngày trước'}"
+                  >so với 28 ngày trước</span
                 >
-                  so với 28 ngày trước
-                </span>
               </p>
             </article>
 
@@ -126,9 +109,8 @@
                 <span
                   class="comparison-text"
                   th:text="${selectedDays != null ? 'so với ' + selectedDays + ' ngày trước' : 'so với 28 ngày trước'}"
+                  >so với 28 ngày trước</span
                 >
-                  so với 28 ngày trước
-                </span>
               </p>
             </article>
 
@@ -149,9 +131,8 @@
                 <span
                   class="comparison-text"
                   th:text="${selectedDays != null ? 'so với ' + selectedDays + ' ngày trước' : 'so với 28 ngày trước'}"
+                  >so với 28 ngày trước</span
                 >
-                  so với 28 ngày trước
-                </span>
               </p>
             </article>
 
@@ -175,9 +156,8 @@
                 <span
                   class="comparison-text"
                   th:text="${selectedDays != null ? 'so với ' + selectedDays + ' ngày trước' : 'so với 28 ngày trước'}"
+                  >so với 28 ngày trước</span
                 >
-                  so với 28 ngày trước
-                </span>
               </p>
             </article>
           </div>
@@ -222,8 +202,7 @@
                     ><strong
                       id="todayNewCustomers"
                       th:text="${analytics.newCustomers()}"
-                      >—</strong
-                    >
+                    ></strong>
                   </div>
                   <!-- TODO bind: KH quay lại -->
                   <div class="row">
@@ -231,8 +210,7 @@
                     ><strong
                       id="todayReturning"
                       th:text="${analytics.oldCustomers()}"
-                      >—</strong
-                    >
+                    ></strong>
                   </div>
                   <!-- TODO bind: tỷ lệ giữ chân -->
                   <div class="row">
@@ -240,22 +218,20 @@
                     ><strong
                       id="retentionRate"
                       th:text="${analytics.retentionRate()}"
-                      >—</strong
-                    >
+                    ></strong>
                   </div>
                 </div>
               </article>
             </aside>
           </div>
 
-          <!-- Vùng dưới: 2 cards -->
           <div class="grid two bottom-grid">
             <article class="card">
               <div class="card-title">Top sản phẩm bán chạy</div>
               <table class="table" id="tableTopProducts">
                 <thead>
                   <tr>
-                    <th>#</th>
+                    <th>Top</th>
                     <th>Sản phẩm</th>
                     <th>Đơn</th>
                     <th>Số lượng</th>
@@ -268,6 +244,7 @@
                       Chưa có dữ liệu
                     </td>
                   </tr>
+
                   <tr th:each="product : ${topProducts}">
                     <td th:text="${product.topId}">1</td>
                     <td class="product-name" th:text="${product.productName}">

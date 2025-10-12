@@ -3,8 +3,7 @@
  * Handles Chart.js rendering for bar and line charts
  */
 
-(function () {
-  "use strict";
+(function () {"use strict";
 
   // Bar Chart
   const labels =
@@ -22,7 +21,7 @@
       {
         label: "Weekly Sales",
         data: values,
-        borderWidth: 1,
+        borderWidth: 2,
       },
     ],
   };
@@ -68,7 +67,7 @@
   // Tạo label với ngày đầu và ngày cuối
   const startDate = labelsLine.length > 0 ? labelsLine[0] : "";
   const endDate =
-    labelsLine.length > 0 ? labelsLine[labelsLine.length - 2] : "";
+    labelsLine.length > 0 ? labelsLine[labelsLine.length - 1] : "";
   const revenueLabel = `Doanh thu (${startDate} - ${endDate})`;
 
   const dataLine = {
@@ -77,7 +76,7 @@
       {
         label: revenueLabel,
         data: valuesLine,
-        tension: 0.35, // đường mượt
+        tension: 0, // đường mượt
         borderWidth: 2,
         borderColor: "#0ea5e9",
         backgroundColor: gradient,
@@ -97,7 +96,7 @@
     data: dataLine,
     options: {
       responsive: true,
-      maintainAspectRatio: false,
+      maintainAspectRatio: false, //cho phép thay đổi tỉ lệ, lấp đầy chiều cao/width container.
       layout: { padding: { top: 8, right: 12, bottom: 8, left: 6 } },
       interaction: { mode: "index", intersect: false },
       animation: { duration: 600, easing: "easeOutQuart" },
@@ -106,8 +105,6 @@
           display: true,
           labels: {
             color: "#0f172a", // chữ đậm trên nền trắng
-            boxWidth: 10,
-            boxHeight: 10,
             usePointStyle: true,
             pointStyle: "line",
           },
@@ -128,8 +125,8 @@
       },
       scales: {
         x: {
-          grid: { display: false },
-          ticks: { color: "#475569", maxRotation: 0, autoSkip: true },
+            grid: { display: false },
+            ticks: { color: "#475569", maxRotation: 0, autoSkip: true }, //không xoay nhãn (giữ ngang). //tự bỏ bớt nhãn nếu chật.
         },
         y: {
           beginAtZero: true,

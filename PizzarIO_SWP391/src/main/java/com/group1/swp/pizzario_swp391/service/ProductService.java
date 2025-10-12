@@ -55,7 +55,7 @@ public class ProductService {
                 .flashSaleStart(product.getFlashSaleStart())
                 .flashSaleEnd(product.getFlashSaleEnd())
                 .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
-                .isActive(product.isActive())
+                .active(product.isActive())
                 .build();
     }
 
@@ -96,5 +96,13 @@ public class ProductService {
             throw new RuntimeException(PRODUCT_NOT_FOUND);
         }
         productRepository.deleteById(id);
+    }
+
+    public void toggleProductActive(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(PRODUCT_NOT_FOUND));
+        product.setActive(!product.isActive());
+        product.setUpdatedAt(LocalDateTime.now());
+        productRepository.save(product);
     }
 }
