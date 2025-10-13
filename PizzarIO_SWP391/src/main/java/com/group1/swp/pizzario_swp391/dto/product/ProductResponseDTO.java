@@ -20,7 +20,7 @@ public class ProductResponseDTO {
     double flashSalePrice;
     LocalDateTime flashSaleStart;
     LocalDateTime flashSaleEnd;
-    boolean isActive;
+    boolean active;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
     String categoryName;
@@ -44,7 +44,7 @@ public class ProductResponseDTO {
     }
     
     public String getStatusText() {
-        return isActive ? "Hoạt động" : "Không hoạt động";
+        return active ? "Hoạt động" : "Không hoạt động";
     }
     
     public boolean isOnFlashSale() {

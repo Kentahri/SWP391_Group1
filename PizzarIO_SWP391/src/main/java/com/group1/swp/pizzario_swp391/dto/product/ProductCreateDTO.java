@@ -37,5 +37,5 @@ public class ProductCreateDTO {
     @NotNull(message = "Danh mục không được để trống")
     Long categoryId;
 
-    boolean isActive = true;
+    boolean active = true;
 }
