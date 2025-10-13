@@ -46,5 +46,5 @@ public class StaffCreateDTO {
     @NotNull(message = "Vai trò không được để trống")
     Role role;
 
-    boolean isActive = true;
+    boolean active = true;
 }

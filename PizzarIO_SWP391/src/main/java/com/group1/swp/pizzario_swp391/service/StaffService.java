@@ -71,7 +71,7 @@ public class StaffService {
                 .address(staff.getAddress())
                 .email(staff.getEmail())
                 .role(staff.getRole())
-                .isActive(staff.isActive())
+                .active(staff.isActive())
                 .build();
     }
 

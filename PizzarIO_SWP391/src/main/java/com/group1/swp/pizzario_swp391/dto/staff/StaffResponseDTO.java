@@ -21,7 +21,7 @@ public class StaffResponseDTO {
     String address;
     String email;
     Role role;
-    boolean isActive;
+    boolean active;
     
     // Formatted fields for display
     public String getDateOfBirthFormatted() {
@@ -39,6 +39,6 @@ public class StaffResponseDTO {
     }
     
     public String getStatusText() {
-        return isActive ? "Hoạt động" : "Không hoạt động";
+        return active ? "Hoạt động" : "Không hoạt động";
     }
 }

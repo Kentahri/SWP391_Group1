@@ -86,12 +86,11 @@ public class StaffController {
     // UPDATE: save update
     @PostMapping("/edit/{id}")
     public String updateStaff(@PathVariable int id,
-                              @Valid @ModelAttribute StaffUpdateDTO staffUpdateDTO,
+                              @Valid @ModelAttribute("staff") StaffUpdateDTO staffUpdateDTO,
                               BindingResult bindingResult,
                               Model model,
                               RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("staff", staffUpdateDTO);
             model.addAttribute("roles", Staff.Role.values());
             model.addAttribute("staffID", id);
             return "admin_page/staff/edit";
@@ -100,7 +99,7 @@ public class StaffController {
         try {
             staffService.updateStaff(id, staffUpdateDTO);
             redirectAttributes.addFlashAttribute("success", "Cập nhật thành công!");
-            return "redirect:staff";
+            return "redirect:/manager/staff";
         } catch (ValidationException e) {
             model.addAttribute("staff", staffUpdateDTO);
             model.addAttribute("roles", Staff.Role.values());
@@ -114,6 +113,6 @@ public class StaffController {
     @PostMapping("/delete/{id}")
     public String deleteStaff(@PathVariable int id) {
         staffService.deleteStaffById(id);
-        return "redirect:staff";
+        return "redirect:/manager/staff";
     }
 }
