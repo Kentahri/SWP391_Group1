@@ -1,6 +1,7 @@
 package com.group1.swp.pizzario_swp391.controller.manager;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import lombok.AccessLevel;
@@ -55,20 +56,6 @@ public class ProductController {
         ProductResponseDTO product = productService.getProductById(id);
         model.addAttribute("product", product);
         return "admin_page/product/detail";
-    }
-
-    @GetMapping("/products/create")
-    public String createForm(Model model) {
-        model.addAttribute("product", new ProductCreateDTO());
-        List<CategoryResponseDTO> categories = categoryService.getAllCategories();
-        model.addAttribute("categories", categories);
-        return "admin_page/product/product-create";
-    }
-
-    @PostMapping("/products/create")
-    public String create(@Valid @ModelAttribute ProductCreateDTO productCreateDTO) {
-        productService.createProduct(productCreateDTO);
-        return "redirect:/manager/products";
     }
 
     @GetMapping("/products/edit/{id}")
@@ -132,5 +119,23 @@ public class ProductController {
     public String toggleActive(@PathVariable Long id) {
         productService.toggleProductActive(id);
         return "redirect:/manager/products";
+    }
+
+    @GetMapping("/products/search")
+    @ResponseBody
+    public List<ProductResponseDTO> searchProducts(@RequestParam String query) {
+        List<ProductResponseDTO> allProducts = productService.getAllProducts();
+
+        if (query == null || query.trim().isEmpty()) {
+            return allProducts;
+        }
+
+        String queryLower = query.toLowerCase();
+
+        return allProducts.stream()
+                .filter(p -> p.getName().toLowerCase().contains(queryLower) ||
+                        (p.getDescription() != null && p.getDescription().toLowerCase().contains(queryLower)) ||
+                        p.getCategoryName().toLowerCase().contains(queryLower))
+                .collect(Collectors.toList());
     }
 }

@@ -17,6 +17,19 @@
             <h1>Quản lý món ăn</h1>
             <p class="subtitle">Thêm, sửa, xóa các món ăn trong menu</p>
           </div>
+
+          <!-- Thêm thanh tìm kiếm ở đây -->
+          <div class="search-container">
+            <input
+              type="text"
+              id="productSearch"
+              class="search-input"
+              placeholder="Tìm kiếm món ăn..."
+              autocomplete="off"
+            />
+            <span class="search-icon">🔍</span>
+          </div>
+
           <a th:href="@{/manager/products/new}" class="btn-add-product">
             <span>+</span> Thêm món ăn
           </a>
@@ -95,6 +108,34 @@
                     <input type="checkbox" th:field="*{active}" />
                     Kích hoạt
                   </label>
+                </div>
+
+                <!-- Phần chọn món cho combo - sẽ hiển thị khi chọn category combo -->
+                <div
+                  id="comboProductsSection"
+                  class="mb-3"
+                  style="display: none"
+                >
+                  <label>Chọn món ăn cho combo</label>
+                  <div class="product-selection-container">
+                    <div
+                      id="productSelectionList"
+                      class="product-selection-list"
+                    >
+                      <!-- Products will be loaded here by JavaScript -->
+                      <div class="loading">Đang tải danh sách sản phẩm...</div>
+                    </div>
+                  </div>
+
+                  <div class="selected-products-summary">
+                    <h4>Món đã chọn:</h4>
+                    <div
+                      id="selectedProductsList"
+                      class="selected-products-list"
+                    >
+                      <div class="no-selected-products">Chưa chọn món nào</div>
+                    </div>
+                  </div>
                 </div>
 
                 <div class="modal-footer">
@@ -182,7 +223,7 @@
                     th:title="${product.active} ? 'Ẩn' : 'Hiện'"
                   >
                     <span th:if="${product.active}">Ẩn</span>
-                    <span th:unless="${product.active}" >Hiện</span>
+                    <span th:unless="${product.active}">Hiện</span>
                   </button>
                 </form>
               </div>
