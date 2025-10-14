@@ -2,6 +2,7 @@ package com.group1.swp.pizzario_swp391.controller.manager;
 
 import java.util.List;
 
+import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import lombok.AccessLevel;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,40 +23,40 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @Controller
-@RequestMapping("/category")
+@ManagerUrl
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class CategoryController {
 
     CategoryService categoryService;
 
-    @GetMapping
+    @GetMapping("/categories")
     public String listCategories(Model model) {
         List<CategoryResponseDTO> categories = categoryService.getAllCategories();
         model.addAttribute("categories", categories);
         return "admin_page/category/category-list";
     }
 
-    @GetMapping("/create")
+    @GetMapping("/categories/create")
     public String createForm(Model model) {
         model.addAttribute("category", new CategoryCreateDTO());
         return "admin_page/category/category-create";
     }
 
-    @PostMapping("/create")
+    @PostMapping("/categories/create")
     public String createCategory(@Valid @ModelAttribute CategoryCreateDTO categoryCreateDTO) {
         categoryService.createCategory(categoryCreateDTO);
-        return "redirect:/category";
+        return "redirect:/manager/categories";
     }
-    
-    @GetMapping("/detail/{id}")
+
+    @GetMapping("/categories/detail/{id}")
     public String viewDetail(@PathVariable Long id, Model model) {
         CategoryDetailDTO categoryDetail = categoryService.getCategoryById(id);
         model.addAttribute("category", categoryDetail);
         return "admin_page/category/category-detail";
     }
 
-    @GetMapping("/edit/{id}")
+    @GetMapping("/categories/edit/{id}")
     public String editForm(@PathVariable Long id, Model model) {
         CategoryUpdateDTO categoryUpdateDTO = categoryService.getCategoryForUpdate(id);
         model.addAttribute("categoryDTO", categoryUpdateDTO);
@@ -63,16 +64,15 @@ public class CategoryController {
         return "admin_page/category/category-edit";
     }
 
-    @PostMapping("/edit/{id}")
+    @PostMapping("/categories/edit/{id}")
     public String updateCategory(@PathVariable Long id, @Valid @ModelAttribute CategoryUpdateDTO categoryUpdateDTO) {
         categoryService.updateCategory(id, categoryUpdateDTO);
-        return "redirect:/category";
+        return "redirect:/manager/categories";
     }
 
-    @PostMapping("/delete/{id}")
+    @PostMapping("/categories/delete/{id}")
     public String deleteCategory(@PathVariable Long id) {
         categoryService.deleteCategory(id);
-        return "redirect:/category";
+        return "redirect:/manager/categories";
     }
 }
-

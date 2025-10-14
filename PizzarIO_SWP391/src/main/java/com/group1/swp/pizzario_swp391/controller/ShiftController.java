@@ -22,15 +22,12 @@ public class ShiftController {
 
     @GetMapping("/shifts")
     public String list(Model model) {
-
-        model.addAttribute("shifts", service.getAllShift());
-
-
-        return "admin_page/shift/shift-list";
+        // Redirect to staff_shifts page (integrated view)
+        return "redirect:/manager/staff_shifts";
     }
 
     @GetMapping("/shift/create")
-    public String formCreate(Model model){
+    public String formCreate(Model model) {
 
         model.addAttribute("shift", new ShiftDTO());
 
@@ -50,7 +47,7 @@ public class ShiftController {
 
         redirectAttributes.addFlashAttribute("message", "Tạo thành công");
 
-        return "redirect:/manager/shifts";
+        return "redirect:/manager/staff_shifts";
 
     }
 
@@ -72,14 +69,16 @@ public class ShiftController {
     }
 
     @PostMapping("/shift/edit/{id}")
-    public String updateShift(@ModelAttribute("shift") ShiftDTO shiftDTO,@PathVariable int id, RedirectAttributes redirectAttributes){
+    public String updateShift(@ModelAttribute("shift") ShiftDTO shiftDTO, @PathVariable int id,
+            RedirectAttributes redirectAttributes) {
 
         service.updateShift(id, shiftDTO);
 
         redirectAttributes.addFlashAttribute("message", "Update thành công");
 
-        return "redirect:/manager/shifts";
+        return "redirect:/manager/staff_shifts";
     }
+
     // Xóa
     @GetMapping("/shift/delete/{id}")
     public String delete(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
@@ -87,7 +86,7 @@ public class ShiftController {
         service.deleteShift(id);
 
         redirectAttributes.addFlashAttribute("message", "Delete thành công");
-        return "redirect:/manager/shifts";
+        return "redirect:/manager/staff_shifts";
     }
 
 }
