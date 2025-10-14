@@ -158,14 +158,17 @@ function loadProducts() {
         cb.addEventListener("change", function () {
           const item = this.closest(".product-selection-item");
           const quantityControl = item.querySelector(".quantity-control");
+
           const id = this.dataset.id;
+          const name = item.dataset.name;
+          const price = parseFloat(item.dataset.price);
 
           if (this.checked) {
             quantityControl.style.display = "flex";
             selectedProducts.push({
               id: id,
-              name: item.dataset.name,
-              price: parseFloat(item.dataset.price),
+              name: name,
+              price: price,
               quantity: 1,
             });
           } else {
