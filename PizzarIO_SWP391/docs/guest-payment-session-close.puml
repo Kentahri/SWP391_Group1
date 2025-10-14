@@ -1,0 +1,48 @@
+@startuml GuestPaymentAndSessionClose
+title Guest Thanh Toán - Session Mất
+
+actor "Guest\n(Bàn 5)" as Guest
+actor "Cashier" as Cashier
+participant "Backend" as Backend
+database "Database" as DB
+
+Guest -> Cashier: Tôi muốn thanh toán
+activate Cashier
+
+Cashier -> Backend: POST /api/payment/process\ntableId: 5, paymentMethod: CASH
+activate Backend
+
+Backend -> DB: UPDATE Order SET paymentStatus=PAID\nWHERE sessionId = (SELECT id FROM Session WHERE tableId=5)
+DB --> Backend: Payment recorded
+
+Backend -> DB: UPDATE Dining_Table SET status=WAITING_PAYMENT\nWHERE id=5
+DB --> Backend: Table status updated
+
+Backend --> Cashier: Payment success
+Cashier -> Guest: Cảm ơn quý khách!
+
+note over Guest: Guest rời khỏi bàn\nTablet disconnect WebSocket
+
+Guest -> Backend: Disconnect /ws-guest
+Backend -> Backend: onDisconnect(sessionId=abc-123)
+note over Backend: Cleanup:\nRemove from active sessions\nClose WebSocket connection
+
+alt Cashier xác nhận khách đi
+    Cashier -> Backend: SEND /app/cashier/release-table\ntableId: 5, reason: Payment completed
+    
+    Backend -> DB: UPDATE Session SET isClosed=true, closedAt=NOW()\nWHERE tableId=5
+    DB --> Backend: Session closed permanently
+    
+    note over DB: Session.isClosed = true\nSession MẤT (archived)
+    
+    Backend -> DB: UPDATE Dining_Table SET status=AVAILABLE\nWHERE id=5
+    
+    Backend -> Cashier: /topic/tables-cashier\ntableId: 5, status: AVAILABLE
+    note over Cashier: Bàn 5 trống lại
+end
+
+deactivate Backend
+deactivate Cashier
+
+@enduml
+

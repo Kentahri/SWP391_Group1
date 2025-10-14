@@ -91,6 +91,14 @@ public class ProductService {
         productRepository.save(product);
     }
 
+    public void updateProductActive(Long id, Boolean active) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(PRODUCT_NOT_FOUND));
+        product.setActive(active != null && active);
+        product.setUpdatedAt(java.time.LocalDateTime.now());
+        productRepository.save(product);
+    }
+
     public void deleteProduct(Long id) {
         if (!productRepository.existsById(id)) {
             throw new RuntimeException(PRODUCT_NOT_FOUND);

@@ -23,6 +23,11 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
+import com.group1.swp.pizzario_swp391.service.LoginService;
+
+import lombok.extern.slf4j.Slf4j;
+
+// ProdSecurityConfig.java
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -139,13 +144,15 @@ public class ProdSecurityConfig {
         http
                 .userDetailsService(userDetailsService)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/webjars/**", "/css/**", "/images/**", "/js/**", "/guest",
-                                "/missing_pass/**")
+                        .requestMatchers("/login", "/webjars/**", "/css/**", "/images/**", "/static/js/**", "/guest",
+                                "/missing_pass/**", "/ws/**", "/app/**", "/topic/**", "/queue/**")
                         .permitAll()
                         .requestMatchers("/manager/**").hasRole("MANAGER")
                         .requestMatchers("/kitchen/**").hasRole("KITCHEN")
                         .requestMatchers("/cashier/**").hasRole("CASHIER")
                         .anyRequest().authenticated())
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**"))
                 .formLogin(f -> f
                         .loginPage("/login")
                         .usernameParameter("email") // <input name="email">

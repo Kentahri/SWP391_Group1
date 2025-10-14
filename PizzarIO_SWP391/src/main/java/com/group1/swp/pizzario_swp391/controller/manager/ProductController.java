@@ -138,4 +138,10 @@ public class ProductController {
                         p.getCategoryName().toLowerCase().contains(queryLower))
                 .collect(Collectors.toList());
     }
+
+    @PostMapping("/active/{id}")
+    public String updateActive(@PathVariable Long id, Boolean active) {
+        productService.updateProductActive(id, active != null ? active : false);
+        return "redirect:/kitchen";
+    }
 }
