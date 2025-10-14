@@ -5,52 +5,17 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
     <title>KITCHEN-DASHBOARD</title>
-    <link rel="stylesheet" th:href="@{/css/kitchen.css}">
 </head>
 <body>
-<div class="container">
-    <div class="sidebar">
-        <h2>KITCHEN</h2>
-        <a href="#" id="tab-order" class="tab-link active">Order Management</a>
-        <a href="#" id="tab-outstock" class="tab-link">Out-of-Stock Management</a>
-        <form th:action="@{/logout}" method="post" class="logout-form">
-            <input type="hidden"
-                   th:if="${_csrf != null}"
-                   th:name="${_csrf.parameterName}"
-                   th:value="${_csrf.token}" />
-            <button type="submit" style="margin-top: 20px; width: 100%;">Logout</button>
-        </form>
-    </div>
-    <div class="main-content">
-        <div id="order-management-section">
-            <div th:replace="kitchen-page/kitchen-order-management :: content"></div>
-        </div>
-        <div id="outstock-management-section" style="display:none;">
-            <div th:replace="kitchen-page/kitchen-outstock-management :: content"></div>
-        </div>
-    </div>
-</div>
-<script>
-    const tabOrder = document.getElementById('tab-order');
-    const tabOutstock = document.getElementById('tab-outstock');
-    const orderSection = document.getElementById('order-management-section');
-    const outstockSection = document.getElementById('outstock-management-section');
-
-    tabOrder.addEventListener('click', function(e) {
-        e.preventDefault();
-        tabOrder.classList.add('active');
-        tabOutstock.classList.remove('active');
-        orderSection.style.display = '';
-        outstockSection.style.display = 'none';
-    });
-    tabOutstock.addEventListener('click', function(e) {
-        e.preventDefault();
-        tabOrder.classList.remove('active');
-        tabOutstock.classList.add('active');
-        orderSection.style.display = 'none';
-        outstockSection.style.display = '';
-    });
-</script>
+<h2>KITCHEN</h2>
+<form th:action="@{/logout}" method="post">
+    <input type="hidden"
+           th:if="${_csrf != null}"
+           th:name="${_csrf.parameterName}"
+           th:value="${_csrf.token}" />
+    <button type="submit">Logout</button>
+    </form>
 </body>
 </html>

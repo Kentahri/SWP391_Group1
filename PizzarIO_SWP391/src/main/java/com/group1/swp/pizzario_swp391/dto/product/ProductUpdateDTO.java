@@ -37,5 +37,5 @@ public class ProductUpdateDTO {
     @NotNull(message = "Danh mục không được để trống")
     Long categoryId;
 
-    boolean active;
+    boolean isActive;
 }

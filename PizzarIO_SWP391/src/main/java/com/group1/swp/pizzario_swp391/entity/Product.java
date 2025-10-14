@@ -60,7 +60,7 @@
         private LocalDateTime flashSaleEnd;
 
         @Column(name = "is_active")
-        private boolean active;
+        private boolean isActive;
 
         @Column(name = "created_at")
         private LocalDateTime createdAt;
@@ -77,7 +77,7 @@
             this.flashSalePrice = flashSalePrice;
             this.flashSaleStart = flashSaleStart;
             this.flashSaleEnd = flashSaleEnd;
-            this.active = active;
+            this.isActive = isActive;
             this.createdAt = createdAt;
             this.updatedAt = updatedAt;
         }

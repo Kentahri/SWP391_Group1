@@ -81,10 +81,4 @@ public class ProductController {
         productService.deleteProduct(id);
         return "redirect:/product";
     }
-
-    @PostMapping("/active/{id}")
-    public String updateActive(@PathVariable Long id, Boolean active) {
-        productService.updateProductActive(id, active != null ? active : false);
-        return "redirect:/kitchen";
-    }
 }
