@@ -40,7 +40,7 @@ public class ProductDTO {
     LocalDateTime flashSaleStart;
     LocalDateTime flashSaleEnd;
 
-    boolean isActive;
+    boolean active;
     
     LocalDateTime createdAt;
     LocalDateTime updatedAt;

@@ -55,7 +55,7 @@ public class ProductService {
                 .flashSaleStart(product.getFlashSaleStart())
                 .flashSaleEnd(product.getFlashSaleEnd())
                 .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
-                .isActive(product.isActive())
+                .active(product.isActive())
                 .build();
     }
 
@@ -87,6 +87,14 @@ public class ProductService {
             product.setCategory(category);
         }
 
+        productRepository.save(product);
+    }
+
+    public void updateProductActive(Long id, Boolean active) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(PRODUCT_NOT_FOUND));
+        product.setActive(active != null && active);
+        product.setUpdatedAt(java.time.LocalDateTime.now());
         productRepository.save(product);
     }
 
