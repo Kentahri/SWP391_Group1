@@ -1,10 +1,19 @@
 package com.group1.swp.pizzario_swp391.entity;
 
-import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "reservaion")
@@ -16,13 +25,14 @@ public class Reservation {
     @JoinColumn(name = "table_id")
     private DiningTable diningTable;
 
-    public Reservation(LocalDateTime startTime, LocalDateTime endTime, LocalDateTime createdAt, Status status, String phone, String name, DiningTable diningTable) {
+    public Reservation(LocalDateTime startTime, LocalDateTime createdAt, Status status, String phone, String name, int capacityExpected, String note, DiningTable diningTable) {
         this.startTime = startTime;
-        this.endTime = endTime;
         this.createdAt = createdAt;
         this.status = status;
         this.phone = phone;
         this.name = name;
+        this.note = note;
+        this.capacityExpected = capacityExpected;
         this.diningTable = diningTable;
     }
 
@@ -32,11 +42,10 @@ public class Reservation {
 
     @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
-    @Column(name = "end_time", nullable = false)
-    private LocalDateTime endTime;
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private Status status;
 
     @Column(nullable = false)
@@ -44,7 +53,11 @@ public class Reservation {
 
     @Column(columnDefinition = "NVARCHAR(256)", nullable = false)
     private String name;
-
+    
+    private int capacityExpected;
+    
+    @Column(columnDefinition = "NVARCHAR(500)")
+    private String note;
     public enum Status {
         CONFIRMED, CANCELLED
     }

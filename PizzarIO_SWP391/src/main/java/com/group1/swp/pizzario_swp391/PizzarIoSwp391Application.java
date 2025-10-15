@@ -56,7 +56,7 @@ public class PizzarIoSwp391Application {
                     java.time.LocalDate.of(1998, 1, 15),
                     "0912345678",
                     "Đà Nẵng",
-                    "123456",
+                    passwordEncoder.encode("123456"),
                     "hiep@gmail.com",
                     Staff.Role.KITCHEN,
                     true

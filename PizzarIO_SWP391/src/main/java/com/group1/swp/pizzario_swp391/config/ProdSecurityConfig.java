@@ -1,10 +1,12 @@
 package com.group1.swp.pizzario_swp391.config;
 
+import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,9 +43,10 @@ public class ProdSecurityConfig {
                 req.getSession().setAttribute("CHECKIN_RESULT", "ERROR");
             }
             var a = auth.getAuthorities();
-            String target = a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_MANAGER")) ? "/manager"
+            String target =
+                      a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_MANAGER")) ? "/manager"
                     : a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_KITCHEN")) ? "/kitchen"
-                            : a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_CASHIER")) ? "/cashier" : "/";
+                    : a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_CASHIER")) ? "/cashier" : "/";
             res.sendRedirect(req.getContextPath() + target);
         };
     }

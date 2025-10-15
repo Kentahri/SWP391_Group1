@@ -8,7 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 public class TableSelectionRequest {
     private int tableId;
-    private String sessionId; // Unique ID for each tablet
-    private int guestCount;   // Number of guests
+    private String sessionId;
+    private int guestCount;
 }
 

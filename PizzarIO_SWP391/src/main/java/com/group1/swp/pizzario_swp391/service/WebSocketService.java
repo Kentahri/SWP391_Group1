@@ -13,11 +13,10 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.group1.swp.pizzario_swp391.dto.websocket.TableReleaseRequest;
 import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
 import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionResponse;
 import com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage;
-import com.group1.swp.pizzario_swp391.repository.OrderItemRepository;
+
 import com.group1.swp.pizzario_swp391.repository.SessionRepository;
 import com.group1.swp.pizzario_swp391.repository.TableRepository;
 

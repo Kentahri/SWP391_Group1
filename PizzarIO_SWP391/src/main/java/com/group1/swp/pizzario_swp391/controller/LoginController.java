@@ -29,8 +29,15 @@ public class LoginController {
     public String form(Model model, CsrfToken token) {
         model.addAttribute("_csrf", token);
         model.addAttribute("authen", new StaffLoginDTO());
-        return "authenticate/login";
+        return "/authenticate/login";
     }
+
+//    @PostMapping("/login")
+//    public String redirectToPage(Model model, CsrfToken token) {
+//        model.addAttribute("_csrf", token);
+//        model.addAttribute("authen", new StaffLoginDTO());
+//        return "cashier-page/cashier-dashboard";
+//    }
 
 
     @GetMapping("/missing_pass")
