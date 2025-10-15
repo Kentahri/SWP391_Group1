@@ -17,21 +17,19 @@
             <h1>Quản lý món ăn</h1>
             <p class="subtitle">Thêm, sửa, xóa các món ăn trong menu</p>
           </div>
-          <form
-            th:action="@{/manager/products}"
-            method="post"
-            class="search-container"
-          >
+
+          <!-- Thêm thanh tìm kiếm ở đây -->
+          <div class="search-container">
             <input
               type="text"
-              name="query"
               id="productSearch"
               class="search-input"
               placeholder="Tìm kiếm món ăn..."
               autocomplete="off"
-              th:value="${query}"
             />
-          </form>
+            <span class="search-icon">🔍</span>
+          </div>
+
           <a th:href="@{/manager/products/new}" class="btn-add-product">
             <span>+</span> Thêm món ăn
           </a>
@@ -45,157 +43,74 @@
                 <span class="close" onclick="closeModal()">&times;</span>
               </div>
 
-              <form
-                id="productForm"
-                method="post"
-                th:action="@{/manager/products/save}"
-                th:object="${productForm}"
-              >
+              <form id="productForm" method="post" th:object="${productForm}">
                 <input type="hidden" th:field="*{id}" />
 
-                <div th:if="${errorMessage}" class="alert alert-danger">
-                  <strong>Lỗi:</strong> <span th:text="${errorMessage}"></span>
-                </div>
-
                 <div class="mb-3">
-                  <label>Tên món <span class="required">*</span></label>
-                  <input
-                    type="text"
-                    th:field="*{name}"
-                    th:classappend="${#fields.hasErrors('name')} ? 'error-field' : ''"
-                    placeholder="Nhập tên món ăn"
-                  />
-                  <div
-                    th:if="${#fields.hasErrors('name')}"
-                    class="error-message"
-                    th:errors="*{name}"
-                  ></div>
+                  <label>Tên món</label>
+                  <input type="text" th:field="*{name}" required />
                 </div>
 
                 <div class="mb-3">
                   <label>Mô tả</label>
-                  <textarea
-                    th:field="*{description}"
-                    rows="3"
-                    th:classappend="${#fields.hasErrors('description')} ? 'error-field' : ''"
-                    placeholder="Mô tả món ăn"
-                  ></textarea>
-                  <div
-                    th:if="${#fields.hasErrors('description')}"
-                    class="error-message"
-                    th:errors="*{description}"
-                  ></div>
+                  <textarea th:field="*{description}" rows="3"></textarea>
                 </div>
 
                 <div class="row">
                   <div class="col-6">
-                    <label>Giá gốc (VND) <span class="required">*</span></label>
+                    <label>Giá gốc (VND)</label>
                     <input
                       type="number"
                       step="0.01"
                       th:field="*{basePrice}"
-                      th:classappend="${#fields.hasErrors('basePrice')} ? 'error-field' : ''"
-                      placeholder="1,000 - 10,000,000"
-                      min="1000"
-                      max="10000000"
+                      required
                     />
-                    <div
-                      th:if="${#fields.hasErrors('basePrice')}"
-                      class="error-message"
-                      th:errors="*{basePrice}"
-                    ></div>
                   </div>
                   <div class="col-6">
-                    <label>Giá Flash Sale</label>
+                    <label>Giá Flash</label>
                     <input
                       type="number"
                       step="0.01"
                       th:field="*{flashSalePrice}"
-                      th:classappend="${#fields.hasErrors('flashSalePrice')} ? 'error-field' : ''"
-                      placeholder="Tùy chọn"
-                      min="0"
                     />
-                    <div
-                      th:if="${#fields.hasErrors('flashSalePrice')}"
-                      class="error-message"
-                      th:errors="*{flashSalePrice}"
-                    ></div>
                   </div>
                 </div>
 
                 <div class="row">
                   <div class="col-6">
                     <label>Flash sale bắt đầu</label>
-                    <input
-                      type="datetime-local"
-                      th:field="*{flashSaleStart}"
-                      th:classappend="${#fields.hasErrors('flashSaleStart')} ? 'error-field' : ''"
-                      th:value="${productForm.flashSaleStart != null ? #temporals.format(productForm.flashSaleStart, 'yyyy-MM-dd''T''HH:mm') : ''}"
-                    />
-                    <div
-                      th:if="${#fields.hasErrors('flashSaleStart')}"
-                      class="error-message"
-                      th:errors="*{flashSaleStart}"
-                    ></div>
+                    <input type="datetime-local" th:field="*{flashSaleStart}" />
                   </div>
                   <div class="col-6">
                     <label>Flash sale kết thúc</label>
-                    <input
-                      type="datetime-local"
-                      th:field="*{flashSaleEnd}"
-                      th:classappend="${#fields.hasErrors('flashSaleEnd')} ? 'error-field' : ''"
-                      th:value="${productForm.flashSaleEnd != null ? #temporals.format(productForm.flashSaleEnd, 'yyyy-MM-dd''T''HH:mm') : ''}"
-                    />
-                    <div
-                      th:if="${#fields.hasErrors('flashSaleEnd')}"
-                      class="error-message"
-                      th:errors="*{flashSaleEnd}"
-                    ></div>
+                    <input type="datetime-local" th:field="*{flashSaleEnd}" />
                   </div>
                 </div>
 
                 <div class="mb-3">
-                  <label>Ảnh URL <span class="required">*</span></label>
-                  <input
-                    type="url"
-                    th:field="*{imageURL}"
-                    th:classappend="${#fields.hasErrors('imageURL')} ? 'error-field' : ''"
-                    placeholder="https://example.com/image.jpg"
-                  />
-                  <div
-                    th:if="${#fields.hasErrors('imageURL')}"
-                    class="error-message"
-                    th:errors="*{imageURL}"
-                  ></div>
+                  <label>Ảnh URL</label>
+                  <input type="url" th:field="*{imageURL}" />
                 </div>
 
                 <div class="mb-3">
-                  <label>Danh mục <span class="required">*</span></label>
-                  <select
-                    th:field="*{categoryId}"
-                    th:classappend="${#fields.hasErrors('categoryId')} ? 'error-field' : ''"
-                  >
-                    <option value="">-- Chọn danh mục --</option>
+                  <label>Danh mục</label>
+                  <select th:field="*{categoryId}" required>
                     <option
                       th:each="c : ${categories}"
                       th:value="${c.id}"
                       th:text="${c.name}"
                     ></option>
                   </select>
-                  <div
-                    th:if="${#fields.hasErrors('categoryId')}"
-                    class="error-message"
-                    th:errors="*{categoryId}"
-                  ></div>
                 </div>
 
                 <div class="mb-3">
-                  <label
-                    ><input type="checkbox" th:field="*{active}" /> Kích
-                    hoạt</label
-                  >
+                  <label>
+                    <input type="checkbox" th:field="*{active}" />
+                    Kích hoạt
+                  </label>
                 </div>
 
+                <!-- Phần chọn món cho combo - sẽ hiển thị khi chọn category combo -->
                 <div
                   id="comboProductsSection"
                   class="mb-3"
@@ -207,9 +122,11 @@
                       id="productSelectionList"
                       class="product-selection-list"
                     >
+                      <!-- Products will be loaded here by JavaScript -->
                       <div class="loading">Đang tải danh sách sản phẩm...</div>
                     </div>
                   </div>
+
                   <div class="selected-products-summary">
                     <h4>Món đã chọn:</h4>
                     <div
@@ -244,14 +161,14 @@
             >
               <div class="product-image">
                 <img
-                  th:if="${product.imageURL}"
+                  th:if="${product.imageURL != null and !product.imageURL.isEmpty()}"
                   th:src="${product.imageURL}"
                   alt="Product"
                   loading="lazy"
-                  onerror="this.style.display='none'"
+                  onerror="this.onerror=null; this.src=''; this.style.display='none';"
                 />
                 <div
-                  th:unless="${product.imageURL}"
+                  th:if="${product.imageURL == null or product.imageURL.isEmpty()}"
                   class="no-image-placeholder"
                 >
                   No Image
@@ -265,8 +182,11 @@
                     <span
                       class="badge status-badge"
                       th:classappend="${product.active} ? 'badge-active' : 'badge-inactive'"
-                      th:text="${product.active} ? 'Có sẵn' : 'Đã ẩn'"
-                    ></span>
+                    >
+                      <span
+                        th:text="${product.active} ? 'Có sẵn' : 'Đã ẩn'"
+                      ></span>
+                    </span>
                     <span
                       class="badge badge-category"
                       th:text="${product.categoryName}"
@@ -301,8 +221,10 @@
                     class="btn-icon"
                     th:classappend="${product.active} ? 'btn-hide' : 'btn-show'"
                     th:title="${product.active} ? 'Ẩn' : 'Hiện'"
-                    th:text="${product.active} ? 'Ẩn' : 'Hiện'"
-                  ></button>
+                  >
+                    <span th:if="${product.active}">Ẩn</span>
+                    <span th:unless="${product.active}">Hiện</span>
+                  </button>
                 </form>
               </div>
             </div>

@@ -1,6 +1,6 @@
 package com.group1.swp.pizzario_swp391.service;
 
-
+import com.group1.swp.pizzario_swp391.dto.data_analytics.VoucherStatsDTO;
 import com.group1.swp.pizzario_swp391.dto.voucher.VoucherDTO;
 import com.group1.swp.pizzario_swp391.entity.Voucher;
 import com.group1.swp.pizzario_swp391.mapper.VoucherMapper;
@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,6 +50,8 @@ public class VoucherService {
             throw new IllegalArgumentException("Ngày kết thúc phải sau ngày bắt đầu.");
         }
         Voucher voucher = voucherMapper.toVoucher(voucherDTO);
+        // Đảm bảo timesUsed = 0 khi tạo mới
+        voucher.setTimesUsed(0);
         voucherRepository.save(voucher);
     }
 
@@ -58,7 +59,14 @@ public class VoucherService {
         return voucherRepository.findAll();
     }
 
-    public List<Voucher> getVouchersSort(){
+    public void incrementTimesUsed(Long voucherId) {
+        Voucher voucher = voucherRepository.findById(voucherId)
+                .orElseThrow(() -> new IllegalArgumentException("Voucher không tồn tại"));
+        voucher.setTimesUsed(voucher.getTimesUsed() + 1);
+        voucherRepository.save(voucher);
+    }
+
+    public List<Voucher> getVouchersSort() {
         return voucherRepository.findAllVoucherOrderByValidFromAsc();
     }
 
@@ -102,5 +110,14 @@ public class VoucherService {
         Voucher voucher = voucherRepository.findById(id).orElseThrow(() -> new RuntimeException("Voucher not found"));
         voucherMapper.updateVoucher(voucher, voucherDTO);
         voucherRepository.save(voucher);
+    }
+
+    public VoucherStatsDTO getVoucherAnalytics(){
+        Integer totalVoucher = voucherRepository.findAll().size();
+        Integer activeVoucher = voucherRepository.countByActiveTrue();
+        Integer usedVoucher = voucherRepository.totalUsedVoucher();
+        Integer saveMoneyCustomer = 0;
+
+        return new VoucherStatsDTO(totalVoucher, activeVoucher, usedVoucher, saveMoneyCustomer);
     }
 }

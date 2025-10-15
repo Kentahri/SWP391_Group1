@@ -1,141 +1,335 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cập nhật Voucher</title>
     <style>
-        :root { --bg: #f6f7fb; --card: #ffffff; --muted: #6b7280; --text: #0f172a; --accent: #2563eb; --accent2: #a78bfa; --border: #e5e7eb; }
-        * { box-sizing: border-box; }
-        html, body { height: 100%; }
-        body {
-            margin: 0;
-            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-            background: var(--bg);
-            color: var(--text);
+      :root {
+        --bg: #f6f7fb;
+        --card: #ffffff;
+        --muted: #6b7280;
+        --text: #0f172a;
+        --accent: #2563eb;
+        --accent2: #a78bfa;
+        --border: #e5e7eb;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        background: var(--bg);
+        color: var(--text);
+      }
+      .container {
+        max-width: 500px;
+        margin: 40px auto;
+        padding: 24px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      }
+      .form-row {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      label {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      select,
+      input[type="text"],
+      input[type="number"],
+      input[type="datetime-local"] {
+        width: 100%;
+        background: #ffffff;
+        color: #111827;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 12px;
+        outline: none;
+      }
+      button[type="submit"],
+      .primary-btn {
+        margin-top: 8px;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid transparent;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      button[type="submit"]:hover,
+      .primary-btn:hover {
+        filter: brightness(1.05);
+      }
+      .back-link {
+        display: inline-block;
+        margin-bottom: 16px;
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .toast-error {
+        position: fixed;
+        top: 32px;
+        left: 0;
+        right: 0;
+        margin: 0 auto;
+        z-index: 9999;
+        max-width: 420px;
+        padding: 16px 24px;
+        background: #fee2e2;
+        color: #b91c1c;
+        font-weight: 600;
+        text-align: center;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(190, 26, 26, 0.09);
+        animation: fadeInScale 0.5s;
+      }
+      .error-message {
+        color: #dc2626;
+        font-size: 12px;
+        margin-top: 4px;
+        display: block;
+      }
+      .error-field {
+        border-color: #dc2626 !important;
+        background-color: #fef2f2 !important;
+      }
+      @keyframes fadeInScale {
+        0% {
+          opacity: 0;
+          transform: scale(0.85);
         }
-        .container {
-            max-width: 500px;
-            margin: 40px auto;
-            padding: 24px;
+        100% {
+          opacity: 1;
+          transform: scale(1);
         }
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 18px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-        }
-        .form-row { display: grid; gap: 10px; margin-bottom: 12px; }
-        label { font-size: 13px; color: var(--muted); }
-        select, input[type="text"], input[type="number"], input[type="datetime-local"] {
-            width: 100%;
-            background: #ffffff;
-            color: #111827;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 10px 12px;
-            outline: none;
-        }
-        button[type="submit"], .primary-btn {
-            margin-top: 8px;
-            padding: 10px 14px;
-            border-radius: 10px;
-            border: 1px solid transparent;
-            background: var(--accent);
-            color: #fff;
-            font-weight: 700;
-            cursor: pointer;
-        }
-        button[type="submit"]:hover, .primary-btn:hover { filter: brightness(1.05); }
-        .back-link { display: inline-block; margin-bottom: 16px; color: var(--accent); text-decoration: none; font-weight: 600; }
-        .toast-error {
-            position: fixed;
-            top: 32px;
-            left: 0; right: 0;
-            margin: 0 auto;
-            z-index: 9999;
-            max-width: 420px;
-            padding: 16px 24px;
-            background: #fee2e2;
-            color: #b91c1c;
-            font-weight: 600;
-            text-align: center;
-            border: 1px solid #fecaca;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(190,26,26,0.09);
-            animation: fadeInScale 0.5s;
-        }
-        @keyframes fadeInScale {
-            0% { opacity: 0; transform: scale(0.85); }
-            100% { opacity: 1; transform: scale(1); }
-        }
+      }
     </style>
-</head>
-<body>
-<div class="container">
-    <a th:href="@{/voucher}" class="back-link">&larr; Quay lại danh sách voucher</a>
-    <div th:if="${errorMessage}" class="toast-error" th:text="${errorMessage}"></div>
-    <div class="card">
-        <h2>Cập nhật Voucher</h2>
-        <form th:action="@{'/voucher/update/' + ${voucherId}}" method="post" th:object="${voucherDTO}">
-            <div class="form-row">
-                <label>Mã voucher</label>
-                <input type="text" th:field="*{code}" required />
+  </head>
+  <body>
+    <div class="container">
+      <a th:href="@{/manager/vouchers}" class="back-link"
+        >&larr; Quay lại danh sách voucher</a
+      >
+      <div
+        th:if="${errorMessage}"
+        class="toast-error"
+        th:text="${errorMessage}"
+      ></div>
+      <div class="card">
+        <h2
+          th:text="${voucherId != null ? 'Cập nhật Voucher' : 'Tạo Voucher Mới'}"
+        ></h2>
+        <form
+          th:action="${voucherId != null ? '/pizzario/manager/vouchers/update/' + voucherId : '/pizzario/manager/vouchers/add'}"
+          method="post"
+          th:object="${voucherDTO}"
+        >
+          <div class="form-row">
+            <label>Mã voucher</label>
+            <input
+              type="text"
+              th:field="*{code}"
+              th:class="${#fields.hasErrors('code')} ? 'error-field'"
+            />
+            <span
+              th:if="${#fields.hasErrors('code')}"
+              th:errors="*{code}"
+              class="error-message"
+            ></span>
+          </div>
+          <div class="form-row">
+            <label>Loại</label>
+            <select
+              th:field="*{type}"
+              th:class="${#fields.hasErrors('type')} ? 'error-field'"
+            >
+              <option
+                th:each="type : ${voucherTypes}"
+                th:value="${type}"
+                th:text="${type}"
+              ></option>
+            </select>
+            <span
+              th:if="${#fields.hasErrors('type')}"
+              th:errors="*{type}"
+              class="error-message"
+            ></span>
+          </div>
+          <div class="form-row">
+            <label>Giá trị % chiết khấu</label>
+            <input
+              type="number"
+              th:field="*{value}"
+              step="0.01"
+              th:class="${#fields.hasErrors('value')} ? 'error-field'"
+            />
+            <span
+              th:if="${#fields.hasErrors('value')}"
+              th:errors="*{value}"
+              class="error-message"
+            ></span>
+          </div>
+          <div class="form-row">
+            <label>Mô tả</label>
+            <input
+              type="text"
+              th:field="*{description}"
+              th:class="${#fields.hasErrors('description')} ? 'error-field'"
+            />
+            <span
+              th:if="${#fields.hasErrors('description')}"
+              th:errors="*{description}"
+              class="error-message"
+            ></span>
+          </div>
+          <div class="form-row">
+            <label>Số lần sử dụng tối đa</label>
+            <input
+              type="number"
+              th:field="*{maxUses}"
+              th:class="${#fields.hasErrors('maxUses')} ? 'error-field'"
+            />
+            <span
+              th:if="${#fields.hasErrors('maxUses')}"
+              th:errors="*{maxUses}"
+              class="error-message"
+            ></span>
+          </div>
+          <div class="form-row">
+            <label>Giá trị đơn tối thiểu</label>
+            <input
+              type="number"
+              th:field="*{minOrderAmount}"
+              step="0.01"
+              th:class="${#fields.hasErrors('minOrderAmount')} ? 'error-field'"
+            />
+            <span
+              th:if="${#fields.hasErrors('minOrderAmount')}"
+              th:errors="*{minOrderAmount}"
+              class="error-message"
+            ></span>
+          </div>
+          <div class="form-row">
+            <label>Ngày bắt đầu</label>
+            <input
+              type="datetime-local"
+              th:field="*{validFrom}"
+              th:class="${#fields.hasErrors('validFrom')} ? 'error-field'"
+            />
+            <span
+              th:if="${#fields.hasErrors('validFrom')}"
+              th:errors="*{validFrom}"
+              class="error-message"
+            ></span>
+          </div>
+          <div class="form-row">
+            <label>Ngày kết thúc</label>
+            <input
+              type="datetime-local"
+              th:field="*{validTo}"
+              th:class="${#fields.hasErrors('validTo')} ? 'error-field'"
+            />
+            <span
+              th:if="${#fields.hasErrors('validTo')}"
+              th:errors="*{validTo}"
+              class="error-message"
+            ></span>
+          </div>
+          <div class="form-row">
+            <label>Hoạt động</label>
+            <select th:field="*{active}">
+              <option th:value="true">Có</option>
+              <option th:value="false">Không</option>
+            </select>
+          </div>
+          <!-- Global validation errors -->
+          <div th:if="${#fields.hasGlobalErrors()}" class="form-row">
+            <div
+              class="error-message"
+              style="
+                background-color: #fee;
+                border: 1px solid #fcc;
+                padding: 10px;
+                border-radius: 5px;
+                margin: 10px 0;
+              "
+            >
+              <strong>⚠️ Lỗi validation:</strong>
+              <ul style="margin: 5px 0 0 0; padding-left: 20px">
+                <li
+                  th:each="error : ${#fields.globalErrors()}"
+                  th:text="${error}"
+                ></li>
+              </ul>
             </div>
-            <div class="form-row">
-                <label>Loại</label>
-                <select th:field="*{type}" required>
-                    <option th:each="type : ${voucherTypes}" th:value="${type}" th:text="${type}"></option>
-                </select>
+          </div>
+
+          <!-- Error message from controller -->
+          <div th:if="${errorMessage}" class="form-row">
+            <div
+              class="error-message"
+              style="
+                background-color: #fee;
+                border: 1px solid #fcc;
+                padding: 10px;
+                border-radius: 5px;
+                margin: 10px 0;
+              "
+            >
+              <strong>❌ Lỗi:</strong> <span th:text="${errorMessage}"></span>
             </div>
-            <div class="form-row">
-                <label>Giá trị</label>
-                <input type="number" th:field="*{value}" step="0.01" required />
+          </div>
+
+          <!-- Success message from controller -->
+          <div th:if="${successMessage}" class="form-row">
+            <div
+              style="
+                background-color: #efe;
+                border: 1px solid #cfc;
+                padding: 10px;
+                border-radius: 5px;
+                margin: 10px 0;
+              "
+            >
+              <strong>✅ Thành công:</strong>
+              <span th:text="${successMessage}"></span>
             </div>
-            <div class="form-row">
-                <label>Mô tả</label>
-                <input type="text" th:field="*{description}" />
-            </div>
-            <div class="form-row">
-                <label>Số lần sử dụng tối đa</label>
-                <input type="number" th:field="*{maxUses}" required />
-            </div>
-            <div class="form-row">
-                <label>Số lần đã sử dụng</label>
-                <input type="number" th:field="*{timesUsed}" required />
-            </div>
-            <div class="form-row">
-                <label>Giá trị đơn tối thiểu</label>
-                <input type="number" th:field="*{minOrderAmount}" step="0.01" required />
-            </div>
-            <div class="form-row">
-                <label>Ngày bắt đầu</label>
-                <input type="datetime-local" th:field="*{validFrom}" required />
-            </div>
-            <div class="form-row">
-                <label>Ngày kết thúc</label>
-                <input type="datetime-local" th:field="*{validTo}" required />
-            </div>
-            <div class="form-row">
-                <label>Hoạt động</label>
-                <select th:field="*{active}" required>
-                    <option th:value="true">Có</option>
-                    <option th:value="false">Không</option>
-                </select>
-            </div>
-            <button type="submit" class="primary-btn">Cập nhật</button>
+          </div>
+
+          <button
+            type="submit"
+            class="primary-btn"
+            th:text="${voucherId != null ? 'Cập nhật' : 'Tạo mới'}"
+          ></button>
         </form>
+      </div>
     </div>
-</div>
-<script th:inline="javascript">
-    /*<![CDATA[*/
-    if (document.querySelector('.toast-error')) {
-        setTimeout(function() {
-            document.querySelector('.toast-error').style.display = 'none';
+    <script th:inline="javascript">
+      /*<![CDATA[*/
+      if (document.querySelector(".toast-error")) {
+        setTimeout(function () {
+          document.querySelector(".toast-error").style.display = "none";
         }, 4500);
-    }
-    /*]]>*/
-</script>
-</body>
+      }
+      /*]]>*/
+    </script>
+  </body>
 </html>

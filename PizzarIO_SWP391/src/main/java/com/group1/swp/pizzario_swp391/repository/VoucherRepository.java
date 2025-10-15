@@ -13,4 +13,9 @@ public interface VoucherRepository extends JpaRepository<Voucher, Long> {
     @Query("SELECT v FROM Voucher v ORDER BY v.validFrom ASC")
     List<Voucher> findAllVoucherOrderByValidFromAsc();
 
+    @Query("SELECT sum(v.timesUsed) FROM Voucher v")
+    Integer totalUsedVoucher();
+
+    @Query("select count(v) from Voucher v where v.isActive = true")
+    Integer countByActiveTrue();
 }

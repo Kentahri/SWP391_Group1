@@ -33,36 +33,11 @@
           <div class="voucher-header">
             <h2>Quản lý Voucher</h2>
             <!-- TODO BACKEND: Có thể tạo form create riêng hoặc dùng modal popup -->
-            <button
-              class="btn-create"
-              onclick="alert('TODO: Implement create voucher form')"
+            <a th:href="@{'/manager/vouchers/add'}" class="btn-create"
+              >Tạo Mới</a
             >
-              <span>+</span>
-              <span>Tạo voucher</span>
-            </button>
           </div>
 
-          <!-- 
-            ==================== BACKEND TODO #1: STATISTICS ====================
-            Controller method cần truyền vào Model:
-            
-            @ModelAttribute("stats") VoucherStatisticsDTO stats
-            
-            VoucherStatisticsDTO cần có:
-            - totalVouchers (Integer): count tất cả vouchers trong DB
-            - activeVouchers (Integer): count vouchers có active=true và validTo > now()
-            - totalUsages (Integer): sum của timesUsed từ tất cả vouchers
-            - totalSavings (Double): tổng tiền đã giảm cho khách (từ orders history)
-            
-            Ví dụ:
-            VoucherStatisticsDTO stats = new VoucherStatisticsDTO();
-            stats.setTotalVouchers(voucherRepository.count());
-            stats.setActiveVouchers(voucherRepository.countByActiveAndValidToAfter(true, LocalDateTime.now()));
-            stats.setTotalUsages(voucherRepository.sumTimesUsed());
-            stats.setTotalSavings(orderRepository.sumDiscountAmountFromVouchers());
-            model.addAttribute("stats", stats);
-            ====================================================================
-          -->
           <div class="stats-grid">
             <div class="stat-card">
               <h3>Tổng voucher</h3>

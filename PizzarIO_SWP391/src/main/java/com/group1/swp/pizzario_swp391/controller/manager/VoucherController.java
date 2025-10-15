@@ -1,12 +1,15 @@
 package com.group1.swp.pizzario_swp391.controller.manager;
 
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
+import com.group1.swp.pizzario_swp391.dto.voucher.VoucherCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.voucher.VoucherDTO;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import com.group1.swp.pizzario_swp391.entity.Voucher;
 import com.group1.swp.pizzario_swp391.service.VoucherService;
@@ -25,11 +28,23 @@ public class VoucherController {
         model.addAttribute("voucherTypes", Voucher.VoucherType.values());
         model.addAttribute("voucherDTO", new VoucherDTO());
         model.addAttribute("vouchers", voucherService.getVouchersSort());
+        model.addAttribute("stats", voucherService.getVoucherAnalytics());
+        model.addAttribute("totalVoucher", voucherService.getAllVouchers().size());
+
         return "admin_page/voucher/voucher";
+    }
+
+    @GetMapping("/vouchers/add")
+    public String formAdd(Model model) {
+
+        model.addAttribute("voucherDTO", new VoucherDTO());
+        model.addAttribute("voucherTypes", Voucher.VoucherType.values());
+        return "admin_page/voucher/voucher_edit";
     }
 
     @GetMapping("/vouchers/edit/{id}")
     public String editVoucher(@PathVariable Long id, Model model) {
+
         Voucher voucher = voucherService.getVoucherById(id)
                 .orElseThrow(() -> new RuntimeException("Voucher not found"));
         VoucherDTO voucherDTO = VoucherDTO.builder()
@@ -42,7 +57,7 @@ public class VoucherController {
                 .minOrderAmount(voucher.getMinOrderAmount())
                 .validFrom(voucher.getValidFrom())
                 .validTo(voucher.getValidTo())
-                .isActive(voucher.isActive())
+                .active(voucher.isActive())
                 .build();
         model.addAttribute("voucherDTO", voucherDTO);
         model.addAttribute("voucherId", id);
@@ -51,17 +66,25 @@ public class VoucherController {
     }
 
     @PostMapping("/vouchers/add")
-    public String createNewVoucher(@ModelAttribute VoucherDTO voucherDTO, Model model, RedirectAttributes redirectAttributes) {
+    public String createNewVoucher(@Valid @ModelAttribute VoucherDTO voucherDTO, BindingResult bindingResult,
+            Model model, RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("voucherDTO", voucherDTO);
+            model.addAttribute("voucherTypes", Voucher.VoucherType.values());
+            model.addAttribute("vouchers", voucherService.getVouchersSort());
+            return "admin_page/voucher/voucher_edit";
+        }
+
         try {
             voucherService.createNewVoucher(voucherDTO);
             redirectAttributes.addFlashAttribute("successMessage", "Tạo voucher thành công!");
             return "redirect:/manager/vouchers";
         } catch (Exception ex) {
+            model.addAttribute("voucherDTO", voucherDTO);
             model.addAttribute("voucherTypes", Voucher.VoucherType.values());
             model.addAttribute("vouchers", voucherService.getVouchersSort());
-            model.addAttribute("voucherDTO", voucherDTO); // Để giữ lại dữ liệu form vừa nhập
             model.addAttribute("errorMessage", "Không thể tạo voucher vì: " + ex.getMessage());
-            return "admin_page/voucher/voucher";
+            return "admin_page/voucher/voucher_edit";
         }
     }
 
@@ -72,7 +95,15 @@ public class VoucherController {
     }
 
     @PostMapping("/vouchers/update/{id}")
-    public String updateVoucher(@PathVariable Long id, @ModelAttribute VoucherDTO voucherDTO, Model model, RedirectAttributes redirectAttributes) {
+    public String updateVoucher(@PathVariable Long id, @Valid @ModelAttribute VoucherDTO voucherDTO,
+            BindingResult bindingResult, Model model, RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("voucherDTO", voucherDTO);
+            model.addAttribute("voucherId", id);
+            model.addAttribute("voucherTypes", Voucher.VoucherType.values());
+            return "admin_page/voucher/voucher_edit";
+        }
+
         try {
             voucherService.updateVoucher(id, voucherDTO);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật voucher thành công!");
