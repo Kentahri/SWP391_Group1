@@ -7,6 +7,7 @@ import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import lombok.AccessLevel;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import com.group1.swp.pizzario_swp391.dto.category.CategoryResponseDTO;
@@ -34,6 +35,17 @@ public class ProductController {
     public String list(Model model) {
         List<ProductResponseDTO> products = productService.getAllProducts();
         model.addAttribute("products", products);
+        List<CategoryResponseDTO> categories = categoryService.getAllCategories();
+        model.addAttribute("categories", categories);
+        model.addAttribute("productForm", new ProductCreateDTO()); // Object rỗng cho form
+        return "admin_page/product/product-list";
+    }
+
+    @PostMapping("/products")
+    public String searchProduct(@RequestParam("query") String query, Model model) {
+        List<ProductResponseDTO> products = productService.searchProducts(query);
+        model.addAttribute("products", products);
+        model.addAttribute("query", query);
         List<CategoryResponseDTO> categories = categoryService.getAllCategories();
         model.addAttribute("categories", categories);
         model.addAttribute("productForm", new ProductCreateDTO()); // Object rỗng cho form
@@ -87,26 +99,63 @@ public class ProductController {
     }
 
     @PostMapping("/products/save")
-    public String save(@Valid @ModelAttribute("productForm") ProductCreateDTO productForm) {
-        if (productForm.getId() == null) {
-            // Create new product
-            productService.createProduct(productForm);
-        } else {
-            // Update existing product
-            ProductUpdateDTO updateDTO = ProductUpdateDTO.builder()
-                    .name(productForm.getName())
-                    .description(productForm.getDescription())
-                    .imageURL(productForm.getImageURL())
-                    .basePrice(productForm.getBasePrice())
-                    .flashSalePrice(productForm.getFlashSalePrice())
-                    .flashSaleStart(productForm.getFlashSaleStart())
-                    .flashSaleEnd(productForm.getFlashSaleEnd())
-                    .categoryId(productForm.getCategoryId())
-                    .active(productForm.isActive())
-                    .build();
-            productService.updateProduct(productForm.getId(), updateDTO);
+    public String save(@Valid @ModelAttribute("productForm") ProductCreateDTO productForm,
+            BindingResult bindingResult,
+            Model model) {
+
+        if(productForm.getFlashSaleEnd() != null && productForm.getFlashSaleEnd() != null){
+            if(productForm.getFlashSaleEnd().isBefore(productForm.getFlashSaleStart())){
+                bindingResult.rejectValue("flashSaleEnd", "error.flashSaleEnd",
+                        "Ngày kết thúc phải lớn hơn ngày bắt đầu");
+            }
         }
-        return "redirect:/manager/products";
+
+        // Kiểm tra validation errors
+        if (bindingResult.hasErrors()) {
+            // Load lại dữ liệu cần thiết cho trang
+            List<ProductResponseDTO> products = productService.getAllProducts();
+            model.addAttribute("products", products);
+            List<CategoryResponseDTO> categories = categoryService.getAllCategories();
+            model.addAttribute("categories", categories);
+
+            // Đánh dấu để mở lại modal với lỗi
+            model.addAttribute("openModal", productForm.getId() == null ? "create" : "edit");
+            model.addAttribute("hasErrors", true);
+
+            // Trả về trang với errors
+            return "admin_page/product/product-list";
+        }
+
+        try {
+            if (productForm.getId() == null) {
+                // Create new product
+                productService.createProduct(productForm);
+            } else {
+                // Update existing product
+                ProductUpdateDTO updateDTO = ProductUpdateDTO.builder()
+                        .name(productForm.getName())
+                        .description(productForm.getDescription())
+                        .imageURL(productForm.getImageURL())
+                        .basePrice(productForm.getBasePrice())
+                        .flashSalePrice(productForm.getFlashSalePrice())
+                        .flashSaleStart(productForm.getFlashSaleStart())
+                        .flashSaleEnd(productForm.getFlashSaleEnd())
+                        .categoryId(productForm.getCategoryId())
+                        .active(productForm.isActive())
+                        .build();
+                productService.updateProduct(productForm.getId(), updateDTO);
+            }
+            return "redirect:/manager/products";
+        } catch (Exception e) {
+            // Xử lý lỗi từ service layer (business logic errors)
+            List<ProductResponseDTO> products = productService.getAllProducts();
+            model.addAttribute("products", products);
+            List<CategoryResponseDTO> categories = categoryService.getAllCategories();
+            model.addAttribute("categories", categories);
+            model.addAttribute("openModal", productForm.getId() == null ? "create" : "edit");
+            model.addAttribute("errorMessage", e.getMessage());
+            return "admin_page/product/product-list";
+        }
     }
 
     @PostMapping("/products/delete/{id}")

@@ -50,12 +50,12 @@ public class VoucherController {
         return "admin_page/voucher/voucher_edit";
     }
 
-    @PostMapping("/add")
+    @PostMapping("/vouchers/add")
     public String createNewVoucher(@ModelAttribute VoucherDTO voucherDTO, Model model, RedirectAttributes redirectAttributes) {
         try {
             voucherService.createNewVoucher(voucherDTO);
             redirectAttributes.addFlashAttribute("successMessage", "Tạo voucher thành công!");
-            return "redirect:/voucher";
+            return "redirect:/manager/vouchers";
         } catch (Exception ex) {
             model.addAttribute("voucherTypes", Voucher.VoucherType.values());
             model.addAttribute("vouchers", voucherService.getVouchersSort());
@@ -71,12 +71,12 @@ public class VoucherController {
         return "redirect:/manager/vouchers";
     }
 
-    @PostMapping("/update/{id}")
+    @PostMapping("/vouchers/update/{id}")
     public String updateVoucher(@PathVariable Long id, @ModelAttribute VoucherDTO voucherDTO, Model model, RedirectAttributes redirectAttributes) {
         try {
             voucherService.updateVoucher(id, voucherDTO);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật voucher thành công!");
-            return "redirect:/voucher";
+            return "redirect:/manager/vouchers";
         } catch (Exception ex) {
             model.addAttribute("voucherDTO", voucherDTO);
             model.addAttribute("voucherId", id);

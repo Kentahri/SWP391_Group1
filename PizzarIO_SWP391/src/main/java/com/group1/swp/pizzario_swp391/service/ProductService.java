@@ -113,4 +113,25 @@ public class ProductService {
         product.setUpdatedAt(LocalDateTime.now());
         productRepository.save(product);
     }
+
+    public List<ProductResponseDTO> searchProducts(String query) {
+
+        List<ProductResponseDTO> products;
+
+        if (query != null && !query.trim().isEmpty()) {
+            String queryLower = query.toLowerCase().trim();
+
+            products = this.getAllProducts().stream()
+                    .filter(product -> product.getName().toLowerCase().contains(queryLower) ||
+                            (product.getDescription() != null
+                                    && product.getDescription().toLowerCase().contains(queryLower))
+                            ||
+                            product.getCategoryName().toLowerCase().contains(queryLower))
+                    .collect(Collectors.toList());
+        } else {
+            products = this.getAllProducts();
+        }
+
+        return products;
+    }
 }
