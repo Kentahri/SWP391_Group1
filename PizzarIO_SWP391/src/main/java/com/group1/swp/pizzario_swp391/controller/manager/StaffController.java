@@ -4,7 +4,7 @@ import java.util.List;
 
 
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
-import com.group1.swp.pizzario_swp391.exception.ValidationException;
+// ...existing code...
 
 import jakarta.validation.Valid;
 
@@ -61,16 +61,15 @@ public class StaffController {
             return "admin_page/staff/create";
         }
 
-        try {
-            staffService.createNewStaff(dto);
-            ra.addFlashAttribute("success", "Created staff successfully");
-            return "redirect:staff";
-        } catch (ValidationException e) {
+        String errorMsg = staffService.createNewStaff(dto);
+        if (errorMsg != null) {
             model.addAttribute("roles", Staff.Role.values());
             model.addAttribute("formTitle", "Create Staff");
-            model.addAttribute("error", e.getMessage());
+            model.addAttribute("error", errorMsg);
             return "admin_page/staff/create";
         }
+        ra.addFlashAttribute("success", "Created staff successfully");
+        return "redirect:staff";
     }
 
     // UPDATE: show edit form
@@ -96,17 +95,16 @@ public class StaffController {
             return "admin_page/staff/edit";
         }
         
-        try {
-            staffService.updateStaff(id, staffUpdateDTO);
-            redirectAttributes.addFlashAttribute("success", "Cập nhật thành công!");
-            return "redirect:/manager/staff";
-        } catch (ValidationException e) {
+        String errorMsg = staffService.updateStaff(id, staffUpdateDTO);
+        if (errorMsg != null) {
             model.addAttribute("staff", staffUpdateDTO);
             model.addAttribute("roles", Staff.Role.values());
             model.addAttribute("staffID", id);
-            model.addAttribute("error", e.getMessage());
+            model.addAttribute("error", errorMsg);
             return "admin_page/staff/edit";
         }
+        redirectAttributes.addFlashAttribute("success", "Cập nhật thành công!");
+        return "redirect:/manager/staff";
     }
 
     // DELETE
