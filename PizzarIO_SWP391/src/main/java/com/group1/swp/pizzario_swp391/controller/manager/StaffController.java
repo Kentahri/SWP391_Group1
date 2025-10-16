@@ -3,7 +3,7 @@ package com.group1.swp.pizzario_swp391.controller.manager;
 import java.util.List;
 
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
-import com.group1.swp.pizzario_swp391.exception.ValidationException;
+// ...existing code...
 
 import jakarta.validation.Valid;
 
@@ -63,10 +63,15 @@ public class StaffController {
             return "admin_page/staff/create";
         }
 
-        staffService.createNewStaff(dto);
+          String errorMsg = staffService.createNewStaff(dto);
+        if (errorMsg != null) {
+            model.addAttribute("roles", Staff.Role.values());
+            model.addAttribute("formTitle", "Create Staff");
+            model.addAttribute("error", errorMsg);
+            return "admin_page/staff/create";
+        }
         ra.addFlashAttribute("success", "Created staff successfully");
-        // PRG: điều hướng về trang list
-        return "redirect:/manager/staff";
+        return "redirect:staff";
     }
 
     // UPDATE: show edit form
@@ -82,15 +87,25 @@ public class StaffController {
     // UPDATE: save update
     @PostMapping("/staff/edit/{id}")
     public String updateStaff(@PathVariable int id,
-            @ModelAttribute StaffUpdateDTO staffUpdateDTO,
-            RedirectAttributes redirectAttributes) {
-        try {
-            staffService.updateStaff(id, staffUpdateDTO);
-            redirectAttributes.addFlashAttribute("success", "Cập nhật thành công!");
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/manager/staff/edit/" + id;
+                              @Valid @ModelAttribute("staff") StaffUpdateDTO staffUpdateDTO,
+                              BindingResult bindingResult,
+                              Model model,
+                              RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("roles", Staff.Role.values());
+            model.addAttribute("staffID", id);
+            return "admin_page/staff/edit";
         }
+        
+        String errorMsg = staffService.updateStaff(id, staffUpdateDTO);
+        if (errorMsg != null) {
+            model.addAttribute("staff", staffUpdateDTO);
+            model.addAttribute("roles", Staff.Role.values());
+            model.addAttribute("staffID", id);
+            model.addAttribute("error", errorMsg);
+            return "admin_page/staff/edit";
+        }
+        redirectAttributes.addFlashAttribute("success", "Cập nhật thành công!");
         return "redirect:/manager/staff";
     }
 

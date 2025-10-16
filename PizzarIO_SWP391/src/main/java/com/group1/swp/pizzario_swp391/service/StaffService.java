@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
-import com.group1.swp.pizzario_swp391.exception.ValidationException;
+// ...existing code...
 
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -75,35 +75,35 @@ public class StaffService {
                 .build();
     }
 
-    public void createNewStaff(StaffCreateDTO createDTO) {
-        // Validate unique constraints only
+    public String createNewStaff(StaffCreateDTO createDTO) {
         if (staffRepository.existsByEmail(createDTO.getEmail())) {
-            throw new ValidationException(EMAIL_ALREADY_EXISTS);
+            return EMAIL_ALREADY_EXISTS;
         }
         if (staffRepository.existsByPhone(createDTO.getPhone())) {
-            throw new ValidationException(PHONE_ALREADY_EXISTS);
+            return PHONE_ALREADY_EXISTS;
         }
-
         Staff staff = staffMapper.toEntity(createDTO);
         String encodedPassword = passwordEncoder.encode(createDTO.getPassword());
         staff.setPassword(encodedPassword);
         staffRepository.save(staff);
+        return null;
     }
 
-    public void updateStaff(int id, StaffUpdateDTO updateDTO) {
+    public String updateStaff(int id, StaffUpdateDTO updateDTO) {
         Staff staff = staffRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(STAFF_NOT_FOUND));
-
-        // Validate unique constraints only (excluding current staff)
+                .orElse(null);
+        if (staff == null) {
+            return STAFF_NOT_FOUND;
+        }
         if (staffRepository.existsByEmailAndIdNot(updateDTO.getEmail(), id)) {
-            throw new ValidationException("Email đã tồn tại!");
+            return "Email đã tồn tại!";
         }
         if (staffRepository.existsByPhoneAndIdNot(updateDTO.getPhone(), id)) {
-            throw new ValidationException("Số điện thoại đã tồn tại!");
+            return "Số điện thoại đã tồn tại!";
         }
-
         staffMapper.updateEntity(staff, updateDTO);
         staffRepository.save(staff);
+        return null;
     }
 
     public void deleteStaffById(int id) {
