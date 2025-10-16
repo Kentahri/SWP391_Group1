@@ -1,14 +1,25 @@
 package com.group1.swp.pizzario_swp391.config;
 
+import com.group1.swp.pizzario_swp391.dto.staff.StaffLoginDTO;
+import com.group1.swp.pizzario_swp391.repository.StaffRepository;
+import com.group1.swp.pizzario_swp391.service.LoginService;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.authentication.AccountStatusException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
@@ -17,6 +28,10 @@ import com.group1.swp.pizzario_swp391.service.LoginService;
 import lombok.extern.slf4j.Slf4j;
 
 // ProdSecurityConfig.java
+import java.util.List;
+import java.util.stream.Collectors;
+
+
 @Profile("!dev")
 @Configuration
 @EnableMethodSecurity
@@ -33,12 +48,9 @@ public class ProdSecurityConfig {
         return (req, res, auth) -> {
             String email = auth.getName();
             try {
-                boolean checkedIn = audit.recordLoginByEmail(email);
-                // tuỳ chọn: gắn cờ session để hiện toast ở UI
-                req.getSession().setAttribute("CHECKIN_RESULT", checkedIn ? "OK" : "SKIPPED");
+                audit.recordLoginByEmail(email);
             } catch (Exception ex) {
-                // Không để lỗi check-in phá vỡ đăng nhập/redirect
-                req.getSession().setAttribute("CHECKIN_RESULT", "ERROR");
+                log.warn("Warning: " + ex);
             }
             var a = auth.getAuthorities();
             String target = a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_MANAGER")) ? "/manager"
@@ -59,11 +71,76 @@ public class ProdSecurityConfig {
     }
 
     @Bean
+    AuthenticationFailureHandler myFailureHandler(Validator validator, StaffRepository staffRepository) {
+        return (req, res, ex) -> {
+
+            String email = req.getParameter("email");
+            String password = req.getParameter("password");
+
+            var dto = StaffLoginDTO.builder()
+                    .email(email)
+                    .password(password)
+                    .build();
+
+            var checkValidation = validator.validate(dto);
+
+            String code, msg;
+
+            if (!checkValidation.isEmpty()) {
+
+                var byField = checkValidation.stream().collect(
+                       Collectors.groupingBy(v -> v.getPropertyPath().toString(),
+                                Collectors.mapping(ConstraintViolation::getMessage,
+                                        Collectors.toList())));
+
+                String emailErr = String.join("<br/>", byField.getOrDefault("email", List.of()));
+                String passErr  = String.join("<br/>", byField.getOrDefault("password", List.of()));
+
+                code = "validation";
+                msg  = (emailErr.isEmpty() ? "" : "<b>Email:</b> " + emailErr)
+                        + (!emailErr.isEmpty() && !passErr.isEmpty() ? "<br/>" : "")
+                        + (passErr.isEmpty() ? "" : "<b>Mật khẩu:</b> " + passErr);
+            }
+            else if (ex instanceof BadCredentialsException) {
+
+                boolean checkMail = (email != null && staffRepository.existsByEmail(email));
+                if(!checkMail){
+                    code = "email_not_found";
+                    msg  = "Email không tồn tại";
+                }
+                else {
+                    code = "bad_password";
+                    msg  = "Mật khẩu không đúng";
+                }
+            } else if (ex instanceof AccountStatusException) {
+                // gồm Locked/AccountExpired/CredentialsExpired
+                code = "account_status";
+                msg  = "Tài khoản không ở trạng thái hợp lệ. Yêu cầu manager cấp quyền";
+            } else if (ex instanceof InternalAuthenticationServiceException) {
+                code = "internal_auth";
+                msg  = "Lỗi nội bộ khi xác thực (vui lòng thử lại)";
+            } else if (ex instanceof AuthenticationException) {
+                code = "auth_error";
+                msg  = "Không thể xác thực. Vui lòng thử lại.";
+            } else {
+                code = "unknown";
+                msg  = "Đăng nhập thất bại. Vui lòng thử lại.";
+            }
+
+            req.getSession().setAttribute("LOGIN_ERROR_MSG", msg);
+            res.sendRedirect(req.getContextPath() + "/login?error=" + code);
+        };
+    }
+
+
+
+
+    @Bean
     SecurityFilterChain prodFilter(
             HttpSecurity http,
             UserDetailsService userDetailsService,
             AuthenticationSuccessHandler roleBasedSuccessHandler,
-            LogoutSuccessHandler auditLogoutSuccessHandler) throws Exception {
+            LogoutSuccessHandler auditLogoutSuccessHandler, AuthenticationFailureHandler myFailureHandler) throws Exception {
         http
                 .userDetailsService(userDetailsService)
                 .authorizeHttpRequests(auth -> auth
@@ -81,7 +158,7 @@ public class ProdSecurityConfig {
                         .usernameParameter("email") // <input name="email">
                         .passwordParameter("password") // <input name="password">
                         .successHandler(roleBasedSuccessHandler)
-                        .failureUrl("/login?error")
+                        .failureHandler(myFailureHandler)
                         .permitAll())
                 .logout(l -> l
                         .logoutUrl("/logout") // URL để gửi logout

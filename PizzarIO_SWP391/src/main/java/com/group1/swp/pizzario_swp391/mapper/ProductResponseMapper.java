@@ -11,7 +11,7 @@ import com.group1.swp.pizzario_swp391.entity.Product;
 
 @Mapper(componentModel = "spring")
 public interface ProductResponseMapper {
-    
+
     // Convert Entity to Response DTO
     @Mapping(target = "categoryName", source = "category.name")
     @Mapping(target = "categoryId", source = "category.id")

@@ -13,7 +13,7 @@ import java.util.List;
 public class Order {
 
     @ManyToOne
-    @JoinColumn(name = "created_by")
+    @JoinColumn(name = "staff_id")
     private Staff staff;
 
     @OneToOne
@@ -76,7 +76,7 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private PaymentStatus paymentStatus;
 
-    @Column(name = "tax-rate")
+    @Column(name = "tax_rate")
     private double taxRate;
 
     public enum OrderType {

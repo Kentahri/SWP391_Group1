@@ -17,7 +17,13 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.List;
+import java.time.LocalDate;
+import java.time.DayOfWeek;
+// import java.time.Duration; // Uncomment khi implement calculateStatistics()
+// import java.time.LocalTime; // Uncomment khi implement convertToCalendarDTO()
+// import java.time.format.DateTimeFormatter; // Uncomment khi format time
+import java.util.*;
+// import java.util.stream.Collectors; // Uncomment khi implement filters và buildWeekDays()
 
 @Controller
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -32,10 +38,75 @@ public class StaffShiftController {
     // removed unused mapperResponse
 
     @GetMapping("/staff_shifts")
-    public String listStaffShifts(Model model) {
-        var rows = staffShiftService.search(null, null, null, null); // hoặc service.findAll()
-        model.addAttribute("rows", rows);
-        return "admin_page/staff_shift/shift_management";
+    public String listStaffShifts(
+            @RequestParam(required = false) Integer weekOffset,
+            @RequestParam(required = false) Long staffId,
+            @RequestParam(required = false) Long shiftId,
+            Model model) {
+
+        // TODO: Implement calendar view logic
+        // Bạn cần implement các phần sau:
+
+        // 1. Tính toán tuần hiện tại
+        int offset = weekOffset != null ? weekOffset : 0;
+        LocalDate today = LocalDate.now();
+        LocalDate weekStart = today.plusWeeks(offset).with(DayOfWeek.SUNDAY);
+        LocalDate weekEnd = weekStart.plusDays(6);
+
+        model.addAttribute("weekStartDate", weekStart);
+        model.addAttribute("weekEndDate", weekEnd);
+
+        // 2. Lấy dữ liệu cho filter dropdown
+        List<StaffResponseDTO> allStaff = staffService.getAllStaff();
+        List<ShiftDTO> allShifts = shiftService.getAllShift();
+        model.addAttribute("allStaff", allStaff);
+        model.addAttribute("allShifts", allShifts);
+        model.addAttribute("selectedStaffId", staffId);
+        model.addAttribute("selectedShiftId", shiftId);
+
+        // Thêm danh sách shift types cho shift management section
+        model.addAttribute("shifts", allShifts);
+
+        // 3. TODO: Lấy staff shifts trong tuần
+        // List<StaffShiftDTO> staffShifts =
+        // staffShiftService.findByDateRange(weekStart, weekEnd);
+        // Tạm thời dùng search với null để lấy tất cả
+        var staffShifts = staffShiftService.search(null, null, null, null);
+
+        // TODO: Apply filters nếu có
+        // if (staffId != null) { ... filter by staffId ... }
+        // if (shiftId != null) { ... filter by shiftId ... }
+
+        // 4. TODO: Tính toán statistics
+        // ShiftStatisticsDTO stats = calculateStatistics(staffShifts);
+        // model.addAttribute("stats", stats);
+
+        // Tạm thời dùng giá trị mặc định
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalShifts", staffShifts.size());
+        stats.put("totalHours", 0);
+        stats.put("totalWage", 0.0);
+        stats.put("completedShifts", 0);
+        model.addAttribute("stats", stats);
+
+        // 5. TODO: Tạo weekDays với shift cards
+        // List<WeekDayDTO> weekDays = buildWeekDays(weekStart, weekEnd, staffShifts);
+        // model.addAttribute("weekDays", weekDays);
+
+        // Tạm thời tạo 7 ngày trống
+        List<Map<String, Object>> weekDays = new ArrayList<>();
+        String[] dayNames = { "CN", "T2", "T3", "T4", "T5", "T6", "T7" };
+        for (int i = 0; i < 7; i++) {
+            Map<String, Object> day = new HashMap<>();
+            day.put("date", weekStart.plusDays(i));
+            day.put("dayName", dayNames[i]);
+            day.put("isToday", weekStart.plusDays(i).equals(LocalDate.now()));
+            day.put("shifts", new ArrayList<>()); // TODO: Add actual shifts
+            weekDays.add(day);
+        }
+        model.addAttribute("weekDays", weekDays);
+
+        return "admin_page/staff_shift/shift_calendar";
     }
 
     @GetMapping("/staff_shifts/create")

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cài đặt • Admin Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- SIDEBAR -->
+      <div th:insert="~{fragments/sidebar :: sidebar('settings')}"></div>
+
+      <!-- MAIN -->
+      <main class="main">
+        <header class="page-header">
+          <div>
+            <h1>Cài đặt</h1>
+            <p class="muted">Cấu hình hệ thống</p>
+          </div>
+          <div class="userbox">
+            <div class="avatar">M</div>
+            <div class="who">
+              <strong id="currentUser">—</strong>
+              <span id="currentRole" class="muted">—</span>
+            </div>
+          </div>
+        </header>
+
+        <section>
+          <div class="content-wrapper">
+            <div class="card">
+              <div class="card-title">Cài đặt hệ thống</div>
+              <div class="card-body">
+                <p>Trang cài đặt đang được phát triển...</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
