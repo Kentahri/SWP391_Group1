@@ -3,7 +3,7 @@ package com.group1.swp.pizzario_swp391.controller.manager;
 import java.util.List;
 
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
-import com.group1.swp.pizzario_swp391.dto.staff.StaffDTO;
+import com.group1.swp.pizzario_swp391.exception.ValidationException;
 
 import jakarta.validation.Valid;
 
@@ -72,20 +72,8 @@ public class StaffController {
     // UPDATE: show edit form
     @GetMapping("/staff/edit/{id}")
     public String edit(Model model, @PathVariable int id) {
-
         StaffUpdateDTO staffUpdateDTO = staffService.getStaffForUpdate(id);
         model.addAttribute("staff", staffUpdateDTO);
-        StaffResponseDTO staff = staffService.getStaffById(id);
-        StaffDTO staffDTO = StaffDTO.builder()
-                .name(staff.getName())
-                .dateOfBirth(staff.getDateOfBirth())
-                .phone(staff.getPhone())
-                .address(staff.getAddress())
-                .email(staff.getEmail())
-                .role(staff.getRole())
-                .active(staff.isActive())
-                .build();
-        model.addAttribute("staff", staffDTO);
         model.addAttribute("staffID", id);
         model.addAttribute("roles", Staff.Role.values());
         return "admin_page/staff/edit";
