@@ -1,7 +1,6 @@
 package com.group1.swp.pizzario_swp391.controller.manager;
 
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
-import com.group1.swp.pizzario_swp391.dto.voucher.VoucherCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.voucher.VoucherDTO;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;

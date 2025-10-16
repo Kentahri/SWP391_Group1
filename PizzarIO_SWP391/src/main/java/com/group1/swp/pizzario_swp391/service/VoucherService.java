@@ -116,7 +116,7 @@ public class VoucherService {
         Integer totalVoucher = voucherRepository.findAll().size();
         Integer activeVoucher = voucherRepository.countByActiveTrue();
         Integer usedVoucher = voucherRepository.totalUsedVoucher();
-        Integer saveMoneyCustomer = 0;
+        Double saveMoneyCustomer = voucherRepository.totalSavedAllOrders();
 
         return new VoucherStatsDTO(totalVoucher, activeVoucher, usedVoucher, saveMoneyCustomer);
     }

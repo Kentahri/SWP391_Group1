@@ -67,7 +67,7 @@
               <h3>Tổng tiết kiệm</h3>
               <p
                 class="value"
-                th:text="${stats != null ? #numbers.formatDecimal(stats.totalSavings/1000000, 1, 'POINT', 1, 'COMMA') + 'M' : '0M'}"
+                th:text="${stats.totalSavings()}"
               ></p>
               <p class="subtitle">VND đã giảm cho khách</p>
             </div>
