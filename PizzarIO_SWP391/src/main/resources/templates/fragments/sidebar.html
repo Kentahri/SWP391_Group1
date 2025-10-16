@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <body>
+    <!-- 
+  Sidebar Fragment
+  Usage: th:insert="~{fragments/sidebar :: sidebar(activePage='analytics')}"
+  activePage values: 'analytics', 'staff', 'staff_shifts', 'vouchers', 'categories', 'products', 'tables', 'settings'
+-->
+    <aside th:fragment="sidebar(activePage)" class="sidebar">
+      <div class="brand">
+        <div class="logo">🍕</div>
+        <div class="brand-text">
+          <strong>PizzarIO</strong>
+          <span>Admin Dashboard</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a
+          th:href="@{/manager/analytics}"
+          th:classappend="${activePage == 'analytics'} ? 'active' : ''"
+          class="nav-link"
+        >
+          📊 Phân tích
+        </a>
+        <a
+          th:href="@{/manager/staff}"
+          th:classappend="${activePage == 'staff'} ? 'active' : ''"
+          class="nav-link"
+        >
+          👥 Nhân viên
+        </a>
+        <a
+          th:href="@{/manager/staff_shifts}"
+          th:classappend="${activePage == 'staff_shifts'} ? 'active' : ''"
+          class="nav-link"
+        >
+          📅 Ca làm việc
+        </a>
+        <a
+          th:href="@{/manager/vouchers}"
+          th:classappend="${activePage == 'vouchers'} ? 'active' : ''"
+          class="nav-link"
+        >
+          🎟️ Voucher
+        </a>
+        <a
+          th:href="@{/manager/categories}"
+          th:classappend="${activePage == 'categories'} ? 'active' : ''"
+          class="nav-link"
+        >
+          📂 Danh mục
+        </a>
+        <a
+          th:href="@{/manager/products}"
+          th:classappend="${activePage == 'products'} ? 'active' : ''"
+          class="nav-link"
+        >
+          🍕 Sản phẩm
+        </a>
+        <a
+          th:href="@{/manager/tables}"
+          th:classappend="${activePage == 'tables'} ? 'active' : ''"
+          class="nav-link"
+        >
+          🪑 Bàn ăn
+        </a>
+        <a
+          th:href="@{/manager/settings}"
+          th:classappend="${activePage == 'settings'} ? 'active' : ''"
+          class="nav-link"
+        >
+          ⚙️ Cài đặt
+        </a>
+      </nav>
+
+      <form th:action="@{/logout}" method="post" style="margin-top: auto">
+        <input
+          type="hidden"
+          th:if="${_csrf != null}"
+          th:name="${_csrf.parameterName}"
+          th:value="${_csrf.token}"
+        />
+        <button
+          type="submit"
+          class="nav-link"
+          style="
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: inherit;
+          "
+        >
+          🚪 Đăng xuất
+        </button>
+      </form>
+    </aside>
+  </body>
+</html>

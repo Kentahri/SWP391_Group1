@@ -39,33 +39,13 @@ public class LoginController {
         return "authenticate/missing_pass";
     }
 
-//    @PostMapping("/signIn")
-//    public String signIn(@Valid @ModelAttribute("account") Staff account,BindingResult result ,Model model) { //StaffDTO
-//
-//        if(result.hasErrors()){
-//            return "authenticate/login";
-//        }
-//
-//        Optional<Staff> authenticated = loginService.authenticate(account.getEmail(), account.getPassword());
-//
-//        if (authenticated.isEmpty()) {
-//            model.addAttribute("loginError", "Email hoặc mật khẩu không đúng");
-//            return "authenticate/login";
-//        }
-//
-//        Staff authenticate = loginService.authenticate(account.getEmail(), account.getPassword()).orElse(null);
-//
-//        if (authenticate == null) {
-//
-//            return "redirect:authenticate/login";
-//        }
-//
-//        return switch (authenticate.getRole()) {
-//            case MANAGER -> "dashboard";
-//            case KITCHEN -> "kitchen";
-//            case CASHIER -> "cashier-page/cashier";
-//            default -> "redirect:authenticate/login"; // fallback nếu role null hoặc không khớp
-//        };
-//    }
+    @PostMapping("/signIn")
+    public String signIn(@Valid @ModelAttribute("authen") StaffLoginDTO authenLogin,BindingResult result ,Model model) { //StaffDTO
+
+        if(result.hasErrors()){
+            return "authenticate/login";
+        }
+        return "redirect:manager";
+    }
 
 }
