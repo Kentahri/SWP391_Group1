@@ -24,7 +24,7 @@ public class Category {
     String description;
 
     @Column(name = "is_active")
-    boolean isActive;
+    boolean active;
 
     @Column(name = "created_at")
     LocalDateTime createdAt;

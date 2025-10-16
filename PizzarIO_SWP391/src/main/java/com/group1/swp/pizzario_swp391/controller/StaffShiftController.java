@@ -67,6 +67,20 @@ public class StaffShiftController {
         // Thêm danh sách shift types cho shift management section
         model.addAttribute("shifts", allShifts);
 
+        // Add shift form and types for modal (Shift Type)
+        if (!model.containsAttribute("shiftForm")) {
+            model.addAttribute("shiftForm", new ShiftDTO());
+        }
+        List<String> shiftTypes = Arrays.stream(com.group1.swp.pizzario_swp391.entity.Shift.ShiftType.values())
+                .map(Enum::name)
+                .toList();
+        model.addAttribute("shiftTypes", shiftTypes);
+
+        // Add staff shift form for modal (Staff Shift Assignment)
+        if (!model.containsAttribute("staffShiftForm")) {
+            model.addAttribute("staffShiftForm", new StaffShiftDTO());
+        }
+
         // 3. TODO: Lấy staff shifts trong tuần
         // List<StaffShiftDTO> staffShifts =
         // staffShiftService.findByDateRange(weekStart, weekEnd);
@@ -109,86 +123,47 @@ public class StaffShiftController {
         return "admin_page/staff_shift/shift_calendar";
     }
 
-    @GetMapping("/staff_shifts/create")
-    public String createFormStaffShift(
-            @RequestParam(required = false) Integer editId,
-            Model model) {
-
-        List<StaffResponseDTO> staffs = staffService.getAllStaff();
-
-        List<ShiftDTO> shift = shiftService.getAllShift();
-        model.addAttribute("shifts", shift);
-        model.addAttribute("staffs", staffs);
-
-        if (editId != null) {
-            // Chế độ edit - load dữ liệu cũ
-            StaffShiftDTO staffShift = staffShiftService.getById(editId);
-            model.addAttribute("staffShift", staffShift);
-            model.addAttribute("editId", editId);
-            model.addAttribute("isEdit", true);
-        } else {
-            // Chế độ tạo mới
-            model.addAttribute("staffShift", new StaffShiftDTO());
-            model.addAttribute("isEdit", false);
-        }
-
-        return "admin_page/staff_shift/edit";
-    }
-
-    @PostMapping("/staff_shifts/create")
-    public String createStaffShift(@Valid @ModelAttribute("staffShift") StaffShiftDTO staffShiftDTO,
-            BindingResult bindingResult,
-            RedirectAttributes ra, Model model) {
-
-        model.addAttribute("isEdit", false);
-
-        if (bindingResult.hasErrors()) {
-            // Trả về lại form để hiển thị lỗi + giữ dữ liệu đã nhập
-            model.addAttribute("staffs", staffService.getAllStaff());
-            model.addAttribute("shifts", shiftService.getAllShift());
-            return "admin_page/staff_shift/edit";
-        }
-
-        staffShiftService.create(staffShiftDTO);
-
-        ra.addFlashAttribute("message", "Create successfully");
-
-        return "redirect:/manager/staff_shifts";
-    }
-
     @PostMapping("/staff_shifts/delete/{id}")
     public String deleteStaffShift(@PathVariable int id, RedirectAttributes ra) {
         staffShiftService.delete(id);
-        ra.addFlashAttribute("msg", "Xóa phân công thành công");
-        return "redirect:staff_shifts";
+        ra.addFlashAttribute("message", "Xóa phân công thành công");
+        return "redirect:/manager/staff_shifts";
     }
 
     @GetMapping("/staff_shifts/edit/{id}")
-    public String showEditForm(@PathVariable int id, Model model) {
+    public String showEditForm(@PathVariable int id, RedirectAttributes redirectAttributes) {
         StaffShiftDTO staffShift = staffShiftService.getById(id);
-        model.addAttribute("staffs", staffService.getAllStaff());
-        model.addAttribute("shifts", shiftService.getAllShift());
-        model.addAttribute("staffShift", staffShift);
-        return "admin_page/staff_shift/edit";
+
+        // Always open modal for edit
+        redirectAttributes.addFlashAttribute("staffShiftForm", staffShift);
+        redirectAttributes.addFlashAttribute("openStaffShiftModal", "edit");
+        return "redirect:/manager/staff_shifts";
     }
 
-    @PostMapping("/staff_shifts/edit/{id}")
-    public String updateStaffShift(@PathVariable("id") int id,
-            @Valid @ModelAttribute("staffShift") StaffShiftDTO staffShiftDTO, BindingResult bindingResult, Model model,
+    // Save endpoint for modal (handles both create and update)
+    @PostMapping("/staff_shifts/save")
+    public String saveStaffShift(@Valid @ModelAttribute("staffShiftForm") StaffShiftDTO staffShiftDTO,
+            BindingResult bindingResult,
+            Model model,
             RedirectAttributes ra) {
 
-        model.addAttribute("isEdit", true);
-        model.addAttribute("editId", id);
-
         if (bindingResult.hasErrors()) {
-            model.addAttribute("staffs", staffService.getAllStaff());
-            model.addAttribute("shifts", shiftService.getAllShift());
-            return "admin_page/staff_shift/edit";
+            // If there are validation errors, return to modal with errors
+            ra.addFlashAttribute("staffShiftForm", staffShiftDTO);
+            ra.addFlashAttribute("openStaffShiftModal", staffShiftDTO.getId() != null ? "edit" : "create");
+            ra.addFlashAttribute("errors", bindingResult.getAllErrors());
+            return "redirect:/manager/staff_shifts";
         }
 
-        staffShiftService.update(staffShiftDTO, id);
-
-        ra.addFlashAttribute("message", "Update successfully");
+        if (staffShiftDTO.getId() != null && staffShiftDTO.getId() > 0) {
+            // Update existing staff shift
+            staffShiftService.update(staffShiftDTO, staffShiftDTO.getId());
+            ra.addFlashAttribute("message", "Cập nhật ca làm việc thành công");
+        } else {
+            // Create new staff shift
+            staffShiftService.create(staffShiftDTO);
+            ra.addFlashAttribute("message", "Thêm ca làm việc thành công");
+        }
 
         return "redirect:/manager/staff_shifts";
     }

@@ -11,41 +11,55 @@
   const modal = document.getElementById("addTableModal");
   const cancelBtn = document.getElementById("cancelAddTable");
 
-  if (openBtn) {
+  if (openBtn && modal) {
     openBtn.addEventListener("click", function () {
-      modal.style.display = "flex";
+      modal.setAttribute("aria-hidden", "false");
     });
   }
 
-  if (cancelBtn) {
+  if (cancelBtn && modal) {
     cancelBtn.addEventListener("click", function () {
-      modal.style.display = "none";
+      modal.setAttribute("aria-hidden", "true");
     });
   }
 
-  modal &&
+  if (modal) {
     modal.addEventListener("click", function (e) {
       if (e.target === modal) {
-        modal.style.display = "none";
+        modal.setAttribute("aria-hidden", "true");
       }
     });
+  }
 
   // Update Table Modal
   const updateModal = document.getElementById("updateTableModal");
   const cancelUpdateBtn = document.getElementById("cancelUpdateTable");
 
-  if (cancelUpdateBtn) {
+  if (cancelUpdateBtn && updateModal) {
     cancelUpdateBtn.addEventListener("click", function () {
-      updateModal.style.display = "none";
+      updateModal.setAttribute("aria-hidden", "true");
     });
   }
 
-  updateModal &&
+  if (updateModal) {
     updateModal.addEventListener("click", function (e) {
       if (e.target === updateModal) {
-        updateModal.style.display = "none";
+        updateModal.setAttribute("aria-hidden", "true");
       }
     });
+  }
+
+  // Close modal on ESC key
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      if (modal && modal.getAttribute("aria-hidden") === "false") {
+        modal.setAttribute("aria-hidden", "true");
+      }
+      if (updateModal && updateModal.getAttribute("aria-hidden") === "false") {
+        updateModal.setAttribute("aria-hidden", "true");
+      }
+    }
+  });
 })();
 
 // Table Selection and Details
@@ -58,14 +72,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
   tiles.forEach((tile) => {
     tile.addEventListener("click", function () {
+      // Remove selected class from all tiles
       tiles.forEach((t) => t.classList.remove("selected"));
+
+      // Add selected class to clicked tile
       this.classList.add("selected");
 
       const ds = this.dataset;
 
       // Update detail panel
       document.getElementById("tableName").textContent = "Bàn " + (ds.id || "");
-      document.getElementById("detailStatus").textContent = ds.status || "—";
+
+      // Update status with badge styling
+      const statusElement = document.getElementById("detailStatus");
+      const status = ds.status || "—";
+      statusElement.textContent = status;
+
+      // Remove all status classes
+      statusElement.classList.remove(
+        "available",
+        "occupied",
+        "paying",
+        "reserved"
+      );
+
+      // Add appropriate status class
+      if (status !== "—") {
+        statusElement.classList.add(status.toLowerCase());
+      }
+
       document.getElementById("detailCapacity").textContent =
         ds.capacity || "0";
       document.getElementById("detailCondition").textContent =
@@ -75,17 +110,31 @@ document.addEventListener("DOMContentLoaded", function () {
       document.getElementById("detailUpdatedAt").textContent =
         ds.updatedAt || "—";
 
-      console.log("Selected table:", ds.id);
-      console.log("Update URL:", ds.update_url);
-
+      // Store current table info
       currentTableId = ds.id;
-      updateForm.action = ds.update_url;
 
-      document.getElementById("updateCapacity").value = ds.capacity || "1";
-      document.getElementById("updateTableCondition").value =
-        ds.condition || "";
+      // Set update form action (data-update_url becomes updateUrl in dataset)
+      if (updateForm && ds.updateUrl) {
+        updateForm.action = ds.updateUrl;
+        console.log("Update form action set to:", ds.updateUrl);
+      }
 
-      tableActions.style.display = "block";
+      // Populate update form
+      const capacityInput = document.getElementById("updateCapacity");
+      const conditionSelect = document.getElementById("updateTableCondition");
+
+      if (capacityInput) {
+        capacityInput.value = ds.capacity || "1";
+      }
+
+      if (conditionSelect) {
+        conditionSelect.value = ds.condition || "";
+      }
+
+      // Show action buttons
+      if (tableActions) {
+        tableActions.style.display = "block";
+      }
     });
   });
 
@@ -96,11 +145,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Update button handler
   const updateBtn = document.getElementById("updateTableBtn");
-  if (updateBtn) {
+  const updateModal = document.getElementById("updateTableModal");
+
+  if (updateBtn && updateModal) {
     updateBtn.addEventListener("click", function (e) {
       e.preventDefault();
       if (currentTableId) {
-        document.getElementById("updateTableModal").style.display = "flex";
+        updateModal.setAttribute("aria-hidden", "false");
       }
     });
   }

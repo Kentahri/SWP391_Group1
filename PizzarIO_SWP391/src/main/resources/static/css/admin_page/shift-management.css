@@ -25,8 +25,7 @@ body {
 }
 
 .container {
-  max-width: 1400px;
-  margin: 0 auto;
+  /* No max-width constraint - consistent with other admin pages */
 }
 
 /* Header */
@@ -440,7 +439,7 @@ body {
 
 .shift-table .primary-btn {
   padding: 6px 12px;
-  background: var(--brand);
+  background: var(--accent);
   color: white;
   text-decoration: none;
   border-radius: 6px;
@@ -448,6 +447,8 @@ body {
   font-weight: 600;
   display: inline-block;
   transition: all 0.2s;
+  border: none;
+  cursor: pointer;
 }
 
 .shift-table .primary-btn:hover {
@@ -456,7 +457,7 @@ body {
 
 .shift-table .delete-btn {
   padding: 6px 12px;
-  background: var(--red);
+  background: var(--danger);
   color: white;
   text-decoration: none;
   border-radius: 6px;
@@ -468,6 +469,209 @@ body {
 
 .shift-table .delete-btn:hover {
   filter: brightness(1.1);
+}
+
+/* Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.show {
+  display: flex;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.close {
+  font-size: 28px;
+  cursor: pointer;
+  color: #999;
+  border: none;
+  background: none;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  text-align: center;
+  transition: color 0.2s;
+}
+
+.close:hover {
+  color: #333;
+}
+
+/* Form Styles */
+#staffShiftForm,
+#shiftTypeForm {
+  padding: 20px 24px;
+}
+
+.mb-3 {
+  margin-bottom: 16px;
+}
+
+#staffShiftForm label,
+#shiftTypeForm label,
+.mb-3 label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+}
+
+#staffShiftForm input,
+#staffShiftForm select,
+#shiftTypeForm input,
+#shiftTypeForm select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+#staffShiftForm input:focus,
+#staffShiftForm select:focus,
+#shiftTypeForm input:focus,
+#shiftTypeForm select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Error Styling */
+.error-field {
+  border-color: #dc2626 !important;
+  background-color: #fef2f2 !important;
+}
+
+.error-field:focus {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+  font-weight: 500;
+}
+
+.error-alert {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 16px 0 0;
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+}
+
+.btn-secondary {
+  background: var(--gray-light);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+/* Alert Messages */
+.alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  animation: slideDown 0.3s ease-out;
+}
+
+.alert-success {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.alert-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Responsive */

@@ -112,12 +112,19 @@ public class VoucherService {
         voucherRepository.save(voucher);
     }
 
-    public VoucherStatsDTO getVoucherAnalytics(){
+    public VoucherStatsDTO getVoucherAnalytics() {
         Integer totalVoucher = voucherRepository.findAll().size();
         Integer activeVoucher = voucherRepository.countByActiveTrue();
         Integer usedVoucher = voucherRepository.totalUsedVoucher();
         Double saveMoneyCustomer = voucherRepository.totalSavedAllOrders();
 
         return new VoucherStatsDTO(totalVoucher, activeVoucher, usedVoucher, saveMoneyCustomer);
+    }
+
+    public void toggleVoucherActive(Long id) {
+        Voucher voucher = voucherRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Voucher not found"));
+        voucher.setActive(!voucher.isActive());
+        voucherRepository.save(voucher);
     }
 }

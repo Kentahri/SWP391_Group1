@@ -4,9 +4,11 @@ import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import com.group1.swp.pizzario_swp391.dto.ShiftDTO;
 import com.group1.swp.pizzario_swp391.entity.Shift;
 import com.group1.swp.pizzario_swp391.service.ShiftService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -20,61 +22,70 @@ public class ShiftController {
 
     private final ShiftService service;
 
-    @GetMapping("/shifts")
-    public String list(Model model) {
-        // Redirect to staff_shifts page (integrated view)
-        return "redirect:/manager/staff_shifts";
-    }
-
-    @GetMapping("/shift/create")
-    public String formCreate(Model model) {
-
-        model.addAttribute("shift", new ShiftDTO());
-
-        List<String> labels = Arrays.stream(Shift.ShiftType.values())
+    private List<String> getShiftTypes() {
+        return Arrays.stream(Shift.ShiftType.values())
                 .map(Enum::name)
                 .toList();
-
-        model.addAttribute("label", labels);
-
-        return "admin_page/shift/create";
     }
 
-    @PostMapping("/shift/create")
-    public String save(@ModelAttribute("shift") ShiftDTO shift, RedirectAttributes redirectAttributes) {
+    @GetMapping("/shifts")
+    public String list(Model model) {
+        // Get all shifts
+        List<ShiftDTO> shifts = service.getAllShift();
+        model.addAttribute("shifts", shifts);
 
-        service.createShift(shift);
+        // Add shift form and types for modal
+        if (!model.containsAttribute("shiftForm")) {
+            model.addAttribute("shiftForm", new ShiftDTO());
+        }
+        model.addAttribute("shiftTypes", getShiftTypes());
 
-        redirectAttributes.addFlashAttribute("message", "Tạo thành công");
-
-        return "redirect:/manager/staff_shifts";
-
+        return "admin_page/shift/shift-list";
     }
 
     @GetMapping("/shift/edit/{id}")
-    public String update(@PathVariable Integer id, Model model) {
+    public String update(@PathVariable Integer id,
+            @RequestParam(required = false, defaultValue = "staff_shifts") String returnPage,
+            RedirectAttributes redirectAttributes) {
 
         ShiftDTO shift = service.getShiftById(id);
 
-        List<String> labels = Arrays.stream(Shift.ShiftType.values())
-                .map(Enum::name)
-                .toList();
+        // Always open modal for edit
+        redirectAttributes.addFlashAttribute("shiftForm", shift);
+        redirectAttributes.addFlashAttribute("openShiftModal", "edit");
 
-        model.addAttribute("label", labels);
-
-        model.addAttribute("shift", shift);
-        System.out.println(shift);
-
-        return "admin_page/shift/create";
+        // Determine which page to return to
+        if ("shifts".equals(returnPage)) {
+            return "redirect:/manager/shifts";
+        } else {
+            return "redirect:/manager/staff_shifts";
+        }
     }
 
-    @PostMapping("/shift/edit/{id}")
-    public String updateShift(@ModelAttribute("shift") ShiftDTO shiftDTO, @PathVariable int id,
+    // Save endpoint for modal (handles both create and update)
+    @PostMapping("/shift/save")
+    public String saveShift(@Valid @ModelAttribute("shiftForm") ShiftDTO shiftDTO,
+            BindingResult bindingResult,
             RedirectAttributes redirectAttributes) {
 
-        service.updateShift(id, shiftDTO);
+        if (bindingResult.hasErrors()) {
+            // If there are validation errors, return to modal with errors
+            redirectAttributes.addFlashAttribute("shiftForm", shiftDTO);
+            redirectAttributes.addFlashAttribute("openShiftModal", shiftDTO.getId() != null ? "edit" : "create");
+            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.shiftForm",
+                    bindingResult);
+            return "redirect:/manager/staff_shifts";
+        }
 
-        redirectAttributes.addFlashAttribute("message", "Update thành công");
+        if (shiftDTO.getId() != null && shiftDTO.getId() > 0) {
+            // Update existing shift
+            service.updateShift(shiftDTO.getId(), shiftDTO);
+            redirectAttributes.addFlashAttribute("message", "Cập nhật ca làm việc thành công");
+        } else {
+            // Create new shift
+            service.createShift(shiftDTO);
+            redirectAttributes.addFlashAttribute("message", "Tạo ca làm việc thành công");
+        }
 
         return "redirect:/manager/staff_shifts";
     }
