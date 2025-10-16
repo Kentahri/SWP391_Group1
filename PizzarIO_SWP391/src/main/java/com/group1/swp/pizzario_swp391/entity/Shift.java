@@ -51,6 +51,6 @@ public class Shift {
     private LocalDateTime createdAt;
 
     public enum ShiftType {
-        SANG, CHIEU, TOI
+        SANG, CHIEU, TOI, DEM
     }
 }

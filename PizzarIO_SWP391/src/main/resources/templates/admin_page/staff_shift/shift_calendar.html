@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quản lý ca làm việc</title>
+    <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin_page/shift-management.css}" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- SIDEBAR -->
+      <div th:insert="~{fragments/sidebar :: sidebar('staff_shifts')}"></div>
+
+      <!-- MAIN -->
+      <main class="main">
+        <header class="page-header">
+          <div>
+            <h1>Quản lý ca làm việc</h1>
+            <p class="muted">Phân ca và theo dõi thời gian làm việc</p>
+          </div>
+          <div class="userbox">
+            <div class="avatar">M</div>
+            <div class="who">
+              <strong>Manager</strong>
+              <span class="muted">Quản lý</span>
+            </div>
+          </div>
+        </header>
+
+         <div class="container">
+           <!-- Tabs Navigation -->
+           <div class="tabs-nav">
+             <button class="tab-btn active" onclick="switchTab('calendar')">
+               📅 Lịch phân công ca
+             </button>
+             <button class="tab-btn" onclick="switchTab('shifts')">
+               ⚙️ Quản lý loại ca
+             </button>
+           </div>
+
+           <!-- Tab: Calendar View -->
+           <div id="tab-calendar" class="tab-content active">
+           <!-- Stats Cards -->
+           <!--
+        BACKEND TODO #1: Tạo controller method để tính toán các thống kê:
+        - totalShifts: Tổng số ca làm việc trong tuần hiện tại
+        - totalHours: Tổng giờ làm việc (sum của tất cả ca)
+        - totalWage: Tổng lương (sum của hourlyWage * số giờ làm)
+        - completedShifts: Số ca có status = "Hoàn thành"
+        
+        Model attributes cần truyền:
+        @ModelAttribute("stats") ShiftStatisticsDTO stats
+      -->
+          <div class="stats-grid">
+            <div class="stat-card blue">
+              <div class="stat-content">
+                <h3>Tổng ca làm việc</h3>
+                <div class="stat-value" th:text="${stats != null ? stats.totalShifts : 0}">14</div>
+              </div>
+              <div class="stat-icon blue">📅</div>
+            </div>
+
+            <div class="stat-card green">
+              <div class="stat-content">
+                <h3>Tổng giờ làm</h3>
+                <div class="stat-value" th:text="${stats != null ? stats.totalHours + 'h' : '0h'}">109h</div>
+              </div>
+              <div class="stat-icon green">🕐</div>
+            </div>
+
+            <div class="stat-card purple">
+              <div class="stat-content">
+                <h3>Tổng lương</h3>
+                <div class="stat-value" th:text="${stats != null ? #numbers.formatDecimal(stats.totalWage, 0, 'POINT', 3, 'COMMA') + 'đ' : '0đ'}">4.180.000đ</div>
+              </div>
+              <div class="stat-icon purple">👥</div>
+            </div>
+
+            <div class="stat-card orange">
+              <div class="stat-content">
+                <h3>Ca hoàn thành</h3>
+                <div class="stat-value">
+                  <span th:text="${stats != null ? stats.completedShifts : 0}">11</span>/<span th:text="${stats != null ? stats.totalShifts : 0}">14</span>
+                </div>
+              </div>
+              <div class="stat-icon orange">⚠️</div>
+            </div>
+          </div>
+
+          <!-- Main Calendar Card -->
+          <div class="main-card">
+            <!-- Calendar Header with Filters -->
+            <div class="calendar-header">
+              <div class="calendar-title">
+                <span>📅</span>
+                <span>Lịch ca làm việc</span>
+              </div>
+
+              <div class="calendar-controls">
+                <!-- 
+              BACKEND TODO #2: Tạo filter dropdown
+              - Lấy danh sách tất cả nhân viên từ database
+              - Thêm option "Tất cả nhân viên"
+              - Khi chọn, reload page với query param: ?staffId=xxx
+            -->
+                <div class="filter-group">
+                  <span class="filter-label">🔍</span>
+                  <select class="filter-select" id="staffFilter" onchange="filterByStaff()">
+                    <option value="">Tất cả nhân viên</option>
+                    <!-- BACKEND: Loop qua danh sách staff - Model attribute: @ModelAttribute("allStaff") List<Staff> allStaff -->
+                    <option th:each="staff : ${allStaff}" th:value="${staff.id}" th:text="${staff.name}" th:selected="${selectedStaffId != null && selectedStaffId == staff.id}"></option>
+                  </select>
+                </div>
+
+                <div class="filter-group">
+                  <select class="filter-select" id="shiftFilter" onchange="filterByShift()">
+                    <option value="">Tất cả ca</option>
+                    <!-- BACKEND: Loop qua danh sách shift types - Model attribute: @ModelAttribute("allShifts") List<Shift> allShifts -->
+                    <option th:each="shift : ${allShifts}" th:value="${shift.id}" th:text="${shift.shiftName}" th:selected="${selectedShiftId != null && selectedShiftId == shift.id}"></option>
+                  </select>
+                </div>
+
+                <button class="add-btn" onclick="window.location.href='/manager/staff_shifts/create'">+ Thêm ca làm việc</button>
+              </div>
+            </div>
+
+            <!-- Week Navigation -->
+            <!-- 
+          BACKEND TODO #3: Xử lý tuần hiện tại
+          - weekStartDate: Ngày bắt đầu tuần (LocalDate)
+          - weekEndDate: Ngày kết thúc tuần (LocalDate)
+          - Khi click "Tuần trước": redirect với query param ?weekOffset=-1
+          - Khi click "Tuần sau": redirect với query param ?weekOffset=1
+        -->
+            <div class="week-navigation">
+              <button class="week-nav-btn" onclick="navigateWeek(-1)">
+                ◀ Tuần trước
+              </button>
+
+              <div style="text-align: center">
+                <div class="week-range">
+                  <span th:text="${#temporals.format(weekStartDate, 'dd/MM/yyyy')}">5/10/2025</span>
+                  -
+                  <span th:text="${#temporals.format(weekEndDate, 'dd/MM/yyyy')}">11/10/2025</span>
+                </div>
+                <div class="week-current">Tuần hiện tại</div>
+              </div>
+
+              <button class="week-nav-btn" onclick="navigateWeek(1)">
+                Tuần sau ▶
+              </button>
+            </div>
+
+            <!-- Calendar Grid -->
+            <!-- 
+          BACKEND TODO #4: Chuẩn bị dữ liệu calendar
+          - Tạo Map<LocalDate, List<StaffShiftDTO>> shiftsByDay
+          - StaffShiftDTO bao gồm: id, workDate, shift (tên ca, giờ), staff (tên NV), 
+            status, checkIn, checkOut, hourlyWage, totalHours
+          - Group các shift theo ngày trong tuần
+          
+          Model attribute: @ModelAttribute("weekDays") List<WeekDayDTO> weekDays
+          
+          WeekDayDTO {
+            LocalDate date;
+            String dayName; // CN, T2, T3, T4, T5, T6, T7
+            boolean isToday;
+            List<StaffShiftDTO> shifts;
+          }
+        -->
+            <div class="calendar-grid">
+              <!-- Loop qua 7 ngày trong tuần -->
+              <div class="day-column" th:each="day : ${weekDays}" th:classappend="${day.isToday} ? 'today' : ''">
+                <div class="day-header">
+                  <div class="day-name" th:text="${day.dayName}">CN</div>
+                  <div class="day-number" th:text="${#temporals.format(day.date, 'dd')}">5</div>
+                </div>
+
+                <div class="shift-cards">
+                  <!-- Loop qua các ca trong ngày -->
+                  <!-- BACKEND: Mỗi shift card cần có: CSS class theo loại ca: morning/afternoon/evening, Staff name, Time range, Status: Hoàn thành/Vắng mặt/Đã lên lịch, Wage -->
+                  <div class="shift-card" th:each="shift : ${day.shifts}" th:classappend="${shift.shiftType}" th:onclick="'editShift(' + ${shift.id} + ')'">
+                    <div class="shift-type">
+                      <span class="icon">✏️</span>
+                      <span th:text="${shift.shiftName}">Sáng</span>
+                    </div>
+
+                    <div class="shift-staff" th:text="${shift.staffName}">
+                      Phạm Thị Dung
+                    </div>
+
+                    <div class="shift-time" th:text="${shift.timeRange}">
+                      06:00 - 14:00
+                    </div>
+
+                    <!-- BACKEND: Status mapping - "Hoàn thành" -> class="completed", "Vắng mặt" -> class="absent", "Đã lên lịch" -> class="scheduled" -->
+                    <div class="shift-status" th:classappend="${shift.statusClass}" th:text="${shift.statusText}">Hoàn thành</div>
+
+                    <div class="shift-wage" th:text="${#numbers.formatDecimal(shift.totalWage, 0, 'POINT', 3, 'COMMA') + 'đ'}">280.000đ</div>
+                  </div>
+                </div>
+              </div>
+             </div>
+           </div>
+         </div>
+           </div>
+           <!-- End Tab: Calendar View -->
+
+           <!-- Tab: Shift Types Management -->
+           <div id="tab-shifts" class="tab-content">
+             <div class="shift-management-card">
+               <div class="shift-header">
+                 <h2>Quản lý loại ca làm việc</h2>
+                 <a th:href="@{/manager/shift/create}" class="add-btn">+ Thêm loại ca mới</a>
+               </div>
+
+               <table class="shift-table">
+                 <thead>
+                   <tr>
+                     <th>ID</th>
+                     <th>Tên ca làm việc</th>
+                     <th>Giờ bắt đầu</th>
+                     <th>Giờ kết thúc</th>
+                     <th>Hành động</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   <tr th:each="shift : ${shifts}">
+                     <td th:text="${shift.id}">1</td>
+                     <td th:text="${shift.shiftName}">Ca sáng</td>
+                     <td th:text="${shift.startTime}">08:00</td>
+                     <td th:text="${shift.endTime}">12:00</td>
+                     <td class="actions">
+                       <a class="primary-btn" th:href="@{'/manager/shift/edit/' + ${shift.id}}">Sửa</a>
+                       <a class="delete-btn" th:href="@{'/manager/shift/delete/' + ${shift.id}}" th:onclick="|return confirm('Bạn có chắc chắn muốn xóa ca #${shift.id}?');|">Xóa</a>
+                     </td>
+                   </tr>
+                 </tbody>
+               </table>
+             </div>
+           </div>
+           <!-- End Tab: Shift Types Management -->
+         </div>
+       </main>
+     </div>
+
+     <script th:src="@{/js/admin/shift-calendar.js}"></script>
+   </body>
+ </html>

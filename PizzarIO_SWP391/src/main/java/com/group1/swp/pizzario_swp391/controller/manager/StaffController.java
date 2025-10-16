@@ -2,9 +2,8 @@ package com.group1.swp.pizzario_swp391.controller.manager;
 
 import java.util.List;
 
-
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
-import com.group1.swp.pizzario_swp391.dto.staff.StaffDTO;
+// ...existing code...
 
 import jakarta.validation.Valid;
 
@@ -15,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.group1.swp.pizzario_swp391.dto.staff.StaffCreateDTO;
@@ -24,7 +24,6 @@ import com.group1.swp.pizzario_swp391.entity.Staff;
 import com.group1.swp.pizzario_swp391.service.StaffService;
 
 import lombok.RequiredArgsConstructor;
-
 
 @Controller
 @RequiredArgsConstructor
@@ -42,7 +41,7 @@ public class StaffController {
         return "admin_page/staff/list";
     }
 
-    @GetMapping("/create")
+    @GetMapping("/staff/create")
     public String createForm(Model model) {
         model.addAttribute("staff", new StaffCreateDTO());
         model.addAttribute("roles", Staff.Role.values());
@@ -51,11 +50,11 @@ public class StaffController {
     }
 
     // CREATE SUBMIT: POST /staff/create
-    @PostMapping("/create")
+    @PostMapping("/staff/create")
     public String create(@Valid @ModelAttribute("staff") StaffCreateDTO dto,
-                         BindingResult bindingResult,
-                         Model model,
-                         RedirectAttributes ra) {
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes ra) {
 
         // ❗ Khi có lỗi validate, QUAY LẠI đúng view "staff/create"
         if (bindingResult.hasErrors()) {
@@ -64,53 +63,56 @@ public class StaffController {
             return "admin_page/staff/create";
         }
 
-        staffService.createNewStaff(dto);
+          String errorMsg = staffService.createNewStaff(dto);
+        if (errorMsg != null) {
+            model.addAttribute("roles", Staff.Role.values());
+            model.addAttribute("formTitle", "Create Staff");
+            model.addAttribute("error", errorMsg);
+            return "admin_page/staff/create";
+        }
         ra.addFlashAttribute("success", "Created staff successfully");
-        // PRG: điều hướng về trang list
         return "redirect:staff";
     }
 
     // UPDATE: show edit form
-    @GetMapping("/edit/{id}")
+    @GetMapping("/staff/edit/{id}")
     public String edit(Model model, @PathVariable int id) {
-
         StaffUpdateDTO staffUpdateDTO = staffService.getStaffForUpdate(id);
         model.addAttribute("staff", staffUpdateDTO);
-        StaffResponseDTO staff = staffService.getStaffById(id);
-        StaffDTO staffDTO = StaffDTO.builder()
-                .name(staff.getName())
-                .dateOfBirth(staff.getDateOfBirth())
-                .phone(staff.getPhone())
-                .address(staff.getAddress())
-                .email(staff.getEmail())
-                .role(staff.getRole())
-                .active(staff.isActive())
-                .build();
-        model.addAttribute("staff", staffDTO);
         model.addAttribute("staffID", id);
         model.addAttribute("roles", Staff.Role.values());
         return "admin_page/staff/edit";
     }
 
     // UPDATE: save update
-    @PostMapping("/edit/{id}")
+    @PostMapping("/staff/edit/{id}")
     public String updateStaff(@PathVariable int id,
-                              @ModelAttribute StaffUpdateDTO staffUpdateDTO,
+                              @Valid @ModelAttribute("staff") StaffUpdateDTO staffUpdateDTO,
+                              BindingResult bindingResult,
+                              Model model,
                               RedirectAttributes redirectAttributes) {
-        try {
-            staffService.updateStaff(id, staffUpdateDTO);
-            redirectAttributes.addFlashAttribute("success", "Cập nhật thành công!");
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/staff/edit/" + id;
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("roles", Staff.Role.values());
+            model.addAttribute("staffID", id);
+            return "admin_page/staff/edit";
         }
-        return "redirect:/staff";
+        
+        String errorMsg = staffService.updateStaff(id, staffUpdateDTO);
+        if (errorMsg != null) {
+            model.addAttribute("staff", staffUpdateDTO);
+            model.addAttribute("roles", Staff.Role.values());
+            model.addAttribute("staffID", id);
+            model.addAttribute("error", errorMsg);
+            return "admin_page/staff/edit";
+        }
+        redirectAttributes.addFlashAttribute("success", "Cập nhật thành công!");
+        return "redirect:/manager/staff";
     }
 
     // DELETE
-    @PostMapping("/delete/{id}")
+    @PostMapping("/staff/delete/{id}")
     public String deleteStaff(@PathVariable int id) {
         staffService.deleteStaffById(id);
-        return "redirect:/staff";
+        return "redirect:/manager/staff";
     }
 }

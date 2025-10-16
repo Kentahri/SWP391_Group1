@@ -20,47 +20,47 @@ public class ProductResponseDTO {
     double flashSalePrice;
     LocalDateTime flashSaleStart;
     LocalDateTime flashSaleEnd;
-    boolean isActive;
+    boolean active;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
     String categoryName;
     Long categoryId;
-    
+
     // Formatted fields for display
     public String getCreatedAtFormatted() {
         return createdAt != null ? createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "";
     }
-    
+
     public String getUpdatedAtFormatted() {
         return updatedAt != null ? updatedAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "";
     }
-    
+
     public String getFlashSaleStartFormatted() {
         return flashSaleStart != null ? flashSaleStart.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "";
     }
-    
+
     public String getFlashSaleEndFormatted() {
         return flashSaleEnd != null ? flashSaleEnd.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "";
     }
-    
+
     public String getStatusText() {
-        return isActive ? "Hoạt động" : "Không hoạt động";
+        return active ? "Hoạt động" : "Không hoạt động";
     }
-    
+
     public boolean isOnFlashSale() {
         LocalDateTime now = LocalDateTime.now();
-        return flashSaleStart != null && flashSaleEnd != null 
+        return flashSaleStart != null && flashSaleEnd != null
                 && now.isAfter(flashSaleStart) && now.isBefore(flashSaleEnd);
     }
-    
+
     public double getCurrentPrice() {
         return isOnFlashSale() ? flashSalePrice : basePrice;
     }
-    
+
     public String getCurrentPriceFormatted() {
         return String.format("%,.0f VND", getCurrentPrice());
     }
-    
+
     public String getBasePriceFormatted() {
         return String.format("%,.0f VND", basePrice);
     }
