@@ -2,7 +2,6 @@ package com.group1.swp.pizzario_swp391.controller.manager;
 
 import java.util.List;
 
-
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 // ...existing code...
 
@@ -11,7 +10,11 @@ import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.group1.swp.pizzario_swp391.dto.staff.StaffCreateDTO;
@@ -21,7 +24,6 @@ import com.group1.swp.pizzario_swp391.entity.Staff;
 import com.group1.swp.pizzario_swp391.service.StaffService;
 
 import lombok.RequiredArgsConstructor;
-
 
 @Controller
 @RequiredArgsConstructor
@@ -39,7 +41,7 @@ public class StaffController {
         return "admin_page/staff/list";
     }
 
-    @GetMapping("/create")
+    @GetMapping("/staff/create")
     public String createForm(Model model) {
         model.addAttribute("staff", new StaffCreateDTO());
         model.addAttribute("roles", Staff.Role.values());
@@ -48,11 +50,11 @@ public class StaffController {
     }
 
     // CREATE SUBMIT: POST /staff/create
-    @PostMapping("/create")
+    @PostMapping("/staff/create")
     public String create(@Valid @ModelAttribute("staff") StaffCreateDTO dto,
-                         BindingResult bindingResult,
-                         Model model,
-                         RedirectAttributes ra) {
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes ra) {
 
         // ❗ Khi có lỗi validate, QUAY LẠI đúng view "staff/create"
         if (bindingResult.hasErrors()) {
@@ -61,7 +63,7 @@ public class StaffController {
             return "admin_page/staff/create";
         }
 
-        String errorMsg = staffService.createNewStaff(dto);
+          String errorMsg = staffService.createNewStaff(dto);
         if (errorMsg != null) {
             model.addAttribute("roles", Staff.Role.values());
             model.addAttribute("formTitle", "Create Staff");
@@ -73,7 +75,7 @@ public class StaffController {
     }
 
     // UPDATE: show edit form
-    @GetMapping("/edit/{id}")
+    @GetMapping("/staff/edit/{id}")
     public String edit(Model model, @PathVariable int id) {
         StaffUpdateDTO staffUpdateDTO = staffService.getStaffForUpdate(id);
         model.addAttribute("staff", staffUpdateDTO);
@@ -83,7 +85,7 @@ public class StaffController {
     }
 
     // UPDATE: save update
-    @PostMapping("/edit/{id}")
+    @PostMapping("/staff/edit/{id}")
     public String updateStaff(@PathVariable int id,
                               @Valid @ModelAttribute("staff") StaffUpdateDTO staffUpdateDTO,
                               BindingResult bindingResult,
@@ -108,7 +110,7 @@ public class StaffController {
     }
 
     // DELETE
-    @PostMapping("/delete/{id}")
+    @PostMapping("/staff/delete/{id}")
     public String deleteStaff(@PathVariable int id) {
         staffService.deleteStaffById(id);
         return "redirect:/manager/staff";

@@ -15,6 +15,9 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ProductCreateDTO {
+
+    Long id; // Nullable - dùng để phân biệt Create (null) vs Update (có giá trị)
+
     @NotBlank(message = "Tên sản phẩm không được để trống")
     @Size(max = 100, message = "Tên sản phẩm không được vượt quá 100 ký tự")
     String name;
@@ -37,5 +40,6 @@ public class ProductCreateDTO {
     @NotNull(message = "Danh mục không được để trống")
     Long categoryId;
 
-    boolean isActive = true;
+    @Builder.Default
+    boolean active = true;
 }

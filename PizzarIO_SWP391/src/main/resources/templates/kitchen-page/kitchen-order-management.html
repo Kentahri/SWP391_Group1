@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>KITCHEN-DASHBOARD</title>
+    <link rel="stylesheet" th:href="@{/css/kitchen.css}">
+</head>
+<body>
+<div class="container">
+    <div class="sidebar">
+        <h2>KITCHEN</h2>
+        <a th:href="@{/kitchen/order-list}" class="tab-link active">Order Management</a>
+        <a th:href="@{/kitchen/outstock}" class="tab-link">Out-of-Stock Management</a>
+        <form th:action="@{/logout}" method="post" class="logout-form">
+            <input type="hidden"
+                   th:if="${_csrf != null}"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}" />
+            <button type="submit" style="margin-top: 20px; width: 100%;">Logout</button>
+        </form>
+    </div>
+    <div class="main-content">
+        <!-- Main order management content -->
+        <h2 class="om-title">Quản lý Orders</h2>
+        <div class="om-filter-bar">
+            <button class="om-tab active"><span class="om-icon">&#9679;</span> Đang xử lý</button>
+            <button class="om-tab"><span class="om-icon">&#x1F374;</span> Tại bàn</button>
+            <button class="om-tab"><span class="om-icon">&#x1F3EA;</span> Take away</button>
+            <button class="om-tab"><span class="om-icon">&#x2714;</span> Hoàn thành</button>
+        </div>
+        <div class="order-list">
+            <div class="order-card" th:each="order : ${orders}">
+                <div class="order-header">
+                    <span class="order-id" th:text="${order.code}">ORD-XXX</span>
+                    <span class="badge blue" th:if="${order.priority eq 'NORMAL'}">Bình thường</span>
+                    <span class="badge orange" th:if="${order.priority eq 'PRIORITY'}">Ưu tiên</span>
+                    <span class="badge yellow" th:if="${order.status eq 'PROCESSING'}">Đang xử lý</span>
+                    <span class="badge gray" th:if="${order.status eq 'NEW'}">Mới</span>
+                    <span class="badge gray" th:if="${order.status eq 'COMPLETED'}">Hoàn thành</span>
+                    <!-- Bổ sung badge động nếu có trường khác -->
+                </div>
+                <div class="order-meta">
+                    <span class="order-table"><i class="fa fa-map-marker-alt"></i>
+                        <span th:text="${order.tableName != null ? 'Bàn ' + order.tableName : order.type}">Bàn/Take away</span>
+                    </span>
+                    <span class="order-time"><i class="fa fa-clock"></i> <span th:text="${order.timeAgo}">5 phút trước</span></span>
+                </div>
+                <div class="order-progress">
+                    <span th:text="${order.totalItems} + ' món'">Số món</span>
+                    <div class="progress-bar">
+                        <div class="progress" th:style="'width:' + ${order.processPercent} + '%'" ></div>
+                    </div>
+                    <span><span th:text="${order.completedItems}">1</span>/<span th:text="${order.totalItems}">3</span></span>
+                </div>
+                <button class="order-detail-btn">Xem chi tiết</button>
+            </div>
+            <div th:if="${#lists.isEmpty(orders)}">Không có đơn nào.</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
