@@ -23,6 +23,16 @@
           </button>
         </div>
 
+        <!-- Tabs Navigation -->
+        <div class="tabs-nav" style="margin-bottom: 20px">
+          <a th:href="@{/manager/staff_shifts}" class="tab-btn">
+            📅 Lịch phân công ca
+          </a>
+          <a th:href="@{/manager/shifts}" class="tab-btn active">
+            ⚙️ Quản lý loại ca
+          </a>
+        </div>
+
         <div class="shift-table-container">
           <!-- Modal -->
           <div id="shiftModal" class="modal">
@@ -116,8 +126,16 @@
               <tr th:each="shift : ${shifts}">
                 <td th:text="${shift.id}">1</td>
                 <td th:text="${shift.shiftName}">Ca sáng</td>
-                <td th:text="${shift.startTime}">08:00</td>
-                <td th:text="${shift.endTime}">12:00</td>
+                <td
+                  th:text="${shift.startTime != null ? #temporals.format(shift.startTime, 'HH:mm') : '-'}"
+                >
+                  08:00
+                </td>
+                <td
+                  th:text="${shift.endTime != null ? #temporals.format(shift.endTime, 'HH:mm') : '-'}"
+                >
+                  12:00
+                </td>
                 <td>
                   <div class="action-buttons">
                     <button

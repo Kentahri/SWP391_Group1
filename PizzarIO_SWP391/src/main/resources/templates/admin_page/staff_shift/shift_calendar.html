@@ -35,12 +35,12 @@
            
            <!-- Tabs Navigation -->
            <div class="tabs-nav">
-             <button class="tab-btn active" onclick="switchTab('calendar')">
+             <a th:href="@{/manager/staff_shifts}" class="tab-btn active">
                📅 Lịch phân công ca
-             </button>
-             <button class="tab-btn" onclick="switchTab('shifts')">
+             </a>
+             <a th:href="@{/manager/shifts}" class="tab-btn">
                ⚙️ Quản lý loại ca
-             </button>
+             </a>
            </div>
 
            <!-- Tab: Calendar View -->

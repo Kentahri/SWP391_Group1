@@ -322,3 +322,36 @@
     font-size: 10px;
   }
 }
+
+/* Tabs Navigation */
+.tabs-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: all 0.2s;
+  margin-bottom: -2px;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.tab-btn:hover {
+  color: var(--text);
+  background: var(--gray-light);
+}
+
+.tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}

@@ -1,4 +1,4 @@
-/**
+  /**
  * Table Management JavaScript
  * Handles add/update table modals and table selection
  */
