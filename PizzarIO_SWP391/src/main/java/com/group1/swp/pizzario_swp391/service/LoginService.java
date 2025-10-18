@@ -64,7 +64,7 @@ public class LoginService {
             staffShift.setStatus(StaffShift.Status.SCHEDULED);
         }
         else{
-            staffShift.setStatus(StaffShift.Status.LEFT);
+            staffShift.setStatus(StaffShift.Status.COMPLETED);
         }
 
         staffShift.setCheckOut(LocalDateTime.now());

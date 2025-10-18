@@ -45,17 +45,6 @@
 
            <!-- Tab: Calendar View -->
            <div id="tab-calendar" class="tab-content active">
-           <!-- Stats Cards -->
-           <!--
-        BACKEND TODO #1: Tạo controller method để tính toán các thống kê:
-        - totalShifts: Tổng số ca làm việc trong tuần hiện tại
-        - totalHours: Tổng giờ làm việc (sum của tất cả ca)
-        - totalWage: Tổng lương (sum của hourlyWage * số giờ làm)
-        - completedShifts: Số ca có status = "Hoàn thành"
-        
-        Model attributes cần truyền:
-        @ModelAttribute("stats") ShiftStatisticsDTO stats
-      -->
           <div class="stats-grid">
             <div class="stat-card blue">
               <div class="stat-content">
@@ -76,7 +65,7 @@
             <div class="stat-card purple">
               <div class="stat-content">
                 <h3>Tổng lương</h3>
-                <div class="stat-value" th:text="${stats != null ? #numbers.formatDecimal(stats.totalWage, 0, 'POINT', 3, 'COMMA') + 'đ' : '0đ'}">4.180.000đ</div>
+                <div class="stat-value" th:text="${stats != null ? #numbers.formatDecimal(stats.totalWage, 1, 'COMMA', 0, 'COMMA') + 'đ' : '0đ'}">4.180.000đ</div>
               </div>
               <div class="stat-icon purple">👥</div>
             </div>
@@ -102,17 +91,10 @@
               </div>
 
               <div class="calendar-controls">
-                <!-- 
-              BACKEND TODO #2: Tạo filter dropdown
-              - Lấy danh sách tất cả nhân viên từ database
-              - Thêm option "Tất cả nhân viên"
-              - Khi chọn, reload page với query param: ?staffId=xxx
-            -->
                 <div class="filter-group">
                   <span class="filter-label">🔍</span>
                   <select class="filter-select" id="staffFilter" onchange="filterByStaff()">
                     <option value="">Tất cả nhân viên</option>
-                    <!-- BACKEND: Loop qua danh sách staff - Model attribute: @ModelAttribute("allStaff") List<Staff> allStaff -->
                     <option th:each="staff : ${allStaff}" th:value="${staff.id}" th:text="${staff.name}" th:selected="${selectedStaffId != null && selectedStaffId == staff.id}"></option>
                   </select>
                 </div>
@@ -120,7 +102,6 @@
                 <div class="filter-group">
                   <select class="filter-select" id="shiftFilter" onchange="filterByShift()">
                     <option value="">Tất cả ca</option>
-                    <!-- BACKEND: Loop qua danh sách shift types - Model attribute: @ModelAttribute("allShifts") List<Shift> allShifts -->
                     <option th:each="shift : ${allShifts}" th:value="${shift.id}" th:text="${shift.shiftName}" th:selected="${selectedShiftId != null && selectedShiftId == shift.id}"></option>
                   </select>
                 </div>
@@ -202,13 +183,6 @@
             </div>
 
             <!-- Week Navigation -->
-            <!-- 
-          BACKEND TODO #3: Xử lý tuần hiện tại
-          - weekStartDate: Ngày bắt đầu tuần (LocalDate)
-          - weekEndDate: Ngày kết thúc tuần (LocalDate)
-          - Khi click "Tuần trước": redirect với query param ?weekOffset=-1
-          - Khi click "Tuần sau": redirect với query param ?weekOffset=1
-        -->
             <div class="week-navigation">
               <button class="week-nav-btn" onclick="navigateWeek(-1)">
                 ◀ Tuần trước
@@ -229,22 +203,6 @@
             </div>
 
             <!-- Calendar Grid -->
-            <!-- 
-          BACKEND TODO #4: Chuẩn bị dữ liệu calendar
-          - Tạo Map<LocalDate, List<StaffShiftDTO>> shiftsByDay
-          - StaffShiftDTO bao gồm: id, workDate, shift (tên ca, giờ), staff (tên NV), 
-            status, checkIn, checkOut, hourlyWage, totalHours
-          - Group các shift theo ngày trong tuần
-          
-          Model attribute: @ModelAttribute("weekDays") List<WeekDayDTO> weekDays
-          
-          WeekDayDTO {
-            LocalDate date;
-            String dayName; // CN, T2, T3, T4, T5, T6, T7
-            boolean isToday;
-            List<StaffShiftDTO> shifts;
-          }
-        -->
             <div class="calendar-grid">
               <!-- Loop qua 7 ngày trong tuần -->
               <div class="day-column" th:each="day : ${weekDays}" th:classappend="${day.isToday} ? 'today' : ''">
@@ -255,8 +213,12 @@
 
                 <div class="shift-cards">
                   <!-- Loop qua các ca trong ngày -->
-                  <!-- BACKEND: Mỗi shift card cần có: CSS class theo loại ca: morning/afternoon/evening, Staff name, Time range, Status: Hoàn thành/Vắng mặt/Đã lên lịch, Wage -->
-                  <div class="shift-card" th:each="shift : ${day.shifts}" th:classappend="${shift.shiftType}" th:onclick="'editShift(' + ${shift.id} + ')'">
+                  <div 
+                    class="shift-card" 
+                    th:each="shift : ${day.shifts}" 
+                    th:classappend="${shift.shiftType}" 
+                    th:onclick="|editShift(${shift.id})|"
+                    style="cursor: pointer;">
                     <div class="shift-type">
                       <span class="icon">✏️</span>
                       <span th:text="${shift.shiftName}">Sáng</span>
@@ -270,10 +232,13 @@
                       06:00 - 14:00
                     </div>
 
-                    <!-- BACKEND: Status mapping - "Hoàn thành" -> class="completed", "Vắng mặt" -> class="absent", "Đã lên lịch" -> class="scheduled" -->
-                    <div class="shift-status" th:classappend="${shift.statusClass}" th:text="${shift.statusText}">Hoàn thành</div>
+                    <div class="shift-status" th:classappend="${shift.statusClass}" th:text="${shift.statusText}">
+                      Hoàn thành
+                    </div>
 
-                    <div class="shift-wage" th:text="${#numbers.formatDecimal(shift.totalWage, 0, 'POINT', 3, 'COMMA') + 'đ'}">280.000đ</div>
+                    <div class="shift-wage" th:text="${#numbers.formatDecimal(shift.totalWage, 0, 'POINT', 0, 'COMMA') + 'đ'}">
+                      280.000đ
+                    </div>
                   </div>
                 </div>
               </div>

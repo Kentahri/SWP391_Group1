@@ -2,8 +2,11 @@ package com.group1.swp.pizzario_swp391.controller;
 
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import com.group1.swp.pizzario_swp391.dto.ShiftDTO;
+import com.group1.swp.pizzario_swp391.dto.data_analytics.StatsStaffShiftDTO;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.staffshift.StaffShiftDTO;
+import com.group1.swp.pizzario_swp391.dto.staffshift.StaffShiftResponseDTO;
+import com.group1.swp.pizzario_swp391.entity.Shift;
 import com.group1.swp.pizzario_swp391.service.ShiftService;
 import com.group1.swp.pizzario_swp391.service.StaffService;
 import com.group1.swp.pizzario_swp391.service.StaffShiftService;
@@ -19,11 +22,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.DayOfWeek;
-// import java.time.Duration; // Uncomment khi implement calculateStatistics()
-// import java.time.LocalTime; // Uncomment khi implement convertToCalendarDTO()
-// import java.time.format.DateTimeFormatter; // Uncomment khi format time
 import java.util.*;
-// import java.util.stream.Collectors; // Uncomment khi implement filters và buildWeekDays()
 
 @Controller
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -44,13 +43,10 @@ public class StaffShiftController {
             @RequestParam(required = false) Long shiftId,
             Model model) {
 
-        // TODO: Implement calendar view logic
-        // Bạn cần implement các phần sau:
-
-        // 1. Tính toán tuần hiện tại
+        // 1. Tính toán tuần hiện tại (T2 -> CN)
         int offset = weekOffset != null ? weekOffset : 0;
         LocalDate today = LocalDate.now();
-        LocalDate weekStart = today.plusWeeks(offset).with(DayOfWeek.SUNDAY);
+        LocalDate weekStart = today.plusWeeks(offset).with(DayOfWeek.MONDAY);
         LocalDate weekEnd = weekStart.plusDays(6);
 
         model.addAttribute("weekStartDate", weekStart);
@@ -71,7 +67,7 @@ public class StaffShiftController {
         if (!model.containsAttribute("shiftForm")) {
             model.addAttribute("shiftForm", new ShiftDTO());
         }
-        List<String> shiftTypes = Arrays.stream(com.group1.swp.pizzario_swp391.entity.Shift.ShiftType.values())
+        List<String> shiftTypes = Arrays.stream(Shift.ShiftType.values())
                 .map(Enum::name)
                 .toList();
         model.addAttribute("shiftTypes", shiftTypes);
@@ -81,43 +77,16 @@ public class StaffShiftController {
             model.addAttribute("staffShiftForm", new StaffShiftDTO());
         }
 
-        // 3. TODO: Lấy staff shifts trong tuần
-        // List<StaffShiftDTO> staffShifts =
-        // staffShiftService.findByDateRange(weekStart, weekEnd);
-        // Tạm thời dùng search với null để lấy tất cả
-        var staffShifts = staffShiftService.search(null, null, null, null);
+        // 3. Lấy staff shifts trong tuần với filters
+        List<StaffShiftResponseDTO> staffShifts = staffShiftService.findByDateRangeWithFilters(
+                weekStart, weekEnd, staffId, shiftId);
 
-        // TODO: Apply filters nếu có
-        // if (staffId != null) { ... filter by staffId ... }
-        // if (shiftId != null) { ... filter by shiftId ... }
-
-        // 4. TODO: Tính toán statistics
-        // ShiftStatisticsDTO stats = calculateStatistics(staffShifts);
-        // model.addAttribute("stats", stats);
-
-        // Tạm thời dùng giá trị mặc định
-        Map<String, Object> stats = new HashMap<>();
-        stats.put("totalShifts", staffShifts.size());
-        stats.put("totalHours", 0);
-        stats.put("totalWage", 0.0);
-        stats.put("completedShifts", 0);
+        // 4. Tính toán statistics
+        StatsStaffShiftDTO stats = staffShiftService.getAnalyticsStaffShift();
         model.addAttribute("stats", stats);
 
-        // 5. TODO: Tạo weekDays với shift cards
-        // List<WeekDayDTO> weekDays = buildWeekDays(weekStart, weekEnd, staffShifts);
-        // model.addAttribute("weekDays", weekDays);
-
-        // Tạm thời tạo 7 ngày trống
-        List<Map<String, Object>> weekDays = new ArrayList<>();
-        String[] dayNames = { "CN", "T2", "T3", "T4", "T5", "T6", "T7" };
-        for (int i = 0; i < 7; i++) {
-            Map<String, Object> day = new HashMap<>();
-            day.put("date", weekStart.plusDays(i));
-            day.put("dayName", dayNames[i]);
-            day.put("isToday", weekStart.plusDays(i).equals(LocalDate.now()));
-            day.put("shifts", new ArrayList<>()); // TODO: Add actual shifts
-            weekDays.add(day);
-        }
+        // 5. Tạo weekDays với shift cards
+        var weekDays = staffShiftService.buildWeekDays(weekStart, weekEnd, staffShifts);
         model.addAttribute("weekDays", weekDays);
 
         return "admin_page/staff_shift/shift_calendar";

@@ -25,11 +25,9 @@ public class StaffShiftDTO {
 
     @NotNull(message = "Vui lòng chọn ngày làm việc")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    @FutureOrPresent(message = "Ngày làm việc không được ở quá khứ")
     private LocalDate workDate;
 
     @NotBlank(message = "Vui lòng chọn trạng thái")
-    @Pattern(regexp = "SCHEDULED|CHECKED_IN|CHECKED_OUT", message = "Trạng thái phải là một trong: SCHEDULED, CHECKED_IN, CHECKED_OUT")
     private String status;
 
     private LocalDateTime checkIn;
