@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
+    />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+    <title>PizzarIO - Menu</title>
+    <style>
+        :root {
+            --bg: #e8fffb;
+            --panel: #ffffff;
+            --accent: #e25050;
+            --accent-2: #2e7d32;
+            --muted: #a0aec0;
+            --chip: #ffd2d2;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Segoe UI, sans-serif;
+            background: var(--bg);
+            margin: 0;
+        }
+
+        .page {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 16px;
+            padding: 16px;
+        }
+
+        header {
+            background: var(--panel);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .search {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search input {
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid #e2e8f0;
+            min-width: 240px;
+        }
+
+        .left-col {
+            display: grid;
+            gap: 16px;
+        }
+
+        .banners {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .banner {
+            background: #f7c0c0;
+            color: #000;
+            border-radius: 12px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .categories {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .cat-chip {
+            background: var(--chip);
+            color: #000;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 13px;
+            cursor: pointer;
+            border: 1px solid #f2b2b2;
+        }
+
+        .cat-chip.active {
+            background: #ffb3b3;
+            border-color: #ff9a9a;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--panel);
+            border-radius: 12px;
+            padding: 12px;
+            display: grid;
+            grid-template-rows: 140px auto;
+            gap: 8px;
+            position: relative;
+        }
+
+        .card .thumb {
+            background: #f0f4ff;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card .thumb img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .card .meta {
+            display: grid;
+            gap: 6px;
+        }
+
+        .card .name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2d3748;
+            min-height: 38px;
+        }
+
+        .card .price-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card .price {
+            background: #b7ffd1;
+            color: #0f5132;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .card .add {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: #bfe1ff;
+            color: #0b4aa6;
+            font-weight: 900;
+            cursor: pointer;
+        }
+
+        .cart {
+            background: var(--panel);
+            border-radius: 12px;
+            padding: 0;
+            display: grid;
+            grid-template-rows: auto 1fr auto auto;
+            overflow: hidden;
+        }
+
+        .cart .title {
+            background: var(--accent);
+            color: #fff;
+            padding: 14px 16px;
+            font-weight: 700;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cart .list {
+            padding: 12px;
+            display: grid;
+            gap: 10px;
+            max-height: 420px;
+            overflow: auto;
+        }
+
+        .cart-item {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            align-items: center;
+            gap: 8px;
+            background: #e7f0ff;
+            padding: 8px 10px;
+            border-radius: 8px;
+        }
+
+        .cart-item .name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .cart-item .qty {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cart-item .qty button {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: none;
+            background: #3b82f6;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .cart-item .del {
+            background: #e11d48;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+        }
+
+        .cart .actions {
+            padding: 12px;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 14px 16px;
+            width: 100%;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-secondary {
+            background: #e9f5ff;
+            color: #111827;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 16px;
+            width: 100%;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .summary {
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 700;
+        }
+
+        @media (max-width: 1080px) {
+            .page {
+                grid-template-columns: 1fr;
+            }
+
+            .product-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 640px) {
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<h2>GUEST</h2>
+<div class="page">
+    <div class="left-col">
+        <header>
+            <h1>Menu</h1>
+            <div class="search">
+                <input id="searchBox" type="text" placeholder="Search..."/>
+            </div>
+        </header>
+
+        <div class="categories" id="categoryBar">
+            <button class="cat-chip active" data-category-id="0">All</button>
+            <button
+                    th:each="cat : ${categories}"
+                    class="cat-chip"
+                    th:text="${cat.name}"
+                    th:attr="data-category-id=${cat.id}"
+            ></button>
+        </div>
+
+        <div class="product-grid" id="productGrid">
+            <div
+                    class="card"
+                    th:each="p : ${products}"
+                    th:attr="data-category-id=${p.categoryId}"
+            >
+                <div class="thumb">
+                    <img
+                            th:alt="${p.name}"
+                            th:src="${p.imageURL ?: 'https://via.placeholder.com/160?text=Product'}"
+                    />
+                </div>
+                <div class="meta">
+                    <div class="name" th:text="${p.name}">Product Name</div>
+                    <div class="price-row">
+                        <div class="price" th:text="${p.currentPriceFormatted}">
+                            100.000₫
+                        </div>
+                        <form th:action="@{/guest/cart/add}" method="post">
+                            <input
+                                    type="hidden"
+                                    name="sessionId"
+                                    th:value="${sessionId}"
+                            />
+                            <input type="hidden" name="tableId" th:value="${tableId}"/>
+                            <input type="hidden" name="productId" th:value="${p.id}"/>
+                            <button class="add" type="submit">+</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <aside class="cart">
+        <div class="title">My Cart <span>🛒</span></div>
+        <div class="list" id="cartList">
+            <div class="cart-item" th:each="item : ${cartItems}">
+                <div class="name" th:text="${item.productName}">Product Name</div>
+                <div class="price" th:text="${#numbers.formatCurrency(item.totalPrice)}">0d</div>
+                <div class="qty">
+                    <form
+                            th:action="@{/guest/cart/update}"
+                            method="post"
+                            style="display: inline-block"
+                    >
+                        <input
+                                type="hidden"
+                                name="sessionId"
+                                th:value="${sessionId}"
+                        />
+                        <input type="hidden" name="tableId" th:value="${tableId}"/>
+                        <input
+                                type="hidden"
+                                name="productId"
+                                th:value="${item.productId}"
+                        />
+                        <input
+                                type="hidden"
+                                name="quantity"
+                                th:value="${item.quantity - 1}"
+                        />
+                        <button type="submit">-</button>
+                    </form>
+                    <span th:text="${item.quantity}">1</span>
+                    <form
+                            th:action="@{/guest/cart/update}"
+                            method="post"
+                            style="display: inline-block"
+                    >
+                        <input
+                                type="hidden"
+                                name="sessionId"
+                                th:value="${sessionId}"
+                        />
+                        <input type="hidden" name="tableId" th:value="${tableId}"/>
+                        <input
+                                type="hidden"
+                                name="productId"
+                                th:value="${item.productId}"
+                        />
+                        <input
+                                type="hidden"
+                                name="quantity"
+                                th:value="${item.quantity + 1}"
+                        />
+                        <button type="submit">+</button>
+                    </form>
+                </div>
+                <form
+                        th:action="@{/guest/cart/remove}"
+                        method="post"
+                        style="display: inline-block"
+                >
+                    <input type="hidden" name="sessionId" th:value="${sessionId}"/>
+                    <input type="hidden" name="tableId" th:value="${tableId}"/>
+                    <input
+                            type="hidden"
+                            name="productId"
+                            th:value="${item.productId}"
+                    />
+                    <button class="del" type="submit">✕</button>
+                </form>
+            </div>
+            <p
+                    th:if="${#lists.isEmpty(cartItems)}"
+                    style="text-align: center; color: var(--muted); padding: 1rem"
+            >
+                Giỏ hàng trống
+            </p>
+        </div>
+        <div class="summary">
+            <th:block th:with="cartTotalSum=${#aggregates.sum(cartItems.![totalPrice])}">
+                <span>Total</span>
+                <span id="cartTotal" th:text="${#numbers.formatCurrency(cartTotalSum)}">0₫</span>
+            </th:block>
+        </div>
+        <div class="actions">
+            <form th:action="@{/guest/order/place}" method="post">
+                <input type="hidden" name="sessionId" th:value="${sessionId}"/>
+                <input type="hidden" name="tableId" th:value="${tableId}"/>
+                <button class="btn-primary" type="submit">
+                    Place my Order <span>🧾</span>
+                </button>
+            </form>
+        </div>
+        <div style="height: 10px"></div>
+        <!-- Ordered Items Section -->
+        <div
+                class="title"
+                style="margin-top: 16px; background: var(--accent-2)"
+        >
+            My Order <span>🗒️</span>
+        </div>
+        <div class="list" id="orderedItemsList">
+            <div class="cart-item" th:each="item : ${orderedItems}">
+
+                <div class="name" th:text="${item.productName}">Product Name</div>
+                <div class="qty">
+                    <span th:text="${item.quantity}">1</span>
+                    <small
+                            th:text="${item.status}"
+                            style="margin-left: 8px; color: #555"
+                    ></small>
+                </div>
+                <div
+                        class="price"
+                        th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT')} + '₫'"
+                >
+                    0₫
+                </div>
+            </div>
+            <p
+                    th:if="${#lists.isEmpty(orderedItems)}"
+                    style="text-align: center; color: var(--muted); padding: 1rem"
+            >
+                Chưa có món nào được đặt
+            </p>
+        </div>
+        <div class="summary">
+            <th:block th:with="orderTotalSum=${#aggregates.sum(orderedItems.![totalPrice])}">
+                <span>Order Total</span>
+                <span
+                        id="orderTotal"
+                        th:text="${#numbers.formatDecimal(orderTotalSum, 0, 'COMMA', 3, 'POINT')} + ' ₫'"
+                >0₫</span
+                >
+            </th:block>
+        </div>
+        <form th:action="@{/guest/table/release}" method="post">
+            <input type="hidden" name="tableId" th:value="${tableId}"/>
+            <button class="btn-secondary" type="submit">I want to pay</button>
+        </form>
+
+    </aside>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const productCards = Array.from(
+            document.querySelectorAll(".product-grid .card")
+        );
+        const categoryChips = Array.from(
+            document.querySelectorAll(".categories .cat-chip")
+        );
+        const searchBox = document.getElementById("searchBox");
+
+        function filterProducts() {
+            const activeChip = document.querySelector(".cat-chip.active");
+            const activeCategoryId = parseInt(
+                activeChip.getAttribute("data-category-id")
+            );
+            const keyword = searchBox.value.toLowerCase();
+
+            productCards.forEach((card) => {
+                const cardCategoryId = parseInt(
+                    card.getAttribute("data-category-id")
+                );
+                const cardName = card
+                    .querySelector(".name")
+                    .textContent.toLowerCase();
+
+                const categoryMatch =
+                    activeCategoryId === 0 || cardCategoryId === activeCategoryId;
+                const keywordMatch = !keyword || cardName.includes(keyword);
+
+                card.style.display = categoryMatch && keywordMatch ? "" : "none";
+            });
+        }
+
+        categoryChips.forEach((chip) => {
+            chip.addEventListener("click", () => {
+                categoryChips.forEach((c) => c.classList.remove("active"));
+                chip.classList.add("active");
+                filterProducts();
+            });
+        });
+
+        searchBox.addEventListener("input", filterProducts);
+    });
+</script>
+</body>
+</html>

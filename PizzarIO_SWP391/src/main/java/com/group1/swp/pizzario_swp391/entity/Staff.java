@@ -63,12 +63,15 @@ public class Staff {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
+    @Column(columnDefinition = "NVARCHAR(50)")
     private String name;
+
     @Column(name = "dob")
-  
     private LocalDate dateOfBirth;
 
     private String phone;
+
+    @Column(columnDefinition = "NVARCHAR(256)")
     private String address;
     private String password;
     private String email;

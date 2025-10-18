@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.ToString;
-import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,7 +37,7 @@ public class Voucher {
     private VoucherType type;
     private double value;
 
-    @Nationalized
+    @Column(columnDefinition = "NVARCHAR(256)")
     private String description;
 
     @Column(name = "max_uses", nullable = false)

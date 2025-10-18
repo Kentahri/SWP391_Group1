@@ -43,6 +43,7 @@ public class Shift {
     private int id;
 
     @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "NVARCHAR(50)")
     private ShiftType shiftName;
 
     private LocalDateTime startTime;

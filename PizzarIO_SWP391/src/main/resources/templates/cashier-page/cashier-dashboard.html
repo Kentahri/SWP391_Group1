@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Cashier Dashboard - Table Management</title>
+	<link rel="stylesheet" th:href="@{/css/cashier-dashboard.css}">
+</head>
+<body>
+<div class="dashboard-container">
+	<!-- Top bar -->
+	<header class="topbar">
+		<div class="brand">🍕 PizzarIO</div>
+		<div class="actions">
+			<button class="btn action-purple" type="button">Tạo mới đơn hàng</button>
+			<button class="btn action-green" type="button">Xem lịch sử hóa đơn</button>
+			<form th:action="@{/logout}" method="post">
+				<input type="hidden"
+				       th:if="${_csrf != null}"
+				       th:name="${_csrf.parameterName}"
+				       th:value="${_csrf.token}" />
+				<button type="submit" class="btn-logout">Logout</button>
+			</form>
+		</div>
+	</header>
+	<div class="horizontal-divider"></div>
+	
+	<div class="layout">
+		<!-- Left: Table manager -->
+		<section class="panel left">
+			<div class="section-title">Quản lý bàn</div>
+			<div class="panel-header">
+				<span class="icon">🪑</span>
+				<span class="title">Table map</span>
+			</div>
+			
+			<div class="table-grid" id="table-grid">
+				<div th:each="table : ${tables}"
+				     th:id="'table-' + ${table.id}"
+				     th:class="'table-card ' + ${table.tableStatus.toString().toLowerCase()}"
+				     th:onclick="'handleTableClick(' + ${table.id} + ')'"
+				     th:attr="data-id=${table.id},
+				              data-status=${table.tableStatus},
+				              data-capacity=${table.capacity}
+				              ">
+					<div class="table-dot"
+					     th:classappend="${table.tableStatus.toString().toLowerCase() == 'waiting_payment' ? ' show' : ''}"></div>
+					<div class="table-number">Bàn [[${table.id}]]</div>
+					<div class="table-status-text"
+					     th:text="${table.tableStatus == 'AVAILABLE' ? 'Trống' : (table.tableStatus == 'OCCUPIED' ? 'Có khách' : (table.tableStatus == 'WAITING_PAYMENT' ? 'Chờ thanh toán' : 'Đã đặt trước'))}">
+						Trống
+					</div>
+					<div class="table-note" th:if="${table.tableStatus == 'WAITING_PAYMENT'}">Tiền mặt</div>
+					<div class="table-capacity" th:if="${table.tableStatus == 'RESERVED'}">[[${table.capacity}]] người
+					</div>
+					<div class="table-actions" th:if="${table.tableStatus == 'WAITING_PAYMENT'}">
+						<button class="btn small" th:onclick="'releaseTable(' + ${table.id} + ', event)'">Giải phóng
+						</button>
+					</div>
+				</div>
+			</div>
+			
+			<div class="legend">
+				<div class="legend-title">Chú thích:</div>
+				<div class="legend-items">
+					<div class="legend-item"><span class="box avail"></span><span>Bàn trống</span></div>
+					<div class="legend-item"><span class="box occ"></span><span>Đang có khách</span></div>
+					<div class="legend-item"><span class="box wait"></span><span>Chờ thanh toán</span></div>
+					<div class="legend-item"><span class="box res"></span><span>Đã đặt trước</span></div>
+				</div>
+			</div>
+		</section>
+		
+		<!-- Right: Table details -->
+        <section class="panel right">
+            <div class="section-title">Đơn bàn chi tiết</div>
+            <div id="table-detail" class="table-detail">
+                <div class="placeholder">Chọn 1 bàn để xem chi tiết</div>
+            </div>
+		</section>
+	</div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<div>Tên: <p th:text="${name}"></p></div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script th:src="@{/js/cashier-websocket.js}"></script>
+</body>
+</html>
+
+
