@@ -25,13 +25,10 @@ public class Membership {
         orders = new ArrayList<>();
     }
 
-    public Membership(String phoneNumber, String name, String email, MembershipTier membershipTier, int points, boolean isActive, LocalDateTime joinedAt) {
+    public Membership(String phoneNumber, String name, boolean isActive, LocalDateTime joinedAt) {
         this();
         this.phoneNumber = phoneNumber;
         this.name = name;
-        this.email = email;
-        this.membershipTier = membershipTier;
-        this.points = points;
         this.isActive = isActive;
         this.joinedAt = joinedAt;
     }
@@ -45,21 +42,10 @@ public class Membership {
 
     private String name;
 
-    private String email;
-
-    @Column(name = "membership_tier")
-    @Enumerated(EnumType.STRING)
-    private MembershipTier membershipTier;
-
-    private int points;
-
     @Column(name = "is_active")
     private boolean isActive;
 
     @Column(name = "joined_at")
     private LocalDateTime joinedAt;
 
-    public enum MembershipTier{
-        BRONZE, SILVER, GOLD, PLATINUM
-    }
 }
