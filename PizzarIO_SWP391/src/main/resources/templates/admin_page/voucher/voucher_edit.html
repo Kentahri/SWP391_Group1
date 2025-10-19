@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -49,11 +49,33 @@
         }
         button[type="submit"]:hover, .primary-btn:hover { filter: brightness(1.05); }
         .back-link { display: inline-block; margin-bottom: 16px; color: var(--accent); text-decoration: none; font-weight: 600; }
+        .toast-error {
+            position: fixed;
+            top: 32px;
+            left: 0; right: 0;
+            margin: 0 auto;
+            z-index: 9999;
+            max-width: 420px;
+            padding: 16px 24px;
+            background: #fee2e2;
+            color: #b91c1c;
+            font-weight: 600;
+            text-align: center;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(190,26,26,0.09);
+            animation: fadeInScale 0.5s;
+        }
+        @keyframes fadeInScale {
+            0% { opacity: 0; transform: scale(0.85); }
+            100% { opacity: 1; transform: scale(1); }
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <a th:href="@{/voucher}" class="back-link">&larr; Quay lại danh sách voucher</a>
+    <div th:if="${errorMessage}" class="toast-error" th:text="${errorMessage}"></div>
     <div class="card">
         <h2>Cập nhật Voucher</h2>
         <form th:action="@{'/voucher/update/' + ${voucherId}}" method="post" th:object="${voucherDTO}">
@@ -106,5 +128,14 @@
         </form>
     </div>
 </div>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    if (document.querySelector('.toast-error')) {
+        setTimeout(function() {
+            document.querySelector('.toast-error').style.display = 'none';
+        }, 4500);
+    }
+    /*]]>*/
+</script>
 </body>
 </html>
