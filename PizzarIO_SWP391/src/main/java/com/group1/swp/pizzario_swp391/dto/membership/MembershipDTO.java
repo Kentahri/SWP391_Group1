@@ -10,4 +10,5 @@ public class MembershipDTO {
     private String name;
     private boolean isActive;
     private LocalDateTime joinedAt;
+    private Integer points;
 }

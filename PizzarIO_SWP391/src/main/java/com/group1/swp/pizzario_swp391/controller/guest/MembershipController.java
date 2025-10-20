@@ -57,10 +57,20 @@ public class MembershipController {
     }
 
     @PostMapping("/register")
-    public String register(@Valid MembershipRegistrationDTO registrationDTO, BindingResult bindingResult, Model model) {
+    public String register(@Valid MembershipRegistrationDTO registrationDTO,
+                           BindingResult bindingResult,
+                           Model model) {
+        // đảm bảo form object luôn trong model để Thymeleaf hiển thị lỗi trường
+        model.addAttribute("registrationDTO", registrationDTO);
+
+        // nếu có lỗi validate, trả về từng lỗi cụ thể cho từng field
         if (bindingResult.hasErrors()) {
-            model.addAttribute("registrationDTO", registrationDTO);
-            model.addAttribute("error", "Vui lòng kiểm tra lại thông tin.");
+            if (bindingResult.hasFieldErrors("fullName")) {
+                model.addAttribute("fullNameError", bindingResult.getFieldError("fullName").getDefaultMessage());
+            }
+            if (bindingResult.hasFieldErrors("phoneNumber")) {
+                model.addAttribute("phoneNumberError", bindingResult.getFieldError("phoneNumber").getDefaultMessage());
+            }
             return "guest-page/membership_register";
         }
 

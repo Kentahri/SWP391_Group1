@@ -22,7 +22,7 @@ public interface MembershipMapper {
     Membership toMembership(VerifyMembershipDTO verifyMembershipDTO);
     void updateMembershipFromVerify(@MappingTarget Membership membership, VerifyMembershipDTO verifyMembershipDTO);
 
-    // Mapper for registration flow
+    @org.mapstruct.Mapping(source = "fullName", target = "name")
     Membership toMembership(MembershipRegistrationDTO registrationDTO);
     void updateMembershipFromRegistration(@MappingTarget Membership membership, MembershipRegistrationDTO registrationDTO);
 }

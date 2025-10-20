@@ -25,12 +25,13 @@ public class Membership {
         orders = new ArrayList<>();
     }
 
-    public Membership(String phoneNumber, String name, boolean isActive, LocalDateTime joinedAt) {
+    public Membership(String phoneNumber, String name, boolean isActive, LocalDateTime joinedAt, int points) {
         this();
         this.phoneNumber = phoneNumber;
         this.name = name;
         this.isActive = isActive;
         this.joinedAt = joinedAt;
+        this.points = points;
     }
 
     @Id
@@ -47,5 +48,8 @@ public class Membership {
 
     @Column(name = "joined_at")
     private LocalDateTime joinedAt;
+
+    @Column(name = "points", nullable = false)
+    private Integer points;
 
 }

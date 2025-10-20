@@ -32,17 +32,36 @@ public class MembershipService {
         return membershipRepository.findByPhoneNumber(phoneNumber);
     }
 
-    // NEW: đăng ký membership
+    // Đăng ký membership (gán points nếu có, mặc định 0)
     public Optional<MembershipDTO> register(MembershipRegistrationDTO registrationDTO) {
         String phone = registrationDTO.getPhoneNumber().trim();
-        // kiểm tra tồn tại
         if (membershipRepository.findByPhoneNumber(phone).isPresent()) {
             return Optional.empty();
         }
+
         Membership entity = membershipMapper.toMembership(registrationDTO);
-        entity.setName(registrationDTO.getFullName());
         entity.setPhoneNumber(phone);
-        entity.setJoinedAt(LocalDateTime.now());
+        // gán joinedAt nếu entity dùng thuộc tính này
+        try {
+            entity.getClass().getMethod("setJoinedAt", LocalDateTime.class)
+                  .invoke(entity, LocalDateTime.now());
+        } catch (Exception ignored) {
+            // nếu entity không có setJoinedAt, bỏ qua
+        }
+
+        // gán points: nếu DTO null thì mặc định 0 (đã khởi tạo trong DTO), nhưng đảm bảo không null
+        Integer pts = registrationDTO.getPoints() != null ? registrationDTO.getPoints() : 0;
+        try {
+            entity.getClass().getMethod("setPoints", Integer.class)
+                  .invoke(entity, pts);
+        } catch (NoSuchMethodException e) {
+            // try primitive int setter
+            try {
+                entity.getClass().getMethod("setPoints", int.class)
+                      .invoke(entity, pts);
+            } catch (Exception ignored) {}
+        } catch (Exception ignored) {}
+
         Membership saved = membershipRepository.save(entity);
         return Optional.of(membershipMapper.toMembershipDTO(saved));
     }

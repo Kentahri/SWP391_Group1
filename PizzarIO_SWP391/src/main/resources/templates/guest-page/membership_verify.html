@@ -122,12 +122,10 @@
 
         <div th:if="${error}" class="error" th:text="${error}"></div>
 
-        <!-- 👉 Thêm phần này -->
         <div class="register-section">
           <span>Chưa có tài khoản?</span>
           <a th:href="@{/guest/membership/register}">Đăng ký</a>
         </div>
-        <!-- 👈 Hết phần thêm -->
 
         <div th:if="${membership}">
           <h2 style="margin-top: 32px">Thông tin thành viên</h2>
@@ -143,6 +141,14 @@
             <tr>
               <th>Số điện thoại</th>
               <td th:text="${membership.phoneNumber}">-</td>
+            </tr>
+            <tr>
+              <th>Điểm</th>
+              <td
+                th:text="${membership.points != null ? membership.points : 0}"
+              >
+                0
+              </td>
             </tr>
             <tr>
               <th>Ngày tham gia</th>
