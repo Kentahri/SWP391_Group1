@@ -11,6 +11,8 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CategoryCreateDTO {
+    Long id; // Dùng cho trường hợp edit trong modal
+
     @NotBlank(message = "Tên danh mục không được để trống")
     @Size(max = 100, message = "Tên danh mục không được vượt quá 100 ký tự")
     String name;
@@ -18,5 +20,6 @@ public class CategoryCreateDTO {
     @Size(max = 500, message = "Mô tả không được vượt quá 500 ký tự")
     String description;
 
-    boolean isActive = true; // Mặc định là active khi tạo mới
+    @Builder.Default
+    boolean active = true; // Mặc định là active khi tạo mới
 }

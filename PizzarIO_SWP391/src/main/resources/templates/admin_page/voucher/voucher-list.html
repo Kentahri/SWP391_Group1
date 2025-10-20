@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quản lý Voucher • Admin Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin_page/voucher-list.css}" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- SIDEBAR -->
+      <div th:insert="~{fragments/sidebar :: sidebar('vouchers')}"></div>
+
+      <!-- MAIN -->
+      <div class="main-content">
+        <header class="page-header">
+          <div>
+            <h1>Quản lý Voucher</h1>
+            <p class="muted">Tạo và quản lý các mã giảm giá cho khách hàng</p>
+          </div>
+          <div class="userbox">
+            <div class="avatar">M</div>
+            <div class="who">
+              <strong>Manager</strong>
+              <span class="muted">Quản lý</span>
+            </div>
+          </div>
+        </header>
+
+        <div class="voucher-container">
+          <a th:href="@{/manager/vouchers/new}" class="btn-create">
+            + Tạo voucher
+          </a>
+
+          <!-- Stats Grid -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <h3>Tổng voucher</h3>
+              <p
+                class="value"
+                th:text="${stats != null ? stats.totalVouchers : 0}"
+              >
+                0
+              </p>
+              <p class="subtitle">voucher đã tạo</p>
+            </div>
+            <div class="stat-card">
+              <h3>Đang hoạt động</h3>
+              <p
+                class="value"
+                th:text="${stats != null ? stats.activeVouchers : 0}"
+              >
+                0
+              </p>
+              <p class="subtitle">voucher có thể sử dụng</p>
+            </div>
+            <div class="stat-card">
+              <h3>Lượt sử dụng</h3>
+              <p
+                class="value"
+                th:text="${stats != null ? stats.totalUsages : 0}"
+              >
+                0
+              </p>
+              <p class="subtitle">lần đã được sử dụng</p>
+            </div>
+            <div class="stat-card">
+              <h3>Tổng tiết kiệm</h3>
+              <p
+                class="value"
+                th:text="${stats != null && stats.totalSavings() != null ? (#numbers.formatDecimal(stats.totalSavings(), 1, 'COMMA', 2, 'POINT') + ' VND') : '0 VND'}"
+              >
+                0 VND
+              </p>
+              <p class="subtitle">VND đã giảm cho khách</p>
+            </div>
+          </div>
+
+          <!-- Modal -->
+          <div id="voucherModal" class="modal">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h2 id="modalTitle">Tạo voucher mới</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+              </div>
+
+              <form id="voucherForm" method="post" th:object="${voucherForm}">
+                <input type="hidden" th:field="*{id}" />
+
+                <!-- Global Error Message -->
+                <div
+                  th:if="${errorMessage}"
+                  class="error-alert"
+                  style="
+                    background-color: #fee;
+                    border: 1px solid #fcc;
+                    padding: 12px;
+                    border-radius: 8px;
+                    margin-bottom: 16px;
+                    color: #c00;
+                  "
+                >
+                  <strong>❌ Lỗi:</strong>
+                  <span th:text="${errorMessage}"></span>
+                </div>
+
+                <!-- Global Validation Errors -->
+                <div
+                  th:if="${#fields.hasGlobalErrors()}"
+                  class="error-alert"
+                  style="
+                    background-color: #fee;
+                    border: 1px solid #fcc;
+                    padding: 12px;
+                    border-radius: 8px;
+                    margin-bottom: 16px;
+                    color: #c00;
+                  "
+                >
+                  <strong>⚠️ Lỗi validation:</strong>
+                  <ul style="margin: 5px 0 0 0; padding-left: 20px">
+                    <li
+                      th:each="error : ${#fields.globalErrors()}"
+                      th:text="${error}"
+                    ></li>
+                  </ul>
+                </div>
+
+                <div class="mb-3">
+                  <label>Mã voucher *</label>
+                  <input
+                    type="text"
+                    th:field="*{code}"
+                    th:class="${#fields.hasErrors('code')} ? 'error-field' : ''"
+                    placeholder="VD: WELCOME20"
+                    style="text-transform: uppercase"
+                  />
+                  <small style="color: var(--muted); font-size: 12px"
+                    >Chỉ chữ hoa, số, gạch ngang và gạch dưới</small
+                  >
+                  <span
+                    th:if="${#fields.hasErrors('code')}"
+                    th:errors="*{code}"
+                    class="error-message"
+                    style="
+                      color: #dc2626;
+                      font-size: 12px;
+                      margin-top: 4px;
+                      display: block;
+                    "
+                  ></span>
+                </div>
+
+                <div class="row">
+                  <div class="col-6">
+                    <label>Loại voucher *</label>
+                    <select
+                      th:field="*{type}"
+                      th:class="${#fields.hasErrors('type')} ? 'error-field' : ''"
+                    >
+                      <option value="">-- Chọn loại --</option>
+                      <option
+                        th:each="type : ${voucherTypes}"
+                        th:value="${type}"
+                        th:text="${type.name() == 'PERCENTAGE' ? 'Phần trăm (%)' : 'Số tiền cố định (VND)'}"
+                      ></option>
+                    </select>
+                    <span
+                      th:if="${#fields.hasErrors('type')}"
+                      th:errors="*{type}"
+                      class="error-message"
+                      style="
+                        color: #dc2626;
+                        font-size: 12px;
+                        margin-top: 4px;
+                        display: block;
+                      "
+                    ></span>
+                  </div>
+                  <div class="col-6">
+                    <label>Giá trị *</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      th:field="*{value}"
+                      th:class="${#fields.hasErrors('value')} ? 'error-field' : ''"
+                      placeholder="VD: 20 hoặc 50000"
+                    />
+                    <small style="color: var(--muted); font-size: 12px"
+                      >% (0-100) hoặc VND</small
+                    >
+                    <span
+                      th:if="${#fields.hasErrors('value')}"
+                      th:errors="*{value}"
+                      class="error-message"
+                      style="
+                        color: #dc2626;
+                        font-size: 12px;
+                        margin-top: 4px;
+                        display: block;
+                      "
+                    ></span>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label>Mô tả *</label>
+                  <textarea
+                    th:field="*{description}"
+                    th:class="${#fields.hasErrors('description')} ? 'error-field' : ''"
+                    rows="2"
+                    placeholder="Mô tả chi tiết voucher..."
+                  ></textarea>
+                  <span
+                    th:if="${#fields.hasErrors('description')}"
+                    th:errors="*{description}"
+                    class="error-message"
+                    style="
+                      color: #dc2626;
+                      font-size: 12px;
+                      margin-top: 4px;
+                      display: block;
+                    "
+                  ></span>
+                </div>
+
+                <div class="row">
+                  <div class="col-6">
+                    <label>Số lần sử dụng tối đa *</label>
+                    <input
+                      type="number"
+                      th:field="*{maxUses}"
+                      th:class="${#fields.hasErrors('maxUses')} ? 'error-field' : ''"
+                      placeholder="VD: 100"
+                    />
+                    <span
+                      th:if="${#fields.hasErrors('maxUses')}"
+                      th:errors="*{maxUses}"
+                      class="error-message"
+                      style="
+                        color: #dc2626;
+                        font-size: 12px;
+                        margin-top: 4px;
+                        display: block;
+                      "
+                    ></span>
+                  </div>
+                  <div class="col-6">
+                    <label>Đơn hàng tối thiểu *</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      th:field="*{minOrderAmount}"
+                      th:class="${#fields.hasErrors('minOrderAmount')} ? 'error-field' : ''"
+                      placeholder="VD: 100000"
+                    />
+                    <span
+                      th:if="${#fields.hasErrors('minOrderAmount')}"
+                      th:errors="*{minOrderAmount}"
+                      class="error-message"
+                      style="
+                        color: #dc2626;
+                        font-size: 12px;
+                        margin-top: 4px;
+                        display: block;
+                      "
+                    ></span>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-6">
+                    <label>Ngày bắt đầu *</label>
+                    <input
+                      type="datetime-local"
+                      th:field="*{validFrom}"
+                      th:class="${#fields.hasErrors('validFrom')} ? 'error-field' : ''"
+                    />
+                    <span
+                      th:if="${#fields.hasErrors('validFrom')}"
+                      th:errors="*{validFrom}"
+                      class="error-message"
+                      style="
+                        color: #dc2626;
+                        font-size: 12px;
+                        margin-top: 4px;
+                        display: block;
+                      "
+                    ></span>
+                  </div>
+                  <div class="col-6">
+                    <label>Ngày kết thúc *</label>
+                    <input
+                      type="datetime-local"
+                      th:field="*{validTo}"
+                      th:class="${#fields.hasErrors('validTo')} ? 'error-field' : ''"
+                    />
+                    <span
+                      th:if="${#fields.hasErrors('validTo')}"
+                      th:errors="*{validTo}"
+                      class="error-message"
+                      style="
+                        color: #dc2626;
+                        font-size: 12px;
+                        margin-top: 4px;
+                        display: block;
+                      "
+                    ></span>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label>
+                    <input type="checkbox" th:field="*{active}" />
+                    Kích hoạt voucher
+                  </label>
+                </div>
+
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary">Lưu</button>
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    onclick="closeModal()"
+                  >
+                    Hủy
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Vouchers Grid -->
+          <div class="vouchers-grid">
+            <div
+              th:each="voucher : ${vouchers}"
+              class="voucher-card"
+              th:classappend="${!voucher.active} ? 'inactive' : ''"
+            >
+              <div class="voucher-card-header">
+                <div class="voucher-header-top">
+                  <span class="voucher-icon">🎟️</span>
+                  <span
+                    class="voucher-type-label"
+                    th:text="${voucher.type.name() == 'PERCENTAGE' ? 'Giảm theo %' : 'Giảm cố định'}"
+                  ></span>
+                </div>
+                <h3
+                  class="voucher-title"
+                  th:text="${voucher.description ?: 'Voucher'}"
+                >
+                  Voucher
+                </h3>
+                <div>
+                  <span class="voucher-code" th:text="${voucher.code}"
+                    >CODE</span
+                  >
+                  <span
+                    class="badge-status"
+                    th:classappend="${voucher.active ? 'badge-active' : 'badge-paused'}"
+                    th:text="${voucher.active ? 'Đang hoạt động' : 'Đã hết hạn'}"
+                  ></span>
+                </div>
+              </div>
+
+              <div class="voucher-details">
+                <div class="detail-item">
+                  <span class="detail-label">Giảm giá</span>
+                  <span
+                    class="detail-value"
+                    th:text="${voucher.type.name() == 'PERCENTAGE' ? (voucher.value + '%') : (voucher.value + ' VND')}"
+                  ></span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Đơn tối thiểu</span>
+                  <span
+                    class="detail-value"
+                    th:text="${#numbers.formatDecimal(voucher.minOrderAmount, 1, 'NONE', 0, 'POINT') + ' VND'}"
+                  ></span>
+                </div>
+              </div>
+
+              <!-- Usage -->
+              <div class="usage-progress">
+                <div class="progress-label">
+                  <span>Đã sử dụng</span>
+                  <span>
+                    <strong th:text="${voucher.timesUsed}">0</strong>/<span
+                      th:text="${voucher.maxUses}"
+                      >0</span
+                    >
+                  </span>
+                </div>
+                <div class="progress-bar-container">
+                  <div
+                    class="progress-bar-fill"
+                    th:style="'width: ' + ${voucher.maxUses > 0 ? (voucher.timesUsed * 100.0 / voucher.maxUses) : 0} + '%'"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- Date range -->
+              <div class="date-range">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  ></path>
+                </svg>
+                <span
+                  th:text="${#temporals.format(voucher.validFrom, 'd/M/yyyy')} + ' - ' + ${#temporals.format(voucher.validTo, 'd/M/yyyy')}"
+                ></span>
+              </div>
+
+              <!-- Action buttons -->
+              <div class="card-footer">
+                <a
+                  th:href="@{/manager/vouchers/edit/{id}(id=${voucher.id})}"
+                  class="btn-edit"
+                >
+                  Sửa
+                </a>
+                <form
+                  th:action="@{/manager/vouchers/toggle/{id}(id=${voucher.id})}"
+                  method="post"
+                  style="display: inline; flex: 1"
+                  onsubmit="return confirm('Bạn có chắc muốn thay đổi trạng thái?')"
+                >
+                  <button
+                    type="submit"
+                    class="btn-toggle"
+                    th:text="${voucher.active ? 'Tạm dừng' : 'Kích hoạt'}"
+                    style="width: 100%"
+                  >
+                    Toggle
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script th:inline="javascript">
+      window.openModalFlag = /*[[${openModal}]]*/ null;
+    </script>
+    <script th:src="@{/js/admin/voucher-list.js}"></script>
+  </body>
+</html>

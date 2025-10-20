@@ -1,76 +1,174 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Category List • Admin Dashboard</title>
+    <title>Quản lý Danh mục • Admin Dashboard</title>
     <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin_page/category-list.css}" />
   </head>
   <body>
     <div class="app">
-      <!-- SIDEBAR -->
       <div th:insert="~{fragments/sidebar :: sidebar('categories')}"></div>
 
-      <!-- MAIN -->
-      <main class="main">
-        <header class="page-header">
-          <div>
+      <div class="main-content">
+        <div class="page-header">
+          <div class="header-content">
             <h1>Quản lý Danh mục</h1>
-            <p class="muted">Danh sách tất cả danh mục sản phẩm</p>
+            <p class="subtitle">Thêm, sửa, ẩn/hiện các danh mục sản phẩm</p>
           </div>
-          <div class="userbox">
-            <div class="avatar">M</div>
-            <div class="who">
-              <strong id="currentUser">—</strong>
-              <span id="currentRole" class="muted">—</span>
+
+          <!-- Thanh tìm kiếm -->
+          <div class="search-container">
+            <input
+              type="text"
+              id="categorySearch"
+              class="search-input"
+              placeholder="Tìm kiếm danh mục..."
+              autocomplete="off"
+            />
+            <span class="search-icon">🔍</span>
+          </div>
+
+          <a th:href="@{/manager/categories/new}" class="btn-add-category">
+            <span>+</span> Thêm danh mục
+          </a>
+        </div>
+
+        <div class="category-table-container">
+          <!-- Modal -->
+          <div id="categoryModal" class="modal">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h2 id="modalTitle">Thêm danh mục mới</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+              </div>
+
+              <form id="categoryForm" method="post" th:object="${categoryForm}">
+                <input type="hidden" th:field="*{id}" />
+
+                <!-- General error message -->
+                <div
+                  class="alert alert-danger"
+                  th:if="${errorMessage}"
+                  th:text="${errorMessage}"
+                ></div>
+
+                <div class="mb-3">
+                  <label>Tên danh mục</label>
+                  <input
+                    type="text"
+                    th:field="*{name}"
+                    th:errorclass="error-field"
+                  />
+                  <span
+                    class="error-message"
+                    th:if="${#fields.hasErrors('name')}"
+                    th:errors="*{name}"
+                  ></span>
+                </div>
+
+                <div class="mb-3">
+                  <label>Mô tả</label>
+                  <textarea
+                    th:field="*{description}"
+                    rows="3"
+                    th:errorclass="error-field"
+                  ></textarea>
+                  <span
+                    class="error-message"
+                    th:if="${#fields.hasErrors('description')}"
+                    th:errors="*{description}"
+                  ></span>
+                </div>
+
+                <div class="form-check mb-3">
+                  <input
+                    type="checkbox"
+                    th:field="*{active}"
+                    id="activeCheck"
+                  />
+                  <label for="activeCheck">Kích hoạt</label>
+                </div>
+
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary">Lưu</button>
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    onclick="closeModal()"
+                  >
+                    Hủy
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
-        </header>
 
-        <section>
-          <div class="content-wrapper">
-            <a th:href="@{/manager/categories/create}" class="btn btn-primary"
-              >+ Thêm Category</a
-            >
-
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Tên</th>
-                  <th>Mô tả</th>
-                  <th>Kích hoạt</th>
-                  <th>Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr th:each="cat : ${categories}">
-                  <td th:text="${cat.id}"></td>
-                  <td th:text="${cat.name}"></td>
-                  <td th:text="${cat.description}"></td>
-                  <td th:text="${cat.active ? 'Yes' : 'No'}"></td>
-                  <td>
+          <!-- Table -->
+          <table class="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Tên</th>
+                <th>Mô tả</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                th:each="cat : ${categories}"
+                th:classappend="${!cat.active} ? 'inactive' : ''"
+              >
+                <td th:text="${cat.id}"></td>
+                <td th:text="${cat.name}"></td>
+                <td th:text="${cat.description}"></td>
+                <td>
+                  <span
+                    class="badge"
+                    th:classappend="${cat.active} ? 'badge-active' : 'badge-inactive'"
+                  >
+                    <span th:text="${cat.active} ? 'Có sẵn' : 'Đã ẩn'"></span>
+                  </span>
+                </td>
+                <td>
+                  <div class="action-buttons">
                     <a
-                      th:href="@{'/manager/categories/edit/' + ${cat.id}}"
-                      class="btn btn-warning btn-sm"
-                      >Sửa</a
+                      th:href="@{/manager/categories/edit/{id}(id=${cat.id})}"
+                      class="btn-icon btn-edit"
+                      title="Sửa"
                     >
+                      Sửa
+                    </a>
                     <form
-                      th:action="@{'/manager/categories/delete/' + ${cat.id}}"
+                      th:action="@{/manager/categories/toggle/{id}(id=${cat.id})}"
                       method="post"
-                      style="display: inline"
+                      class="inline-form"
+                      onsubmit="return confirm('Bạn có chắc muốn thay đổi trạng thái?')"
                     >
-                      <button type="submit" class="btn btn-danger btn-sm">
-                        Xóa
+                      <button
+                        type="submit"
+                        class="btn-icon"
+                        th:classappend="${cat.active} ? 'btn-hide' : 'btn-show'"
+                        th:title="${cat.active} ? 'Ẩn' : 'Hiện'"
+                      >
+                        <span th:if="${cat.active}">Ẩn</span>
+                        <span th:unless="${cat.active}">Hiện</span>
                       </button>
                     </form>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </main>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
+
+    <script th:inline="javascript">
+      window.openModalFlag = /*[[${openModal}]]*/ null;
+    </script>
+    <script th:src="@{/js/admin/category-list.js}"></script>
   </body>
 </html>

@@ -40,19 +40,13 @@ public class CategoryService {
                 .collect(Collectors.toList());
     }
 
-    public CategoryDetailDTO getCategoryById(Long id) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(CATEGORY_NOT_FOUND));
-        return categoryMapper.toDetailDTO(category);
-    }
-    
     public CategoryUpdateDTO getCategoryForUpdate(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(CATEGORY_NOT_FOUND));
         return CategoryUpdateDTO.builder()
                 .name(category.getName())
                 .description(category.getDescription())
-                .isActive(category.isActive())
+                .active(category.isActive())
                 .build();
     }
 
@@ -70,5 +64,12 @@ public class CategoryService {
         }
         categoryRepository.deleteById(id);
     }
-}
 
+    public void toggleCategoryActive(Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(CATEGORY_NOT_FOUND));
+        category.setActive(!category.isActive());
+        category.setUpdatedAt(LocalDateTime.now());
+        categoryRepository.save(category);
+    }
+}

@@ -9,7 +9,6 @@ document.addEventListener("DOMContentLoaded", function () {
   setupImageTimeouts();
   setupModal(modal);
   setupComboFeature(form);
-  setupSearch();
 });
 
 // ===== XỬ LÝ ẢNH =====
@@ -29,7 +28,7 @@ function setupImageTimeouts() {
 
 // ===== XỬ LÝ MODAL =====
 function setupModal(modal) {
-  // Hiển thị modal nếu cần
+  // Hiển thị modal nếu cần (bao gồm cả khi có validation errors)
   if (window.openModalFlag && modal) {
     modal.classList.add("show");
     const title = document.getElementById("modalTitle");
@@ -37,6 +36,15 @@ function setupModal(modal) {
       title.textContent =
         window.openModalFlag === "create" ? "Thêm món mới" : "Sửa món ăn";
     }
+
+    // Scroll to first error nếu có
+    setTimeout(() => {
+      const firstError = document.querySelector(".error-field");
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+        firstError.focus();
+      }
+    }, 100);
   }
 
   // Đóng modal khi click bên ngoài
@@ -254,110 +262,5 @@ function updateDescription() {
   }
 }
 
-// ===== TÌM KIẾM SẢN PHẨM =====
-function setupSearch() {
-  const searchInput = document.getElementById("productSearch");
-  const productList = document.querySelector(".product-list");
-  if (!searchInput || !productList) return;
-
-  const originalHtml = productList.innerHTML;
-
-  // Debounce function
-  const debounce = (fn, delay) => {
-    let timeout;
-    return (...args) => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => fn(...args), delay);
-    };
-  };
-
-  // Tìm kiếm
-  const search = debounce(async (query) => {
-    if (!query.trim()) {
-      productList.innerHTML = originalHtml;
-      return;
-    }
-
-    productList.innerHTML = '<div class="searching">Đang tìm kiếm...</div>';
-
-    try {
-      const res = await fetch(
-        `/pizzario/manager/products/search?query=${encodeURIComponent(query)}`
-      );
-      const products = await res.json();
-
-      if (products.length === 0) {
-        productList.innerHTML = `<div class="no-results"><p>Không tìm thấy "${query}"</p></div>`;
-        return;
-      }
-
-      const regex = new RegExp(
-        `(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
-        "gi"
-      );
-
-      productList.innerHTML = products
-        .map((p) => {
-          const name = p.name.replace(
-            regex,
-            '<span class="highlight-match">$1</span>'
-          );
-          const desc =
-            p.description?.replace(
-              regex,
-              '<span class="highlight-match">$1</span>'
-            ) || "";
-
-          return `
-          <div class="product-item ${
-            !p.active ? "inactive" : ""
-          }" id="product-${p.id}">
-            <div class="product-image">
-              ${
-                p.imageURL
-                  ? `<img src="${p.imageURL}" alt="${p.name}" loading="lazy" onerror="this.onerror=null;this.src='';this.style.display='none';">`
-                  : '<div class="no-image-placeholder">No Image</div>'
-              }
-            </div>
-            <div class="product-info">
-              <div class="product-name-line">
-                <h3 class="product-name">${name}</h3>
-                <div class="product-badges">
-                  <span class="badge ${
-                    p.active ? "badge-active" : "badge-inactive"
-                  }">
-                    ${p.active ? "Có sẵn" : "Đã ẩn"}
-                  </span>
-                  <span class="badge badge-category">${p.categoryName}</span>
-                </div>
-              </div>
-              <p class="product-description">${desc}</p>
-              <div class="product-price">${p.basePriceFormatted}</div>
-            </div>
-            <div class="product-actions">
-              <a href="/pizzario/manager/products/edit/${
-                p.id
-              }" class="btn-icon btn-edit" title="Sửa">Sửa</a>
-              <form action="/pizzario/manager/products/toggle/${
-                p.id
-              }" method="post" class="inline-form" onsubmit="return confirm('Bạn có chắc muốn thay đổi trạng thái?')">
-                <button type="submit" class="btn-icon ${
-                  p.active ? "btn-hide" : "btn-show"
-                }" title="${p.active ? "Ẩn" : "Hiện"}">
-                  ${p.active ? "Ẩn" : "Hiện"}
-                </button>
-              </form>
-            </div>
-          </div>
-        `;
-        })
-        .join("");
-    } catch (err) {
-      console.error(err);
-      productList.innerHTML =
-        '<div class="no-results"><p>Lỗi tìm kiếm</p></div>';
-    }
-  }, 300);
-
-  searchInput.addEventListener("input", (e) => search(e.target.value));
-}
+// Tìm kiếm sản phẩm đã được chuyển sang sử dụng controller
+// Form tìm kiếm sẽ submit trực tiếp đến /manager/products?query=...

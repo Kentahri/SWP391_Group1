@@ -29,29 +29,22 @@
         </header>
 
          <div class="container">
+           <!-- Success/Error Messages -->
+           <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+           <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+           
            <!-- Tabs Navigation -->
            <div class="tabs-nav">
-             <button class="tab-btn active" onclick="switchTab('calendar')">
+             <a th:href="@{/manager/staff_shifts}" class="tab-btn active">
                📅 Lịch phân công ca
-             </button>
-             <button class="tab-btn" onclick="switchTab('shifts')">
+             </a>
+             <a th:href="@{/manager/shifts}" class="tab-btn">
                ⚙️ Quản lý loại ca
-             </button>
+             </a>
            </div>
 
            <!-- Tab: Calendar View -->
            <div id="tab-calendar" class="tab-content active">
-           <!-- Stats Cards -->
-           <!--
-        BACKEND TODO #1: Tạo controller method để tính toán các thống kê:
-        - totalShifts: Tổng số ca làm việc trong tuần hiện tại
-        - totalHours: Tổng giờ làm việc (sum của tất cả ca)
-        - totalWage: Tổng lương (sum của hourlyWage * số giờ làm)
-        - completedShifts: Số ca có status = "Hoàn thành"
-        
-        Model attributes cần truyền:
-        @ModelAttribute("stats") ShiftStatisticsDTO stats
-      -->
           <div class="stats-grid">
             <div class="stat-card blue">
               <div class="stat-content">
@@ -72,7 +65,7 @@
             <div class="stat-card purple">
               <div class="stat-content">
                 <h3>Tổng lương</h3>
-                <div class="stat-value" th:text="${stats != null ? #numbers.formatDecimal(stats.totalWage, 0, 'POINT', 3, 'COMMA') + 'đ' : '0đ'}">4.180.000đ</div>
+                <div class="stat-value" th:text="${stats != null ? #numbers.formatDecimal(stats.totalWage, 1, 'COMMA', 0, 'COMMA') + 'đ' : '0đ'}">4.180.000đ</div>
               </div>
               <div class="stat-icon purple">👥</div>
             </div>
@@ -98,17 +91,10 @@
               </div>
 
               <div class="calendar-controls">
-                <!-- 
-              BACKEND TODO #2: Tạo filter dropdown
-              - Lấy danh sách tất cả nhân viên từ database
-              - Thêm option "Tất cả nhân viên"
-              - Khi chọn, reload page với query param: ?staffId=xxx
-            -->
                 <div class="filter-group">
                   <span class="filter-label">🔍</span>
                   <select class="filter-select" id="staffFilter" onchange="filterByStaff()">
                     <option value="">Tất cả nhân viên</option>
-                    <!-- BACKEND: Loop qua danh sách staff - Model attribute: @ModelAttribute("allStaff") List<Staff> allStaff -->
                     <option th:each="staff : ${allStaff}" th:value="${staff.id}" th:text="${staff.name}" th:selected="${selectedStaffId != null && selectedStaffId == staff.id}"></option>
                   </select>
                 </div>
@@ -116,23 +102,87 @@
                 <div class="filter-group">
                   <select class="filter-select" id="shiftFilter" onchange="filterByShift()">
                     <option value="">Tất cả ca</option>
-                    <!-- BACKEND: Loop qua danh sách shift types - Model attribute: @ModelAttribute("allShifts") List<Shift> allShifts -->
                     <option th:each="shift : ${allShifts}" th:value="${shift.id}" th:text="${shift.shiftName}" th:selected="${selectedShiftId != null && selectedShiftId == shift.id}"></option>
                   </select>
                 </div>
 
-                <button class="add-btn" onclick="window.location.href='/manager/staff_shifts/create'">+ Thêm ca làm việc</button>
+                <button class="add-btn" onclick="openStaffShiftModal()">+ Thêm ca làm việc</button>
+              </div>
+            </div>
+
+            <!-- Staff Shift Assignment Modal -->
+            <div id="staffShiftModal" class="modal">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h2 id="staffShiftModalTitle">Thêm ca làm việc</h2>
+                  <span class="close" onclick="closeStaffShiftModal()">&times;</span>
+                </div>
+
+                <form id="staffShiftForm" method="post" th:object="${staffShiftForm}" th:action="@{/manager/staff_shifts/save}">
+                  <input type="hidden" th:field="*{id}" />
+
+                  <div class="mb-3">
+                    <label for="workDate">Ngày làm</label>
+                    <input id="workDate" type="date" th:field="*{workDate}" />
+                    <span class="error-message" th:if="${#fields.hasErrors('workDate')}" th:errors="*{workDate}"></span>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="ssShiftId">Loại ca</label>
+                    <select id="ssShiftId" th:field="*{shiftId}">
+                      <option value="" disabled>-- Chọn ca --</option>
+                      <option 
+                        th:each="sh : ${allShifts}" 
+                        th:value="${sh.id}" 
+                        th:text="${sh.shiftName + ' (' + #temporals.format(sh.startTime,'HH:mm') + '-' + #temporals.format(sh.endTime,'HH:mm') + ')'}">
+                      </option>
+                    </select>
+                    <span class="error-message" th:if="${#fields.hasErrors('shiftId')}" th:errors="*{shiftId}"></span>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="ssStaffId">Nhân viên</label>
+                    <select id="ssStaffId" th:field="*{staffId}">
+                      <option value="" disabled>-- Chọn nhân viên --</option>
+                      <option th:each="s : ${allStaff}" th:value="${s.id}" th:text="${s.name}"></option>
+                    </select>
+                    <span class="error-message" th:if="${#fields.hasErrors('staffId')}" th:errors="*{staffId}"></span>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="hourlyWage">Lương/giờ (VNĐ)</label>
+                    <input 
+                      id="hourlyWage" 
+                      type="number" 
+                      step="1000" 
+                      th:field="*{hourlyWage}" 
+                      placeholder="35000"
+                    />
+                    <span class="error-message" th:if="${#fields.hasErrors('hourlyWage')}" th:errors="*{hourlyWage}"></span>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="ssStatus">Trạng thái</label>
+                    <select id="ssStatus" th:field="*{status}">
+                      <option value="" disabled>-- Chọn trạng thái --</option>
+                      <option 
+                        th:each="st : ${T(com.group1.swp.pizzario_swp391.entity.StaffShift.Status).values()}" 
+                        th:value="${st}" 
+                        th:text="${st}">
+                      </option>
+                    </select>
+                    <span class="error-message" th:if="${#fields.hasErrors('status')}" th:errors="*{status}"></span>
+                  </div>
+
+                  <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeStaffShiftModal()">Hủy</button>
+                  </div>
+                </form>
               </div>
             </div>
 
             <!-- Week Navigation -->
-            <!-- 
-          BACKEND TODO #3: Xử lý tuần hiện tại
-          - weekStartDate: Ngày bắt đầu tuần (LocalDate)
-          - weekEndDate: Ngày kết thúc tuần (LocalDate)
-          - Khi click "Tuần trước": redirect với query param ?weekOffset=-1
-          - Khi click "Tuần sau": redirect với query param ?weekOffset=1
-        -->
             <div class="week-navigation">
               <button class="week-nav-btn" onclick="navigateWeek(-1)">
                 ◀ Tuần trước
@@ -153,22 +203,6 @@
             </div>
 
             <!-- Calendar Grid -->
-            <!-- 
-          BACKEND TODO #4: Chuẩn bị dữ liệu calendar
-          - Tạo Map<LocalDate, List<StaffShiftDTO>> shiftsByDay
-          - StaffShiftDTO bao gồm: id, workDate, shift (tên ca, giờ), staff (tên NV), 
-            status, checkIn, checkOut, hourlyWage, totalHours
-          - Group các shift theo ngày trong tuần
-          
-          Model attribute: @ModelAttribute("weekDays") List<WeekDayDTO> weekDays
-          
-          WeekDayDTO {
-            LocalDate date;
-            String dayName; // CN, T2, T3, T4, T5, T6, T7
-            boolean isToday;
-            List<StaffShiftDTO> shifts;
-          }
-        -->
             <div class="calendar-grid">
               <!-- Loop qua 7 ngày trong tuần -->
               <div class="day-column" th:each="day : ${weekDays}" th:classappend="${day.isToday} ? 'today' : ''">
@@ -179,8 +213,12 @@
 
                 <div class="shift-cards">
                   <!-- Loop qua các ca trong ngày -->
-                  <!-- BACKEND: Mỗi shift card cần có: CSS class theo loại ca: morning/afternoon/evening, Staff name, Time range, Status: Hoàn thành/Vắng mặt/Đã lên lịch, Wage -->
-                  <div class="shift-card" th:each="shift : ${day.shifts}" th:classappend="${shift.shiftType}" th:onclick="'editShift(' + ${shift.id} + ')'">
+                  <div 
+                    class="shift-card" 
+                    th:each="shift : ${day.shifts}" 
+                    th:classappend="${shift.shiftType}" 
+                    th:onclick="|editShift(${shift.id})|"
+                    style="cursor: pointer;">
                     <div class="shift-type">
                       <span class="icon">✏️</span>
                       <span th:text="${shift.shiftName}">Sáng</span>
@@ -194,10 +232,13 @@
                       06:00 - 14:00
                     </div>
 
-                    <!-- BACKEND: Status mapping - "Hoàn thành" -> class="completed", "Vắng mặt" -> class="absent", "Đã lên lịch" -> class="scheduled" -->
-                    <div class="shift-status" th:classappend="${shift.statusClass}" th:text="${shift.statusText}">Hoàn thành</div>
+                    <div class="shift-status" th:classappend="${shift.statusClass}" th:text="${shift.statusText}">
+                      Hoàn thành
+                    </div>
 
-                    <div class="shift-wage" th:text="${#numbers.formatDecimal(shift.totalWage, 0, 'POINT', 3, 'COMMA') + 'đ'}">280.000đ</div>
+                    <div class="shift-wage" th:text="${#numbers.formatDecimal(shift.totalWage, 0, 'POINT', 0, 'COMMA') + 'đ'}">
+                      280.000đ
+                    </div>
                   </div>
                 </div>
               </div>
@@ -207,44 +248,109 @@
            </div>
            <!-- End Tab: Calendar View -->
 
-           <!-- Tab: Shift Types Management -->
-           <div id="tab-shifts" class="tab-content">
-             <div class="shift-management-card">
-               <div class="shift-header">
-                 <h2>Quản lý loại ca làm việc</h2>
-                 <a th:href="@{/manager/shift/create}" class="add-btn">+ Thêm loại ca mới</a>
-               </div>
+          <!-- Tab: Shift Types Management -->
+          <div id="tab-shifts" class="tab-content">
+            <div class="shift-management-card">
+              <div class="shift-header">
+                <h2>Quản lý loại ca làm việc</h2>
+                <button class="add-btn" onclick="openShiftModal()">+ Thêm loại ca mới</button>
+              </div>
 
-               <table class="shift-table">
-                 <thead>
-                   <tr>
-                     <th>ID</th>
-                     <th>Tên ca làm việc</th>
-                     <th>Giờ bắt đầu</th>
-                     <th>Giờ kết thúc</th>
-                     <th>Hành động</th>
-                   </tr>
-                 </thead>
-                 <tbody>
-                   <tr th:each="shift : ${shifts}">
-                     <td th:text="${shift.id}">1</td>
-                     <td th:text="${shift.shiftName}">Ca sáng</td>
-                     <td th:text="${shift.startTime}">08:00</td>
-                     <td th:text="${shift.endTime}">12:00</td>
-                     <td class="actions">
-                       <a class="primary-btn" th:href="@{'/manager/shift/edit/' + ${shift.id}}">Sửa</a>
-                       <a class="delete-btn" th:href="@{'/manager/shift/delete/' + ${shift.id}}" th:onclick="|return confirm('Bạn có chắc chắn muốn xóa ca #${shift.id}?');|">Xóa</a>
-                     </td>
-                   </tr>
-                 </tbody>
-               </table>
-             </div>
-           </div>
-           <!-- End Tab: Shift Types Management -->
+              <!-- Shift Type Modal -->
+              <div id="shiftTypeModal" class="modal">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h2 id="shiftModalTitle">Thêm loại ca mới</h2>
+                    <span class="close" onclick="closeShiftModal()">&times;</span>
+                  </div>
+
+                  <form id="shiftTypeForm" method="post" th:object="${shiftForm}" th:action="@{/manager/shift/save}">
+                    <input type="hidden" th:field="*{id}" />
+
+                    <div class="mb-3">
+                      <label for="shiftType">Loại ca làm việc</label>
+                      <select id="shiftType" th:field="*{shiftName}">
+                        <option value="" disabled>-- Chọn loại ca --</option>
+                        <option
+                          th:each="st : ${shiftTypes}"
+                          th:value="${st}"
+                          th:text="${st}"
+                        ></option>
+                      </select>
+                      <span class="error-message" th:if="${#fields.hasErrors('shiftName')}" th:errors="*{shiftName}"></span>
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="startTime">Giờ bắt đầu</label>
+                      <input
+                        type="datetime-local"
+                        id="startTime"
+                        th:field="*{startTime}"
+                        step="1"
+                      />
+                      <span class="error-message" th:if="${#fields.hasErrors('startTime')}" th:errors="*{startTime}"></span>
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="endTime">Giờ kết thúc</label>
+                      <input
+                        type="datetime-local"
+                        id="endTime"
+                        th:field="*{endTime}"
+                        step="1"
+                      />
+                      <span class="error-message" th:if="${#fields.hasErrors('endTime')}" th:errors="*{endTime}"></span>
+                    </div>
+
+                    <div class="modal-footer">
+                      <button type="submit" class="btn btn-primary">Lưu</button>
+                      <button
+                        type="button"
+                        class="btn btn-secondary"
+                        onclick="closeShiftModal()"
+                      >
+                        Hủy
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <table class="shift-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Tên ca làm việc</th>
+                    <th>Giờ bắt đầu</th>
+                    <th>Giờ kết thúc</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr th:each="shift : ${shifts}">
+                    <td th:text="${shift.id}">1</td>
+                    <td th:text="${shift.shiftName}">Ca sáng</td>
+                    <td th:text="${shift.startTime}">08:00</td>
+                    <td th:text="${shift.endTime}">12:00</td>
+                    <td class="actions">
+                      <button type="button" class="primary-btn" th:onclick="|editShiftType(${shift.id})|">Sửa</button>
+                      <a class="delete-btn" th:href="@{'/manager/shift/delete/' + ${shift.id}}" th:onclick="|return confirm('Bạn có chắc chắn muốn xóa ca #${shift.id}?');|">Xóa</a>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <!-- End Tab: Shift Types Management -->
          </div>
        </main>
      </div>
 
-     <script th:src="@{/js/admin/shift-calendar.js}"></script>
-   </body>
- </html>
+    <script th:inline="javascript">
+      window.openShiftModalFlag = /*[[${openShiftModal}]]*/ null;
+      window.openStaffShiftModalFlag = /*[[${openStaffShiftModal}]]*/ null;
+      window.shiftTypes = /*[[${shiftTypes}]]*/ [];
+    </script>
+    <script th:src="@{/js/admin/shift-calendar.js}"></script>
+  </body>
+</html>

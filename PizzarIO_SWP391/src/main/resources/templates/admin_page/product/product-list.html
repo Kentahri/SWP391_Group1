@@ -46,14 +46,39 @@
               <form id="productForm" method="post" th:object="${productForm}">
                 <input type="hidden" th:field="*{id}" />
 
+                <!-- General error message -->
+                <div
+                  class="alert alert-danger"
+                  th:if="${errorMessage}"
+                  th:text="${errorMessage}"
+                ></div>
+
                 <div class="mb-3">
                   <label>Tên món</label>
-                  <input type="text" th:field="*{name}" required />
+                  <input
+                    type="text"
+                    th:field="*{name}"
+                    th:errorclass="error-field"
+                  />
+                  <span
+                    class="error-message"
+                    th:if="${#fields.hasErrors('name')}"
+                    th:errors="*{name}"
+                  ></span>
                 </div>
 
                 <div class="mb-3">
                   <label>Mô tả</label>
-                  <textarea th:field="*{description}" rows="3"></textarea>
+                  <textarea
+                    th:field="*{description}"
+                    rows="3"
+                    th:errorclass="error-field"
+                  ></textarea>
+                  <span
+                    class="error-message"
+                    th:if="${#fields.hasErrors('description')}"
+                    th:errors="*{description}"
+                  ></span>
                 </div>
 
                 <div class="row">
@@ -63,8 +88,13 @@
                       type="number"
                       step="0.01"
                       th:field="*{basePrice}"
-                      required
+                      th:errorclass="error-field"
                     />
+                    <span
+                      class="error-message"
+                      th:if="${#fields.hasErrors('basePrice')}"
+                      th:errors="*{basePrice}"
+                    ></span>
                   </div>
                   <div class="col-6">
                     <label>Giá Flash</label>
@@ -72,35 +102,73 @@
                       type="number"
                       step="0.01"
                       th:field="*{flashSalePrice}"
+                      th:errorclass="error-field"
                     />
+                    <span
+                      class="error-message"
+                      th:if="${#fields.hasErrors('flashSalePrice')}"
+                      th:errors="*{flashSalePrice}"
+                    ></span>
                   </div>
                 </div>
 
                 <div class="row">
                   <div class="col-6">
                     <label>Flash sale bắt đầu</label>
-                    <input type="datetime-local" th:field="*{flashSaleStart}" />
+                    <input
+                      type="datetime-local"
+                      th:field="*{flashSaleStart}"
+                      th:errorclass="error-field"
+                    />
+                    <span
+                      class="error-message"
+                      th:if="${#fields.hasErrors('flashSaleStart')}"
+                      th:errors="*{flashSaleStart}"
+                    ></span>
                   </div>
                   <div class="col-6">
                     <label>Flash sale kết thúc</label>
-                    <input type="datetime-local" th:field="*{flashSaleEnd}" />
+                    <input
+                      type="datetime-local"
+                      th:field="*{flashSaleEnd}"
+                      th:errorclass="error-field"
+                    />
+                    <span
+                      class="error-message"
+                      th:if="${#fields.hasErrors('flashSaleEnd')}"
+                      th:errors="*{flashSaleEnd}"
+                    ></span>
                   </div>
                 </div>
 
                 <div class="mb-3">
                   <label>Ảnh URL</label>
-                  <input type="url" th:field="*{imageURL}" />
+                  <input
+                    type="url"
+                    th:field="*{imageURL}"
+                    th:errorclass="error-field"
+                  />
+                  <span
+                    class="error-message"
+                    th:if="${#fields.hasErrors('imageURL')}"
+                    th:errors="*{imageURL}"
+                  ></span>
                 </div>
 
                 <div class="mb-3">
                   <label>Danh mục</label>
-                  <select th:field="*{categoryId}" required>
+                  <select th:field="*{categoryId}" th:errorclass="error-field">
                     <option
                       th:each="c : ${categories}"
                       th:value="${c.id}"
                       th:text="${c.name}"
                     ></option>
                   </select>
+                  <span
+                    class="error-message"
+                    th:if="${#fields.hasErrors('categoryId')}"
+                    th:errors="*{categoryId}"
+                  ></span>
                 </div>
 
                 <div class="mb-3">
@@ -111,11 +179,17 @@
                 </div>
 
                 <!-- Phần chọn món cho combo - sẽ hiển thị khi chọn category combo -->
-                <div id="comboProductsSection" class="mb-3" style="display: none" >
+                <div
+                  id="comboProductsSection"
+                  class="mb-3"
+                  style="display: none"
+                >
                   <label>Chọn món ăn cho combo</label>
                   <div class="product-selection-container">
-                    <div id="productSelectionList" class="product-selection-list" >
-                      
+                    <div
+                      id="productSelectionList"
+                      class="product-selection-list"
+                    >
                       <!-- Products will be loaded here by JavaScript -->
                       <div class="loading">Đang tải danh sách sản phẩm...</div>
                     </div>
