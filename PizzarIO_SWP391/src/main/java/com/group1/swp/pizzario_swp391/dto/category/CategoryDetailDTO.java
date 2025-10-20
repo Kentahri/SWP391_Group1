@@ -16,22 +16,22 @@ public class CategoryDetailDTO {
     Long id;
     String name;
     String description;
-    boolean isActive;
+    boolean active;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
     List<String> productNames; // Danh sách tên sản phẩm trong category
     int totalProducts;
-    
+
     // Formatted date for display
     public String getCreatedAtFormatted() {
         return createdAt != null ? createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")) : "";
     }
-    
+
     public String getUpdatedAtFormatted() {
         return updatedAt != null ? updatedAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")) : "";
     }
-    
+
     public String getStatusText() {
-        return isActive ? "Hoạt động" : "Không hoạt động";
+        return active ? "Hoạt động" : "Không hoạt động";
     }
 }

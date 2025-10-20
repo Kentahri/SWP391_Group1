@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Membership Verify</title>
+    <style>
+      :root {
+        --bg: #f6f7fb;
+        --card: #fff;
+        --muted: #6b7280;
+        --text: #0f172a;
+        --accent: #2563eb;
+        --border: #e5e7eb;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          Helvetica, Arial;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .container {
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 24px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 28px 32px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      }
+      h1 {
+        margin-top: 0;
+        font-weight: 700;
+      }
+      .primary-btn {
+        display: inline-block;
+        background: var(--accent);
+        color: white;
+        font-weight: 700;
+        padding: 10px 18px;
+        border-radius: 10px;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+      }
+      .primary-btn:hover {
+        filter: brightness(1.05);
+      }
+      .form-group {
+        margin-bottom: 18px;
+      }
+      label {
+        font-weight: 600;
+        margin-bottom: 6px;
+        display: block;
+      }
+      input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        margin-bottom: 8px;
+      }
+      .error {
+        color: #ef4444;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+      .info-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 24px;
+      }
+      .info-table th,
+      .info-table td {
+        padding: 10px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+      }
+      .info-table th {
+        background: #f3f4f6;
+      }
+      .register-section {
+        margin-top: 20px;
+        text-align: center;
+        color: var(--muted);
+      }
+      .register-section a {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+        margin-left: 5px;
+      }
+      .register-section a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <h1>Kiểm tra thành viên</h1>
+        <form
+          th:action="@{/guest/membership}"
+          method="post"
+          th:object="${verifyMembershipDTO}"
+        >
+          <div class="form-group">
+            <label>Nhập số điện thoại của bạn:</label>
+            <input
+              type="text"
+              th:field="*{phoneNumber}"
+              placeholder="Số điện thoại"
+            />
+          </div>
+          <button type="submit" class="primary-btn">Kiểm tra</button>
+        </form>
+
+        <div th:if="${error}" class="error" th:text="${error}"></div>
+
+        <div class="register-section">
+          <span>Chưa có tài khoản?</span>
+          <a th:href="@{/guest/membership/register}">Đăng ký</a>
+        </div>
+
+        <div th:if="${membership}">
+          <h2 style="margin-top: 32px">Thông tin thành viên</h2>
+          <table class="info-table">
+            <tr>
+              <th>ID</th>
+              <td th:text="${membership.id}">-</td>
+            </tr>
+            <tr>
+              <th>Họ và tên</th>
+              <td th:text="${membership.name}">-</td>
+            </tr>
+            <tr>
+              <th>Số điện thoại</th>
+              <td th:text="${membership.phoneNumber}">-</td>
+            </tr>
+            <tr>
+              <th>Điểm</th>
+              <td
+                th:text="${membership.points != null ? membership.points : 0}"
+              >
+                0
+              </td>
+            </tr>
+            <tr>
+              <th>Ngày tham gia</th>
+              <td
+                th:text="${membership.joinedAt != null ? #temporals.format(membership.joinedAt, 'dd/MM/yyyy HH:mm') : '-'}"
+              >
+                -
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

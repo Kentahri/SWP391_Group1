@@ -14,21 +14,21 @@ public class CategoryResponseDTO {
     Long id;
     String name;
     String description;
-    boolean isActive;
+    boolean active;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
     int totalProducts;
-    
+
     // Formatted date for display
     public String getCreatedAtFormatted() {
         return createdAt != null ? createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "";
     }
-    
+
     public String getUpdatedAtFormatted() {
         return updatedAt != null ? updatedAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "";
     }
-    
+
     public String getStatusText() {
-        return isActive ? "Hoạt động" : "Không hoạt động";
+        return active ? "Hoạt động" : "Không hoạt động";
     }
 }

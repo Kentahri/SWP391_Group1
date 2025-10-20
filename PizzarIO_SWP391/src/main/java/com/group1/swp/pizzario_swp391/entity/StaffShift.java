@@ -41,9 +41,10 @@ public class StaffShift {
     private LocalDateTime checkOut;
 
     public enum Status {
-        SCHEDULED, PRESENT, LATE, ABSENT, LEFT, LEFT_EARLY
+        SCHEDULED, PRESENT, LATE, ABSENT, COMPLETED, LEFT_EARLY
     }
 
+    @Column(name = "hourly_wage")
     private int hourlyWage;
 
 }
