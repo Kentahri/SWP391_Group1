@@ -1,11 +1,8 @@
 package com.group1.swp.pizzario_swp391.config;
 
-import com.group1.swp.pizzario_swp391.dto.staff.StaffLoginDTO;
-import com.group1.swp.pizzario_swp391.repository.StaffRepository;
-import com.group1.swp.pizzario_swp391.service.LoginService;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -23,13 +20,13 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
+import com.group1.swp.pizzario_swp391.dto.staff.StaffLoginDTO;
+import com.group1.swp.pizzario_swp391.repository.StaffRepository;
 import com.group1.swp.pizzario_swp391.service.LoginService;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
-
-// ProdSecurityConfig.java
-import java.util.List;
-import java.util.stream.Collectors;
 
 
 @Profile("!dev")
@@ -55,7 +52,7 @@ public class ProdSecurityConfig {
             var a = auth.getAuthorities();
             String target = a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_MANAGER")) ? "/manager"
                     : a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_KITCHEN")) ? "/kitchen"
-                            : a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_CASHIER")) ? "/cashier" : "/";
+                    : a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_CASHIER")) ? "/cashier" : "/";
             res.sendRedirect(req.getContextPath() + target);
         };
     }
@@ -89,7 +86,7 @@ public class ProdSecurityConfig {
             if (!checkValidation.isEmpty()) {
 
                 var byField = checkValidation.stream().collect(
-                       Collectors.groupingBy(v -> v.getPropertyPath().toString(),
+                        Collectors.groupingBy(v -> v.getPropertyPath().toString(),
                                 Collectors.mapping(ConstraintViolation::getMessage,
                                         Collectors.toList())));
 
@@ -144,8 +141,8 @@ public class ProdSecurityConfig {
         http
                 .userDetailsService(userDetailsService)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/webjars/**", "/css/**", "/images/**", "/static/js/**", "/guest",
-                                "/missing_pass/**", "/ws/**", "/app/**", "/topic/**", "/queue/**")
+                        .requestMatchers("/login", "/webjars/**", "/css/**", "/images/**", "/static/js/**",  "/js/**",
+                                "/guest/**", "/missing_pass/**", "/ws/**", "/app/**", "/topic/**", "/queue/**")
                         .permitAll()
                         .requestMatchers("/manager/**").hasRole("MANAGER")
                         .requestMatchers("/kitchen/**").hasRole("KITCHEN")
@@ -153,6 +150,12 @@ public class ProdSecurityConfig {
                         .anyRequest().authenticated())
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**"))
+                // Session Management: Cho phép nhiều session độc lập
+                .sessionManagement(session -> session
+                        .sessionFixation().changeSessionId() // Đổi session ID sau khi login
+                        .maximumSessions(10) // Cho phép tối đa 10 sessions đồng thời
+                        .maxSessionsPreventsLogin(false) // Không block login mới
+                )
                 .formLogin(f -> f
                         .loginPage("/login")
                         .usernameParameter("email") // <input name="email">

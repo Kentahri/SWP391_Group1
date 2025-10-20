@@ -120,11 +120,7 @@ public class StaffService {
     }
 
     public void updatePasswordByEmail(String email, String password) {
-        Staff staff = loginRepository.findByEmail(email).orElse(null);
-        if (staff == null) {
-            throw new IllegalArgumentException("Không tìm thấy nhân viên với email: " + email);
-        }
-
+        Staff staff = findByEmail(email);
         String encodedPassword = passwordEncoder.encode(password);
 
         staff.setPassword(encodedPassword);
@@ -132,7 +128,11 @@ public class StaffService {
     }
 
     public Staff findByEmail(String email) {
-        return loginRepository.findByEmail(email).orElse(null);
+        Staff staff = loginRepository.findByEmail(email).orElse(null);
+        if(staff == null){
+            throw new IllegalArgumentException("Không tìm thấy nhân viên với email: " + email);
+        }
+        return staff;
     }
 
     public void updateStaff(Staff staff) {

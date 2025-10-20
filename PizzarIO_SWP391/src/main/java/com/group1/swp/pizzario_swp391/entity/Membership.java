@@ -41,6 +41,7 @@ public class Membership {
     @Column(name = "phone", unique = true, nullable = false)
     private String phoneNumber;
 
+    @Column(columnDefinition = "NVARCHAR(100)")
     private String name;
 
     @Column(name = "is_active")

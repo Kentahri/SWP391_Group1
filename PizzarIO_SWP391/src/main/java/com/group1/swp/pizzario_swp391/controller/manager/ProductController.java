@@ -188,9 +188,4 @@ public class ProductController {
                 .collect(Collectors.toList());
     }
 
-    @PostMapping("/active/{id}")
-    public String updateActive(@PathVariable Long id, Boolean active) {
-        productService.updateProductActive(id, active != null ? active : false);
-        return "redirect:/kitchen/outstock";
-    }
 }

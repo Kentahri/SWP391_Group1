@@ -1,0 +1,116 @@
+@startuml open-reserved-table-flow
+title Flow: Cashier mở bàn cho khách đã đặt trước (RESERVED → OCCUPIED)
+
+actor Cashier
+participant "Browser" as Browser
+participant "CashierDashboardController" as Controller
+participant "ReservationService" as Service
+participant "ReservationSchedulerService" as Scheduler
+participant "TableRepository" as TableRepo
+participant "ReservationRepository" as ReservRepo
+database "Database" as DB
+
+== Bước 1: Khách hàng đến nhà hàng ==
+
+note over Cashier
+  Khách hàng đến và báo với Cashier:
+  "Tôi đã đặt bàn trước"
+end note
+
+Cashier -> Browser: Click "Xem đơn hàng đặt trước"\nhoặc click vào bàn RESERVED\nrồi "Xem đơn đặt trước"
+
+Browser -> Controller: GET /cashier/reservations/upcoming\nhoặc /cashier/tables/{id}/reservations
+activate Controller
+
+Controller -> Service: getUpcomingReservations()\nhoặc getReservationsByTableId(tableId)
+activate Service
+Service -> ReservRepo: findUpcomingReservations(now)\nhoặc findActiveReservationsByTableId(tableId)
+ReservRepo -> DB: SELECT * FROM reservation\nWHERE status = 'CONFIRMED'...
+DB --> ReservRepo: List<Reservation>
+ReservRepo --> Service: List<Reservation>
+Service --> Controller: List<ReservationDTO>
+deactivate Service
+
+Controller --> Browser: Render HTML với danh sách reservations
+deactivate Controller
+
+Browser --> Cashier: Hiển thị reservation cards\nvới nút "🔓 Mở bàn cho khách"
+
+== Bước 2: Cashier xác nhận và mở bàn ==
+
+Cashier -> Browser: Click nút "🔓 Mở bàn cho khách"
+
+Browser -> Browser: JavaScript confirm dialog:\n"Xác nhận khách đã đến và mở bàn?"
+
+alt Cashier chọn "OK"
+    Browser -> Controller: POST /cashier/reservations/{id}/open\n(với reservationId, returnUrl)
+    activate Controller
+    
+    Controller -> Service: openTableForGuestWithReservation(reservationId)
+    activate Service
+    
+    ' Bước 1: Cancel scheduled NO_SHOW task
+    Service -> Scheduler: cancelNoShowCheck(reservationId)
+    activate Scheduler
+    note right of Scheduler
+      Cancel task tự động đánh dấu NO_SHOW
+      vì khách đã đến rồi
+    end note
+    Scheduler -> Scheduler: scheduledTasks.get(reservationId)
+    Scheduler -> Scheduler: future.cancel(false)
+    Scheduler -> Scheduler: scheduledTasks.remove(reservationId)
+    Scheduler --> Service: void
+    deactivate Scheduler
+    
+    ' Bước 2: Update Reservation status
+    Service -> ReservRepo: findById(reservationId)
+    ReservRepo -> DB: SELECT * FROM reservation\nWHERE id = ?
+    DB --> ReservRepo: Reservation
+    ReservRepo --> Service: Reservation (status=CONFIRMED)
+    
+    Service -> Service: reservation.setStatus(ARRIVED)
+    Service -> ReservRepo: save(reservation)
+    ReservRepo -> DB: UPDATE reservation\nSET status = 'ARRIVED'\nWHERE id = ?
+    DB --> ReservRepo: Success
+    
+    ' Bước 3: Update Table status
+    Service -> Service: table = reservation.getDiningTable()
+    Service -> Service: table.setTableStatus(OCCUPIED)
+    Service -> TableRepo: save(table)
+    TableRepo -> DB: UPDATE Dining_Table\nSET table_status = 'OCCUPIED'\nWHERE id = ?
+    DB --> TableRepo: Success
+    
+    ' Bước 4: Broadcast via WebSocket (optional)
+    Service -> Service: broadcastTableStatusToGuests()\nbroadcastTableStatusToCashier()
+    note right of Service
+      Thông báo cho các Cashier khác
+      và Guest page qua WebSocket
+    end note
+    
+    Service --> Controller: void
+    deactivate Service
+    
+    Controller -> Controller: redirectAttributes.addFlashAttribute(\n"successMessage",\n"Đã mở bàn cho khách. Chúc phục vụ vui vẻ!")
+    
+    Controller --> Browser: 302 Redirect to returnUrl\n(hoặc /cashier)
+    deactivate Controller
+    
+    Browser -> Controller: GET returnUrl
+    Controller --> Browser: Render HTML với success message
+    
+    Browser --> Cashier: ✅ "Đã mở bàn cho khách.\nChúc phục vụ vui vẻ!"
+    
+    note over Cashier
+      Bàn giờ có status OCCUPIED
+      Reservation có status ARRIVED
+      Scheduled NO_SHOW task đã bị cancel
+    end note
+    
+else Cashier chọn "Cancel"
+    Browser --> Cashier: Không làm gì cả
+end
+
+@enduml
+
+
+
