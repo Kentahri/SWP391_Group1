@@ -12,6 +12,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.format.annotation.DateTimeFormat;
 
 @Data
 @NoArgsConstructor
@@ -25,6 +26,7 @@ public class StaffUpdateDTO {
 
     @NotNull(message = "Ngày sinh không được để trống")
     @Past(message = "Ngày sinh phải là ngày trong quá khứ")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     LocalDate dateOfBirth;
 
     @NotBlank(message = "Số điện thoại không được để trống")
@@ -42,5 +44,5 @@ public class StaffUpdateDTO {
     @NotNull(message = "Vai trò không được để trống")
     Role role;
 
-    boolean isActive;
+    boolean active;
 }

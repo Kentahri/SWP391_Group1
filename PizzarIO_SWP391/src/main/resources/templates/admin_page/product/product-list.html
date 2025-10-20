@@ -1,57 +1,235 @@
-<!doctype html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product List</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .img-thumb { width: 64px; height: 64px; object-fit: cover; }
-    </style>
-</head>
-<body>
-<div class="container mt-5">
-    <h2 class="mb-3">Danh sách Sản phẩm</h2>
-    <a th:href="@{/product/create}" class="btn btn-primary mb-3">+ Thêm Sản phẩm</a>
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quản lý món ăn • Admin Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin_page/product-list.css}" />
+  </head>
+  <body>
+    <div class="app">
+      <div th:insert="~{fragments/sidebar :: sidebar('products')}"></div>
 
-    <table class="table table-bordered">
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>Tên</th>
-            <th>Ảnh</th>
-            <th>Giá gốc</th>
-            <th>Giá Flash</th>
-            <th>Category</th>
-            <th>Kích hoạt</th>
-            <th>Hành động</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="p : ${products}">
-            <td th:text="${p.id}"></td>
-            <td th:text="${p.name}"></td>
-            <td>
-                <img th:if="${p.imageURL}" th:src="${p.imageURL}" class="img-thumb" alt="img">
-            </td>
-            <td th:text="${#numbers.formatDecimal(p.basePrice, 0, 'COMMA', 0, 'POINT')}"></td>
-            <td th:text="${#numbers.formatDecimal(p.flashSalePrice, 0, 'COMMA', 0, 'POINT')}"></td>
-            <td th:text="${p.category.name}"></td>
-            <td th:text="${p.isActive ? 'Yes' : 'No'}"></td>
-            <td>
-                <a th:href="@{'/product/edit/' + ${p.id}}" class="btn btn-warning btn-sm">Sửa</a>
-                <form th:action="@{'/product/delete/' + ${p.id}}" method="post" style="display:inline;">
-                    <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+      <div class="main-content">
+        <div class="page-header">
+          <div class="header-content">
+            <h1>Quản lý món ăn</h1>
+            <p class="subtitle">Thêm, sửa, xóa các món ăn trong menu</p>
+          </div>
+
+          <!-- Thêm thanh tìm kiếm ở đây -->
+          <div class="search-container">
+            <input
+              type="text"
+              id="productSearch"
+              class="search-input"
+              placeholder="Tìm kiếm món ăn..."
+              autocomplete="off"
+            />
+            <span class="search-icon">🔍</span>
+          </div>
+
+          <a th:href="@{/manager/products/new}" class="btn-add-product">
+            <span>+</span> Thêm món ăn
+          </a>
+        </div>
+
+        <div class="product-list-container">
+          <div id="productModal" class="modal">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h2 id="modalTitle">Thêm món mới</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+              </div>
+
+              <form id="productForm" method="post" th:object="${productForm}">
+                <input type="hidden" th:field="*{id}" />
+
+                <div class="mb-3">
+                  <label>Tên món</label>
+                  <input type="text" th:field="*{name}" required />
+                </div>
+
+                <div class="mb-3">
+                  <label>Mô tả</label>
+                  <textarea th:field="*{description}" rows="3"></textarea>
+                </div>
+
+                <div class="row">
+                  <div class="col-6">
+                    <label>Giá gốc (VND)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      th:field="*{basePrice}"
+                      required
+                    />
+                  </div>
+                  <div class="col-6">
+                    <label>Giá Flash</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      th:field="*{flashSalePrice}"
+                    />
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-6">
+                    <label>Flash sale bắt đầu</label>
+                    <input type="datetime-local" th:field="*{flashSaleStart}" />
+                  </div>
+                  <div class="col-6">
+                    <label>Flash sale kết thúc</label>
+                    <input type="datetime-local" th:field="*{flashSaleEnd}" />
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label>Ảnh URL</label>
+                  <input type="url" th:field="*{imageURL}" />
+                </div>
+
+                <div class="mb-3">
+                  <label>Danh mục</label>
+                  <select th:field="*{categoryId}" required>
+                    <option
+                      th:each="c : ${categories}"
+                      th:value="${c.id}"
+                      th:text="${c.name}"
+                    ></option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label>
+                    <input type="checkbox" th:field="*{active}" />
+                    Kích hoạt
+                  </label>
+                </div>
+
+                <!-- Phần chọn món cho combo - sẽ hiển thị khi chọn category combo -->
+                <div id="comboProductsSection" class="mb-3" style="display: none" >
+                  <label>Chọn món ăn cho combo</label>
+                  <div class="product-selection-container">
+                    <div id="productSelectionList" class="product-selection-list" >
+                      
+                      <!-- Products will be loaded here by JavaScript -->
+                      <div class="loading">Đang tải danh sách sản phẩm...</div>
+                    </div>
+                  </div>
+
+                  <div class="selected-products-summary">
+                    <h4>Món đã chọn:</h4>
+                    <div
+                      id="selectedProductsList"
+                      class="selected-products-list"
+                    >
+                      <div class="no-selected-products">Chưa chọn món nào</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary">Lưu</button>
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    onclick="closeModal()"
+                  >
+                    Hủy
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="product-list">
+            <div
+              th:each="product : ${products}"
+              class="product-item"
+              th:classappend="${!product.active} ? 'inactive' : ''"
+              th:id="'product-' + ${product.id}"
+            >
+              <div class="product-image">
+                <img
+                  th:if="${product.imageURL != null and !product.imageURL.isEmpty()}"
+                  th:src="${product.imageURL}"
+                  alt="Product"
+                  loading="lazy"
+                  onerror="this.onerror=null; this.src=''; this.style.display='none';"
+                />
+                <div
+                  th:if="${product.imageURL == null or product.imageURL.isEmpty()}"
+                  class="no-image-placeholder"
+                >
+                  No Image
+                </div>
+              </div>
+
+              <div class="product-info">
+                <div class="product-name-line">
+                  <h3 class="product-name" th:text="${product.name}"></h3>
+                  <div class="product-badges">
+                    <span
+                      class="badge status-badge"
+                      th:classappend="${product.active} ? 'badge-active' : 'badge-inactive'"
+                    >
+                      <span
+                        th:text="${product.active} ? 'Có sẵn' : 'Đã ẩn'"
+                      ></span>
+                    </span>
+                    <span
+                      class="badge badge-category"
+                      th:text="${product.categoryName}"
+                    ></span>
+                  </div>
+                </div>
+                <p
+                  class="product-description"
+                  th:text="${product.description}"
+                ></p>
+                <div
+                  class="product-price"
+                  th:text="${product.basePriceFormatted}"
+                ></div>
+              </div>
+
+              <div class="product-actions">
+                <a
+                  th:href="@{/manager/products/edit/{id}(id=${product.id})}"
+                  class="btn-icon btn-edit"
+                  title="Sửa"
+                  >Sửa</a
+                >
+                <form
+                  th:action="@{/manager/products/toggle/{id}(id=${product.id})}"
+                  method="post"
+                  class="inline-form"
+                  onsubmit="return confirm('Bạn có chắc muốn thay đổi trạng thái?')"
+                >
+                  <button
+                    type="submit"
+                    class="btn-icon"
+                    th:classappend="${product.active} ? 'btn-hide' : 'btn-show'"
+                    th:title="${product.active} ? 'Ẩn' : 'Hiện'"
+                  >
+                    <span th:if="${product.active}">Ẩn</span>
+                    <span th:unless="${product.active}">Hiện</span>
+                  </button>
                 </form>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-</div>
-</body>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script th:inline="javascript">
+      window.openModalFlag = /*[[${openModal}]]*/ null;
+    </script>
+    <script th:src="@{/js/admin/product-list.js}"></script>
+  </body>
 </html>
-
-
-
-
-

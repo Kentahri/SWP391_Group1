@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>KITCHEN-DASHBOARD</title>
+    <link rel="stylesheet" th:href="@{/css/kitchen.css}">
+</head>
+<body>
+<div class="container">
+    <div class="sidebar">
+        <h2>KITCHEN</h2>
+        <a th:href="@{/kitchen/order-list}" class="tab-link">Order Management</a>
+        <a th:href="@{/kitchen/outstock}" class="tab-link active">Out-of-Stock Management</a>
+        <form th:action="@{/logout}" method="post" class="logout-form">
+            <input type="hidden"
+                   th:if="${_csrf != null}"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}" />
+            <button type="submit" style="margin-top: 20px; width: 100%;">Logout</button>
+        </form>
+    </div>
+    <div class="main-content">
+        <!-- Main out-of-stock management content -->
+        <h2 class="om-title">Quản lý sản phẩm hết hàng</h2>
+        <div class="product-list-grid">
+            <div class="product-card" th:each="p : ${products}">
+                <div class="card-header">
+                    <span class="product-title" th:text="${p.name}">Tên sản phẩm</span>
+                    <span class="badge status-badge active" th:if="${p.active}">ACTIVE</span>
+                    <span class="badge status-badge inactive" th:if="${!p.active}">INACTIVE</span>
+                </div>
+                <div class="product-attr-row">
+                    <span class="attr-label">Mã:</span>
+                    <span class="attr-value" th:text="${p.id}"></span>
+                </div>
+                <div class="product-image-desc-row">
+                    <span class="attr-label">Ảnh:</span>
+                    <img th:if="${p.imageURL}" th:src="${p.imageURL}" class="img-thumb" alt="img" style="width:60px; height:60px; object-fit:cover; border-radius:8px; margin-right:10px">
+                </div>
+                <div class="product-desc">
+                    <span class="attr-label">Mô tả:</span> <span th:text="${p.description}"></span>
+                </div>
+                <div class="product-foot">
+                    <span class="product-price" th:text="${#numbers.formatDecimal(p.basePrice,0,'COMMA',0,'POINT')} + ' đ'">Giá</span>
+                    <form th:action="@{'/product/active/' + ${p.id}}" method="post" style="display:inline-block">
+                      <label class="switch"><input type="checkbox" name="active" th:checked="${p.isActive}" onchange="this.form.submit()"><span class="slider"></span></label>
+                      <span class="active-text">Active</span>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

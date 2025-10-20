@@ -1,0 +1,72 @@
+:root {
+  --bg: #f6f7fb;
+  --card: #fff;
+  --muted: #6b7280;
+  --text: #0f172a;
+  --accent: #2563eb;
+  --border: #e5e7eb;
+}
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+    Helvetica, Arial;
+  background: var(--bg);
+  color: var(--text);
+}
+.container {
+  max-width: 1000px;
+  margin: 40px auto;
+  padding: 24px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+h1 {
+  margin-top: 0;
+  font-weight: 700;
+}
+.primary-btn {
+  display: inline-block;
+  background: var(--accent);
+  color: white;
+  font-weight: 700;
+  padding: 10px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+}
+.primary-btn:hover {
+  filter: brightness(1.05);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+th,
+td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+th {
+  background: #f3f4f6;
+}
+.actions {
+  display: flex;
+  gap: 6px;
+}
+.delete-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.delete-btn:hover {
+  filter: brightness(1.1);
+}

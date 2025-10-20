@@ -1,16 +1,19 @@
 package com.group1.swp.pizzario_swp391.config;
 
-import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.authentication.AccountStatusException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
@@ -19,6 +22,10 @@ import com.group1.swp.pizzario_swp391.service.LoginService;
 import lombok.extern.slf4j.Slf4j;
 
 // ProdSecurityConfig.java
+import java.util.List;
+import java.util.stream.Collectors;
+
+
 @Profile("!dev")
 @Configuration
 @EnableMethodSecurity
@@ -35,12 +42,9 @@ public class ProdSecurityConfig {
         return (req, res, auth) -> {
             String email = auth.getName();
             try {
-                boolean checkedIn = audit.recordLoginByEmail(email);
-                // tuỳ chọn: gắn cờ session để hiện toast ở UI
-                req.getSession().setAttribute("CHECKIN_RESULT", checkedIn ? "OK" : "SKIPPED");
+                audit.recordLoginByEmail(email);
             } catch (Exception ex) {
-                // Không để lỗi check-in phá vỡ đăng nhập/redirect
-                req.getSession().setAttribute("CHECKIN_RESULT", "ERROR");
+                log.warn("Warning: " + ex);
             }
             var a = auth.getAuthorities();
             String target =
@@ -66,11 +70,11 @@ public class ProdSecurityConfig {
             HttpSecurity http,
             UserDetailsService userDetailsService,
             AuthenticationSuccessHandler roleBasedSuccessHandler,
-            LogoutSuccessHandler auditLogoutSuccessHandler) throws Exception {
+            LogoutSuccessHandler auditLogoutSuccessHandler, AuthenticationFailureHandler myFailureHandler) throws Exception {
         http
                 .userDetailsService(userDetailsService)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/webjars/**", "/css/**", "/images/**", "/js/**", "/guest",
+                        .requestMatchers("/login", "/webjars/**", "/css/**", "/images/**", "/static/js/**", "/guest",
                                 "/missing_pass/**", "/ws/**", "/app/**", "/topic/**", "/queue/**")
                         .permitAll()
                         .requestMatchers("/manager/**").hasRole("MANAGER")
@@ -84,7 +88,7 @@ public class ProdSecurityConfig {
                         .usernameParameter("email") // <input name="email">
                         .passwordParameter("password") // <input name="password">
                         .successHandler(roleBasedSuccessHandler)
-                        .failureUrl("/login?error")
+                        .failureHandler(myFailureHandler)
                         .permitAll())
                 .logout(l -> l
                         .logoutUrl("/logout") // URL để gửi logout

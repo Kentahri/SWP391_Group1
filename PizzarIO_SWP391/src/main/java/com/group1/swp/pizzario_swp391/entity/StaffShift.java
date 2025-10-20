@@ -41,7 +41,7 @@ public class StaffShift {
     private LocalDateTime checkOut;
 
     public enum Status {
-        SCHEDULED, PRESENT, LATE, ABSENT, LEFT
+        SCHEDULED, PRESENT, LATE, ABSENT, LEFT, LEFT_EARLY
     }
 
     private int hourlyWage;

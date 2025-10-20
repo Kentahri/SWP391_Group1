@@ -13,14 +13,9 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
-import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionResponse;
-import com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage;
-
-import com.group1.swp.pizzario_swp391.repository.SessionRepository;
-import com.group1.swp.pizzario_swp391.repository.TableRepository;
-
-import jakarta.persistence.OptimisticLockException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Service to handle WebSocket business logic for Cashier operations
@@ -29,11 +24,12 @@ import jakarta.persistence.OptimisticLockException;
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-public class WebSocketService {
+public class WebSocketService{
 
     SimpMessagingTemplate messagingTemplate;
     TableRepository tableRepository;
     SessionRepository sessionRepository;
+    OrderRepository orderRepository;
 
     /**
      * Guest selects a table
@@ -63,12 +59,17 @@ public class WebSocketService {
             session.setCreatedAt(LocalDateTime.now());
             Session savedSession = sessionRepository.save(session);
 
-            // Tạo mới 1 order
+            // Tạo mới 1 order và lưu vào DB
             Order newOrder = new Order();
             newOrder.setSession(savedSession);
             newOrder.setCreatedAt(LocalDateTime.now());
             newOrder.setOrderStatus(Order.OrderStatus.PREPARING);
+            newOrder.setOrderType(Order.OrderType.DINE_IN);
+            newOrder.setPaymentStatus(Order.PaymentStatus.UNPAID);
             newOrder.setNote("");
+            newOrder.setTotalPrice(0.0);
+            newOrder.setTaxRate(0.1); // 10% tax
+            orderRepository.save(newOrder);
 
             // Update table status with optimistic locking
             DiningTable.TableStatus oldStatus = table.getTableStatus();
@@ -125,7 +126,7 @@ public class WebSocketService {
     /**
      * Broadcast table status change to cashier
      */
-    private void broadcastTableStatusToCashier(
+    public void broadcastTableStatusToCashier(
             TableStatusMessage.MessageType type,
             int tableId,
             DiningTable.TableStatus oldStatus,
@@ -149,7 +150,7 @@ public class WebSocketService {
     /**
      * Broadcast table status to all guest tablets
      */
-    private void broadcastTableStatusToGuests(int tableId, DiningTable.TableStatus newStatus) {
+    public void broadcastTableStatusToGuests(int tableId, DiningTable.TableStatus newStatus) {
         TableStatusMessage guestMessage = TableStatusMessage.builder()
                 .tableId(tableId)
                 .newStatus(newStatus)

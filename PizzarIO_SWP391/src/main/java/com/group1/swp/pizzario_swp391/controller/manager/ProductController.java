@@ -1,15 +1,13 @@
 package com.group1.swp.pizzario_swp391.controller.manager;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import lombok.AccessLevel;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import com.group1.swp.pizzario_swp391.dto.category.CategoryResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.product.ProductCreateDTO;
@@ -23,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @Controller
-@RequestMapping("/product")
+@ManagerUrl
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class ProductController {
@@ -32,53 +30,113 @@ public class ProductController {
 
     CategoryService categoryService;
 
-    @GetMapping
+    @GetMapping("/products")
     public String list(Model model) {
         List<ProductResponseDTO> products = productService.getAllProducts();
         model.addAttribute("products", products);
+        List<CategoryResponseDTO> categories = categoryService.getAllCategories();
+        model.addAttribute("categories", categories);
+        model.addAttribute("productForm", new ProductCreateDTO()); // Object rỗng cho form
         return "admin_page/product/product-list";
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/products/new")
+    public String newProduct(Model model) {
+        List<ProductResponseDTO> products = productService.getAllProducts();
+        model.addAttribute("products", products);
+        List<CategoryResponseDTO> categories = categoryService.getAllCategories();
+        model.addAttribute("categories", categories);
+        model.addAttribute("productForm", new ProductCreateDTO());
+        model.addAttribute("openModal", "create"); // Flag để mở modal
+        return "admin_page/product/product-list";
+    }
+
+    @GetMapping("/products/detail/{id}")
     public String detail(@PathVariable Long id, Model model) {
         ProductResponseDTO product = productService.getProductById(id);
         model.addAttribute("product", product);
         return "admin_page/product/detail";
     }
 
-    @GetMapping("/create")
-    public String createForm(Model model) {
-        model.addAttribute("product", new ProductCreateDTO());
-        List<CategoryResponseDTO> categories = categoryService.getAllCategories();
-        model.addAttribute("categories", categories);
-        return "admin_page/product/product-create";
-    }
-
-    @PostMapping("/create")
-    public String create(@Valid @ModelAttribute ProductCreateDTO productCreateDTO) {
-        productService.createProduct(productCreateDTO);
-        return "redirect:/product";
-    }
-
-    @GetMapping("/edit/{id}")
+    @GetMapping("/products/edit/{id}")
     public String editForm(@PathVariable Long id, Model model) {
+        // Lấy dữ liệu product và convert sang ProductCreateDTO để dùng chung form
         ProductUpdateDTO productUpdateDTO = productService.getProductForUpdate(id);
-        model.addAttribute("productDTO", productUpdateDTO);
-        model.addAttribute("productId", id);
+
+        // Convert sang ProductCreateDTO (có field id)
+        ProductCreateDTO productForm = ProductCreateDTO.builder()
+                .id(id)
+                .name(productUpdateDTO.getName())
+                .description(productUpdateDTO.getDescription())
+                .imageURL(productUpdateDTO.getImageURL())
+                .basePrice(productUpdateDTO.getBasePrice())
+                .flashSalePrice(productUpdateDTO.getFlashSalePrice())
+                .flashSaleStart(productUpdateDTO.getFlashSaleStart())
+                .flashSaleEnd(productUpdateDTO.getFlashSaleEnd())
+                .categoryId(productUpdateDTO.getCategoryId())
+                .active(productUpdateDTO.isActive())
+                .build();
+
+        List<ProductResponseDTO> products = productService.getAllProducts();
+        model.addAttribute("products", products);
         List<CategoryResponseDTO> categories = categoryService.getAllCategories();
         model.addAttribute("categories", categories);
-        return "admin_page/product/product-edit";
+        model.addAttribute("productForm", productForm);
+        model.addAttribute("openModal", "edit"); // Flag để mở modal
+        return "admin_page/product/product-list";
     }
 
-    @PostMapping("/edit/{id}")
-    public String update(@PathVariable Long id, @Valid @ModelAttribute ProductUpdateDTO productUpdateDTO) {
-        productService.updateProduct(id, productUpdateDTO);
-        return "redirect:/product";
+    @PostMapping("/products/save")
+    public String save(@Valid @ModelAttribute("productForm") ProductCreateDTO productForm) {
+        if (productForm.getId() == null) {
+            // Create new product
+            productService.createProduct(productForm);
+        } else {
+            // Update existing product
+            ProductUpdateDTO updateDTO = ProductUpdateDTO.builder()
+                    .name(productForm.getName())
+                    .description(productForm.getDescription())
+                    .imageURL(productForm.getImageURL())
+                    .basePrice(productForm.getBasePrice())
+                    .flashSalePrice(productForm.getFlashSalePrice())
+                    .flashSaleStart(productForm.getFlashSaleStart())
+                    .flashSaleEnd(productForm.getFlashSaleEnd())
+                    .categoryId(productForm.getCategoryId())
+                    .active(productForm.isActive())
+                    .build();
+            productService.updateProduct(productForm.getId(), updateDTO);
+        }
+        return "redirect:/manager/products";
     }
 
-    @PostMapping("/delete/{id}")
+    @PostMapping("/products/delete/{id}")
     public String delete(@PathVariable Long id) {
         productService.deleteProduct(id);
-        return "redirect:/product";
+        return "redirect:/manager/products";
     }
+
+    @PostMapping("/products/toggle/{id}")
+    public String toggleActive(@PathVariable Long id) {
+        productService.toggleProductActive(id);
+        return "redirect:/manager/products";
+    }
+
+    @GetMapping("/products/search")
+    @ResponseBody
+    public List<ProductResponseDTO> searchProducts(@RequestParam String query) {
+        List<ProductResponseDTO> allProducts = productService.getAllProducts();
+
+        if (query == null || query.trim().isEmpty()) {
+            return allProducts;
+        }
+
+        String queryLower = query.toLowerCase();
+
+        return allProducts.stream()
+                .filter(p -> p.getName().toLowerCase().contains(queryLower) ||
+                        (p.getDescription() != null && p.getDescription().toLowerCase().contains(queryLower)) ||
+                        p.getCategoryName().toLowerCase().contains(queryLower))
+                .collect(Collectors.toList());
+    }
+
 }
