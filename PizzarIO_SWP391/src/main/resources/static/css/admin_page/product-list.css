@@ -624,14 +624,10 @@ label span[style*="color: red"] {
   margin-left: 2px;
 }
 
-/* Modal form with errors - keep modal open */
 .modal.show .modal-content {
   animation: shake 0.3s ease-in-out;
 }
 
-
-
-/* Error summary at top of form */
 .error-summary {
   background: #fee;
   border: 1px solid #fcc;
@@ -654,4 +650,24 @@ label span[style*="color: red"] {
 .error-summary li {
   color: #c00;
   margin: 5px 0;
+}
+
+.no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  font-size: 16px;
+  background-color: var(--gray-light);
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.no-results-icon {
+  font-size: 48px;
+  margin-bottom: 10px;
+  opacity: 0.5;
+}
+
+.no-results p {
+  margin: 0;
 }

@@ -1,4 +1,3 @@
-
 (function () {
   "use strict";
 
@@ -10,14 +9,12 @@
     const endDate = document.getElementById("endDate");
     const applyBtn = document.getElementById("applyCustomDate");
 
-    
     const today = new Date();
     endDate.value = today.toISOString().split("T")[0];
     const defaultStart = new Date(today);
     defaultStart.setDate(today.getDate() - 28);
     startDate.value = defaultStart.toISOString().split("T")[0];
 
-    
     timeRangeSelect.addEventListener("change", function () {
       console.log("Dropdown changed to:", this.value);
       if (this.value === "custom") {
@@ -31,7 +28,6 @@
       }
     });
 
-    
     applyBtn.addEventListener("click", function () {
       const start = startDate.value;
       const end = endDate.value;
@@ -48,7 +44,6 @@
 
       customDateRange.style.display = "none";
 
-      
       loadDataForCustomRange(start, end);
     });
 
@@ -56,19 +51,18 @@
     document.addEventListener("click", function (event) {
       if (
         !event.target.closest("#timeRangeSelect") &&
-        !event.target.closest("#customDateRange")) {
+        !event.target.closest("#customDateRange")
+      ) {
         customDateRange.style.display = "none";
       }
     });
   });
 
-  
   function loadDataForRange(days) {
     console.log(`Đang tải dữ liệu cho ${days} ngày qua...`);
     submitForm({ days: days });
   }
 
-  
   function loadDataForCustomRange(startDate, endDate) {
     console.log(`Đang tải dữ liệu từ ${startDate} đến ${endDate}...`);
     submitForm({ startDate: startDate, endDate: endDate });
@@ -86,6 +80,18 @@
       input.name = key;
       input.value = value;
       form.appendChild(input);
+    }
+
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+    const csrfParam =
+      document.querySelector('meta[name="_csrf_parameter"]')?.content ||
+      "_csrf";
+    if (csrfToken) {
+      const csrfInput = document.createElement("input");
+      csrfInput.type = "hidden";
+      csrfInput.name = csrfParam;
+      csrfInput.value = csrfToken;
+      form.appendChild(csrfInput);
     }
 
     document.body.appendChild(form);

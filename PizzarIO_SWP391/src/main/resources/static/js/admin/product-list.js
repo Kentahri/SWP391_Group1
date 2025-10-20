@@ -5,10 +5,12 @@ let selectedProducts = [];
 document.addEventListener("DOMContentLoaded", function () {
   const modal = document.getElementById("productModal");
   const form = document.getElementById("productForm");
+  const searchInput = document.getElementById("productSearch");
 
   setupImageTimeouts();
   setupModal(modal);
   setupComboFeature(form);
+  setupSearch(searchInput);
 });
 
 // ===== XỬ LÝ ẢNH =====
@@ -262,5 +264,82 @@ function updateDescription() {
   }
 }
 
-// Tìm kiếm sản phẩm đã được chuyển sang sử dụng controller
-// Form tìm kiếm sẽ submit trực tiếp đến /manager/products?query=...
+// ===== TÌM KIẾM SẢN PHẨM =====
+function setupSearch(searchInput) {
+  if (!searchInput) return;
+
+  searchInput.addEventListener("input", function () {
+    const searchTerm = this.value.toLowerCase().trim();
+    filterProducts(searchTerm);
+  });
+}
+
+function filterProducts(searchTerm) {
+  const productItems = document.querySelectorAll(".product-item");
+  let visibleCount = 0;
+
+  productItems.forEach((item) => {
+    const name =
+      item.querySelector(".product-name")?.textContent.toLowerCase() || "";
+    const description =
+      item.querySelector(".product-description")?.textContent.toLowerCase() ||
+      "";
+    const price =
+      item.querySelector(".product-price")?.textContent.toLowerCase() || "";
+    const category =
+      item.querySelector(".badge-category")?.textContent.toLowerCase() || "";
+    const status =
+      item.querySelector(".status-badge")?.textContent.toLowerCase() || "";
+
+    const matches =
+      name.includes(searchTerm) ||
+      description.includes(searchTerm) ||
+      price.includes(searchTerm) ||
+      category.includes(searchTerm) ||
+      status.includes(searchTerm);
+
+    if (matches) {
+      item.style.display = "";
+      visibleCount++;
+    } else {
+      item.style.display = "none";
+    }
+  });
+
+  // Show/hide no results message
+  showNoResults(visibleCount === 0, searchTerm);
+}
+
+function showNoResults(show, searchTerm) {
+  let noResultsDiv = document.getElementById("noResults");
+
+  if (show) {
+    if (!noResultsDiv) {
+      noResultsDiv = document.createElement("div");
+      noResultsDiv.id = "noResults";
+      noResultsDiv.className = "no-results";
+      noResultsDiv.innerHTML = `
+        <div class="no-results-icon">🔍</div>
+        <p>Không tìm thấy món ăn nào với từ khóa "<strong>${escapeHtml(
+          searchTerm
+        )}</strong>"</p>
+      `;
+      document.querySelector(".product-list").appendChild(noResultsDiv);
+    }
+  } else {
+    if (noResultsDiv) {
+      noResultsDiv.remove();
+    }
+  }
+}
+
+function escapeHtml(text) {
+  const map = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  };
+  return text.replace(/[&<>"']/g, (m) => map[m]);
+}

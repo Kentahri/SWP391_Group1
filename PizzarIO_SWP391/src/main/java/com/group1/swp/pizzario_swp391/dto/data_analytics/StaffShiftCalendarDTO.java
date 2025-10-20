@@ -8,6 +8,7 @@ public record StaffShiftCalendarDTO(
         String timeRange,        // Khung giờ: "06:00 - 14:00"
         String statusText,       // Text hiển thị: "Hoàn thành", "Vắng mặt", "Đã lên lịch"
         String statusClass,      // CSS class: "completed", "absent", "scheduled"
-        Double totalWage     // Tổng lương (hourlyWage * số giờ làm)
+        Double totalWage,    // Tổng lương (hourlyWage * số giờ làm)
+        String note  
 ) {
 }

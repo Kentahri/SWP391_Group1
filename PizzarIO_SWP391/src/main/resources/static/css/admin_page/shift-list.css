@@ -355,3 +355,24 @@
   color: var(--primary);
   border-bottom-color: var(--primary);
 }
+
+/* Alerts */
+.alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 8px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.alert-success {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.alert-error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}

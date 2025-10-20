@@ -23,9 +23,6 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
-import com.group1.swp.pizzario_swp391.service.LoginService;
-
-import lombok.extern.slf4j.Slf4j;
 
 // ProdSecurityConfig.java
 import java.util.List;
@@ -53,7 +50,7 @@ public class ProdSecurityConfig {
                 log.warn("Warning: " + ex);
             }
             var a = auth.getAuthorities();
-            String target = a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_MANAGER")) ? "/manager"
+            String target = a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_MANAGER")) ? "/manager/analytics"
                     : a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_KITCHEN")) ? "/kitchen"
                             : a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_CASHIER")) ? "/cashier" : "/";
             res.sendRedirect(req.getContextPath() + target);
@@ -131,9 +128,6 @@ public class ProdSecurityConfig {
             res.sendRedirect(req.getContextPath() + "/login?error=" + code);
         };
     }
-
-
-
 
     @Bean
     SecurityFilterChain prodFilter(

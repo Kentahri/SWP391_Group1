@@ -8,7 +8,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
-
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -26,6 +25,7 @@ public interface StaffShiftMapper {
     @Mapping(target = "checkIn", source = "checkIn")
     @Mapping(target = "checkOut", source = "checkOut")
     @Mapping(target = "hourlyWage", source = "hourlyWage")
+    @Mapping(target = "note", source = "note")
     StaffShiftDTO toStaffShiftDTO(StaffShift staffShift);
 
     // Convert DTO to Entity
@@ -33,6 +33,7 @@ public interface StaffShiftMapper {
     @Mapping(target = "staff", ignore = true)
     @Mapping(target = "shift", ignore = true)
     @Mapping(target = "workDate", source = "workDate")
+    @Mapping(target = "note", source = "note")
     StaffShift toStaffShift(StaffShiftDTO staffShiftDTO);
 
     // Update Entity from DTO
@@ -40,6 +41,7 @@ public interface StaffShiftMapper {
     @Mapping(target = "staff", ignore = true)
     @Mapping(target = "shift", ignore = true)
     @Mapping(target = "workDate", source = "workDate")
+    @Mapping(target = "note", source = "note")
     void updateStaffShift(@MappingTarget StaffShift staffShift, StaffShiftDTO staffShiftDTO);
 
     // NEW: Convert Entity to Response DTO
@@ -54,6 +56,7 @@ public interface StaffShiftMapper {
     @Mapping(target = "checkIn", source = "checkIn")
     @Mapping(target = "checkOut", source = "checkOut")
     @Mapping(target = "hourlyWage", source = "hourlyWage")
+    @Mapping(target = "note", source = "note")
     StaffShiftResponseDTO toResponseDTO(StaffShift staffShift);
 
     // NEW: Convert Response DTO to Calendar DTO
@@ -65,6 +68,7 @@ public interface StaffShiftMapper {
     @Mapping(target = "statusText", source = "shiftStatus", qualifiedByName = "getStatusText")
     @Mapping(target = "statusClass", source = "shiftStatus", qualifiedByName = "getStatusClass")
     @Mapping(target = "totalWage", source = "source", qualifiedByName = "calculateTotalWage")
+    @Mapping(target = "note", source = "note")
     StaffShiftCalendarDTO toCalendarDTO(StaffShiftResponseDTO source);
 
     @Named("determineShiftType")

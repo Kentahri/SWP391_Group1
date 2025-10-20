@@ -55,4 +55,7 @@ public class StaffShift {
     @Column(name = "hourly_wage")
     private int hourlyWage;
 
+    @Column(name = "note", length = 500)
+    private String note;
+
 }

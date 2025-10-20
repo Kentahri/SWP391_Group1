@@ -37,4 +37,7 @@ public class StaffShiftDTO {
     @NotNull(message = "Vui lòng nhập lương theo giờ")
     @DecimalMin(value = "0.0", inclusive = false, message = "Lương theo giờ phải lớn hơn 0")
     private BigDecimal hourlyWage;
+
+    @Size(max = 500, message = "Ghi chú không được vượt quá 500 ký tự")
+    private String note;
 }
