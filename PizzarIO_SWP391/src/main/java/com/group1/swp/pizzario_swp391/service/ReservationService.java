@@ -42,29 +42,8 @@ public class ReservationService {
      */
     @Transactional
     public ReservationDTO createReservation(ReservationCreateDTO dto) {
-        // Validate table exists
         DiningTable table = tableRepository.findById(dto.getTableId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bàn với ID: " + dto.getTableId()));
-
-        // Validate capacity cho 1 bàn
-        if (dto.getCapacityExpected() > table.getCapacity()) {
-            throw new RuntimeException("Vượt quá số người tối đa tại bàn, vui lòng chọn bàn phù hợp");
-        }
-
-        Reservation duplicateReservation = reservationRepository.findDuplicateReservation(dto.getTableId(), dto.getStartTime());
-        if (duplicateReservation != null) {
-            throw new RuntimeException("Bàn đã được đặt trong thời gian này");
-        }
-
-        boolean checkConflictReservation = checkConflictReservation(dto.getTableId(), dto.getStartTime());
-        if (checkConflictReservation) {
-            throw new RuntimeException("Thời gian đặt trước phải cách nhau ít nhất 90 phút.");
-        }
-
-        if ((table.getTableStatus().equals(DiningTable.TableStatus.OCCUPIED) || table.getTableStatus().equals(DiningTable.TableStatus.WAITING_PAYMENT))
-                && dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(90))) {
-            throw new RuntimeException("Bàn hiện đang có người ngồi, hãy đặt bàn cách thời điểm này ít nhất 90 phút");
-        }
 
         // Tạo reservation
         Reservation reservation = reservationMapper.toReservationEntity(dto);
@@ -89,10 +68,38 @@ public class ReservationService {
             );
         } else {
             tableRepository.save(table);
+            broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
         }
 
         reservationSchedulerService.scheduleNoShowCheck(reservation.getId(), reservation.getStartTime());
         return reservationMapper.toReservationDTO(saved);
+    }
+
+    /**
+     * Throw exception nếu có lỗi business logic
+     */
+    public void validateReservationBusinessLogic(ReservationCreateDTO dto) {
+        DiningTable table = tableRepository.findById(dto.getTableId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bàn với ID: " + dto.getTableId()));
+
+        if (dto.getCapacityExpected() > table.getCapacity()) {
+            throw new RuntimeException("Vượt quá số người tối đa tại bàn, vui lòng chọn bàn phù hợp");
+        }
+
+        Reservation duplicateReservation = reservationRepository.findDuplicateReservation(dto.getTableId(), dto.getStartTime());
+        if (duplicateReservation != null) {
+            throw new RuntimeException("Bàn đã được đặt trong thời gian này");
+        }
+
+        boolean checkConflictReservation = checkConflictReservation(dto.getTableId(), dto.getStartTime());
+        if (checkConflictReservation) {
+            throw new RuntimeException("Thời gian đặt trước phải cách nhau ít nhất 90 phút.");
+        }
+
+        if ((table.getTableStatus().equals(DiningTable.TableStatus.OCCUPIED) || table.getTableStatus().equals(DiningTable.TableStatus.WAITING_PAYMENT))
+                && dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(90))) {
+            throw new RuntimeException("Bàn hiện đang có người ngồi, hãy đặt bàn cách thời điểm này ít nhất 90 phút");
+        }
     }
 
     /**
@@ -105,42 +112,6 @@ public class ReservationService {
             startTime.plusMinutes(90)
         );
         return !conflictReservations.isEmpty();
-    }
-
-    /**
-     * Lấy tất cả danh sách reservation
-     */
-    public List<ReservationDTO> getUpcomingReservations() {
-        List<Reservation> reservationList = reservationRepository.findUpcomingReservations();
-        return reservationList.stream().map(reservationMapper::toReservationDTO).collect(Collectors.toList());
-    }
-
-    /**
-     * Lấy reservation của một bàn cụ thể
-     */
-    public List<ReservationDTO> getReservationsByTableId(Integer tableId) {
-        List<Reservation> reservationList = reservationRepository.findAllReservationsByTableId(tableId);
-        return reservationList.stream().map(reservationMapper::toReservationDTO).collect(Collectors.toList());
-    }
-
-    /**
-     * Tìm kiếm reservation sắp tới theo keyword
-     */
-    public List<ReservationDTO> searchUpcomingReservations(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return getUpcomingReservations();
-        }
-        List<Reservation> reservationList = reservationRepository.searchUpcomingReservations(LocalDateTime.now(), keyword.trim());
-        return reservationList.stream().map(reservationMapper::toReservationDTO).collect(Collectors.toList());
-    }
-
-    /**
-     * Lấy thông tin reservation theo ID để edit
-     */
-    public ReservationDTO findById(Long reservationId) {
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy reservation"));
-        return reservationMapper.toReservationDTO(reservation);
     }
 
     /**
@@ -359,6 +330,42 @@ public class ReservationService {
                     "Có bàn đặt trước trong 90p nữa, bàn đã được khóa lại (Reservation #" + reservationId + ")"
             );
         }
+    }
+
+    /**
+     * Lấy tất cả danh sách reservation
+     */
+    public List<ReservationDTO> getUpcomingReservations() {
+        List<Reservation> reservationList = reservationRepository.findUpcomingReservations();
+        return reservationList.stream().map(reservationMapper::toReservationDTO).collect(Collectors.toList());
+    }
+
+    /**
+     * Lấy reservation của một bàn cụ thể
+     */
+    public List<ReservationDTO> getReservationsByTableId(Integer tableId) {
+        List<Reservation> reservationList = reservationRepository.findAllReservationsByTableId(tableId);
+        return reservationList.stream().map(reservationMapper::toReservationDTO).collect(Collectors.toList());
+    }
+
+    /**
+     * Tìm kiếm reservation sắp tới theo keyword
+     */
+    public List<ReservationDTO> searchUpcomingReservations(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return getUpcomingReservations();
+        }
+        List<Reservation> reservationList = reservationRepository.searchUpcomingReservations(LocalDateTime.now(), keyword.trim());
+        return reservationList.stream().map(reservationMapper::toReservationDTO).collect(Collectors.toList());
+    }
+
+    /**
+     * Lấy thông tin reservation theo ID để edit
+     */
+    public ReservationDTO findById(Long reservationId) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy reservation"));
+        return reservationMapper.toReservationDTO(reservation);
     }
 
     private void broadcastTableStatusToGuests(int tableId, DiningTable.TableStatus newStatus) {

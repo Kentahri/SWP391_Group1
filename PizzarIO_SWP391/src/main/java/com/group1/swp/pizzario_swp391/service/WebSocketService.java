@@ -4,7 +4,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
+import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionResponse;
+import com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage;
 import com.group1.swp.pizzario_swp391.entity.*;
+import com.group1.swp.pizzario_swp391.repository.OrderRepository;
+import com.group1.swp.pizzario_swp391.repository.SessionRepository;
+import com.group1.swp.pizzario_swp391.repository.TableRepository;
+import jakarta.persistence.OptimisticLockException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -12,10 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Service to handle WebSocket business logic for Cashier operations

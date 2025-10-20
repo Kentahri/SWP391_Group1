@@ -100,13 +100,7 @@ public class CashierDashboardController {
             Principal principal) {
 
         try {
-            ReservationDTO reservation = reservationService.createReservation(dto);
-
-            if (!bindingResult.hasErrors()) {
-                redirectAttributes.addFlashAttribute("successMessage", "Đặt bàn thành công cho khách " + reservation.getCustomerName());
-                return "redirect:/cashier";
-            }
-
+            reservationService.validateReservationBusinessLogic(dto);
         } catch (RuntimeException e) {
             String errorMessage = e.getMessage();
             if (errorMessage.contains("Vượt quá số người tối đa") || errorMessage.contains("số người")) {
@@ -115,10 +109,11 @@ public class CashierDashboardController {
                 bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
             } else if (errorMessage.contains("90 phút") || errorMessage.contains("cách nhau")) {
                 bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
+            } else if (errorMessage.contains("Không tìm thấy bàn")) {
+                bindingResult.rejectValue("tableId", "error.tableId", errorMessage);
             }
         }
 
-        // Hiển thị form với TẤT CẢ errors (DTO validation + business logic)
         if (bindingResult.hasErrors()) {
             String email = principal.getName();
             Staff staff = staffService.findByEmail(email);
@@ -131,9 +126,15 @@ public class CashierDashboardController {
             return "cashier-page/cashier-dashboard";
         }
 
-        return "redirect:/cashier";
+        try {
+            ReservationDTO reservation = reservationService.createReservation(dto);
+            redirectAttributes.addFlashAttribute("successMessage", "Đặt bàn thành công cho khách " + reservation.getCustomerName());
+            return "redirect:/cashier";
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
+            return "redirect:/cashier";
+        }
     }
-
     /**
      * Xem danh sách reservation sắp tới (có hỗ trợ tìm kiếm)
      */

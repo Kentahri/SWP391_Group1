@@ -1,5 +1,8 @@
 package com.group1.swp.pizzario_swp391.config;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -17,13 +20,13 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
+import com.group1.swp.pizzario_swp391.dto.staff.StaffLoginDTO;
+import com.group1.swp.pizzario_swp391.repository.StaffRepository;
 import com.group1.swp.pizzario_swp391.service.LoginService;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
-
-// ProdSecurityConfig.java
-import java.util.List;
-import java.util.stream.Collectors;
 
 
 @Profile("!dev")
@@ -47,8 +50,7 @@ public class ProdSecurityConfig {
                 log.warn("Warning: " + ex);
             }
             var a = auth.getAuthorities();
-            String target =
-                      a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_MANAGER")) ? "/manager"
+            String target = a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_MANAGER")) ? "/manager"
                     : a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_KITCHEN")) ? "/kitchen"
                     : a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_CASHIER")) ? "/cashier" : "/";
             res.sendRedirect(req.getContextPath() + target);
@@ -66,6 +68,71 @@ public class ProdSecurityConfig {
     }
 
     @Bean
+    AuthenticationFailureHandler myFailureHandler(Validator validator, StaffRepository staffRepository) {
+        return (req, res, ex) -> {
+
+            String email = req.getParameter("email");
+            String password = req.getParameter("password");
+
+            var dto = StaffLoginDTO.builder()
+                    .email(email)
+                    .password(password)
+                    .build();
+
+            var checkValidation = validator.validate(dto);
+
+            String code, msg;
+
+            if (!checkValidation.isEmpty()) {
+
+                var byField = checkValidation.stream().collect(
+                        Collectors.groupingBy(v -> v.getPropertyPath().toString(),
+                                Collectors.mapping(ConstraintViolation::getMessage,
+                                        Collectors.toList())));
+
+                String emailErr = String.join("<br/>", byField.getOrDefault("email", List.of()));
+                String passErr  = String.join("<br/>", byField.getOrDefault("password", List.of()));
+
+                code = "validation";
+                msg  = (emailErr.isEmpty() ? "" : "<b>Email:</b> " + emailErr)
+                        + (!emailErr.isEmpty() && !passErr.isEmpty() ? "<br/>" : "")
+                        + (passErr.isEmpty() ? "" : "<b>Mật khẩu:</b> " + passErr);
+            }
+            else if (ex instanceof BadCredentialsException) {
+
+                boolean checkMail = (email != null && staffRepository.existsByEmail(email));
+                if(!checkMail){
+                    code = "email_not_found";
+                    msg  = "Email không tồn tại";
+                }
+                else {
+                    code = "bad_password";
+                    msg  = "Mật khẩu không đúng";
+                }
+            } else if (ex instanceof AccountStatusException) {
+                // gồm Locked/AccountExpired/CredentialsExpired
+                code = "account_status";
+                msg  = "Tài khoản không ở trạng thái hợp lệ. Yêu cầu manager cấp quyền";
+            } else if (ex instanceof InternalAuthenticationServiceException) {
+                code = "internal_auth";
+                msg  = "Lỗi nội bộ khi xác thực (vui lòng thử lại)";
+            } else if (ex instanceof AuthenticationException) {
+                code = "auth_error";
+                msg  = "Không thể xác thực. Vui lòng thử lại.";
+            } else {
+                code = "unknown";
+                msg  = "Đăng nhập thất bại. Vui lòng thử lại.";
+            }
+
+            req.getSession().setAttribute("LOGIN_ERROR_MSG", msg);
+            res.sendRedirect(req.getContextPath() + "/login?error=" + code);
+        };
+    }
+
+
+
+
+    @Bean
     SecurityFilterChain prodFilter(
             HttpSecurity http,
             UserDetailsService userDetailsService,
@@ -74,8 +141,8 @@ public class ProdSecurityConfig {
         http
                 .userDetailsService(userDetailsService)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/webjars/**", "/css/**", "/images/**", "/static/js/**", "/guest",
-                                "/missing_pass/**", "/ws/**", "/app/**", "/topic/**", "/queue/**")
+                        .requestMatchers("/login", "/webjars/**", "/css/**", "/images/**", "/static/js/**",  "/js/**",
+                                "/guest/**", "/missing_pass/**", "/ws/**", "/app/**", "/topic/**", "/queue/**")
                         .permitAll()
                         .requestMatchers("/manager/**").hasRole("MANAGER")
                         .requestMatchers("/kitchen/**").hasRole("KITCHEN")
@@ -83,6 +150,12 @@ public class ProdSecurityConfig {
                         .anyRequest().authenticated())
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**"))
+                // Session Management: Cho phép nhiều session độc lập
+                .sessionManagement(session -> session
+                        .sessionFixation().changeSessionId() // Đổi session ID sau khi login
+                        .maximumSessions(10) // Cho phép tối đa 10 sessions đồng thời
+                        .maxSessionsPreventsLogin(false) // Không block login mới
+                )
                 .formLogin(f -> f
                         .loginPage("/login")
                         .usernameParameter("email") // <input name="email">

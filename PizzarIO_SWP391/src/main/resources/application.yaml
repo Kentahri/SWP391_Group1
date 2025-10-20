@@ -34,9 +34,15 @@ spring:
           ssl:
             trust: smtp.gmail.com
   profiles:
-    active: dev
+    active: prod
 
 server:
   port: ${SERVER_PORT}
   servlet:
     context-path: ${SERVER_CONTEXT_PATH}
+    session:
+      cookie:
+        http-only: true
+        secure: false
+        same-site: lax
+      timeout: 30m
