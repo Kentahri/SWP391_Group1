@@ -20,8 +20,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO;
 import com.group1.swp.pizzario_swp391.dto.reservation.ReservationCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.reservation.ReservationDTO;
+import com.group1.swp.pizzario_swp391.dto.reservation.ReservationUpdateDTO;
 import com.group1.swp.pizzario_swp391.dto.table.TableForCashierDTO;
 import com.group1.swp.pizzario_swp391.entity.Staff;
+import com.group1.swp.pizzario_swp391.mapper.ReservationMapper;
 import com.group1.swp.pizzario_swp391.service.ReservationService;
 import com.group1.swp.pizzario_swp391.service.StaffService;
 import com.group1.swp.pizzario_swp391.service.TableService;
@@ -41,6 +43,7 @@ public class CashierDashboardController {
     TableService tableService;
     StaffService staffService;
     ReservationService reservationService;
+    ReservationMapper reservationMapper;
 
     @GetMapping
     public String cashierDashboard(Model model, Principal principal) {
@@ -96,32 +99,22 @@ public class CashierDashboardController {
             Model model,
             Principal principal) {
 
-        // Kiểm tra xem có đủ dữ liệu để validate business logic không (tránh NPE)
-        boolean canValidateBusinessLogic = dto.getTableId() != null 
-                                        && dto.getStartTime() != null 
-                                        && dto.getCapacityExpected() > 0;
+        try {
+            ReservationDTO reservation = reservationService.createReservation(dto);
 
-        // Nếu có đủ dữ liệu, thử validate business logic để catch cả DTO errors và business errors
-        if (canValidateBusinessLogic) {
-            try {
-                ReservationDTO reservation = reservationService.createReservation(dto);
-                
-                // Chỉ redirect thành công nếu KHÔNG có bất kỳ validation error nào
-                if (!bindingResult.hasErrors()) {
-                    redirectAttributes.addFlashAttribute("successMessage", "Đặt bàn thành công cho khách " + reservation.getCustomerName());
-                    return "redirect:/cashier";
-                }
-            } catch (RuntimeException e) {
-                // Map business logic errors to specific fields
-                String errorMessage = e.getMessage();
-                if (errorMessage.contains("Vượt quá số người tối đa") || errorMessage.contains("số người")) {
-                    bindingResult.rejectValue("capacityExpected", "error.capacityExpected", errorMessage);
-                } else if (errorMessage.contains("Bàn đã được đặt") || errorMessage.contains("thời gian này")) {
-                    bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
-                } else if (errorMessage.contains("90 phút") || errorMessage.contains("cách nhau")) {
-                    bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
-                }
-                // Không set general errorMessage - chỉ inline errors
+            if (!bindingResult.hasErrors()) {
+                redirectAttributes.addFlashAttribute("successMessage", "Đặt bàn thành công cho khách " + reservation.getCustomerName());
+                return "redirect:/cashier";
+            }
+
+        } catch (RuntimeException e) {
+            String errorMessage = e.getMessage();
+            if (errorMessage.contains("Vượt quá số người tối đa") || errorMessage.contains("số người")) {
+                bindingResult.rejectValue("capacityExpected", "error.capacityExpected", errorMessage);
+            } else if (errorMessage.contains("Bàn đã được đặt") || errorMessage.contains("thời gian này")) {
+                bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
+            } else if (errorMessage.contains("90 phút") || errorMessage.contains("cách nhau")) {
+                bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
             }
         }
 
@@ -130,28 +123,38 @@ public class CashierDashboardController {
             String email = principal.getName();
             Staff staff = staffService.findByEmail(email);
             List<TableForCashierDTO> tables = tableService.getTablesForCashier();
-            
+
             model.addAttribute("staff", staff);
             model.addAttribute("tables", tables);
             model.addAttribute("showReservationModal", true);
-            
+
             return "cashier-page/cashier-dashboard";
         }
 
-        // Không có errors - redirect về dashboard (fallback)
         return "redirect:/cashier";
     }
 
     /**
-     * Xem danh sách reservation sắp tới
+     * Xem danh sách reservation sắp tới (có hỗ trợ tìm kiếm)
      */
     @GetMapping("/reservations/upcoming")
-    public String getUpcomingReservations(Model model, Principal principal) {
+    public String getUpcomingReservations(
+            @RequestParam(required = false) String search,
+            Model model,
+            Principal principal) {
         try {
             String email = principal.getName();
             Staff staff = staffService.findByEmail(email);
 
-            List<ReservationDTO> upcomingReservations = reservationService.getUpcomingReservations();
+            // Nếu có từ khóa tìm kiếm thì search, không thì lấy tất cả
+            List<ReservationDTO> upcomingReservations;
+            if (search != null && !search.trim().isEmpty()) {
+                upcomingReservations = reservationService.searchUpcomingReservations(search);
+                model.addAttribute("searchKeyword", search);
+            } else {
+                upcomingReservations = reservationService.getUpcomingReservations();
+            }
+
             List<TableForCashierDTO> tables = tableService.getTablesForCashier();
 
             model.addAttribute("staff", staff);
@@ -159,7 +162,7 @@ public class CashierDashboardController {
             model.addAttribute("upcomingReservations", upcomingReservations);
             model.addAttribute("reservationCreateDTO", new ReservationCreateDTO());
             return "cashier-page/cashier-dashboard";
-        } catch (Exception e) {
+        } catch (Exception _) {
             model.addAttribute("error", "Không thể tải danh sách đặt bàn. Vui lòng thử lại.");
             return "error-page";
         }
@@ -190,6 +193,101 @@ public class CashierDashboardController {
     }
 
     /**
+     * Lấy form chỉnh sửa reservation
+     */
+    @GetMapping("/reservations/{id}/edit")
+    public String editReservation(
+            @PathVariable Long id,
+            Model model,
+            Principal principal,
+            @RequestParam(required = false) String returnUrl) {
+        try {
+            String email = principal.getName();
+            Staff staff = staffService.findByEmail(email);
+
+            ReservationDTO reservation = reservationService.findById(id);
+            List<TableForCashierDTO> tables = tableService.getTablesForCashier();
+
+            ReservationUpdateDTO updateDTO = reservationMapper.toReservationUpdateDTO(reservation);
+
+            model.addAttribute("staff", staff);
+            model.addAttribute("tables", tables);
+            model.addAttribute("reservationUpdateDTO", updateDTO);
+            model.addAttribute("showUpdateModal", true);
+            model.addAttribute("returnUrl", returnUrl);
+
+            List<ReservationDTO> upcomingReservations = reservationService.getUpcomingReservations();
+            model.addAttribute("upcomingReservations", upcomingReservations);
+            model.addAttribute("reservationCreateDTO", new ReservationCreateDTO());
+
+            return "cashier-page/cashier-dashboard";
+        } catch (Exception _) {
+            model.addAttribute("error", "Không thể tải thông tin đặt bàn. Vui lòng thử lại.");
+            return "error-page";
+        }
+    }
+
+    /**
+     * Cập nhật reservation
+     */
+    @PostMapping("/reservations/{id}/update")
+    public String updateReservation(
+            @PathVariable Long id,
+            @Valid @ModelAttribute("reservationUpdateDTO") ReservationUpdateDTO dto,
+            BindingResult bindingResult,
+            RedirectAttributes redirectAttributes,
+            Model model,
+            Principal principal,
+            @RequestParam(required = false) String returnUrl) {
+
+        boolean canValidateBusinessLogic = dto.getStartTime() != null && dto.getCapacityExpected() > 0;
+
+        if (canValidateBusinessLogic) {
+            try {
+                ReservationDTO updated = reservationService.updateReservation(id, dto);
+
+                if (!bindingResult.hasErrors()) {
+                    redirectAttributes.addFlashAttribute("successMessage", "Cập nhật đặt bàn thành công cho khách " + updated.getCustomerName());
+
+                    if (returnUrl != null && !returnUrl.isEmpty()) {
+                        return "redirect:" + returnUrl;
+                    }
+                    return "redirect:/cashier/reservations/upcoming";
+                }
+            } catch (RuntimeException e) {
+                String errorMessage = e.getMessage();
+                if (errorMessage.contains("Vượt quá số người tối đa") || errorMessage.contains("số người")) {
+                    bindingResult.rejectValue("capacityExpected", "error.capacityExpected", errorMessage);
+                } else if (errorMessage.contains("Bàn đã được đặt") || errorMessage.contains("thời gian này")) {
+                    bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
+                } else if (errorMessage.contains("90 phút") || errorMessage.contains("cách nhau")) {
+                    bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
+                } else if (errorMessage.contains("đã bị hủy")) {
+                    bindingResult.reject("error.reservation", errorMessage);
+                }
+            }
+        }
+
+        if (bindingResult.hasErrors()) {
+            String email = principal.getName();
+            Staff staff = staffService.findByEmail(email);
+            List<TableForCashierDTO> tables = tableService.getTablesForCashier();
+            List<ReservationDTO> upcomingReservations = reservationService.getUpcomingReservations();
+
+            model.addAttribute("staff", staff);
+            model.addAttribute("tables", tables);
+            model.addAttribute("upcomingReservations", upcomingReservations);
+            model.addAttribute("reservationCreateDTO", new ReservationCreateDTO());
+            model.addAttribute("showUpdateModal", true);
+            model.addAttribute("returnUrl", returnUrl);
+
+            return "cashier-page/cashier-dashboard";
+        }
+
+        return "redirect:/cashier/reservations/upcoming";
+    }
+
+    /**
      * Hủy reservation
      */
     @PostMapping("/reservations/{id}/delete")
@@ -201,13 +299,40 @@ public class CashierDashboardController {
             reservationService.cancelReservation(id);
             redirectAttributes.addFlashAttribute("successMessage", "Đã hủy đặt bàn thành công");
 
-            // Redirect về URL trước đó nếu có, không thì về dashboard
             if (returnUrl != null && !returnUrl.isEmpty()) {
                 return "redirect:" + returnUrl;
             }
             return "redirect:/cashier";
         } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/cashier";
+        } catch (Exception _) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Đã xảy ra lỗi. Vui lòng thử lại.");
+            return "redirect:/cashier";
+        }
+    }
+
+    /**
+     * Mở bàn cho khách đã đặt trước (khách đã đến)
+     */
+    @PostMapping("/reservations/{id}/open")
+    public String openTableForReservation(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes,
+            @RequestParam(required = false) String returnUrl) {
+        try {
+            reservationService.openTableForGuestWithReservation(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã mở bàn cho khách. Chúc phục vụ vui vẻ!");
+            
+            if (returnUrl != null && !returnUrl.isEmpty()) {
+                return "redirect:" + returnUrl;
+            }
+            return "redirect:/cashier";
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            if (returnUrl != null && !returnUrl.isEmpty()) {
+                return "redirect:" + returnUrl;
+            }
             return "redirect:/cashier";
         } catch (Exception _) {
             redirectAttributes.addFlashAttribute("errorMessage", "Đã xảy ra lỗi. Vui lòng thử lại.");

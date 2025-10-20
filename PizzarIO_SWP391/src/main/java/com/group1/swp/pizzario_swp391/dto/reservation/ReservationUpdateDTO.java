@@ -37,8 +37,9 @@ public class ReservationUpdateDTO {
     private String note;
     
     private Integer tableId;
-
 }
+
+
 
 
 

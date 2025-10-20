@@ -1,5 +1,6 @@
 package com.group1.swp.pizzario_swp391.mapper;
 
+import com.group1.swp.pizzario_swp391.dto.reservation.ReservationUpdateDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -26,4 +27,6 @@ public interface ReservationMapper {
     @Mapping(source = "customerPhone", target = "phone")
     @Mapping(source = "note", target = "note")
     Reservation toReservationEntity(ReservationCreateDTO reservationCreateDTO);
+
+    ReservationUpdateDTO toReservationUpdateDTO(ReservationDTO reservationDTO);
 }

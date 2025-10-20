@@ -745,9 +745,19 @@ body {
     color: #155724;
 }
 
-.reservation-status.cancelled {
+.reservation-status.arrived {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.reservation-status.canceled {
     background: #f8d7da;
     color: #721c24;
+}
+
+.reservation-status.no_show {
+    background: #fff3cd;
+    color: #856404;
 }
 
 .reservation-info {
@@ -1562,4 +1572,21 @@ textarea.form-control {
     50% {
         opacity: 0.6;
     }
+}
+
+/* ==================== Open Table Button ==================== */
+.btn-open-table {
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+}
+
+.btn-open-table:hover {
+    background-color: #1976D2 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(33, 150, 243, 0.4);
+}
+
+.btn-open-table:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
 }

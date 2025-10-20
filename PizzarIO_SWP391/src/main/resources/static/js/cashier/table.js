@@ -39,19 +39,23 @@ function handleTableUpdate(update) {
         }, 10);
     }
 
-    // Show notification
-    const messages = {
-        'TABLE_OCCUPIED': `🟢 Bàn ${update.tableId} đã được khách chọn`,
-        'TABLE_RELEASED': `✅ Bàn ${update.tableId} đã được giải phóng`,
-        'TABLE_RESERVED': `📅 Bàn ${update.tableId} đã được đặt trước`,
-        'TABLE_PAYMENT_PENDING': `💰 Bàn ${update.tableId} đang chờ thanh toán`
-    };
-
-    const message = messages[update.type] || update.message || `Bàn ${update.tableId} cập nhật`;
-    showToast(message, 'info');
+    // Show notification - Ưu tiên message từ backend
+    let message;
     
-    // Reload trang sau khi có update để đồng bộ dữ liệu
-    // setTimeout(() => {
-    //     window.location.reload();
-    // }, 2000);
+    if (update.message) {
+        // Dùng message từ backend (ưu tiên cao nhất)
+        message = update.message;
+    } else {
+        // Fallback: Dùng message mặc định theo type
+        const defaultMessages = {
+            'TABLE_OCCUPIED': `🟢 Bàn ${update.tableId} đã được khách chọn`,
+            'TABLE_RELEASED': `✅ Bàn ${update.tableId} đã được giải phóng`,
+            'TABLE_RESERVED': `📅 Bàn ${update.tableId} đã được đặt trước`,
+            'TABLE_PAYMENT_PENDING': `💰 Bàn ${update.tableId} đang chờ thanh toán`
+        };
+        message = defaultMessages[update.type] || `Bàn ${update.tableId} cập nhật`;
+    }
+    
+    showToast(message, 'info');
+
 }

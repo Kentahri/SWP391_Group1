@@ -1,0 +1,73 @@
+@startuml reservation-scheduler-architecture
+title Kiến trúc Auto NO_SHOW Scheduler - Component & Data Flow
+
+!define CONTROLLER #E3F2FD
+!define SERVICE #FFF3E0
+!define SCHEDULER #F3E5F5
+!define INFRASTRUCTURE #E8F5E9
+
+package "Controller Layer" CONTROLLER {
+    [CashierDashboardController] as Controller
+}
+
+package "Service Layer" SERVICE {
+    [ReservationService] as Service
+}
+
+package "Scheduler Layer" SCHEDULER {
+    [ReservationSchedulerService] as SchedulerService
+    
+    note right of SchedulerService
+        **Nhiệm vụ:**
+        - Quản lý scheduled tasks
+        - Schedule/Cancel/Reschedule
+        - Lưu trữ ScheduledFuture trong Map
+    end note
+}
+
+package "Spring Infrastructure" INFRASTRUCTURE {
+    [TaskScheduler\n(ThreadPoolTaskScheduler)] as TaskScheduler
+    [Thread Pool\n(5 threads)] as ThreadPool
+    
+    note right of TaskScheduler
+        **Cách hoạt động:**
+        1. Nhận task + thời gian chạy
+        2. Lưu vào internal heap (priority queue)
+        3. Background thread liên tục check
+        4. Khi đến giờ → submit task vào ThreadPool
+    end note
+}
+
+database "Database" {
+    [Reservation Table]
+    [DiningTable Table]
+}
+
+' Relationships
+Controller --> Service : calls
+Service --> SchedulerService : schedule/cancel tasks
+SchedulerService --> TaskScheduler : schedule(task, time)
+TaskScheduler --> ThreadPool : execute task
+ThreadPool --> SchedulerService : callback: handleNoShow()
+SchedulerService --> Service : processNoShowReservation()
+Service --> [Reservation Table] : update
+Service --> [DiningTable Table] : update
+
+' Data structures
+rectangle "scheduledTasks: Map<Long, ScheduledFuture>" as Map {
+    note
+        **Key:** reservationId
+        **Value:** ScheduledFuture (để cancel)
+        
+        Ví dụ:
+        - 123 → ScheduledFuture@18:15
+        - 124 → ScheduledFuture@19:30
+        - 125 → ScheduledFuture@20:00
+    end note
+}
+
+SchedulerService ..> Map : stores
+
+@enduml
+
+

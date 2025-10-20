@@ -59,7 +59,7 @@ public class Reservation {
     @Column(columnDefinition = "NVARCHAR(500)")
     private String note;
     public enum Status {
-        CONFIRMED, CANCELLED
+        CONFIRMED, ARRIVED, CANCELED, NO_SHOW
     }
 
 }
