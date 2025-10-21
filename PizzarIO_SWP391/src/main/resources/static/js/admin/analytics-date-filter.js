@@ -1,4 +1,4 @@
-(function () {
+ (function () {
   "use strict";
 
   // Xử lý dropdown chọn thời gian

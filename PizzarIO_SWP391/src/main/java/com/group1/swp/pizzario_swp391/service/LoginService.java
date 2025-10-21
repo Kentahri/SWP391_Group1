@@ -109,13 +109,6 @@ public class LoginService {
         return true;
     }
 
-    /**
-     * Tìm ca phù hợp để check-in
-     * Logic:
-     * 1. Ưu tiên ca chưa check-in
-     * 2. Trong khoảng thời gian cho phép (30 phút trước đến hết ca)
-     * 3. Nếu nhiều ca, chọn ca gần nhất
-     */
     private Optional<StaffShift> findShiftToCheckIn(List<StaffShift> shifts, LocalDateTime now) {
         return shifts.stream()
                 .filter(ss -> ss.getCheckIn() == null) // Chưa check-in
