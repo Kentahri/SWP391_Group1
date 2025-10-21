@@ -3,6 +3,7 @@ package com.group1.swp.pizzario_swp391.config;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -26,7 +27,6 @@ import com.group1.swp.pizzario_swp391.service.LoginService;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-import lombok.extern.slf4j.Slf4j;
 
 
 @Profile("!dev")
@@ -142,14 +142,15 @@ public class ProdSecurityConfig {
                 .userDetailsService(userDetailsService)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/webjars/**", "/css/**", "/images/**", "/static/js/**",  "/js/**",
-                                "/guest/**", "/missing_pass/**", "/ws/**", "/app/**", "/topic/**", "/queue/**")
+                                "/guest/**", "/missing_pass/**", "/ws/**", "/app/**", "/topic/**", "/queue/**",
+                                "/api/chatbot/**")
                         .permitAll()
                         .requestMatchers("/manager/**").hasRole("MANAGER")
                         .requestMatchers("/kitchen/**").hasRole("KITCHEN")
                         .requestMatchers("/cashier/**").hasRole("CASHIER")
                         .anyRequest().authenticated())
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**"))
+                        .ignoringRequestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**", "/api/chatbot/**"))
                 // Session Management: Cho phép nhiều session độc lập
                 .sessionManagement(session -> session
                         .sessionFixation().changeSessionId() // Đổi session ID sau khi login
