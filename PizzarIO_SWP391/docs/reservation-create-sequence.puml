@@ -1,0 +1,73 @@
+@startuml Create Reservation Sequence Diagram
+
+actor Cashier
+participant "CashierDashboardController" as Controller
+participant "ReservationService" as Service
+participant "ReservationMapper" as Mapper
+participant "ReservationRepository" as Repo
+participant "TableRepository" as TableRepo
+participant "ReservationSchedulerService" as Scheduler
+participant "SimpMessagingTemplate" as WebSocket
+participant "DiningTable" as Table
+participant "Reservation" as Entity
+
+Cashier -> Controller: POST /cashier/reservations
+activate Controller
+
+Controller -> Controller: Validate form data
+Controller -> Service: validateReservationBusinessLogic(dto)
+activate Service
+
+Service -> TableRepo: findById(tableId)
+TableRepo --> Service: DiningTable
+Service -> Service: Check capacity
+Service -> Repo: findDuplicateReservation(tableId, startTime)
+Repo --> Service: null (no duplicate)
+Service -> Service: checkConflictReservation(tableId, startTime)
+Service -> Repo: findConflictReservation(tableId, startTime±90min)
+Repo --> Service: List<Reservation> (empty)
+Service -> Service: Check table status & timing
+Service --> Controller: Validation passed
+deactivate Service
+
+Controller -> Service: createReservation(dto)
+activate Service
+
+Service -> TableRepo: findById(tableId)
+TableRepo --> Service: DiningTable
+Service -> Mapper: toReservationEntity(dto)
+activate Mapper
+Mapper --> Service: Reservation entity
+deactivate Mapper
+
+Service -> Entity: setDiningTable(table)
+Service -> Repo: save(reservation)
+activate Repo
+Repo --> Service: Saved Reservation
+deactivate Repo
+
+alt If reservation within 90 minutes
+    Service -> Table: setTableStatus(RESERVED)
+    Service -> TableRepo: save(table)
+    Service -> WebSocket: broadcastTableStatusToGuests(tableId, RESERVED)
+    Service -> WebSocket: broadcastTableStatusToCashier(TABLE_RESERVED, ...)
+end
+
+Service -> Scheduler: scheduleNoShowCheck(reservationId, startTime)
+activate Scheduler
+Scheduler -> Scheduler: Schedule task for startTime + 15min
+Scheduler --> Service: Task scheduled
+deactivate Scheduler
+
+Service -> Mapper: toReservationDTO(savedReservation)
+activate Mapper
+Mapper --> Service: ReservationDTO
+deactivate Mapper
+
+Service --> Controller: ReservationDTO
+deactivate Service
+
+Controller --> Cashier: Success response + redirect
+deactivate Controller
+
+@enduml

@@ -1,0 +1,91 @@
+@startuml View Reservation Sequence Diagram
+
+actor Cashier
+participant "CashierDashboardController" as Controller
+participant "ReservationService" as Service
+participant "ReservationRepository" as Repo
+participant "ReservationMapper" as Mapper
+participant "Reservation" as Entity
+
+group Get Upcoming Reservations
+    Cashier -> Controller: GET /cashier/reservations/upcoming?search=keyword
+    activate Controller
+    
+    Controller -> Service: searchUpcomingReservations(keyword)
+    activate Service
+    
+    Service -> Repo: searchUpcomingReservations(now, keyword)
+    activate Repo
+    Repo --> Service: List<Reservation>
+    deactivate Repo
+    
+    loop For each reservation
+        Service -> Mapper: toReservationDTO(reservation)
+        activate Mapper
+        Mapper --> Service: ReservationDTO
+        deactivate Mapper
+    end
+    
+    Service --> Controller: List<ReservationDTO>
+    deactivate Service
+    
+    Controller --> Cashier: View with reservation list
+    deactivate Controller
+end
+
+group Get Reservations by Table
+    Cashier -> Controller: GET /cashier/tables/{tableId}/reservations
+    activate Controller
+    
+    Controller -> Service: getReservationsByTableId(tableId)
+    activate Service
+    
+    Service -> Repo: findAllReservationsByTableId(tableId)
+    activate Repo
+    Repo --> Service: List<Reservation>
+    deactivate Repo
+    
+    loop For each reservation
+        Service -> Mapper: toReservationDTO(reservation)
+        activate Mapper
+        Mapper --> Service: ReservationDTO
+        deactivate Mapper
+    end
+    
+    Service --> Controller: List<ReservationDTO>
+    deactivate Service
+    
+    Controller --> Cashier: View with table reservations
+    deactivate Controller
+end
+
+group Get Single Reservation for Edit
+    Cashier -> Controller: GET /cashier/reservations/{id}/edit
+    activate Controller
+    
+    Controller -> Service: findById(reservationId)
+    activate Service
+    
+    Service -> Repo: findById(reservationId)
+    activate Repo
+    Repo --> Service: Reservation
+    deactivate Repo
+    
+    Service -> Mapper: toReservationDTO(reservation)
+    activate Mapper
+    Mapper --> Service: ReservationDTO
+    deactivate Mapper
+    
+    Service --> Controller: ReservationDTO
+    deactivate Service
+    
+    Controller -> Mapper: toReservationUpdateDTO(reservationDTO)
+    activate Mapper
+    Mapper --> Controller: ReservationUpdateDTO
+    deactivate Mapper
+    
+    Controller --> Cashier: Edit form with reservation data
+    deactivate Controller
+end
+
+@enduml

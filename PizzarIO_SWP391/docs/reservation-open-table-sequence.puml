@@ -1,0 +1,60 @@
+@startuml Open Table for Reservation Sequence Diagram
+
+actor Cashier
+participant "CashierDashboardController" as Controller
+participant "ReservationService" as Service
+participant "ReservationRepository" as Repo
+participant "TableRepository" as TableRepo
+participant "ReservationSchedulerService" as Scheduler
+participant "SimpMessagingTemplate" as WebSocket
+participant "Reservation" as Entity
+participant "DiningTable" as Table
+
+Cashier -> Controller: POST /cashier/reservations/{id}/open
+activate Controller
+
+Controller -> Service: openTableForGuestWithReservation(reservationId)
+activate Service
+
+Service -> Repo: findById(reservationId)
+activate Repo
+Repo --> Service: Reservation
+deactivate Repo
+
+Service -> Scheduler: cancelNoShowCheck(reservationId)
+activate Scheduler
+Scheduler -> Scheduler: Remove scheduled task from Map
+Scheduler -> Scheduler: Cancel ScheduledFuture if exists
+Scheduler --> Service: Task canceled
+deactivate Scheduler
+
+Service -> Entity: setStatus(ARRIVED)
+Service -> Entity: getDiningTable()
+Entity --> Service: DiningTable
+
+Service -> Table: getTableStatus()
+Table --> Service: TableStatus (oldStatus)
+
+Service -> Table: setTableStatus(OCCUPIED)
+Service -> TableRepo: save(table)
+activate TableRepo
+TableRepo --> Service: Updated DiningTable
+deactivate TableRepo
+
+Service -> Repo: save(reservation)
+activate Repo
+Repo --> Service: Updated Reservation
+deactivate Repo
+
+Service -> WebSocket: broadcastTableStatusToGuests(tableId, OCCUPIED)
+Service -> WebSocket: broadcastTableStatusToCashier(TABLE_OCCUPIED, ...)
+
+Service --> Controller: void
+deactivate Service
+
+Controller --> Cashier: Success response + redirect
+deactivate Controller
+
+note right of Service: Guest has arrived - table is now occupied
+
+@enduml

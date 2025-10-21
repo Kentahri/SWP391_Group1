@@ -1,0 +1,80 @@
+@startuml Auto Cancel After 15 Minutes Sequence Diagram
+
+participant "TaskScheduler" as Scheduler
+participant "ReservationSchedulerService" as SchedulerService
+participant "ApplicationEventPublisher" as EventPublisher
+participant "ReservationService" as Service
+participant "ReservationRepository" as Repo
+participant "TableRepository" as TableRepo
+participant "SimpMessagingTemplate" as WebSocket
+participant "Reservation" as Entity
+participant "DiningTable" as Table
+
+
+group Scheduled Task Execution
+    Scheduler -> SchedulerService: Execute scheduled task (startTime + 15min)
+    activate SchedulerService
+    
+    SchedulerService -> SchedulerService: handleNoShow(reservationId)
+    SchedulerService -> EventPublisher: publishEvent(ReservationNoShowEvent)
+    activate EventPublisher
+    EventPublisher --> SchedulerService: Event published
+    deactivate EventPublisher
+    
+    SchedulerService -> SchedulerService: Remove task from scheduledTasks Map
+    SchedulerService --> Scheduler: Task completed
+    deactivate SchedulerService
+end
+
+group Event Processing
+    EventPublisher -> Service: onReservationNoShowEvent(event)
+    activate Service
+    
+    Service -> Service: processNoShowReservation(reservationId)
+    Service -> Repo: findByIdWithLock(reservationId)
+    activate Repo
+    Repo --> Service: Reservation (with lock)
+    deactivate Repo
+    
+    Service -> Service: Check if status is still CONFIRMED
+    alt If status is CONFIRMED
+        Service -> Entity: setStatus(NO_SHOW)
+        Service -> Repo: save(reservation)
+        activate Repo
+        Repo --> Service: Updated Reservation
+        deactivate Repo
+        
+        Service -> Entity: getDiningTable()
+        Entity --> Service: DiningTable
+        
+        Service -> Repo: findConflictReservation(tableId, now, now+90min)
+        activate Repo
+        Repo --> Service: List<Reservation> (other active reservations)
+        deactivate Repo
+        
+        alt If no other active reservations AND table is RESERVED
+            Service -> Table: setTableStatus(AVAILABLE)
+            Service -> TableRepo: save(table)
+            activate TableRepo
+            TableRepo --> Service: Updated DiningTable
+            deactivate TableRepo
+            
+            Service -> WebSocket: broadcastTableStatusToGuests(tableId, AVAILABLE)
+            Service -> WebSocket: broadcastTableStatusToCashier(TABLE_RELEASED, ...)
+            
+            note right of Service: Table released - no more reservations
+        else If other reservations exist
+            Service -> WebSocket: broadcastTableStatusToGuests(tableId, RESERVED)
+            Service -> WebSocket: broadcastTableStatusToCashier(TABLE_RESERVED, ...)
+            
+            note right of Service: Table stays RESERVED - other reservations exist
+        end
+    else If status changed (ARRIVED/CANCELED)
+        note right of Service: No action needed - customer already handled
+    end
+    
+    Service --> EventPublisher: Event processed
+    deactivate Service
+end
+
+@enduml
