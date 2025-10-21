@@ -49,7 +49,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     /**
      * Tìm reservation trong tất cả các bàn theo khoảng thời gian
      */
-    @Query("select r from Reservation r where r.status = 'CONFIRMED' and r.startTime between :from and :to")
+    @Query("select r from Reservation r where r.status = 'CONFIRMED' " +
+            "and r.startTime between :from and :to " +
+            "and r.diningTable.tableStatus != 'RESERVED'")
     List<Reservation> findAllUpcomingReservationInRange(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
     /**

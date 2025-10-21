@@ -2,6 +2,8 @@ package com.group1.swp.pizzario_swp391.controller;
 
 import java.io.IOException;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,9 +18,6 @@ import com.group1.swp.pizzario_swp391.dto.chatbot.GeminiChatRequest;
 import com.group1.swp.pizzario_swp391.dto.chatbot.GeminiChatResponse;
 import com.group1.swp.pizzario_swp391.service.GeminiChatService;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 @RestController
 @RequestMapping("/api/chatbot")
 @RequiredArgsConstructor
@@ -30,24 +29,35 @@ public class GeminiChatController {
     /**
      * Endpoint chat thông thường
      */
-    @PostMapping("/chat")
+    @PostMapping(value = "/chat", produces = "application/json")
     public ResponseEntity<GeminiChatResponse> chat(@RequestBody GeminiChatRequest request) {
+        log.info("========== CHAT ENDPOINT CALLED ==========");
+        log.info("📨 Request: {}", request);
         
         try {
             if (request.getMessage() == null || request.getMessage().trim().isEmpty()) {
+                log.warn("⚠️ Empty message");
                 return ResponseEntity.ok(
                     new GeminiChatResponse(null, false, "Message cannot be empty")
                 );
             }
+            
+            log.info("✅ Calling service...");
             String response = geminiChatService.chat(request.getMessage());
-            return ResponseEntity.ok(
-                new GeminiChatResponse(response, true, null)
-            );
+            
+            log.info("✅ Service returned response");
+            log.info("📤 Response length: {}", response.length());
+            
+            GeminiChatResponse chatResponse = new GeminiChatResponse(response, true, null);
+            log.info("📦 Returning: {}", chatResponse);
+            
+            return ResponseEntity.ok(chatResponse);
 
         } catch (Exception e) {
-            return ResponseEntity.ok(
-                new GeminiChatResponse(null, false, e.getMessage())
-            );
+            log.error("========== ERROR IN CHAT ENDPOINT ==========");
+            log.error("❌ Exception: ", e);
+            return ResponseEntity.badRequest()
+                    .body(new GeminiChatResponse(null, false, e.getMessage()));
         }
     }
 
@@ -56,8 +66,7 @@ public class GeminiChatController {
      */
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamChat(@RequestParam String message) {
-        SseEmitter emitter = new SseEmitter(60000L); // 60 seconds timeout
-
+        SseEmitter emitter = new SseEmitter(60000L);
         geminiChatService.streamChat(message, new GeminiChatService.StreamCallback() {
             @Override
             public void onChunk(String chunk) {

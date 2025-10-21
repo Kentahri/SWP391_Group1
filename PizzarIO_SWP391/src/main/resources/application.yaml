@@ -51,12 +51,3 @@ gemini:
   api:
     key: ${GEMINI_API_KEY}
     model: ${GEMINI_MODEL}
-
-logging:
-  level:
-    root: INFO
-    com.group1.swp.pizzario_swp391.controller.GeminiChatController: DEBUG
-    com.group1.swp.pizzario_swp391.service.GeminiChatService: DEBUG
-    com.google.genai: DEBUG
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

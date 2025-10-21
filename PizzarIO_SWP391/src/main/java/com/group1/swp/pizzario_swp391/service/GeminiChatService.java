@@ -19,9 +19,9 @@ public class GeminiChatService {
 
     @Value("${gemini.api.model}")
     private String model;
-
-    @Value("${gemini.api.key}")
-    private String apiKey;
+//
+//    @Value("${gemini.api.key}")
+//    private String apiKey;
 
     public String chat(String userMessage) {
         try {
@@ -40,16 +40,13 @@ public class GeminiChatService {
                     Khách hàng hỏi: %s
                     """.formatted(userMessage);
 
-            log.info("📝 Full prompt length: {} characters", fullPrompt.length());
-
             GenerateContentConfig config = GenerateContentConfig.builder()
-                    .temperature(0.7f)
-                    .topK(40f)
-                    .topP(0.95f)
-                    .maxOutputTokens(500)
+                    .temperature(0.7f) // Độ sáng tạo, ngẫu nhiên của câu trả lời
+                    .topK(40f) // Giới hạn số lựa chọn token
+                    .topP(0.95f)  // Xác suất tích lũy
+                    .maxOutputTokens(400)
                     .build();
 
-            log.info("⚙️ Config created - temperature: 0.7, topK: 40, topP: 0.95, maxTokens: 500");
             log.info("🚀 Calling Gemini API...");
 
             GenerateContentResponse response = geminiClient.models.generateContent(
@@ -63,11 +60,8 @@ public class GeminiChatService {
             
             if (response != null) {
                 String responseText = response.text();
-                log.info("📄 Response text: {}", responseText != null ? ("NOT NULL (length: " + responseText.length() + ")") : "NULL");
-                
+
                 if (responseText != null && !responseText.isBlank()) {
-                    log.info("✅ Returning response: {}", responseText.substring(0, Math.min(100, responseText.length())) + "...");
-                    log.info("============ GEMINI CHAT SERVICE - END (SUCCESS) ============");
                     return responseText;
                 } else {
                     log.warn("⚠️ Response text is null or blank");
@@ -75,23 +69,10 @@ public class GeminiChatService {
             } else {
                 log.error("❌ Response object is null!");
             }
-            
-            log.warn("⚠️ Returning default error message");
-            log.info("============ GEMINI CHAT SERVICE - END (NO CONTENT) ============");
+
             return "Xin lỗi, tôi không thể xử lý yêu cầu của bạn lúc này.";
             
         } catch (Exception e) {
-            log.error("============ GEMINI CHAT SERVICE - ERROR ============");
-            log.error("❌ Exception type: {}", e.getClass().getName());
-            log.error("❌ Error message: {}", e.getMessage());
-            log.error("❌ Full stack trace: ", e);
-            
-            if (e.getCause() != null) {
-                log.error("❌ Caused by: {}", e.getCause().getClass().getName());
-                log.error("❌ Cause message: {}", e.getCause().getMessage());
-            }
-            
-            log.info("============ GEMINI CHAT SERVICE - END (ERROR) ============");
             return "Đã có lỗi xảy ra. Vui lòng thử lại sau. Error: " + e.getMessage();
         }
     }

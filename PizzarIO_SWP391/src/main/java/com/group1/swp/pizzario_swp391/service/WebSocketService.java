@@ -34,6 +34,44 @@ public class WebSocketService{
     SessionRepository sessionRepository;
     OrderRepository orderRepository;
 
+
+    /**
+     * Broadcast table status change to cashier
+     */
+    public void broadcastTableStatusToCashier(
+            TableStatusMessage.MessageType type,
+            int tableId,
+            DiningTable.TableStatus oldStatus,
+            DiningTable.TableStatus newStatus,
+            String updatedBy,
+            String message
+    ) {
+        TableStatusMessage statusMessage = TableStatusMessage.builder()
+                .type(type)
+                .tableId(tableId)
+                .oldStatus(oldStatus)
+                .newStatus(newStatus)
+                .updatedBy(updatedBy)
+                .timestamp(LocalDateTime.now())
+                .message(message)
+                .build();
+
+        messagingTemplate.convertAndSend("/topic/tables-cashier", statusMessage);
+    }
+
+    /**
+     * Broadcast table status to all guest tablets
+     */
+    public void broadcastTableStatusToGuests(int tableId, DiningTable.TableStatus newStatus) {
+        TableStatusMessage guestMessage = TableStatusMessage.builder()
+                .tableId(tableId)
+                .newStatus(newStatus)
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        messagingTemplate.convertAndSend("/topic/tables-guest", guestMessage);
+    }
+
     /**
      * Guest selects a table
      * - Check if table is available
@@ -124,43 +162,6 @@ public class WebSocketService{
             sendTableSelectionError(request.getSessionId(), request.getTableId(),
                     "Lỗi hệ thống, vui lòng thử lại", TableSelectionResponse.ResponseType.ERROR);
         }
-    }
-
-    /**
-     * Broadcast table status change to cashier
-     */
-    public void broadcastTableStatusToCashier(
-            TableStatusMessage.MessageType type,
-            int tableId,
-            DiningTable.TableStatus oldStatus,
-            DiningTable.TableStatus newStatus,
-            String updatedBy,
-            String message
-    ) {
-        TableStatusMessage statusMessage = TableStatusMessage.builder()
-                .type(type)
-                .tableId(tableId)
-                .oldStatus(oldStatus)
-                .newStatus(newStatus)
-                .updatedBy(updatedBy)
-                .timestamp(LocalDateTime.now())
-                .message(message)
-                .build();
-
-        messagingTemplate.convertAndSend("/topic/tables-cashier", statusMessage);
-    }
-
-    /**
-     * Broadcast table status to all guest tablets
-     */
-    public void broadcastTableStatusToGuests(int tableId, DiningTable.TableStatus newStatus) {
-        TableStatusMessage guestMessage = TableStatusMessage.builder()
-                .tableId(tableId)
-                .newStatus(newStatus)
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        messagingTemplate.convertAndSend("/topic/tables-guest", guestMessage);
     }
 
     /**

@@ -36,6 +36,7 @@ public class ReservationService {
     TableRepository tableRepository;
     ReservationMapper reservationMapper;
     ReservationSchedulerService reservationSchedulerService;
+    WebSocketService webSocketService;
 
     /**
      * Tạo reservation mới cho bàn
@@ -56,8 +57,8 @@ public class ReservationService {
             tableRepository.save(table);
             
             // Broadcast WebSocket
-            broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
-            broadcastTableStatusToCashier(
+            webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
+            webSocketService.broadcastTableStatusToCashier(
                 TableStatusMessage.MessageType.TABLE_RESERVED,
                 table.getId(),
                 oldStatus,
@@ -68,7 +69,7 @@ public class ReservationService {
             );
         } else {
             tableRepository.save(table);
-            broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
+            webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
         }
 
         reservationSchedulerService.scheduleNoShowCheck(reservation.getId(), reservation.getStartTime());
@@ -184,8 +185,8 @@ public class ReservationService {
             tableRepository.save(table);
             
             // Broadcast WebSocket
-            broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
-            broadcastTableStatusToCashier(
+            webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
+            webSocketService.broadcastTableStatusToCashier(
                 TableStatusMessage.MessageType.TABLE_RELEASED,
                 table.getId(),
                 oldStatus,
@@ -206,9 +207,10 @@ public class ReservationService {
     /**
      * Khóa bàn tự động nếu đã đến thời gian quy định
      */
-    @Scheduled(fixedRate = 60_000)
+    @Scheduled(fixedRate = 5000)
     @Transactional
-    public void closeTable() {
+    public synchronized void closeTable() {
+        log.info("🔄 Scheduled: closeTable() is running...");
         List<Reservation> reservationList = reservationRepository.findAllUpcomingReservationInRange(LocalDateTime.now(),
                 LocalDateTime.now().plusMinutes(90));
         if(!reservationList.isEmpty()){
@@ -217,14 +219,15 @@ public class ReservationService {
                 DiningTable.TableStatus oldStatus = table.getTableStatus();
                 if (oldStatus.equals(DiningTable.TableStatus.AVAILABLE)) {
                     table.setTableStatus(DiningTable.TableStatus.RESERVED);
-                    broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
-                    broadcastTableStatusToCashier(TableStatusMessage.MessageType.TABLE_RESERVED, table.getId(), oldStatus, table.getTableStatus(), "System", "Bàn tự động khóa cho reservation #" + reservation.getId());
+                    webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
+                    webSocketService.broadcastTableStatusToCashier(TableStatusMessage.MessageType.TABLE_RESERVED, table.getId(), oldStatus, table.getTableStatus(), "System", "Bàn tự động khóa cho reservation #" + reservation.getId());
+                    tableRepository.save(table);
+                    reservationRepository.save(reservation);
                 }
-                tableRepository.save(table);
-                reservationRepository.save(reservation);
             }
         }
     }
+
 
     /**
      * Mở bàn cho khách đã đặt trước
@@ -245,8 +248,8 @@ public class ReservationService {
         reservationRepository.save(reservation);
         
         // Broadcast WebSocket
-        broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
-        broadcastTableStatusToCashier(
+        webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
+        webSocketService.broadcastTableStatusToCashier(
             TableStatusMessage.MessageType.TABLE_OCCUPIED,
             table.getId(),
             oldStatus,
@@ -310,8 +313,8 @@ public class ReservationService {
             log.info("Đã mở lại bàn {} (không còn reservation active)", table.getId());
 
             // Broadcast
-            broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
-            broadcastTableStatusToCashier(
+            webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
+            webSocketService.broadcastTableStatusToCashier(
                 TableStatusMessage.MessageType.TABLE_RELEASED,
                 table.getId(),
                 oldStatus,
@@ -320,8 +323,9 @@ public class ReservationService {
                 "Khách không đến sau 15 phút, bàn được mở lại (Reservation #" + reservationId + ")"
             );
         }else {
-            broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
-            broadcastTableStatusToCashier(
+//            broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
+            webSocketService.broadcastTableStatusToGuests(table.getId(),table.getTableStatus());
+            webSocketService.broadcastTableStatusToCashier(
                     TableStatusMessage.MessageType.TABLE_RESERVED,
                     table.getId(),
                     oldStatus,
@@ -366,37 +370,6 @@ public class ReservationService {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy reservation"));
         return reservationMapper.toReservationDTO(reservation);
-    }
-
-    private void broadcastTableStatusToGuests(int tableId, DiningTable.TableStatus newStatus) {
-        TableStatusMessage guestMessage = TableStatusMessage.builder()
-                .tableId(tableId)
-                .newStatus(newStatus)
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        messagingTemplate.convertAndSend("/topic/tables-guest", guestMessage);
-    }
-
-    private void broadcastTableStatusToCashier(
-            TableStatusMessage.MessageType type,
-            int tableId,
-            DiningTable.TableStatus oldStatus,
-            DiningTable.TableStatus newStatus,
-            String updatedBy,
-            String message
-    ) {
-        TableStatusMessage statusMessage = TableStatusMessage.builder()
-                .type(type)
-                .tableId(tableId)
-                .oldStatus(oldStatus)
-                .newStatus(newStatus)
-                .updatedBy(updatedBy)
-                .timestamp(LocalDateTime.now())
-                .message(message)
-                .build();
-
-        messagingTemplate.convertAndSend("/topic/tables-cashier", statusMessage);
     }
 
 }
