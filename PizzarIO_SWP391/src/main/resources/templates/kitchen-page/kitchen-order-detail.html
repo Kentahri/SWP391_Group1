@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chi tiết Order - Kitchen</title>
+    <link rel="stylesheet" th:href="@{/css/kitchen.css}" />
+</head>
+<body>
+<div class="container">
+    <div class="main-content">
+        <h2>Chi tiết Đơn hàng - <span th:text="${order.code}"></span></h2>
+        <div>
+            <b>Bàn:</b> <span th:text="${order.tableName}"></span> |
+            <b>Trạng thái:</b> <span th:text="${order.status}"></span> |
+            <b>Thời gian:</b> <span th:text="${order.timeAgo}"></span>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th>Số lượng</th>
+                    <th>Đơn giá</th>
+                    <th>Thành tiền</th>
+                    <th>Trạng thái món</th>
+                    <th>Ghi chú</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="item : ${items}">
+                    <td th:text="${item.productName}"></td>
+                    <td th:text="${item.quantity}"></td>
+                    <td th:text="${#numbers.formatDecimal(item.unitPrice,0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
+                    <td th:text="${#numbers.formatDecimal(item.totalPrice,0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
+                    <td th:text="${item.status}"></td>
+                    <td th:text="${item.note}"></td>
+                </tr>
+            </tbody>
+        </table>
+        <a th:href="@{/kitchen/order-list}" class="btn">Quay lại danh sách Order</a>
+    </div>
+</div>
+</body>
+</html>
