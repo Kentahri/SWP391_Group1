@@ -4,10 +4,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("categoryForm");
   const searchInput = document.getElementById("categorySearch");
 
-  // Setup modal
   setupModal(modal, form);
 
-  // Setup search
   setupSearch(searchInput);
 });
 

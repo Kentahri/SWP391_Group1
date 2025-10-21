@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 
 import lombok.Data;
 
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +50,6 @@ public class Shift {
     private LocalDateTime createdAt;
 
     public enum ShiftType {
-        SANG, CHIEU, TOI, DEM
+        SÁNG, CHIỀU, TỐI
     }
 }

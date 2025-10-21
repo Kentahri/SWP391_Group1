@@ -6,6 +6,12 @@
     <title>Quản lý ca làm việc • Admin Dashboard</title>
     <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
     <link rel="stylesheet" th:href="@{/css/admin_page/shift-list.css}" />
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
+    <meta
+      name="_csrf_parameter"
+      th:if="${_csrf != null}"
+      th:content="${_csrf.parameterName}"
+    />
   </head>
   <body>
     <div class="app">
@@ -15,6 +21,11 @@
         <div class="page-header">
           <div class="header-content">
             <h1>Quản lý ca làm việc</h1>
+            <div
+              th:if="${message != null}"
+              class="alert alert-success"
+              th:text="${message}"
+            ></div>
             <p class="subtitle">Thêm, sửa, xóa các ca làm việc</p>
           </div>
 
@@ -49,6 +60,12 @@
                 th:action="@{/manager/shift/save}"
               >
                 <input type="hidden" th:field="*{id}" />
+                <input
+                  type="hidden"
+                  th:if="${_csrf != null}"
+                  th:name="${_csrf.parameterName}"
+                  th:value="${_csrf.token}"
+                />
 
                 <div class="mb-3">
                   <label for="shiftType">Loại ca làm việc</label>

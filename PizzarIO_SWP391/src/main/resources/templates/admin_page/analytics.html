@@ -36,16 +36,32 @@
               <h2>Số liệu phân tích về kênh</h2>
               <p class="muted">
                 Chỉ số thời gian •
-                <span id="rangeLabel" th:text="${dateRangeLabel} ?: '28 ngày qua'">28 ngày qua</span>
+                <span
+                  id="rangeLabel"
+                  th:text="${dateRangeLabel} ?: '28 ngày qua'"
+                  >28 ngày qua</span
+                >
               </p>
             </div>
 
             <!-- Dropdown chọn khoảng thời gian -->
             <div class="time-range-wrapper">
               <select id="timeRangeSelect">
-                <option value="7" th:selected="${selectedDays != null && selectedDays == 7}">7 ngày qua</option>
-                <option value="28" th:selected="${selectedDays == null || selectedDays == 28}">28 ngày qua</option>
-                <option value="custom" th:selected="${isCustomRange}"> Tùy chỉnh </option>
+                <option
+                  value="7"
+                  th:selected="${selectedDays != null && selectedDays == 7}"
+                >
+                  7 ngày qua
+                </option>
+                <option
+                  value="28"
+                  th:selected="${selectedDays == null || selectedDays == 28}"
+                >
+                  28 ngày qua
+                </option>
+                <option value="custom" th:selected="${isCustomRange}">
+                  Tùy chỉnh
+                </option>
               </select>
 
               <!-- Date pickers cho tùy chỉnh -->
@@ -279,6 +295,13 @@
           </div>
         </section>
       </main>
+
+      <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
+      <meta
+        name="_csrf_parameter"
+        th:if="${_csrf != null}"
+        th:content="${_csrf.parameterName}"
+      />
     </div>
 
     <script

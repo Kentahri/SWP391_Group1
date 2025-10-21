@@ -6,6 +6,12 @@
     <title>Quản lý món ăn • Admin Dashboard</title>
     <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
     <link rel="stylesheet" th:href="@{/css/admin_page/product-list.css}" />
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
+    <meta
+      name="_csrf_parameter"
+      th:if="${_csrf != null}"
+      th:content="${_csrf.parameterName}"
+    />
   </head>
   <body>
     <div class="app">
@@ -45,6 +51,12 @@
 
               <form id="productForm" method="post" th:object="${productForm}">
                 <input type="hidden" th:field="*{id}" />
+                <input
+                  type="hidden"
+                  th:if="${_csrf != null}"
+                  th:name="${_csrf.parameterName}"
+                  th:value="${_csrf.token}"
+                />
 
                 <!-- General error message -->
                 <div
@@ -284,6 +296,12 @@
                   class="inline-form"
                   onsubmit="return confirm('Bạn có chắc muốn thay đổi trạng thái?')"
                 >
+                  <input
+                    type="hidden"
+                    th:if="${_csrf != null}"
+                    th:name="${_csrf.parameterName}"
+                    th:value="${_csrf.token}"
+                  />
                   <button
                     type="submit"
                     class="btn-icon"

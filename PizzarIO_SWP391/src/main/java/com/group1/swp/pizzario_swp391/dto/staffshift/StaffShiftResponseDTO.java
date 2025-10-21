@@ -20,16 +20,15 @@ public class StaffShiftResponseDTO {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 
-
-    // Thông tin staff tham gia shift này
     private String staffName;
     private Integer staffId;
 
-    private String shiftStatus; // Trạng thái shift (ACTIVE, INACTIVE, etc.)
+    private String shiftStatus; 
 
     private LocalDateTime checkIn;
     private LocalDateTime checkOut;
     private BigDecimal hourlyWage;
-    // Thông tin bổ sung về shift
 
+
+    private String note;
 }

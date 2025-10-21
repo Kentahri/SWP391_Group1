@@ -6,6 +6,12 @@
     <title>Quản lý Bàn ăn • Admin Dashboard</title>
     <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
     <link rel="stylesheet" th:href="@{/css/admin_page/table-management.css}" />
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
+    <meta
+      name="_csrf_parameter"
+      th:if="${_csrf != null}"
+      th:content="${_csrf.parameterName}"
+    />
   </head>
 
   <body>
@@ -142,6 +148,12 @@
                 method="post"
                 th:object="${tableCreateDTO}"
               >
+                <input
+                  type="hidden"
+                  th:if="${_csrf != null}"
+                  th:name="${_csrf.parameterName}"
+                  th:value="${_csrf.token}"
+                />
                 <div class="form-row">
                   <label>Sức chứa (số người)</label>
                   <label>
@@ -185,6 +197,12 @@
             <header>Cập nhật bàn</header>
             <div class="content">
               <form id="updateTableForm" method="post">
+                <input
+                  type="hidden"
+                  th:if="${_csrf != null}"
+                  th:name="${_csrf.parameterName}"
+                  th:value="${_csrf.token}"
+                />
                 <div class="form-row">
                   <label>Sức chứa (số người)</label>
                   <label>
