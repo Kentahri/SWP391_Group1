@@ -6,7 +6,7 @@ spring:
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     properties:
       hibernate:
         jdbc:
@@ -34,7 +34,7 @@ spring:
           ssl:
             trust: smtp.gmail.com
   profiles:
-    active: prod
+    active: dev
 
 server:
   port: ${SERVER_PORT}
