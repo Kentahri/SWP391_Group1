@@ -83,17 +83,17 @@
   <body>
     <div class="container">
       <div class="card">
-        <h1>Edit Staff</h1>
+        <h1>Chỉnh sửa nhân viên</h1>
 
         <div th:if="${error}" class="error" th:text="${error}"></div>
 
         <form
-          th:action="@{'/manager/edit/' + ${staffID}}"
+          th:action="@{'/manager/staff/edit/' + ${staffID}}"
           th:object="${staff}"
           method="post"
         >
           <div class="form-row">
-            <label>Name</label>
+            <label>Tên</label>
             <input type="text" th:field="*{name}" required />
             <div
               class="error"
@@ -103,7 +103,7 @@
           </div>
 
           <div class="form-row">
-            <label>Date of Birth</label>
+            <label>Ngày sinh</label>
             <input type="date" th:field="*{dateOfBirth}" required />
             <div
               class="error"
@@ -113,7 +113,7 @@
           </div>
 
           <div class="form-row">
-            <label>Phone</label>
+            <label>Số điện thoại</label>
             <input type="text" th:field="*{phone}" required />
             <div
               class="error"
@@ -123,7 +123,7 @@
           </div>
 
           <div class="form-row">
-            <label>Address</label>
+            <label>Địa chỉ</label>
             <input type="text" th:field="*{address}" />
             <div
               class="error"
@@ -143,7 +143,7 @@
           </div>
 
           <div class="form-row">
-            <label>Role</label>
+            <label>Vai trò</label>
             <select th:field="*{role}" required>
               <option
                 th:each="r : ${roles}"
@@ -160,7 +160,7 @@
           </div>
 
           <div class="form-row">
-            <label><input type="checkbox" th:field="*{active}" /> Active</label>
+            <label><input type="checkbox" th:field="*{active}" /> Hoạt động</label>
             <div
               class="error"
               th:if="${#fields.hasErrors('active')}"
@@ -168,10 +168,10 @@
             ></div>
           </div>
 
-          <button type="submit">Update</button>
+          <button type="submit">Cập nhật</button>
         </form>
 
-        <a class="back-link" th:href="@{/manager/staff}">⬅ Back to List</a>
+        <a class="back-link" th:href="@{/manager/staff}">⬅ Quay lại</a>
       </div>
     </div>
   </body>

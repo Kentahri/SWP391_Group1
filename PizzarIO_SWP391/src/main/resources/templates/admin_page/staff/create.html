@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Staff</title>
+    <title>Tạo mới nhân viên</title>
     <style>
         :root { --bg:#f6f7fb; --card:#fff; --muted:#6b7280; --text:#0f172a; --accent:#2563eb; --border:#e5e7eb; }
         body { margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; background:var(--bg); color:var(--text); }
@@ -22,38 +22,38 @@
 <body>
 <div class="container">
     <div class="card">
-        <h1>Create Staff</h1>
+        <h1>Tạo mới nhân viên</h1>
 
         <div th:if="${error}" class="error" th:text="${error}"></div>
 
         <form th:action="@{/manager/staff/create}" th:object="${staff}" method="post">
 
             <div class="form-row">
-                <label>Name</label>
+                <label>Tên</label>
                 <input type="text" th:field="*{name}" required/>
                 <div class="error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
             </div>
 
             <div class="form-row">
-                <label>Date of Birth</label>
+                <label>Ngày sinh</label>
                 <input type="date" th:field="*{dateOfBirth}" required/>
                 <div class="error" th:if="${#fields.hasErrors('dateOfBirth')}" th:errors="*{dateOfBirth}"></div>
             </div>
 
             <div class="form-row">
-                <label>Phone</label>
+                <label>Số điện thoại</label>
                 <input type="text" th:field="*{phone}" required/>
                 <div class="error" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></div>
             </div>
 
             <div class="form-row">
-                <label>Address</label>
+                <label>Địa chỉ</label>
                 <input type="text" th:field="*{address}"/>
                 <div class="error" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></div>
             </div>
 
             <div class="form-row">
-                <label>Password</label>
+                <label>Mật khẩu</label>
                 <input type="password" th:field="*{password}" required/>
                 <div class="error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
             </div>
@@ -65,7 +65,7 @@
             </div>
 
             <div class="form-row">
-                <label>Role</label>
+                <label>Vai trò</label>
                 <select th:field="*{role}" required>
                     <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"></option>
                 </select>
@@ -73,15 +73,15 @@
             </div>
 
             <div class="form-row">
-                <label><input type="checkbox" th:field="*{active}"/> Active</label>
+                <label><input type="checkbox" th:field="*{active}"/> Hoạt động</label>
                 <div class="error" th:if="${#fields.hasErrors('active')}" th:errors="*{active}"></div>
             </div>
 
-            <button type="submit">Save</button>
+            <button type="submit">Lưu</button>
         </form>
 
 
-        <a class="back-link" th:href="@{/manager/staff}">⬅ Back to List</a>
+        <a class="back-link" th:href="@{/manager/staff}">⬅ Quay lại</a>
     </div>
 </div>
 </body>
