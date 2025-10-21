@@ -1,0 +1,82 @@
+@startuml reservation-timeline-example
+title Timeline Example: Auto NO_SHOW Check
+
+robust "Cashier Action" as Cashier
+robust "Reservation Status" as ReservationStatus
+robust "Table Status" as TableStatus
+robust "Scheduled Task" as ScheduledTask
+concise "TaskScheduler" as TaskScheduler
+
+@0
+Cashier is Idle
+ReservationStatus is {-}
+TableStatus is AVAILABLE
+ScheduledTask is {-}
+TaskScheduler is Idle
+
+@10
+Cashier is "Tạo reservation\nstartTime=18:00"
+ReservationStatus is CONFIRMED
+TableStatus is RESERVED
+ScheduledTask is "SCHEDULED\n(will run @18:15)"
+TaskScheduler is "Waiting..."
+
+note bottom
+    **17:50 - Cashier đặt bàn:**
+    1. Save reservation (id=123)
+    2. Table status → RESERVED
+    3. Schedule task: 18:00 + 15m = 18:15
+end note
+
+@20
+Cashier is Idle
+ReservationStatus is CONFIRMED
+TableStatus is RESERVED
+ScheduledTask is "Waiting..."
+TaskScheduler is "Waiting..."
+
+@30
+Cashier is Idle
+ReservationStatus is CONFIRMED
+TableStatus is RESERVED
+ScheduledTask is "Waiting..."
+TaskScheduler is "Waiting..."
+
+note bottom
+    **18:00 - Thời gian đặt bàn**
+    Khách hàng nên đến
+    Nhưng vẫn có 15 phút grace period
+end note
+
+@40
+Cashier is Idle
+ReservationStatus is CONFIRMED
+TableStatus is RESERVED
+ScheduledTask is "About to run..."
+TaskScheduler is "About to run..."
+
+@50
+Cashier is Idle
+ReservationStatus is NO_SHOW
+TableStatus is AVAILABLE
+ScheduledTask is "COMPLETED\n(task executed)"
+TaskScheduler is "Executed"
+
+note bottom
+    **18:15 - Task tự động chạy:**
+    1. Status → NO_SHOW
+    2. Table → AVAILABLE
+    3. Broadcast WebSocket
+    4. Task removed from Map
+end note
+
+@60
+Cashier is "Nhận thông báo\nWebSocket"
+ReservationStatus is NO_SHOW
+TableStatus is AVAILABLE
+ScheduledTask is {-}
+TaskScheduler is Idle
+
+@enduml
+
+

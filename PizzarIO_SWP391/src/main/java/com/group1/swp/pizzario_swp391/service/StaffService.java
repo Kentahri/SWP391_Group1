@@ -4,12 +4,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
-import com.group1.swp.pizzario_swp391.dto.staff.StaffDTO;
+// ...existing code...
 
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import com.group1.swp.pizzario_swp391.dto.staff.StaffCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffResponseDTO;
@@ -24,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @Service
+@Validated
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class StaffService {
@@ -69,39 +71,39 @@ public class StaffService {
                 .address(staff.getAddress())
                 .email(staff.getEmail())
                 .role(staff.getRole())
-                .isActive(staff.isActive())
+                .active(staff.isActive())
                 .build();
     }
 
-    public void createNewStaff(StaffCreateDTO createDTO) {
-        // Validate unique constraints
+    public String createNewStaff(StaffCreateDTO createDTO) {
         if (staffRepository.existsByEmail(createDTO.getEmail())) {
-            throw new IllegalArgumentException(EMAIL_ALREADY_EXISTS);
+            return EMAIL_ALREADY_EXISTS;
         }
         if (staffRepository.existsByPhone(createDTO.getPhone())) {
-            throw new IllegalArgumentException(PHONE_ALREADY_EXISTS);
+            return PHONE_ALREADY_EXISTS;
         }
-
         Staff staff = staffMapper.toEntity(createDTO);
         String encodedPassword = passwordEncoder.encode(createDTO.getPassword());
         staff.setPassword(encodedPassword);
         staffRepository.save(staff);
+        return null;
     }
 
-    public void updateStaff(int id, StaffUpdateDTO updateDTO) {
+    public String updateStaff(int id, StaffUpdateDTO updateDTO) {
         Staff staff = staffRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(STAFF_NOT_FOUND));
-
-        // Validate unique constraints (excluding current staff)
+                .orElse(null);
+        if (staff == null) {
+            return STAFF_NOT_FOUND;
+        }
         if (staffRepository.existsByEmailAndIdNot(updateDTO.getEmail(), id)) {
-            throw new IllegalArgumentException("Email đã tồn tại!");
+            return "Email đã tồn tại!";
         }
         if (staffRepository.existsByPhoneAndIdNot(updateDTO.getPhone(), id)) {
-            throw new IllegalArgumentException("Số điện thoại đã tồn tại!");
+            return "Số điện thoại đã tồn tại!";
         }
-
         staffMapper.updateEntity(staff, updateDTO);
         staffRepository.save(staff);
+        return null;
     }
 
     public void deleteStaffById(int id) {
@@ -111,36 +113,6 @@ public class StaffService {
         staffRepository.deleteById(id);
     }
 
-    public void updateStaff(int id, StaffDTO staffDTO) {
-        Staff staff = staffRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Staff not found"));
-
-        // Kiểm tra trùng email (loại trừ chính staff hiện tại)
-        if (staffRepository.existsByEmailAndIdNot(staffDTO.getEmail(), id)) {
-            throw new IllegalArgumentException("Email đã tồn tại!");
-        }
-
-        // Kiểm tra trùng số điện thoại
-        if (staffRepository.existsByPhoneAndIdNot(staffDTO.getPhone(), id)) {
-            throw new IllegalArgumentException("Số điện thoại đã tồn tại!");
-        }
-
-        // ✅ Tự update field thay vì dùng mapper, để kiểm soát password
-        staff.setName(staffDTO.getName());
-        staff.setDateOfBirth(staffDTO.getDateOfBirth());
-        staff.setPhone(staffDTO.getPhone());
-        staff.setAddress(staffDTO.getAddress());
-        staff.setEmail(staffDTO.getEmail());
-        staff.setRole(staffDTO.getRole());
-        staff.setActive(staffDTO.isActive());
-
-        // 🔑 Chỉ update password nếu DTO có giá trị
-        if (staffDTO.getPassword() != null && !staffDTO.getPassword().isBlank()) {
-            staff.setPassword(staffDTO.getPassword());
-        }
-
-        staffRepository.save(staff);
-    }
 
 
     public void add(Staff staff){
@@ -148,11 +120,7 @@ public class StaffService {
     }
 
     public void updatePasswordByEmail(String email, String password) {
-        Staff staff = loginRepository.findByEmail(email).orElse(null);
-        if (staff == null) {
-            throw new IllegalArgumentException("Không tìm thấy nhân viên với email: " + email);
-        }
-
+        Staff staff = findByEmail(email);
         String encodedPassword = passwordEncoder.encode(password);
 
         staff.setPassword(encodedPassword);
@@ -160,7 +128,11 @@ public class StaffService {
     }
 
     public Staff findByEmail(String email) {
-        return loginRepository.findByEmail(email).orElse(null);
+        Staff staff = loginRepository.findByEmail(email).orElse(null);
+        if(staff == null){
+            throw new IllegalArgumentException("Không tìm thấy nhân viên với email: " + email);
+        }
+        return staff;
     }
 
     public void updateStaff(Staff staff) {

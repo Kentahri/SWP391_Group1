@@ -6,7 +6,7 @@ spring:
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     properties:
       hibernate:
         jdbc:
@@ -40,3 +40,9 @@ server:
   port: ${SERVER_PORT}
   servlet:
     context-path: ${SERVER_CONTEXT_PATH}
+    session:
+      cookie:
+        http-only: true
+        secure: false
+        same-site: lax
+      timeout: 30m

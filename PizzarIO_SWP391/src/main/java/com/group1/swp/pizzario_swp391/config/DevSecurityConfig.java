@@ -21,7 +21,7 @@ public class DevSecurityConfig {
     SecurityFilterChain filter(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(a -> a
-                        .requestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**").permitAll()
+                        .requestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**", "/api/**").permitAll()
                         .anyRequest().permitAll())
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**")

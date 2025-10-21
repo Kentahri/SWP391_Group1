@@ -13,12 +13,25 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Data;
+import org.hibernate.annotations.OptimisticLockType;
+import org.hibernate.annotations.OptimisticLocking;
 
 @Entity
 @Table(name = "[Dining_Table]")
 @Data
+@OptimisticLocking(type = OptimisticLockType.VERSION)
 public class DiningTable {
+
+    @OneToMany(mappedBy = "diningTable")
+    @Column(nullable = true)
+    private List<Reservation> reservations;
+
+    public void addReservation(Reservation reservation) {
+        reservations.add(reservation);
+        reservation.setDiningTable(this);
+    }
 
     @OneToMany(mappedBy = "table")
     @Column(nullable = true)
@@ -31,20 +44,25 @@ public class DiningTable {
 
     public DiningTable() {
         sessionList = new ArrayList<>();
+        reservations = new ArrayList<>();
     }
 
-    public DiningTable(TableStatus tableStatus, TableCondition tableCondition, LocalDateTime createdAt, LocalDateTime updatedAt, int capacity) {
+    public DiningTable(TableStatus tableStatus, TableCondition tableCondition, LocalDateTime createdAt, LocalDateTime updatedAt, int capacity, int version) {
         this();
         this.tableStatus = tableStatus;
         this.tableCondition = tableCondition;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.capacity = capacity;
+        this.version = version;
     }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
+
+    @Version
+    private Integer version;
 
     @Column(name = "table_status")
     @Enumerated(EnumType.STRING)
