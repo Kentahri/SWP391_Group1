@@ -23,6 +23,8 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class VoucherCreateDTO {
+    private Long id;
+
     @NotBlank(message = "Mã voucher không được để trống")
     @Size(max = 20, message = "Mã voucher không được vượt quá 20 ký tự")
     @Pattern(regexp = "^[A-Z0-9_-]+$", message = "Mã voucher chỉ được chứa chữ hoa, số, gạch ngang và gạch dưới")

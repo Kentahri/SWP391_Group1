@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import com.group1.swp.pizzario_swp391.dto.voucher.VoucherCreateDTO;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -53,6 +54,10 @@ public class VoucherService {
         // Đảm bảo timesUsed = 0 khi tạo mới
         voucher.setTimesUsed(0);
         voucherRepository.save(voucher);
+    }
+
+    public void createNewVoucher(VoucherCreateDTO dto) {
+        // TODO: mapping từ VoucherCreateDTO sang entity Voucher và lưu xuống database
     }
 
     public List<Voucher> getAllVouchers() {
