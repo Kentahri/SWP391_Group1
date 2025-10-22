@@ -20,6 +20,7 @@ import com.group1.swp.pizzario_swp391.service.TableService;
 
 
 @SpringBootApplication
+@EnableScheduling
 public class PizzarIoSwp391Application {
 
     public static void main(String[] args) {

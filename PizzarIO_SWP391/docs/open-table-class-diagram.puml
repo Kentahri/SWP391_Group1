@@ -1,0 +1,102 @@
+@startuml Open Table Class Diagram
+
+!define CONTROLLER_COLOR #E1F5FE
+!define SERVICE_COLOR #F3E5F5
+!define REPOSITORY_COLOR #E8F5E8
+!define ENTITY_COLOR #FFF3E0
+!define DTO_COLOR #FCE4EC
+!define WEBSOCKET_COLOR #F1F8E9
+
+package "Controller Layer" <<Rectangle>> CONTROLLER_COLOR {
+    class CashierDashboardController {
+        - tableService : TableService
+        --
+        + openTable(Integer, RedirectAttributes) : String
+    }
+}
+
+package "Service Layer" <<Rectangle>> SERVICE_COLOR {
+    class TableService {
+        - tableRepository : TableRepository
+        - webSocketService : WebSocketService
+        --
+        + openTable(Integer) : void
+        + releaseTable(Integer, HttpSession) : void
+    }
+
+    class WebSocketService {
+        - messagingTemplate : SimpMessagingTemplate
+        --
+        + broadcastTableStatusToCashier(...) : void
+        + broadcastTableStatusToGuests(Integer, TableStatus) : void
+    }
+}
+
+package "Repository Layer" <<Rectangle>> REPOSITORY_COLOR {
+    interface TableRepository {
+        + findById(Integer) : Optional<DiningTable>
+        + save(DiningTable) : DiningTable
+    }
+}
+
+package "Entity Layer" <<Rectangle>> ENTITY_COLOR {
+    class DiningTable {
+        - id : Integer
+        - tableStatus : TableStatus
+        - capacity : int
+        - createdAt : LocalDateTime
+        - updatedAt : LocalDateTime
+        --
+        + TableStatus enum {AVAILABLE, OCCUPIED, RESERVED, WAITING_PAYMENT}
+    }
+}
+
+package "WebSocket Layer" <<Rectangle>> WEBSOCKET_COLOR {
+    class TableStatusMessage {
+        - type : MessageType
+        - tableId : int
+        - oldStatus : TableStatus
+        - newStatus : TableStatus
+        - updatedBy : String
+        - timestamp : LocalDateTime
+        - message : String
+        --
+        + MessageType enum {TABLE_OPENED, TABLE_RELEASED, TABLE_RESERVED, TABLE_PAYMENT_PENDING}
+    }
+}
+
+' Dependency Relationships
+CashierDashboardController ..> TableService : uses
+TableService ..> TableRepository : uses
+TableService ..> WebSocketService : uses
+WebSocketService ..> SimpMessagingTemplate : uses
+
+' Association Relationships
+TableRepository ..> DiningTable : manages
+
+' Notes
+note right of CashierDashboardController
+  Cashier clicks "Open Table" button
+  Simply makes table available for guest selection
+  Does NOT mark as occupied
+end note
+
+note right of TableService
+  Changes table status to AVAILABLE
+  Broadcasts status change to all clients
+  Allows guests to select this table
+end note
+
+note right of DiningTable
+  Status changes from RESERVED/WAITING_PAYMENT
+  to AVAILABLE when opened
+  Guests can then select this table
+end note
+
+note right of TableStatusMessage
+  Broadcasts table opening event
+  Notifies all cashiers and guests
+  Real-time status updates
+end note
+
+@enduml

@@ -1,0 +1,62 @@
+@startuml Open Table Sequence Diagram
+
+actor Cashier
+participant "CashierDashboardController" as Controller
+participant "TableService" as Service
+participant "TableRepository" as Repo
+participant "WebSocketService" as WebSocket
+participant "SimpMessagingTemplate" as MessagingTemplate
+participant "DiningTable" as Table
+participant "TableStatusMessage" as StatusMessage
+
+group Open Table Process
+    Cashier -> Controller: POST /cashier/tables/{id}/open
+    activate Controller
+    
+    Controller -> Service: openTable(tableId)
+    activate Service
+    
+    Service -> Repo: findById(tableId)
+    activate Repo
+    Repo --> Service: DiningTable
+    deactivate Repo
+    
+    Service -> Table: getTableStatus()
+    Table --> Service: Current TableStatus
+    
+    alt If table is RESERVED or AVAILABLE
+        Service -> Table: setTableStatus(AVAILABLE)
+        Service -> Repo: save(table)
+        activate Repo
+        Repo --> Service: Updated DiningTable
+        deactivate Repo
+        
+        Service -> WebSocket: broadcastTableStatusToCashier(TABLE_OPENED, ...)
+        activate WebSocket
+        WebSocket -> MessagingTemplate: convertAndSend("/topic/tables-cashier", message)
+        activate MessagingTemplate
+        MessagingTemplate --> WebSocket: Message sent
+        deactivate MessagingTemplate
+        deactivate WebSocket
+        
+        Service -> WebSocket: broadcastTableStatusToGuests(tableId, AVAILABLE)
+        activate WebSocket
+        WebSocket -> MessagingTemplate: convertAndSend("/topic/tables-guest", message)
+        activate MessagingTemplate
+        MessagingTemplate --> WebSocket: Message sent
+        deactivate MessagingTemplate
+        deactivate WebSocket
+        
+        Service --> Controller: Success
+    else If table is OCCUPIED or WAITING_PAYMENT
+        Service --> Controller: Cannot open table
+    end
+    
+    deactivate Service
+    
+    Controller --> Cashier: Success response + redirect
+    deactivate Controller
+end
+
+@enduml
+

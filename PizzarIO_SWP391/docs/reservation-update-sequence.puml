@@ -1,0 +1,72 @@
+@startuml Update Reservation Sequence Diagram
+
+actor Cashier
+participant "CashierDashboardController" as Controller
+participant "ReservationService" as Service
+participant "ReservationMapper" as Mapper
+participant "ReservationRepository" as Repo
+participant "TableRepository" as TableRepo
+participant "ReservationSchedulerService" as Scheduler
+participant "Reservation" as Entity
+participant "DiningTable" as Table
+
+Cashier -> Controller: POST /cashier/reservations/{id}/update
+activate Controller
+
+Controller -> Controller: Validate form data
+Controller -> Service: updateReservation(reservationId, dto)
+activate Service
+
+Service -> Repo: findById(reservationId)
+activate Repo
+Repo --> Service: Reservation
+deactivate Repo
+
+Service -> Service: Check if reservation is CANCELED
+alt If CANCELED
+    Service --> Controller: RuntimeException("Cannot update canceled reservation")
+    Controller --> Cashier: Error message
+    deactivate Service
+    deactivate Controller
+    return
+end
+
+Service -> Entity: getDiningTable()
+Entity --> Service: DiningTable
+Service -> Service: Validate capacity
+
+alt If startTime changed
+    Service -> Repo: findDuplicateReservation(tableId, newStartTime)
+    Repo --> Service: null or different reservation
+    Service -> Service: checkConflictReservation(tableId, newStartTime)
+    Service -> Repo: findConflictReservation(tableId, newStartTime±90min)
+    Repo --> Service: List<Reservation>
+    Service -> Service: Check table status & timing
+end
+
+Service -> Entity: Update fields (name, phone, capacity, startTime, note)
+Service -> Scheduler: updateNoShowCheck(reservationId, newStartTime)
+activate Scheduler
+Scheduler -> Scheduler: Cancel old task
+Scheduler -> Scheduler: Schedule new task for newStartTime + 15min
+Scheduler --> Service: Task updated
+deactivate Scheduler
+
+Service -> Repo: save(reservation)
+activate Repo
+Repo --> Service: Updated Reservation
+deactivate Repo
+
+Service -> Mapper: toReservationDTO(updatedReservation)
+activate Mapper
+Mapper --> Service: ReservationDTO
+deactivate Mapper
+
+Service --> Controller: ReservationDTO
+deactivate Service
+
+Controller --> Cashier: Success response + redirect
+deactivate Controller
+
+@enduml
+

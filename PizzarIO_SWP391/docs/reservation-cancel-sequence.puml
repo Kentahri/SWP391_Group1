@@ -1,0 +1,66 @@
+@startuml Cancel Reservation Sequence Diagram
+
+actor Cashier
+participant "CashierDashboardController" as Controller
+participant "ReservationService" as Service
+participant "ReservationRepository" as Repo
+participant "TableRepository" as TableRepo
+participant "ReservationSchedulerService" as Scheduler
+participant "SimpMessagingTemplate" as WebSocket
+participant "Reservation" as Entity
+participant "DiningTable" as Table
+
+Cashier -> Controller: POST /cashier/reservations/{id}/delete
+activate Controller
+
+Controller -> Service: cancelReservation(reservationId)
+activate Service
+
+Service -> Repo: findById(reservationId)
+activate Repo
+Repo --> Service: Reservation
+deactivate Repo
+
+Service -> Entity: setStatus(CANCELED)
+Service -> Entity: getDiningTable()
+Entity --> Service: DiningTable
+
+Service -> Table: getTableStatus()
+Table --> Service: TableStatus
+
+alt If table status is RESERVED
+    Service -> Table: setTableStatus(AVAILABLE)
+    Service -> TableRepo: save(table)
+    activate TableRepo
+    TableRepo --> Service: Updated DiningTable
+    deactivate TableRepo
+    
+    Service -> WebSocket: broadcastTableStatusToGuests(tableId, AVAILABLE)
+    Service -> WebSocket: broadcastTableStatusToCashier(TABLE_RELEASED, ...)
+end
+
+Service -> Scheduler: cancelNoShowCheck(reservationId)
+activate Scheduler
+Scheduler -> Scheduler: Remove scheduled task from Map
+Scheduler -> Scheduler: Cancel ScheduledFuture if exists
+Scheduler --> Service: Task canceled
+deactivate Scheduler
+
+Service -> Repo: save(reservation)
+activate Repo
+Repo --> Service: Updated Reservation
+deactivate Repo
+
+Service -> TableRepo: save(table)
+activate TableRepo
+TableRepo --> Service: Updated DiningTable
+deactivate TableRepo
+
+Service --> Controller: void
+deactivate Service
+
+Controller --> Cashier: Success response + redirect
+deactivate Controller
+
+@enduml
+

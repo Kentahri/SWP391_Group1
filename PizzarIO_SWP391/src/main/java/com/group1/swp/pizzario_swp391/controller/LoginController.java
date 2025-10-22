@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import jakarta.validation.Valid;
 
-import java.util.Optional;
 
 @Controller
 public class LoginController {

@@ -55,11 +55,6 @@ public class StaffService {
                 .collect(Collectors.toList());
     }
 
-    public StaffResponseDTO getStaffById(int id) {
-        Staff staff = staffRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(STAFF_NOT_FOUND));
-        return staffMapper.toResponseDTO(staff);
-    }
 
     public StaffUpdateDTO getStaffForUpdate(int id) {
         Staff staff = staffRepository.findById(id)

@@ -30,9 +30,6 @@ public class StaffShiftService {
     private final StaffRepository staffRepository;
     private final ShiftRepository shiftRepository;
 
-    public List<StaffShift> search(LocalDate from, LocalDate to, Integer shiftId, Integer staffId) {
-        return staffShiftRepository.search(from, to, shiftId, staffId);
-    }
 
     @Transactional
     public void create(StaffShiftDTO staffShiftDTO) {
@@ -86,20 +83,10 @@ public class StaffShiftService {
         return new StatsStaffShiftDTO(totalShifts, totalHours, totalWage, completedShifts);
     }
 
-    public List<StaffShiftResponseDTO> findByDateRange(LocalDate weekStart, LocalDate weekEnd) {
-        List<StaffShift> staffShifts = staffShiftRepository.findByWeekRange(weekStart, weekEnd);
-
-        return staffShifts.stream()
-                .map(staffShiftMapper::toResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    // NEW: Optimized filter method sử dụng repository
     public List<StaffShiftResponseDTO> findByDateRangeWithFilters(LocalDate weekStart, LocalDate weekEnd,
             Long staffId, Long shiftId) {
         List<StaffShift> staffShifts;
 
-        // Chọn repository method tối ưu dựa trên filters
         if (staffId != null && shiftId != null) {
             staffShifts = staffShiftRepository.findByWeekRangeAndFilters(
                     weekStart, weekEnd, staffId.intValue(), shiftId.intValue());
@@ -118,12 +105,9 @@ public class StaffShiftService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Build danh sách 7 ngày trong tuần với các shift cards
-     */
     public List<WeekDayDTO> buildWeekDays(LocalDate weekStart, LocalDate weekEnd,
             List<StaffShiftResponseDTO> staffShifts) {
-        // Group shifts theo workDate
+
         Map<LocalDate, List<StaffShiftCalendarDTO>> shiftsByDate = staffShifts.stream()
                 .collect(Collectors.groupingBy(
                         StaffShiftResponseDTO::getWorkDate,
@@ -131,7 +115,7 @@ public class StaffShiftService {
                                 staffShiftMapper::toCalendarDTO,
                                 Collectors.toList())));
 
-        // Tạo danh sách 7 ngày (T2 -> CN)
+
         List<WeekDayDTO> weekDays = new ArrayList<>();
         String[] dayNames = { "T2", "T3", "T4", "T5", "T6", "T7", "CN" };
         LocalDate today = LocalDate.now();

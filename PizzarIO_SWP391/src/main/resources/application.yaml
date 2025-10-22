@@ -46,3 +46,8 @@ server:
         secure: false
         same-site: lax
       timeout: 30m
+
+gemini:
+  api:
+    key: ${GEMINI_API_KEY}
+    model: ${GEMINI_MODEL}

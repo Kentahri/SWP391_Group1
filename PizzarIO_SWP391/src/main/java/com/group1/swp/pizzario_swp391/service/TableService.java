@@ -90,17 +90,6 @@ public class TableService {
         return tableMapper.toTableForCashierDTOs(tableRepository.findAll());
     }
 
-    /**
-     * Cập nhật trạng thái bàn (Cashier)
-     * Cashier chỉ được cập nhật tableStatus
-     */
-    public void updateTableStatus(Integer id, DiningTable.TableStatus status) {
-        DiningTable table = tableRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Table not found"));
-        table.setTableStatus(status);
-        table.setUpdatedAt(LocalDateTime.now());
-        tableRepository.save(table);
-    }
 
     public void add(DiningTable table) {
         tableRepository.save(table);

@@ -1,0 +1,107 @@
+@startuml View Table Map Class Diagram
+
+!define CONTROLLER_COLOR #E1F5FE
+!define SERVICE_COLOR #F3E5F5
+!define REPOSITORY_COLOR #E8F5E8
+!define ENTITY_COLOR #FFF3E0
+!define DTO_COLOR #FCE4EC
+!define WEBSOCKET_COLOR #F1F8E9
+
+package "Controller Layer" <<Rectangle>> CONTROLLER_COLOR {
+    class CashierDashboardController {
+        - tableService : TableService
+        - staffService : StaffService
+        --
+        + cashierDashboard(Model, Principal) : String
+    }
+}
+
+package "Service Layer" <<Rectangle>> SERVICE_COLOR {
+    class TableService {
+        - tableRepository : TableRepository
+        - tableMapper : TableMapper
+        --
+        + getTablesForCashier() : List<TableForCashierDTO>
+    }
+}
+
+package "Repository Layer" <<Rectangle>> REPOSITORY_COLOR {
+    interface TableRepository {
+        + findAll() : List<DiningTable>
+    }
+}
+
+package "Mapper Layer" <<Rectangle>> REPOSITORY_COLOR {
+    interface TableMapper {
+        + toTableForCashierDTO(DiningTable) : TableForCashierDTO
+        + toTableForCashierDTOs(List<DiningTable>) : List<TableForCashierDTO>
+    }
+}
+
+package "Entity Layer" <<Rectangle>> ENTITY_COLOR {
+    class DiningTable {
+        - id : Integer
+        - tableStatus : TableStatus
+        - capacity : int
+        - createdAt : LocalDateTime
+        - updatedAt : LocalDateTime
+        --
+        + TableStatus enum {AVAILABLE, OCCUPIED, RESERVED, WAITING_PAYMENT}
+    }
+}
+
+package "DTO Layer" <<Rectangle>> DTO_COLOR {
+    class TableForCashierDTO {
+        - id : int
+        - tableStatus : TableStatus
+        - capacity : int
+    }
+}
+
+package "WebSocket Layer" <<Rectangle>> WEBSOCKET_COLOR {
+    class TableStatusMessage {
+        - type : MessageType
+        - tableId : int
+        - oldStatus : TableStatus
+        - newStatus : TableStatus
+        - updatedBy : String
+        - timestamp : LocalDateTime
+        - message : String
+        --
+        + MessageType enum {TABLE_OCCUPIED, TABLE_RELEASED, TABLE_RESERVED, TABLE_PAYMENT_PENDING}
+    }
+}
+
+' Dependency Relationships
+CashierDashboardController ..> TableService : uses
+TableService ..> TableRepository : uses
+TableService ..> TableMapper : uses
+TableMapper ..> DiningTable : converts
+TableMapper ..> TableForCashierDTO : converts
+
+' Association Relationships
+TableRepository ..> DiningTable : manages
+
+' Notes
+note right of CashierDashboardController
+  Displays table map with real-time status
+  Shows all tables in grid layout
+  Updates via WebSocket
+end note
+
+note right of TableForCashierDTO
+  Simplified DTO for cashier view
+  Only shows essential info:
+  - Table ID
+  - Status (color-coded)
+  - Capacity
+end note
+
+note right of DiningTable
+  Core entity representing physical table
+  Status changes trigger WebSocket broadcasts
+  Optimistic locking for concurrent access
+end note
+
+@enduml
+

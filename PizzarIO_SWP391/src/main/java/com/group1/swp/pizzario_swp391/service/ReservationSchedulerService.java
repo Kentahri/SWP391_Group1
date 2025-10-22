@@ -6,10 +6,6 @@ import java.time.ZoneId;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
-
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -23,8 +19,6 @@ import com.group1.swp.pizzario_swp391.event.reservation.ReservationNoShowEvent;
  * Service kiểm soát việc tự động khóa bàn sau 15p nếu khách không đến
  */
 @Service
-//@RequiredArgsConstructor
-//@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Slf4j
 public class ReservationSchedulerService {
 

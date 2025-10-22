@@ -1,0 +1,141 @@
+@startuml View Table Detail Class Diagram
+
+!define CONTROLLER_COLOR #E1F5FE
+!define SERVICE_COLOR #F3E5F5
+!define REPOSITORY_COLOR #E8F5E8
+!define ENTITY_COLOR #FFF3E0
+!define DTO_COLOR #FCE4EC
+
+package "Controller Layer" <<Rectangle>> CONTROLLER_COLOR {
+    class CashierDashboardController {
+        - tableService : TableService
+        - staffService : StaffService
+        --
+        + getTableOrderDetail(Integer, Model, Principal) : String
+    }
+}
+
+package "Service Layer" <<Rectangle>> SERVICE_COLOR {
+    class TableService {
+        - tableRepository : TableRepository
+        - sessionRepository : SessionRepository
+        --
+        + getOrderDetailByTableId(Integer) : OrderDetailDTO
+    }
+}
+
+package "Repository Layer" <<Rectangle>> REPOSITORY_COLOR {
+    interface TableRepository {
+        + findById(Integer) : Optional<DiningTable>
+    }
+
+    interface SessionRepository {
+        + findByTableIdAndIsClosedFalse(Integer) : Optional<Session>
+    }
+}
+
+package "Entity Layer" <<Rectangle>> ENTITY_COLOR {
+    class DiningTable {
+        - id : Integer
+        - tableStatus : TableStatus
+        - capacity : int
+        - sessionList : List<Session>
+        --
+        + TableStatus enum {AVAILABLE, OCCUPIED, RESERVED, WAITING_PAYMENT}
+    }
+
+    class Session {
+        - id : String
+        - table : DiningTable
+        - order : Order
+        - closed : boolean
+        - createdAt : LocalDateTime
+        - closedAt : LocalDateTime
+    }
+
+    class Order {
+        - id : Long
+        - session : Session
+        - orderItems : List<OrderItem>
+        - createdAt : LocalDateTime
+        - orderStatus : OrderStatus
+        - totalPrice : Double
+        - note : String
+        --
+        + OrderStatus enum {PREPARING, READY, SERVED, COMPLETED}
+    }
+
+    class OrderItem {
+        - id : Long
+        - product : Product
+        - quantity : int
+        - unitPrice : Double
+        - totalPrice : Double
+        - note : String
+        - orderItemStatus : OrderItemStatus
+    }
+
+    class Product {
+        - id : Long
+        - name : String
+        - imageURL : String
+        - price : Double
+    }
+}
+
+package "DTO Layer" <<Rectangle>> DTO_COLOR {
+    class OrderDetailDTO {
+        - orderId : Long
+        - tableId : Integer
+        - orderItems : List<OrderItemDTO>
+        - totalPrice : Double
+        - orderStatus : OrderStatus
+        - createdAt : LocalDateTime
+    }
+
+    class OrderItemDTO {
+        - id : Long
+        - productName : String
+        - productImageUrl : String
+        - quantity : int
+        - unitPrice : Double
+        - totalPrice : Double
+        - note : String
+        - status : OrderItemStatus
+    }
+}
+
+' Dependency Relationships
+CashierDashboardController ..> TableService : uses
+TableService ..> TableRepository : uses
+TableService ..> SessionRepository : uses
+
+' Association Relationships
+TableRepository ..> DiningTable : manages
+SessionRepository ..> Session : manages
+DiningTable --> Session : contains
+Session --> Order : contains
+Order --> OrderItem : contains
+OrderItem --> Product : references
+
+' Notes
+note right of CashierDashboardController
+  Shows detailed view of selected table
+  Displays current order if exists
+  Shows table info and order items
+end note
+
+note right of OrderDetailDTO
+  Complete order information for table
+  Includes all order items with details
+  Used for cashier order management
+end note
+
+note right of Session
+  Links table to active order
+  Tracks guest session lifecycle
+  Only one active session per table
+end note
+
+@enduml
+
