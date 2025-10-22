@@ -2,6 +2,7 @@ package com.group1.swp.pizzario_swp391.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +41,7 @@ public class Shift {
     }
 
     public enum ShiftType {
-        SANG, CHIEU, TOI, DEM
+        SÁNG, CHIỀU, TỐI
     }
 
     public void setShiftName(ShiftType shiftName) {

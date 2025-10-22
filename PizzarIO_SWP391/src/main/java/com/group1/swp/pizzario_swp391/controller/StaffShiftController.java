@@ -3,10 +3,13 @@ package com.group1.swp.pizzario_swp391.controller;
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import com.group1.swp.pizzario_swp391.dto.ShiftDTO;
 import com.group1.swp.pizzario_swp391.dto.data_analytics.StatsStaffShiftDTO;
+import com.group1.swp.pizzario_swp391.dto.data_analytics.WeekDayDTO;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.staffshift.StaffShiftDTO;
 import com.group1.swp.pizzario_swp391.dto.staffshift.StaffShiftResponseDTO;
 import com.group1.swp.pizzario_swp391.entity.Shift;
+import com.group1.swp.pizzario_swp391.entity.StaffShift;
+import com.group1.swp.pizzario_swp391.repository.StaffShiftRepository;
 import com.group1.swp.pizzario_swp391.service.ShiftService;
 import com.group1.swp.pizzario_swp391.service.StaffService;
 import com.group1.swp.pizzario_swp391.service.StaffShiftService;
@@ -31,6 +34,7 @@ import java.util.*;
 public class StaffShiftController {
 
     StaffShiftService staffShiftService;
+    StaffShiftRepository staffShiftRepository;
 
     StaffService staffService;
     ShiftService shiftService;
@@ -43,7 +47,6 @@ public class StaffShiftController {
             @RequestParam(required = false) Long shiftId,
             Model model) {
 
-        // 1. Tính toán tuần hiện tại (T2 -> CN)
         int offset = weekOffset != null ? weekOffset : 0;
         LocalDate today = LocalDate.now();
         LocalDate weekStart = today.plusWeeks(offset).with(DayOfWeek.MONDAY);
@@ -52,7 +55,6 @@ public class StaffShiftController {
         model.addAttribute("weekStartDate", weekStart);
         model.addAttribute("weekEndDate", weekEnd);
 
-        // 2. Lấy dữ liệu cho filter dropdown
         List<StaffResponseDTO> allStaff = staffService.getAllStaff();
         List<ShiftDTO> allShifts = shiftService.getAllShift();
         model.addAttribute("allStaff", allStaff);
@@ -60,10 +62,8 @@ public class StaffShiftController {
         model.addAttribute("selectedStaffId", staffId);
         model.addAttribute("selectedShiftId", shiftId);
 
-        // Thêm danh sách shift types cho shift management section
         model.addAttribute("shifts", allShifts);
 
-        // Add shift form and types for modal (Shift Type)
         if (!model.containsAttribute("shiftForm")) {
             model.addAttribute("shiftForm", new ShiftDTO());
         }
@@ -72,56 +72,167 @@ public class StaffShiftController {
                 .toList();
         model.addAttribute("shiftTypes", shiftTypes);
 
-        // Add staff shift form for modal (Staff Shift Assignment)
         if (!model.containsAttribute("staffShiftForm")) {
             model.addAttribute("staffShiftForm", new StaffShiftDTO());
         }
 
-        // 3. Lấy staff shifts trong tuần với filters
-        List<StaffShiftResponseDTO> staffShifts = staffShiftService.findByDateRangeWithFilters(
-                weekStart, weekEnd, staffId, shiftId);
-
-        // 4. Tính toán statistics
         StatsStaffShiftDTO stats = staffShiftService.getAnalyticsStaffShift();
         model.addAttribute("stats", stats);
 
-        // 5. Tạo weekDays với shift cards
-        var weekDays = staffShiftService.buildWeekDays(weekStart, weekEnd, staffShifts);
+        List<StaffShiftResponseDTO> staffShifts = staffShiftService.findByDateRangeWithFilters(
+                weekStart, weekEnd, staffId, shiftId);
+
+        List<WeekDayDTO> weekDays = staffShiftService.buildWeekDays(weekStart, weekEnd, staffShifts);
         model.addAttribute("weekDays", weekDays);
 
         return "admin_page/staff_shift/shift_calendar";
     }
 
     @PostMapping("/staff_shifts/delete/{id}")
-    public String deleteStaffShift(@PathVariable int id, RedirectAttributes ra) {
+    public String deleteStaffShift(
+            @PathVariable int id,
+            @RequestParam(required = false) Integer weekOffset,
+            @RequestParam(required = false) Long filterStaffId,
+            @RequestParam(required = false) Long filterShiftId,
+            RedirectAttributes ra) {
         staffShiftService.delete(id);
         ra.addFlashAttribute("message", "Xóa phân công thành công");
-        return "redirect:/manager/staff_shifts";
+
+        // Build redirect URL with preserved parameters
+        StringBuilder redirectUrl = new StringBuilder("redirect:/manager/staff_shifts");
+        boolean hasParam = false;
+
+        if (weekOffset != null) {
+            redirectUrl.append("?weekOffset=").append(weekOffset);
+            hasParam = true;
+        }
+        if (filterStaffId != null) {
+            redirectUrl.append(hasParam ? "&" : "?").append("staffId=").append(filterStaffId);
+            hasParam = true;
+        }
+        if (filterShiftId != null) {
+            redirectUrl.append(hasParam ? "&" : "?").append("shiftId=").append(filterShiftId);
+        }
+
+        return redirectUrl.toString();
+    }
+
+    @GetMapping("/staff_shifts/create")
+    public String showCreateForm(
+            @RequestParam(required = false) Integer weekOffset,
+            @RequestParam(required = false) Long filterStaffId,
+            @RequestParam(required = false) Long filterShiftId,
+            RedirectAttributes redirectAttributes) {
+        // Create empty form for create mode
+        redirectAttributes.addFlashAttribute("staffShiftForm", new StaffShiftDTO());
+        redirectAttributes.addFlashAttribute("openStaffShiftModal", "create");
+
+        // Build redirect URL with preserved parameters
+        StringBuilder redirectUrl = new StringBuilder("redirect:/manager/staff_shifts");
+        boolean hasParam = false;
+
+        if (weekOffset != null) {
+            redirectUrl.append("?weekOffset=").append(weekOffset);
+            hasParam = true;
+        }
+        if (filterStaffId != null) {
+            redirectUrl.append(hasParam ? "&" : "?").append("staffId=").append(filterStaffId);
+            hasParam = true;
+        }
+        if (filterShiftId != null) {
+            redirectUrl.append(hasParam ? "&" : "?").append("shiftId=").append(filterShiftId);
+        }
+
+        return redirectUrl.toString();
     }
 
     @GetMapping("/staff_shifts/edit/{id}")
-    public String showEditForm(@PathVariable int id, RedirectAttributes redirectAttributes) {
+    public String showEditForm(
+            @PathVariable int id,
+            @RequestParam(required = false) Integer weekOffset,
+            @RequestParam(required = false) Long filterStaffId,
+            @RequestParam(required = false) Long filterShiftId,
+            RedirectAttributes redirectAttributes) {
         StaffShiftDTO staffShift = staffShiftService.getById(id);
 
         // Always open modal for edit
         redirectAttributes.addFlashAttribute("staffShiftForm", staffShift);
         redirectAttributes.addFlashAttribute("openStaffShiftModal", "edit");
-        return "redirect:/manager/staff_shifts";
+
+        // Build redirect URL with preserved parameters
+        StringBuilder redirectUrl = new StringBuilder("redirect:/manager/staff_shifts");
+        boolean hasParam = false;
+
+        if (weekOffset != null) {
+            redirectUrl.append("?weekOffset=").append(weekOffset);
+            hasParam = true;
+        }
+        if (filterStaffId != null) {
+            redirectUrl.append(hasParam ? "&" : "?").append("staffId=").append(filterStaffId);
+            hasParam = true;
+        }
+        if (filterShiftId != null) {
+            redirectUrl.append(hasParam ? "&" : "?").append("shiftId=").append(filterShiftId);
+        }
+
+        return redirectUrl.toString();
     }
 
     // Save endpoint for modal (handles both create and update)
     @PostMapping("/staff_shifts/save")
-    public String saveStaffShift(@Valid @ModelAttribute("staffShiftForm") StaffShiftDTO staffShiftDTO,
+    public String saveStaffShift(
+            @Valid @ModelAttribute("staffShiftForm") StaffShiftDTO staffShiftDTO,
             BindingResult bindingResult,
+            @RequestParam(required = false) Integer weekOffset,
+            @RequestParam(required = false) Long filterStaffId,
+            @RequestParam(required = false) Long filterShiftId,
             Model model,
             RedirectAttributes ra) {
+
+        StringBuilder redirectUrl = new StringBuilder("redirect:/manager/staff_shifts");
+        boolean hasParam = false;
+
+        if (weekOffset != null) {
+            redirectUrl.append("?weekOffset=").append(weekOffset);
+            hasParam = true;
+        }
+        if (filterStaffId != null) {
+            redirectUrl.append(hasParam ? "&" : "?").append("staffId=").append(filterStaffId);
+            hasParam = true;
+        }
+        if (filterShiftId != null) {
+            redirectUrl.append(hasParam ? "&" : "?").append("shiftId=").append(filterShiftId);
+        }
+
+        // Custom validation: Only for CREATE mode (not EDIT), prevent past dates
+        if (staffShiftDTO.getId() == null || staffShiftDTO.getId() <= 0) {
+            if (staffShiftDTO.getWorkDate() != null && staffShiftDTO.getWorkDate().isBefore(LocalDate.now())) {
+                bindingResult.rejectValue("workDate", "error.workDate", "Ngày làm không được trước ngày hiện tại");
+            }
+
+            // Check duplicate: Same staff + same date + same shift (only for CREATE)
+            if (staffShiftDTO.getWorkDate() != null && staffShiftDTO.getStaffId() != null
+                    && staffShiftDTO.getShiftId() != null) {
+                List<StaffShift> existingShifts = staffShiftRepository.findAllShiftsByStaffIdAndDate(
+                        staffShiftDTO.getStaffId(),
+                        staffShiftDTO.getWorkDate());
+
+                boolean hasDuplicate = existingShifts.stream()
+                        .anyMatch(ss -> ss.getShift().getId() == staffShiftDTO.getShiftId());
+
+                if (hasDuplicate) {
+                    bindingResult.rejectValue("shiftId", "error.duplicate",
+                            "Nhân viên này đã có ca làm việc này trong ngày đã chọn");
+                }
+            }
+        }
 
         if (bindingResult.hasErrors()) {
             // If there are validation errors, return to modal with errors
             ra.addFlashAttribute("staffShiftForm", staffShiftDTO);
             ra.addFlashAttribute("openStaffShiftModal", staffShiftDTO.getId() != null ? "edit" : "create");
-            ra.addFlashAttribute("errors", bindingResult.getAllErrors());
-            return "redirect:/manager/staff_shifts";
+            ra.addFlashAttribute("org.springframework.validation.BindingResult.staffShiftForm", bindingResult);
+            return redirectUrl.toString();
         }
 
         if (staffShiftDTO.getId() != null && staffShiftDTO.getId() > 0) {
@@ -134,7 +245,7 @@ public class StaffShiftController {
             ra.addFlashAttribute("message", "Thêm ca làm việc thành công");
         }
 
-        return "redirect:/manager/staff_shifts";
+        return redirectUrl.toString();
     }
 
 }

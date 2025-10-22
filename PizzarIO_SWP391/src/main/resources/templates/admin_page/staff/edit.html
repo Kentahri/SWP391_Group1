@@ -1,17 +1,26 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
   <head>
+    <title>Edit Staff</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Edit Staff</title>
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
+    <meta
+      name="_csrf_parameter"
+      th:if="${_csrf != null}"
+      th:content="${_csrf.parameterName}"
+    />
     <style>
       :root {
         --bg: #f6f7fb;
-        --card: #fff;
+        --card: #ffffff;
         --muted: #6b7280;
         --text: #0f172a;
         --accent: #2563eb;
         --border: #e5e7eb;
+      }
+      * {
+        box-sizing: border-box;
       }
       body {
         margin: 0;
@@ -19,61 +28,68 @@
           Helvetica, Arial;
         background: var(--bg);
         color: var(--text);
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        padding: 40px;
       }
       .container {
-        max-width: 700px;
-        margin: 40px auto;
-        padding: 24px;
-      }
-      .card {
         background: var(--card);
         border: 1px solid var(--border);
         border-radius: 16px;
-        padding: 20px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        max-width: 500px;
+        width: 100%;
+        padding: 24px;
       }
       h1 {
         margin-top: 0;
+        text-align: center;
+        font-size: 1.5rem;
         font-weight: 700;
       }
+      form {
+        display: grid;
+        gap: 14px;
+        margin-top: 20px;
+      }
       label {
-        font-size: 14px;
+        font-size: 0.9rem;
         font-weight: 600;
         color: var(--muted);
-      }
-      .form-row {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        margin-bottom: 12px;
+        display: block;
+        margin-bottom: 4px;
       }
       input,
       select {
+        width: 100%;
         padding: 10px 12px;
         border: 1px solid var(--border);
         border-radius: 10px;
+        font-size: 0.95rem;
         outline: none;
+      }
+      input[type="checkbox"] {
+        width: auto;
+        margin-right: 6px;
       }
       button {
         background: var(--accent);
         color: white;
-        font-weight: 700;
-        padding: 10px 16px;
+        padding: 12px;
         border: none;
         border-radius: 10px;
+        font-weight: 700;
         cursor: pointer;
+        margin-top: 10px;
       }
       button:hover {
         filter: brightness(1.05);
       }
-      .error {
-        color: #ef4444;
-        font-weight: 600;
-        margin-bottom: 12px;
-      }
       .back-link {
         display: inline-block;
-        margin-top: 12px;
+        margin-top: 16px;
         text-decoration: none;
         color: var(--accent);
         font-weight: 600;
@@ -85,7 +101,9 @@
       <div class="card">
         <h1>Chỉnh sửa nhân viên</h1>
 
-        <div th:if="${error}" class="error" th:text="${error}"></div>
+      <div th:if="${error}" style="color: red">
+        <p th:text="${error}"></p>
+      </div>
 
         <form
           th:action="@{'/manager/staff/edit/' + ${staffID}}"
@@ -132,15 +150,10 @@
             ></div>
           </div>
 
-          <div class="form-row">
-            <label>Email</label>
-            <input type="email" th:field="*{email}" required />
-            <div
-              class="error"
-              th:if="${#fields.hasErrors('email')}"
-              th:errors="*{email}"
-            ></div>
-          </div>
+        <div>
+          <label>Email:</label>
+          <input type="email" th:field="*{email}" required />
+        </div>
 
           <div class="form-row">
             <label>Vai trò</label>

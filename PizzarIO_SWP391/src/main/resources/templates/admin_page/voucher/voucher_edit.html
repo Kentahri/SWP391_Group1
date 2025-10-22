@@ -4,6 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cập nhật Voucher</title>
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
+    <meta
+      name="_csrf_parameter"
+      th:if="${_csrf != null}"
+      th:content="${_csrf.parameterName}"
+    />
     <style>
       :root {
         --bg: #f6f7fb;
@@ -142,6 +148,12 @@
           method="post"
           th:object="${voucherDTO}"
         >
+          <input
+            type="hidden"
+            th:if="${_csrf != null}"
+            th:name="${_csrf.parameterName}"
+            th:value="${_csrf.token}"
+          />
           <div class="form-row">
             <label>Mã voucher</label>
             <input

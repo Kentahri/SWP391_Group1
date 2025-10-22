@@ -1,0 +1,81 @@
+@startuml View Table Detail Sequence Diagram
+
+actor Cashier
+participant "CashierDashboardController" as Controller
+participant "TableService" as Service
+participant "TableRepository" as TableRepo
+participant "SessionRepository" as SessionRepo
+participant "DiningTable" as Table
+participant "Session" as Session
+participant "Order" as Order
+participant "OrderItem" as OrderItem
+participant "Product" as Product
+
+group Load Table Detail
+    Cashier -> Controller: GET /cashier/tables/{id}/order
+    activate Controller
+    
+    Controller -> Service: getOrderDetailByTableId(tableId)
+    activate Service
+    
+    Service -> TableRepo: findById(tableId)
+    activate TableRepo
+    TableRepo --> Service: DiningTable
+    deactivate TableRepo
+    
+    Service -> SessionRepo: findByTableIdAndIsClosedFalse(tableId)
+    activate SessionRepo
+    SessionRepo --> Service: Optional<Session>
+    deactivate SessionRepo
+    
+    alt If session exists and has order
+        Service -> Session: getOrder()
+        Session --> Service: Order
+        
+        Service -> Order: getOrderItems()
+        Order --> Service: List<OrderItem>
+        
+        loop For each order item
+            Service -> OrderItem: getProduct()
+            OrderItem --> Service: Product
+            Service -> Product: getName(), getImageURL()
+            Product --> Service: Product details
+        end
+        
+        Service -> Service: Build OrderDetailDTO
+        Service --> Controller: OrderDetailDTO
+    else If no session or no order
+        Service --> Controller: null (no order)
+    end
+    
+    deactivate Service
+    
+    Controller --> Cashier: cashier-dashboard.html with order details
+    deactivate Controller
+end
+
+group Display Order Details
+    note over Cashier: Order detail panel shows:
+    note over Cashier: - Order ID and creation time
+    note over Cashier: - Table ID and status
+    note over Cashier: - List of order items:
+    note over Cashier:   • Product name and image
+    note over Cashier:   • Quantity and unit price
+    note over Cashier:   • Total price per item
+    note over Cashier:   • Item status (PREPARING/READY/SERVED)
+    note over Cashier:   • Special notes
+    note over Cashier: - Total order amount
+    note over Cashier: - Order status
+end
+
+group Empty Table View
+    alt If table has no active order
+        note over Cashier: Empty table detail shows:
+        note over Cashier: - Table number
+        note over Cashier: - "Đặt trước bàn này" button
+        note over Cashier: - "Xem đơn đặt trước" link
+    end
+end
+
+@enduml
+

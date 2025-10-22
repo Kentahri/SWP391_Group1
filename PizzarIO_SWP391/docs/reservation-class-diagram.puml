@@ -1,0 +1,228 @@
+@startuml Reservation System Class Diagram
+
+!define CONTROLLER_COLOR #E1F5FE
+!define SERVICE_COLOR #F3E5F5
+!define REPOSITORY_COLOR #E8F5E8
+!define ENTITY_COLOR #FFF3E0
+!define DTO_COLOR #FCE4EC
+!define EVENT_COLOR #F1F8E9
+
+package "Controller Layer" <<Rectangle>> CONTROLLER_COLOR {
+    class CashierDashboardController {
+        - tableService : TableService
+        - staffService : StaffService
+        - reservationService : ReservationService
+        - reservationMapper : ReservationMapper
+        --
+        + createReservation(ReservationCreateDTO) : String
+        + updateReservation(Long, ReservationUpdateDTO) : String
+        + cancelReservation(Long) : String
+        + openTableForReservation(Long) : String
+        + getUpcomingReservations(String) : String
+        + getTableReservations(Integer) : String
+        + editReservation(Long) : String
+        + findById(Long) : String
+    }
+}
+
+package "Service Layer" <<Rectangle>> SERVICE_COLOR {
+    class ReservationService {
+        - messagingTemplate : SimpMessagingTemplate
+        - reservationRepository : ReservationRepository
+        - tableRepository : TableRepository
+        - reservationMapper : ReservationMapper
+        - reservationSchedulerService : ReservationSchedulerService
+        --
+        + createReservation(ReservationCreateDTO) : ReservationDTO
+        + updateReservation(Long, ReservationUpdateDTO) : ReservationDTO
+        + cancelReservation(Long) : void
+        + openTableForGuestWithReservation(Long) : void
+        + validateReservationBusinessLogic(ReservationCreateDTO) : void
+        + checkConflictReservation(Integer, LocalDateTime) : boolean
+        + processNoShowReservation(Long) : void
+        + onReservationNoShowEvent(ReservationNoShowEvent) : void
+        + closeTable() : void {scheduled}
+        + getUpcomingReservations() : List<ReservationDTO>
+        + getReservationsByTableId(Integer) : List<ReservationDTO>
+        + searchUpcomingReservations(String) : List<ReservationDTO>
+        + findById(Long) : ReservationDTO
+        - broadcastTableStatusToGuests(Integer, TableStatus) : void
+        - broadcastTableStatusToCashier(...) : void
+    }
+
+    class ReservationSchedulerService {
+        - taskScheduler : TaskScheduler
+        - eventPublisher : ApplicationEventPublisher
+        - scheduledTasks : Map<Long, ScheduledFuture<?>>
+        --
+        + scheduleNoShowCheck(Long, LocalDateTime) : void
+        + cancelNoShowCheck(Long) : void
+        + updateNoShowCheck(Long, LocalDateTime) : void
+        - handleNoShow(Long) : void
+    }
+}
+
+package "Repository Layer" <<Rectangle>> REPOSITORY_COLOR {
+    interface ReservationRepository {
+        + findByIdWithLock(Long) : Reservation
+        + findAllReservationsByTableId(Integer) : List<Reservation>
+        + findUpcomingReservations() : List<Reservation>
+        + findDuplicateReservation(Integer, LocalDateTime) : Reservation
+        + findConflictReservation(Integer, LocalDateTime, LocalDateTime) : List<Reservation>
+        + findAllUpcomingReservationInRange(LocalDateTime, LocalDateTime) : List<Reservation>
+        + searchUpcomingReservations(LocalDateTime, String) : List<Reservation>
+    }
+
+    interface TableRepository {
+        + findById(Integer) : Optional<DiningTable>
+        + save(DiningTable) : DiningTable
+    }
+}
+
+package "Mapper Layer" <<Rectangle>> REPOSITORY_COLOR {
+    interface ReservationMapper {
+        + toReservationDTO(Reservation) : ReservationDTO
+        + toReservationEntity(ReservationCreateDTO) : Reservation
+        + toReservationUpdateDTO(ReservationDTO) : ReservationUpdateDTO
+    }
+}
+
+package "Entity Layer" <<Rectangle>> ENTITY_COLOR {
+    class Reservation {
+        - id : Long
+        - diningTable : DiningTable
+        - startTime : LocalDateTime
+        - createdAt : LocalDateTime
+        - status : Status
+        - phone : String
+        - name : String
+        - capacityExpected : int
+        - note : String
+        --
+        + Status enum {CONFIRMED, ARRIVED, CANCELED, NO_SHOW}
+    }
+
+    class DiningTable {
+        - id : Integer
+        - version : Integer {optimistic locking}
+        - tableStatus : TableStatus
+        - tableCondition : TableCondition
+        - createdAt : LocalDateTime
+        - updatedAt : LocalDateTime
+        - capacity : int
+        - reservations : List<Reservation>
+        - sessionList : List<Session>
+        --
+        + TableStatus enum {AVAILABLE, OCCUPIED, RESERVED, WAITING_PAYMENT}
+        + TableCondition enum {NEW, GOOD, WORN, DAMAGED, UNDER_REPAIR, RETIRED}
+    }
+}
+
+package "DTO Layer" <<Rectangle>> DTO_COLOR {
+    class ReservationDTO {
+        - id : Long
+        - tableId : Integer
+        - tableName : String
+        - customerName : String
+        - customerPhone : String
+        - capacityExpected : int
+        - startTime : LocalDateTime
+        - createdAt : LocalDateTime
+        - status : String
+        - note : String
+    }
+
+    class ReservationCreateDTO {
+        - tableId : Integer
+        - customerName : String
+        - customerPhone : String
+        - startTime : LocalDateTime
+        - capacityExpected : int
+        - note : String
+    }
+
+    class ReservationUpdateDTO {
+        - id : Long
+        - customerName : String
+        - customerPhone : String
+        - startTime : LocalDateTime
+        - capacityExpected : int
+        - note : String
+        - tableId : Integer
+    }
+}
+
+package "Event Layer" <<Rectangle>> EVENT_COLOR {
+    class ReservationNoShowEvent {
+        - reservationId : Long
+        - triggeredAt : LocalDateTime
+        --
+        + ReservationNoShowEvent(Object, Long)
+    }
+}
+
+package "WebSocket Layer" <<Rectangle>> EVENT_COLOR {
+    class TableStatusMessage {
+        - type : MessageType
+        - tableId : int
+        - oldStatus : TableStatus
+        - newStatus : TableStatus
+        - updatedBy : String
+        - timestamp : LocalDateTime
+        - message : String
+        --
+        + MessageType enum {TABLE_OCCUPIED, TABLE_RELEASED, TABLE_RESERVED, TABLE_PAYMENT_PENDING}
+    }
+}
+
+' Dependency Relationships
+CashierDashboardController ..> ReservationService : uses
+CashierDashboardController ..> ReservationMapper : uses
+ReservationService ..> ReservationRepository : uses
+ReservationService ..> TableRepository : uses
+ReservationService ..> ReservationMapper : uses
+ReservationService ..> ReservationSchedulerService : uses
+ReservationService ..> SimpMessagingTemplate : uses
+ReservationSchedulerService ..> ApplicationEventPublisher : uses
+ReservationSchedulerService ..> TaskScheduler : uses
+ReservationMapper ..> Reservation : uses
+ReservationMapper ..> ReservationDTO : uses
+ReservationMapper ..> ReservationCreateDTO : uses
+ReservationMapper ..> ReservationUpdateDTO : uses
+
+' Association Relationships
+ReservationRepository ..> Reservation : manages
+TableRepository ..> DiningTable : manages
+Reservation --> DiningTable : references
+DiningTable --> Reservation : contains
+
+' Event Relationships
+ReservationSchedulerService ..> ReservationNoShowEvent : publishes
+ReservationService ..> ReservationNoShowEvent : listens
+ReservationService ..> TableStatusMessage : creates
+
+' Notes
+note right of ReservationService
+  @Transactional methods
+  @Scheduled closeTable()
+  @EventListener onReservationNoShowEvent()
+end note
+
+note right of ReservationSchedulerService
+  Manages scheduled tasks
+  for NO_SHOW processing
+end note
+
+note right of Reservation
+  Entity with JPA annotations
+  @Entity @Table @Id @ManyToOne
+end note
+
+note right of DiningTable
+  Optimistic locking with @Version
+  @OptimisticLocking(type = VERSION)
+end note
+
+@enduml
+
+

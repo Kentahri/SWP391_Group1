@@ -37,14 +37,14 @@
                     <span class="order-id" th:text="${order.code}">ORD-XXX</span>
                     <span class="badge blue" th:if="${order.priority eq 'NORMAL'}">Bình thường</span>
                     <span class="badge orange" th:if="${order.priority eq 'PRIORITY'}">Ưu tiên</span>
-                    <span class="badge yellow" th:if="${order.status eq 'PROCESSING'}">Đang xử lý</span>
-                    <span class="badge gray" th:if="${order.status eq 'NEW'}">Mới</span>
+                    <span class="badge yellow" th:if="${order.status eq 'PREPARING'}">Đang chuẩn bị</span>
+                    <span class="badge green" th:if="${order.status eq 'SERVED'}">Đã phục vụ</span>
                     <span class="badge gray" th:if="${order.status eq 'COMPLETED'}">Hoàn thành</span>
-                    <!-- Bổ sung badge động nếu có trường khác -->
+                    <span class="badge red" th:if="${order.status eq 'CANCELLED'}">Đã hủy</span>
                 </div>
                 <div class="order-meta">
                     <span class="order-table"><i class="fa fa-map-marker-alt"></i>
-                        <span th:text="${order.tableName != null ? 'Bàn ' + order.tableName : order.type}">Bàn/Take away</span>
+                        <span th:text="${order.tableName != null ? order.tableName : order.type}">Bàn/Take away</span>
                     </span>
                     <span class="order-time"><i class="fa fa-clock"></i> <span th:text="${order.timeAgo}">5 phút trước</span></span>
                 </div>
@@ -55,7 +55,13 @@
                     </div>
                     <span><span th:text="${order.completedItems}">1</span>/<span th:text="${order.totalItems}">3</span></span>
                 </div>
-                <button class="order-detail-btn">Xem chi tiết</button>
+                <div class="order-info" th:if="${order.note != null and !order.note.isEmpty()}">
+                    <span class="order-note"><i class="fa fa-sticky-note"></i> <span th:text="${order.note}">Ghi chú</span></span>
+                </div>
+                <div class="order-total">
+                    <span class="total-price">Tổng: <span th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</span></span>
+                </div>
+                <a th:href="@{|/kitchen/order/${order.id}|}" class="order-detail-btn">Xem chi tiết</a>
             </div>
             <div th:if="${#lists.isEmpty(orders)}">Không có đơn nào.</div>
         </div>

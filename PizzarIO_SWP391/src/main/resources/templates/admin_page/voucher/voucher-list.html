@@ -6,6 +6,12 @@
     <title>Quản lý Voucher • Admin Dashboard</title>
     <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
     <link rel="stylesheet" th:href="@{/css/admin_page/voucher-list.css}" />
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
+    <meta
+      name="_csrf_parameter"
+      th:if="${_csrf != null}"
+      th:content="${_csrf.parameterName}"
+    />
   </head>
   <body>
     <div class="app">
@@ -87,6 +93,12 @@
 
               <form id="voucherForm" method="post" th:object="${voucherForm}">
                 <input type="hidden" th:field="*{id}" />
+                <input
+                  type="hidden"
+                  th:if="${_csrf != null}"
+                  th:name="${_csrf.parameterName}"
+                  th:value="${_csrf.token}"
+                />
 
                 <!-- Global Error Message -->
                 <div
@@ -429,6 +441,12 @@
                   style="display: inline; flex: 1"
                   onsubmit="return confirm('Bạn có chắc muốn thay đổi trạng thái?')"
                 >
+                  <input
+                    type="hidden"
+                    th:if="${_csrf != null}"
+                    th:name="${_csrf.parameterName}"
+                    th:value="${_csrf.token}"
+                  />
                   <button
                     type="submit"
                     class="btn-toggle"

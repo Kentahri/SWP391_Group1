@@ -43,6 +43,22 @@ public class ShiftController {
         return "admin_page/shift/shift-list";
     }
 
+    @GetMapping("/shift/create")
+    public String create(@RequestParam(required = false, defaultValue = "staff_shifts") String returnPage,
+                         RedirectAttributes redirectAttributes) {
+
+        // Prepare empty form and flag to open modal in create mode
+        redirectAttributes.addFlashAttribute("shiftForm", new ShiftDTO());
+        redirectAttributes.addFlashAttribute("openShiftModal", "create");
+
+        // Redirect back to the page that initiated the action
+        if ("shifts".equals(returnPage)) {
+            return "redirect:/manager/shifts";
+        } else {
+            return "redirect:/manager/staff_shifts";
+        }
+    }
+
     @GetMapping("/shift/edit/{id}")
     public String update(@PathVariable Integer id,
             @RequestParam(required = false, defaultValue = "staff_shifts") String returnPage,
@@ -68,13 +84,20 @@ public class ShiftController {
             BindingResult bindingResult,
             RedirectAttributes redirectAttributes) {
 
+        if (shiftDTO.getStartTime() != null && shiftDTO.getEndTime() != null) {
+            if (!shiftDTO.getStartTime().isBefore(shiftDTO.getEndTime())) {
+                bindingResult.rejectValue("endTime", "error.shiftForm",
+                        "Giờ bắt đầu phải trước giờ kết thúc");
+            }
+        }
+
         if (bindingResult.hasErrors()) {
             // If there are validation errors, return to modal with errors
             redirectAttributes.addFlashAttribute("shiftForm", shiftDTO);
             redirectAttributes.addFlashAttribute("openShiftModal", shiftDTO.getId() != null ? "edit" : "create");
             redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.shiftForm",
                     bindingResult);
-            return "redirect:/manager/staff_shifts";
+            return "redirect:/manager/shifts";
         }
 
         if (shiftDTO.getId() != null && shiftDTO.getId() > 0) {
@@ -87,7 +110,7 @@ public class ShiftController {
             redirectAttributes.addFlashAttribute("message", "Tạo ca làm việc thành công");
         }
 
-        return "redirect:/manager/staff_shifts";
+        return "redirect:/manager/shifts";
     }
 
     // Xóa
@@ -97,7 +120,7 @@ public class ShiftController {
         service.deleteShift(id);
 
         redirectAttributes.addFlashAttribute("message", "Delete thành công");
-        return "redirect:/manager/staff_shifts";
+        return "redirect:/manager/shifts";
     }
 
 }

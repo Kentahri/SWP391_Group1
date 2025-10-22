@@ -22,20 +22,14 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     /**
      * Tìm các tất cả reservation cho 1 bàn cụ thể
      */
-    @Query("SELECT r FROM Reservation r WHERE r.diningTable.id = :tableId")
+    @Query("SELECT r FROM Reservation r WHERE r.diningTable.id = :tableId ORDER BY r.startTime DESC")
     List<Reservation> findAllReservationsByTableId(@Param("tableId") Integer tableId);
 
     /**
      * Tìm tất cả reservation
      */
-    @Query("SELECT r FROM Reservation r ORDER BY r.startTime ASC")
+    @Query("SELECT r FROM Reservation r ORDER BY r.startTime DESC")
     List<Reservation> findUpcomingReservations();
-
-    /**
-     * Tìm các reservation đã confirmed cho một bàn cụ thể
-     */
-    @Query("SELECT r FROM Reservation r WHERE r.status = 'CONFIRMED' AND r.diningTable.id = :tableId")
-    List<Reservation> findActiveReservationsByTableId(@Param("tableId") Integer tableId);
 
     /**
      * Tìm các reservation trong thời gian chính xác cho một bàn
@@ -55,15 +49,16 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     /**
      * Tìm reservation trong tất cả các bàn theo khoảng thời gian
      */
-    @Query("select r from Reservation r where r.status = 'CONFIRMED' and r.startTime between :from and :to")
+    @Query("select r from Reservation r where r.status = 'CONFIRMED' " +
+            "and r.startTime between :from and :to " +
+            "and r.diningTable.tableStatus != 'RESERVED'")
     List<Reservation> findAllUpcomingReservationInRange(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
     /**
      * Tìm kiếm reservation theo tên khách hàng, số điện thoại
      */
     @Query("SELECT r FROM Reservation r " +
-           "WHERE r.startTime > :now " +
-           "AND (LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "WHERE (LOWER(r.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
            "OR r.phone LIKE CONCAT('%', :keyword, '%')) ")
     List<Reservation> searchUpcomingReservations(@Param("now") LocalDateTime now, @Param("keyword") String keyword);
 

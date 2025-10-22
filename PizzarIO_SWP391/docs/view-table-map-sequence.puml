@@ -1,0 +1,39 @@
+@startuml View Table Map Sequence Diagram
+
+actor Cashier
+participant "CashierDashboardController" as Controller
+participant "TableService" as Service
+participant "TableRepository" as Repo
+participant "TableMapper" as Mapper
+participant "DiningTable" as Entity
+participant "TableForCashierDTO" as DTO
+participant "SimpMessagingTemplate" as WebSocket
+
+group Load Table Map
+    Cashier -> Controller: GET /cashier
+    activate Controller
+    
+    Controller -> Service: getTablesForCashier()
+    activate Service
+    
+    Service -> Repo: findAll()
+    activate Repo
+    Repo --> Service: List<DiningTable>
+    deactivate Repo
+    
+    loop For each table
+        Service -> Mapper: toTableForCashierDTO(table)
+        activate Mapper
+        Mapper --> Service: TableForCashierDTO
+        deactivate Mapper
+    end
+    
+    Service --> Controller: List<TableForCashierDTO>
+    deactivate Service
+    
+    Controller --> Cashier: cashier-dashboard.html with table grid
+    deactivate Controller
+end
+
+@enduml
+

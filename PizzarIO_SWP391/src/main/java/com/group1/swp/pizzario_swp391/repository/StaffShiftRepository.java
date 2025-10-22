@@ -124,4 +124,16 @@ public interface StaffShiftRepository extends JpaRepository<StaffShift, Integer>
           @Param("staffId") Integer staffId,
           @Param("shiftId") Integer shiftId);
 
+  @Query("""
+    select ss from StaffShift ss
+    join fetch ss.shift sh
+    join fetch ss.staff
+    where ss.staff.id = :staffId
+          and ss.workDate = :today
+    order by sh.startTime asc
+""")
+  List<StaffShift> findAllShiftsByStaffIdAndDate(
+          @Param("staffId") Integer staffId,
+          @Param("today") LocalDate today
+  );
 }
