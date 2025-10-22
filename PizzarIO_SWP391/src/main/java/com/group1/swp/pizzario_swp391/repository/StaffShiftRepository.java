@@ -136,4 +136,6 @@ public interface StaffShiftRepository extends JpaRepository<StaffShift, Integer>
           @Param("staffId") Integer staffId,
           @Param("today") LocalDate today
   );
+
+  List<StaffShift> findByWorkDateBetween(LocalDate start, LocalDate end);
 }
