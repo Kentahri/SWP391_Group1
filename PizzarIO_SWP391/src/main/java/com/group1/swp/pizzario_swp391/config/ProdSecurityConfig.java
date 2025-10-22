@@ -28,7 +28,6 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
 
-
 @Profile("!dev")
 @Configuration
 @EnableMethodSecurity
