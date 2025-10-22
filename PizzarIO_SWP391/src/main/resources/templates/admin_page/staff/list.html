@@ -83,7 +83,7 @@
 
                     <div
                       style="color: #111827; font-weight: 600"
-                      th:text="${s.salaryPerShift != null ? #numbers.formatDecimal(s.salaryPerShift,0,'COMMA', 0) + ' VND' : '—'}"
+                      th:text="${s.salaryPerShift != null ? #numbers.formatDecimal(s.salaryPerShift, 1, 'COMMA', 0, 'POINT') + ' VND' : '—'}"
                     ></div>
                   </div>
                 </div>
