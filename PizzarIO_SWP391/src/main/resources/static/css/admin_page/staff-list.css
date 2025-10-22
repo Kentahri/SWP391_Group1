@@ -14,7 +14,7 @@ body {
   color: var(--text);
 }
 .container {
-  max-width: 1000px;
+  max-width: 1400px;
   margin: 40px auto;
   padding: 24px;
 }
@@ -51,6 +51,7 @@ td {
   padding: 10px;
   border-bottom: 1px solid var(--border);
   text-align: left;
+  vertical-align: middle;
 }
 th {
   background: #f3f4f6;
@@ -69,4 +70,116 @@ th {
 }
 .delete-btn:hover {
   filter: brightness(1.1);
+}
+
+/* ======= STATS SECTION ======= */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-card .label {
+  font-size: 15px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.stat-card h2 {
+  margin: 4px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.stat-card .note {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.stat-card .note.active {
+  color: #16a34a; /* Xanh lá */
+}
+
+.stat-card .note.purple {
+  color: #7c3aed; /* Tím */
+}
+
+/* ======= INACTIVE STAFF STYLING ======= */
+.inactive-staff {
+  opacity: 0.6;
+  background-color: #f8f9fa;
+}
+
+.inactive-staff td {
+  color: #6b7280;
+}
+
+.inactive-staff .resigned-badge {
+  background-color: #9ca3af;
+  color: #ffffff;
+}
+
+.resigned-badge {
+  background-color: #6b7280;
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  display: inline-block;
+  line-height: 1.2;
+}
+
+.status-active {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.status-inactive {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.toggle-btn {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+.deactivate-btn {
+  background-color: #ef4444;
+  color: white;
+}
+
+.deactivate-btn:hover {
+  background-color: #dc2626;
+}
+
+.activate-btn {
+  background-color: #16a34a;
+  color: white;
+}
+
+.activate-btn:hover {
+  background-color: #15803d;
 }

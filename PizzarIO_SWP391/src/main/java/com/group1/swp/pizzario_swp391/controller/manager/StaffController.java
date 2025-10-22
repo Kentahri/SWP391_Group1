@@ -1,9 +1,10 @@
 package com.group1.swp.pizzario_swp391.controller.manager;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
-// ...existing code...
 
 import jakarta.validation.Valid;
 
@@ -14,13 +15,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.group1.swp.pizzario_swp391.dto.staff.StaffCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffUpdateDTO;
 import com.group1.swp.pizzario_swp391.entity.Staff;
+import com.group1.swp.pizzario_swp391.service.ShiftService;
 import com.group1.swp.pizzario_swp391.service.StaffService;
 
 import lombok.RequiredArgsConstructor;
@@ -29,15 +30,34 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @ManagerUrl
 public class StaffController {
-
-    final StaffService staffService;
+    private final StaffService staffService;
+    private final ShiftService shiftService;
 
     // READ: list all staff
     @GetMapping("/staff")
     public String listStaffs(Model model) {
+        // Get staff data
         List<StaffResponseDTO> staffs = staffService.getAllStaff();
         model.addAttribute("staffs", staffs);
         model.addAttribute("roles", Staff.Role.values());
+
+        // Get shift data for salary display
+        var shifts = shiftService.findAllDto();
+        model.addAttribute("shifts", shifts);
+
+        // Get payroll totals for charts
+        Map<String, Long> totals = shiftService.getWeeklyPayrollTotals();
+        List<String> labels = new ArrayList<>(totals.keySet());
+        List<Long> data = new ArrayList<>(totals.values());
+        model.addAttribute("chartLabels", labels);
+        model.addAttribute("chartData", data);
+
+        // Calculate stats
+        long totalStaff = staffs.size();
+        long activeStaff = staffs.stream().filter(StaffResponseDTO::isActive).count();
+        model.addAttribute("totalStaff", totalStaff);
+        model.addAttribute("activeStaff", activeStaff);
+
         return "admin_page/staff/list";
     }
 
@@ -70,8 +90,8 @@ public class StaffController {
             model.addAttribute("error", errorMsg);
             return "admin_page/staff/create";
         }
-        ra.addFlashAttribute("success", "Created staff successfully");
-        return "redirect:staff";
+        ra.addFlashAttribute("success", "Tạo nhân viên mới thành công!");
+        return "redirect:/manager/staff";
     }
 
     // UPDATE: show edit form
@@ -109,10 +129,22 @@ public class StaffController {
         return "redirect:/manager/staff";
     }
 
-    // DELETE
-    @PostMapping("/staff/delete/{id}")
-    public String deleteStaff(@PathVariable int id) {
-        staffService.deleteStaffById(id);
+    // TOGGLE ACTIVE STATUS
+    @GetMapping("/staff/toggle-active/{id}")
+    public String toggleActive(@PathVariable int id, RedirectAttributes redirectAttributes) {
+        try {
+            System.out.println("=== TOGGLE ACTIVE CALLED ===");
+            System.out.println("Staff ID: " + id);
+            System.out.println("Endpoint: /pizzario/manager/staff/toggle-active/" + id);
+            
+            staffService.toggleStaffActive(id);
+            redirectAttributes.addFlashAttribute("success", "Cập nhật trạng thái nhân viên thành công");
+            System.out.println("Toggle successful");
+        } catch (RuntimeException e) {
+            System.err.println("Error toggling staff active status: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Không thể cập nhật trạng thái nhân viên: " + e.getMessage());
+        }
         return "redirect:/manager/staff";
     }
+
 }
