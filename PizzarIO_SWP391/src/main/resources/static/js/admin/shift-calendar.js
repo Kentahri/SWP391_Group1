@@ -1,15 +1,61 @@
-/**
- * Shift Calendar JavaScript
- * Handles week navigation, filters, shift editing, and tab switching
- */
-
 (function () {
   "use strict";
 
+  document.addEventListener("DOMContentLoaded", function () {
+    setupShiftTypeModal();
+    setupStaffShiftModal();
+  });
+
+  function setupShiftTypeModal() {
+    const modal = document.getElementById("shiftTypeModal");
+    const form = document.getElementById("shiftTypeForm");
+
+    if (!modal || !form) return;
+
+    if (window.openShiftModalFlag) {
+      modal.classList.add("show");
+      const title = document.getElementById("shiftModalTitle");
+      if (title) {
+        title.textContent =
+          window.openShiftModalFlag === "create"
+            ? "Thêm loại ca mới"
+            : "Sửa loại ca";
+      }
+      switchTab("shifts");
+    }
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeShiftModal();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modal.classList.contains("show")) {
+        closeShiftModal();
+      }
+    });
+  }
+
+  window.openShiftModal = function () {
+    window.location.href =
+      "/pizzario/manager/shift/create?modal=true&returnPage=staff_shifts";
+  };
+
   /**
-   * Switch between tabs
-   * @param {string} tabName - 'calendar' or 'shifts'
+   * Close Shift Type Modal
    */
+  window.closeShiftModal = function () {
+    const modal = document.getElementById("shiftTypeModal");
+    if (modal) {
+      modal.classList.remove("show");
+      // Redirect to clear any edit parameters
+      window.location.href = "/pizzario/manager/staff_shifts";
+    }
+  };
+
+  window.editShiftType = function (shiftId) {
+    window.location.href = "/pizzario/manager/shift/edit/" + shiftId;
+  };
+
   window.switchTab = function (tabName) {
     // Remove active class from all tabs and buttons
     document.querySelectorAll(".tab-btn").forEach((btn) => {
@@ -27,10 +73,6 @@
     if (activeContent) activeContent.classList.add("active");
   };
 
-  /**
-   * Navigate to different week
-   * @param {number} offset - Week offset (-1 for previous, +1 for next)
-   */
   window.navigateWeek = function (offset) {
     const url = new URL(window.location);
     const currentOffset = parseInt(url.searchParams.get("weekOffset")) || 0;
@@ -38,9 +80,6 @@
     window.location.href = url.toString();
   };
 
-  /**
-   * Filter by staff
-   */
   window.filterByStaff = function () {
     const staffId = document.getElementById("staffFilter").value;
     const url = new URL(window.location);
@@ -52,9 +91,6 @@
     window.location.href = url.toString();
   };
 
-  /**
-   * Filter by shift type
-   */
   window.filterByShift = function () {
     const shiftId = document.getElementById("shiftFilter").value;
     const url = new URL(window.location);
@@ -66,11 +102,71 @@
     window.location.href = url.toString();
   };
 
-  /**
-   * Edit shift
-   * @param {number} shiftId - Shift ID to edit
-   */
   window.editShift = function (shiftId) {
-    window.location.href = "/manager/staff_shifts/create?editId=" + shiftId;
+    // Preserve current URL parameters when editing
+    const currentUrl = new URL(window.location);
+    const editUrl = new URL(
+      "/pizzario/manager/staff_shifts/edit/" + shiftId,
+      window.location.origin
+    );
+
+    // Copy all query parameters from current URL to edit URL
+    currentUrl.searchParams.forEach((value, key) => {
+      editUrl.searchParams.set(key, value);
+    });
+
+    window.location.href = editUrl.toString();
+  };
+
+  function setupStaffShiftModal() {
+    const modal = document.getElementById("staffShiftModal");
+    const form = document.getElementById("staffShiftForm");
+
+    if (!modal || !form) return;
+
+    // Show modal if needed (for edit mode)
+    if (window.openStaffShiftModalFlag) {
+      modal.classList.add("show");
+      const title = document.getElementById("staffShiftModalTitle");
+      if (title) {
+        title.textContent =
+          window.openStaffShiftModalFlag === "create"
+            ? "Thêm ca làm việc"
+            : "Sửa ca làm việc";
+      }
+    }
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeStaffShiftModal();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modal.classList.contains("show")) {
+        closeStaffShiftModal();
+      }
+    });
+  }
+
+  window.openStaffShiftModal = function () {
+    // Redirect to server to get a fresh empty form, preserve current URL parameters
+    const currentUrl = new URL(window.location);
+    const createUrl = new URL(
+      "/pizzario/manager/staff_shifts/create",
+      window.location.origin
+    );
+
+    // Copy all query parameters from current URL to create URL
+    currentUrl.searchParams.forEach((value, key) => {
+      createUrl.searchParams.set(key, value);
+    });
+
+    window.location.href = createUrl.toString();
+  };
+
+  window.closeStaffShiftModal = function () {
+    const modal = document.getElementById("staffShiftModal");
+    if (modal) {
+      modal.classList.remove("show");
+    }
   };
 })();

@@ -2,11 +2,13 @@ package com.group1.swp.pizzario_swp391.controller.manager;
 
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import com.group1.swp.pizzario_swp391.dto.voucher.VoucherDTO;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import com.group1.swp.pizzario_swp391.entity.Voucher;
 import com.group1.swp.pizzario_swp391.service.VoucherService;
@@ -21,18 +23,30 @@ public class VoucherController {
     VoucherService voucherService;
 
     @GetMapping("/vouchers")
-    public String voucher(Model model) {
+    public String listVouchers(Model model) {
         model.addAttribute("voucherTypes", Voucher.VoucherType.values());
-        model.addAttribute("voucherDTO", new VoucherDTO());
+        model.addAttribute("voucherForm", new VoucherDTO());
         model.addAttribute("vouchers", voucherService.getVouchersSort());
-        return "admin_page/voucher/voucher";
+        model.addAttribute("stats", voucherService.getVoucherAnalytics());
+        return "admin_page/voucher/voucher-list";
+    }
+
+    @GetMapping("/vouchers/new")
+    public String newVoucher(Model model) {
+        model.addAttribute("voucherTypes", Voucher.VoucherType.values());
+        model.addAttribute("voucherForm", new VoucherDTO());
+        model.addAttribute("vouchers", voucherService.getVouchersSort());
+        model.addAttribute("stats", voucherService.getVoucherAnalytics());
+        model.addAttribute("openModal", "create");
+        return "admin_page/voucher/voucher-list";
     }
 
     @GetMapping("/vouchers/edit/{id}")
     public String editVoucher(@PathVariable Long id, Model model) {
         Voucher voucher = voucherService.getVoucherById(id)
                 .orElseThrow(() -> new RuntimeException("Voucher not found"));
-        VoucherDTO voucherDTO = VoucherDTO.builder()
+        VoucherDTO voucherForm = VoucherDTO.builder()
+                .id(id)
                 .code(voucher.getCode())
                 .type(voucher.getType())
                 .value(voucher.getValue())
@@ -42,47 +56,51 @@ public class VoucherController {
                 .minOrderAmount(voucher.getMinOrderAmount())
                 .validFrom(voucher.getValidFrom())
                 .validTo(voucher.getValidTo())
-                .isActive(voucher.isActive())
+                .active(voucher.isActive())
                 .build();
-        model.addAttribute("voucherDTO", voucherDTO);
-        model.addAttribute("voucherId", id);
+        model.addAttribute("voucherForm", voucherForm);
         model.addAttribute("voucherTypes", Voucher.VoucherType.values());
-        return "admin_page/voucher/voucher_edit";
+        model.addAttribute("vouchers", voucherService.getVouchersSort());
+        model.addAttribute("stats", voucherService.getVoucherAnalytics());
+        model.addAttribute("openModal", "edit");
+        return "admin_page/voucher/voucher-list";
     }
 
-    @PostMapping("/add")
-    public String createNewVoucher(@ModelAttribute VoucherDTO voucherDTO, Model model, RedirectAttributes redirectAttributes) {
+    @PostMapping("/vouchers/save")
+    public String saveVoucher(@Valid @ModelAttribute("voucherForm") VoucherDTO voucherForm,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("voucherTypes", Voucher.VoucherType.values());
+            model.addAttribute("vouchers", voucherService.getVouchersSort());
+            model.addAttribute("stats", voucherService.getVoucherAnalytics());
+            model.addAttribute("openModal", voucherForm.getId() == null ? "create" : "edit");
+            model.addAttribute("hasErrors", true);
+            return "admin_page/voucher/voucher-list";
+        }
+
         try {
-            voucherService.createNewVoucher(voucherDTO);
-            redirectAttributes.addFlashAttribute("successMessage", "Tạo voucher thành công!");
-            return "redirect:/voucher";
+            if (voucherForm.getId() == null) {
+                voucherService.createNewVoucher(voucherForm);
+            } else {
+                voucherService.updateVoucher(voucherForm.getId(), voucherForm);
+            }
+            return "redirect:/manager/vouchers";
         } catch (Exception ex) {
             model.addAttribute("voucherTypes", Voucher.VoucherType.values());
             model.addAttribute("vouchers", voucherService.getVouchersSort());
-            model.addAttribute("voucherDTO", voucherDTO); // Để giữ lại dữ liệu form vừa nhập
-            model.addAttribute("errorMessage", "Không thể tạo voucher vì: " + ex.getMessage());
-            return "admin_page/voucher/voucher";
+            model.addAttribute("stats", voucherService.getVoucherAnalytics());
+            model.addAttribute("openModal", voucherForm.getId() == null ? "create" : "edit");
+            model.addAttribute("errorMessage", ex.getMessage());
+            return "admin_page/voucher/voucher-list";
         }
     }
 
-    @PostMapping("/vouchers/delete/{id}")
-    public String deleteVoucher(@PathVariable Long id) {
-        voucherService.deleteVoucher(id);
+    @PostMapping("/vouchers/toggle/{id}")
+    public String toggleActive(@PathVariable Long id) {
+        voucherService.toggleVoucherActive(id);
         return "redirect:/manager/vouchers";
-    }
-
-    @PostMapping("/update/{id}")
-    public String updateVoucher(@PathVariable Long id, @ModelAttribute VoucherDTO voucherDTO, Model model, RedirectAttributes redirectAttributes) {
-        try {
-            voucherService.updateVoucher(id, voucherDTO);
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật voucher thành công!");
-            return "redirect:/voucher";
-        } catch (Exception ex) {
-            model.addAttribute("voucherDTO", voucherDTO);
-            model.addAttribute("voucherId", id);
-            model.addAttribute("voucherTypes", Voucher.VoucherType.values());
-            model.addAttribute("errorMessage", "Không thể cập nhật voucher vì: " + ex.getMessage());
-            return "admin_page/voucher/voucher_edit";
-        }
     }
 }

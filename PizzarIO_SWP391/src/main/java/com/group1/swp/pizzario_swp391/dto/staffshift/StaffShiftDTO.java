@@ -15,27 +15,29 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class StaffShiftDTO {
 
-    @NotNull(message = "Staff ID is required")
+    private Integer id;
+
+    @NotNull(message = "Vui lòng chọn nhân viên")
     private Integer staffId;
 
-    @NotNull(message = "Shift ID is required")
+    @NotNull(message = "Vui lòng chọn loại ca")
     private Integer shiftId;
 
-    @NotNull(message = "Work date is required")
+    @NotNull(message = "Vui lòng chọn ngày làm việc")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    @FutureOrPresent(message = "Work date cannot be in the past")
     private LocalDate workDate;
 
-    @NotBlank(message = "Status is required")
-    @Pattern(regexp = "SCHEDULED|CHECKED_IN|CHECKED_OUT",
-            message = "Status must be one of: SCHEDULED, CHECKED_IN, CHECKED_OUT")
+    @NotBlank(message = "Vui lòng chọn trạng thái")
     private String status;
 
     private LocalDateTime checkIn;
 
     private LocalDateTime checkOut;
 
-    @NotNull(message = "Hourly wage is required")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Hourly wage must be greater than 0")
+    @NotNull(message = "Vui lòng nhập lương theo giờ")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Lương theo giờ phải lớn hơn 0")
     private BigDecimal hourlyWage;
+
+    @Size(max = 500, message = "Ghi chú không được vượt quá 500 ký tự")
+    private String note;
 }

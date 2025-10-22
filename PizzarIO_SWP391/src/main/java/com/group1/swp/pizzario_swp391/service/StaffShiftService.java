@@ -1,6 +1,10 @@
 package com.group1.swp.pizzario_swp391.service;
 
+import com.group1.swp.pizzario_swp391.dto.data_analytics.StaffShiftCalendarDTO;
+import com.group1.swp.pizzario_swp391.dto.data_analytics.StatsStaffShiftDTO;
+import com.group1.swp.pizzario_swp391.dto.data_analytics.WeekDayDTO;
 import com.group1.swp.pizzario_swp391.dto.staffshift.StaffShiftDTO;
+import com.group1.swp.pizzario_swp391.dto.staffshift.StaffShiftResponseDTO;
 import com.group1.swp.pizzario_swp391.entity.StaffShift;
 import com.group1.swp.pizzario_swp391.mapper.StaffShiftMapper;
 import com.group1.swp.pizzario_swp391.repository.ShiftRepository;
@@ -11,7 +15,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,9 +30,6 @@ public class StaffShiftService {
     private final StaffRepository staffRepository;
     private final ShiftRepository shiftRepository;
 
-    public List<StaffShift> search(LocalDate from, LocalDate to, Integer shiftId, Integer staffId) {
-        return staffShiftRepository.search(from, to, shiftId, staffId);
-    }
 
     @Transactional
     public void create(StaffShiftDTO staffShiftDTO) {
@@ -68,6 +72,65 @@ public class StaffShiftService {
                 .orElseThrow(() -> new RuntimeException("STAFFSHIFT NOT FOUND"));
 
         staffShiftRepository.delete(staffShift);
+    }
 
+    public StatsStaffShiftDTO getAnalyticsStaffShift() {
+        Integer totalShifts = staffShiftRepository.findAll().size();
+        Integer totalHours = staffShiftRepository.totalHours();
+        Double totalWage = staffShiftRepository.totalWage();
+        Integer completedShifts = staffShiftRepository.completedShift();
+
+        return new StatsStaffShiftDTO(totalShifts, totalHours, totalWage, completedShifts);
+    }
+
+    public List<StaffShiftResponseDTO> findByDateRangeWithFilters(LocalDate weekStart, LocalDate weekEnd,
+            Long staffId, Long shiftId) {
+        List<StaffShift> staffShifts;
+
+        if (staffId != null && shiftId != null) {
+            staffShifts = staffShiftRepository.findByWeekRangeAndFilters(
+                    weekStart, weekEnd, staffId.intValue(), shiftId.intValue());
+        } else if (staffId != null) {
+            staffShifts = staffShiftRepository.findByWeekRangeAndStaff(
+                    weekStart, weekEnd, staffId.intValue());
+        } else if (shiftId != null) {
+            staffShifts = staffShiftRepository.findByWeekRangeAndShift(
+                    weekStart, weekEnd, shiftId.intValue());
+        } else {
+            staffShifts = staffShiftRepository.findByWeekRange(weekStart, weekEnd);
+        }
+
+        return staffShifts.stream()
+                .map(staffShiftMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<WeekDayDTO> buildWeekDays(LocalDate weekStart, LocalDate weekEnd,
+            List<StaffShiftResponseDTO> staffShifts) {
+
+        Map<LocalDate, List<StaffShiftCalendarDTO>> shiftsByDate = staffShifts.stream()
+                .collect(Collectors.groupingBy(
+                        StaffShiftResponseDTO::getWorkDate,
+                        Collectors.mapping(
+                                staffShiftMapper::toCalendarDTO,
+                                Collectors.toList())));
+
+
+        List<WeekDayDTO> weekDays = new ArrayList<>();
+        String[] dayNames = { "T2", "T3", "T4", "T5", "T6", "T7", "CN" };
+        LocalDate today = LocalDate.now();
+
+        for (int i = 0; i < 7; i++) {
+            LocalDate date = weekStart.plusDays(i);
+            List<StaffShiftCalendarDTO> shiftsForDay = shiftsByDate.getOrDefault(date, new ArrayList<>());
+
+            weekDays.add(new WeekDayDTO(
+                    date,
+                    dayNames[i],
+                    date.equals(today),
+                    shiftsForDay));
+        }
+
+        return weekDays;
     }
 }

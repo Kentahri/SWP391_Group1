@@ -62,7 +62,8 @@ public class Voucher {
         PERCENTAGE, FIXED_AMOUNT
     }
 
-    public Voucher(String code, VoucherType type, double value, String description, int maxUses, int timesUsed, double minOrderAmount, LocalDateTime validFrom, LocalDateTime validTo, boolean isActive) {
+    public Voucher(String code, VoucherType type, double value, String description, int maxUses, int timesUsed,
+            double minOrderAmount, LocalDateTime validFrom, LocalDateTime validTo, boolean isActive) {
         this.code = code;
         this.type = type;
         this.value = value;
@@ -74,5 +75,5 @@ public class Voucher {
         this.validTo = validTo;
         this.isActive = isActive;
     }
-    
+
 }

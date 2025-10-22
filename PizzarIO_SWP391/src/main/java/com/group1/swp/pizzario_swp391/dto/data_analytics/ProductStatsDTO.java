@@ -8,7 +8,6 @@ public record ProductStatsDTO(
         Integer quantitySold,
         Long totalRevenue
 ) {
-    // Constructor bổ sung nếu không cần productId
     public ProductStatsDTO(String productName, Integer orderCount, Integer quantitySold, Long totalRevenue) {
         this(null, productName, orderCount, quantitySold, totalRevenue);
     }

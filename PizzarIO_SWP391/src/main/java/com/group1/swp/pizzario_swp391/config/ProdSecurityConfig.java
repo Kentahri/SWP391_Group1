@@ -50,7 +50,7 @@ public class ProdSecurityConfig {
                 log.warn("Warning: " + ex);
             }
             var a = auth.getAuthorities();
-            String target = a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_MANAGER")) ? "/manager"
+            String target = a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_MANAGER")) ? "/manager/analytics"
                     : a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_KITCHEN")) ? "/kitchen"
                     : a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_CASHIER")) ? "/cashier" : "/";
             res.sendRedirect(req.getContextPath() + target);
@@ -128,9 +128,6 @@ public class ProdSecurityConfig {
             res.sendRedirect(req.getContextPath() + "/login?error=" + code);
         };
     }
-
-
-
 
     @Bean
     SecurityFilterChain prodFilter(
