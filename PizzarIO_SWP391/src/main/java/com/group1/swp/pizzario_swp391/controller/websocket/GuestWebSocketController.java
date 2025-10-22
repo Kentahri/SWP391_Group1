@@ -1,5 +1,6 @@
 package com.group1.swp.pizzario_swp391.controller.websocket;
 
+import com.group1.swp.pizzario_swp391.service.GuestService;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -24,7 +25,7 @@ import lombok.*;
 @RequiredArgsConstructor
 public class GuestWebSocketController {
 
-    WebSocketService webSocketService;
+    GuestService guestService;
 
     /**
      * Handle table selection from guest tablet
@@ -34,7 +35,7 @@ public class GuestWebSocketController {
     @MessageMapping("/guest/select-table")
     public void selectTable(TableSelectionRequest request) {
         log.info("Guest {} requesting table {}", request.getSessionId(), request.getTableId());
-        webSocketService.handleTableSelection(request);
+        guestService.handleTableSelection(request);
     }
 }
 

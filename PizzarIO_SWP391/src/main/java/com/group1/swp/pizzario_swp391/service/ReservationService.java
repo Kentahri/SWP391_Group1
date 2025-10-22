@@ -235,14 +235,17 @@ public class ReservationService {
     @Transactional
     public void openTableForGuestWithReservation(Long reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy reservation"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy reservation!"));
 
         reservationSchedulerService.cancelNoShowCheck(reservationId);
         reservation.setStatus(Reservation.Status.ARRIVED);
         
         DiningTable table = reservation.getDiningTable();
         DiningTable.TableStatus oldStatus = table.getTableStatus();
-        table.setTableStatus(DiningTable.TableStatus.OCCUPIED);
+        if(oldStatus.equals(DiningTable.TableStatus.OCCUPIED) || oldStatus.equals(DiningTable.TableStatus.WAITING_PAYMENT)){
+            throw new RuntimeException("Bàn đang có khách, không thể mở!");
+        }
+        table.setTableStatus(DiningTable.TableStatus.AVAILABLE);
 
         tableRepository.save(table);
         reservationRepository.save(reservation);
@@ -250,13 +253,12 @@ public class ReservationService {
         // Broadcast WebSocket
         webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
         webSocketService.broadcastTableStatusToCashier(
-            TableStatusMessage.MessageType.TABLE_OCCUPIED,
+            TableStatusMessage.MessageType.TABLE_RELEASED,
             table.getId(),
             oldStatus,
             table.getTableStatus(),
             "CASHIER",
-            String.format("Khách đã đến - Đặt bàn #%d (%s - %s)", 
-                         reservationId, reservation.getName(), reservation.getPhone())
+            String.format("Mở bàn #%d", table.getId())
         );
         
         log.info("Đã mở bàn {} cho reservation {} (khách đã đến)", table.getId(), reservationId);
@@ -323,7 +325,6 @@ public class ReservationService {
                 "Khách không đến sau 15 phút, bàn được mở lại (Reservation #" + reservationId + ")"
             );
         }else {
-//            broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
             webSocketService.broadcastTableStatusToGuests(table.getId(),table.getTableStatus());
             webSocketService.broadcastTableStatusToCashier(
                     TableStatusMessage.MessageType.TABLE_RESERVED,
