@@ -16,4 +16,5 @@ public interface ShiftMapper {
     List<ShiftDTO> toShiftDTOs(List<Shift> shifts);
 
     ShiftDTO toShiftDTO(Shift shift);
+    
 }
