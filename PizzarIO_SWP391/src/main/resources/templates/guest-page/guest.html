@@ -2,80 +2,113 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-
-    <title>GUEST</title>
+    <title>Guest | Table Selection</title> <!-- WebSocket -->
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-    <script th:src="@{/js/guest-websocket.js}"></script>
-    <style>
-        body {
-            font-family: Segoe UI, sans-serif;
-            padding: 20px;
-        }
+    <script th:src="@{/js/guest/guest-websocket.js}"></script>
+    <style> :root {
+        --primary: #1976d2;
+        --success: #2e7d32;
+        --error: #c62828;
+        --bg: #f9fafb;
+        --card-bg: #fff;
+        --disabled: #d0d0d0;
+    }
 
-        .tables {
-            display: grid;
-            grid-template-columns: repeat(3, 120px);
-            gap: 12px;
-        }
+    body {
+        font-family: "Segoe UI", sans-serif;
+        background: var(--bg);
+        color: #333;
+        margin: 0;
+        padding: 24px;
+    }
 
-        .t {
-            background: #eee;
-            padding: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
-            transition: box-shadow .2s ease, outline-color .2s ease;
-        }
+    h2 {
+        text-align: center;
+        color: var(--primary);
+        font-weight: 600;
+    }
 
-        .t.suggest {
-            outline: 2px dashed #2e7d32;
-            box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2) inset;
-        }
+    #guest-result {
+        text-align: center;
+        margin: 16px 0;
+        font-weight: 500;
+    }
 
-        .t.disabled {
-            opacity: 0.5;
-            pointer-events: none;
-        }
+    .guest-result.success {
+        color: var(--success);
+    }
 
-        .guest-result {
-            margin-top: 12px;
-        }
+    .guest-result.error {
+        color: var(--error);
+    }
 
-        .guest-result.success {
-            color: #2e7d32;
-        }
+    .tables {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 16px;
+        max-width: 600px;
+        margin: 0 auto;
+    }
 
-        .guest-result.error {
-            color: #c62828;
-        }
-    </style>
+    .t {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 18px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        cursor: pointer;
+        text-align: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .t:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .t.disabled {
+        opacity: 0.6;
+        pointer-events: none;
+        background: var(--disabled);
+    }
+
+    .t.suggest {
+        outline: 3px dashed var(--success);
+        background: #e8f5e9;
+    }
+
+    .t span {
+        display: block;
+        font-weight: 600;
+        font-size: 16px;
+        color: var(--primary);
+    }
+
+    .status {
+        margin-top: 6px;
+        font-size: 13px;
+        color: #555;
+    }
+
+    footer {
+        margin-top: 32px;
+        text-align: center;
+        font-size: 13px;
+        color: #777;
+    } </style>
 </head>
-<body>
-<h2>GUEST</h2>
-<div id="guest-result" class="guest-result">Chọn 1 bàn bất kỳ</div>
+<body><h2>Chọn Bàn</h2>
+<div id="guest-result" class="guest-result">Chọn 1 bàn bất kỳ để tiếp tục</div>
 <div class="tables">
-    <div th:each="t : ${tables}"
-         th:id="${'table-' + t.id}"
-         class="t"
+    <div th:each="t : ${tables}" th:id="${'table-' + t.id}" class="t"
          th:classappend="${t.tableStatus.name() == 'AVAILABLE'} ? '' : ' disabled'"
          th:title="${'Sức chứa: ' + t.capacity + ' - Trạng thái: ' + t.tableStatus}"
-         th:onclick="|guestSelectTable(${t.id})|">
-        <span th:text="${'Bàn ' + t.id}">Bàn</span>
-        <div class="status" style="font-size:12px; margin-top:4px;"
-             th:text="${t.tableStatus}">AVAILABLE
-        </div>
+         th:onclick="|guestSelectTable(${t.id})|"><span th:text="${'Bàn ' + t.id}">Bàn</span>
+        <div class="status" th:text="${t.tableStatus}">AVAILABLE</div>
     </div>
 </div>
-
-<script th:inline="javascript">
-    window.APP_CTX = /*[[@{/}]]*/ '/';
-    window.addEventListener('DOMContentLoaded', function () {
-        initGuestWebSocket();
-    });
-</script>
+<footer> © 2025 Restaurant System – Guest View</footer>
 </body>
 </html>
