@@ -29,4 +29,7 @@ public class ShiftDTO {
     LocalDateTime endTime;
 
     LocalDateTime createdAt;
+
+    // Thêm thuộc tính lương cho ca (MapStruct sẽ map tự động từ entity)
+    Double salaryPerShift;
 }

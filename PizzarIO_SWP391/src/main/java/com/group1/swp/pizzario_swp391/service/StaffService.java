@@ -90,12 +90,19 @@ public class StaffService {
         if (staff == null) {
             return STAFF_NOT_FOUND;
         }
-        if (staffRepository.existsByEmailAndIdNot(updateDTO.getEmail(), id)) {
+        
+        // Only check email uniqueness if email has changed
+        if (!staff.getEmail().equals(updateDTO.getEmail()) && 
+            staffRepository.existsByEmail(updateDTO.getEmail())) {
             return "Email đã tồn tại!";
         }
-        if (staffRepository.existsByPhoneAndIdNot(updateDTO.getPhone(), id)) {
+        
+        // Only check phone uniqueness if phone has changed
+        if (!staff.getPhone().equals(updateDTO.getPhone()) && 
+            staffRepository.existsByPhone(updateDTO.getPhone())) {
             return "Số điện thoại đã tồn tại!";
         }
+        
         staffMapper.updateEntity(staff, updateDTO);
         staffRepository.save(staff);
         return null;
@@ -131,6 +138,13 @@ public class StaffService {
     }
 
     public void updateStaff(Staff staff) {
+        staffRepository.save(staff);
+    }
+
+    public void toggleStaffActive(int id) {
+        Staff staff = staffRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(STAFF_NOT_FOUND));
+        staff.setActive(!staff.isActive());
         staffRepository.save(staff);
     }
 }

@@ -15,4 +15,7 @@ public interface StaffRepository extends JpaRepository<Staff, Integer> {
     boolean existsByPhoneAndIdNot(String phone, int id);
 
     Optional<Staff> findByEmail(String email);
+
+    // Đếm số nhân viên có isActive = true (tương ứng cột is_active)
+    int countByIsActiveTrue();
 }
