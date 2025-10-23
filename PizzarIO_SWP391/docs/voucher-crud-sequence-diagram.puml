@@ -1,0 +1,164 @@
+@startuml Voucher CRUD Sequence Diagram
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam sequence {
+    ArrowColor #2E86AB
+    LifeLineBackgroundColor #E8F4FD
+    LifeLineBorderColor #2E86AB
+    ParticipantBackgroundColor #E8F4FD
+    ParticipantBorderColor #2E86AB
+}
+
+title Voucher CRUD Operations Sequence Diagram
+
+actor "Manager" as M
+participant "VoucherController" as VC
+participant "VoucherService" as VS
+participant "VoucherMapper" as VM
+participant "VoucherRepository" as VR
+database "Database" as DB
+
+== Create Voucher ==
+M -> VC: GET /manager/vouchers/new
+VC -> VS: getVouchersSort()
+VS -> VR: findAllVoucherOrderByValidFromAsc()
+VR -> DB: SELECT v FROM Voucher v ORDER BY v.validFrom ASC
+DB --> VR: List<Voucher>
+VR --> VS: List<Voucher>
+VS --> VC: List<Voucher>
+VC -> VS: getVoucherAnalytics()
+VS -> VR: findAll().size()
+VR -> DB: SELECT COUNT(*) FROM Voucher
+DB --> VR: Integer
+VR --> VS: Integer
+VS -> VR: countByActiveTrue()
+VR -> DB: SELECT COUNT(v) FROM Voucher v WHERE v.isActive = true
+DB --> VR: Integer
+VR --> VS: Integer
+VS -> VR: totalUsedVoucher()
+VR -> DB: SELECT SUM(v.timesUsed) FROM Voucher v
+DB --> VR: Integer
+VR --> VS: Integer
+VS -> VR: totalSavedAllOrders()
+VR -> DB: Complex query for total savings
+DB --> VR: Double
+VR --> VS: Double
+VS --> VC: VoucherStatsDTO
+VC --> M: voucher-list.html (with create modal)
+
+M -> VC: POST /manager/vouchers/save (VoucherDTO)
+VC -> VC: validate VoucherDTO
+alt Validation fails
+    VC --> M: voucher-list.html (with errors)
+else Validation passes
+    VC -> VS: createNewVoucher(VoucherDTO)
+    VS -> VS: validate voucher data
+    VS -> VM: toVoucher(VoucherDTO)
+    VM --> VS: Voucher entity
+    VS -> VR: save(Voucher)
+    VR -> DB: INSERT INTO Voucher (...)
+    DB --> VR: Voucher
+    VR --> VS: Voucher
+    VS --> VC: success
+    VC --> M: redirect:/manager/vouchers
+end
+
+== Read Voucher ==
+M -> VC: GET /manager/vouchers
+VC -> VS: getVouchersSort()
+VS -> VR: findAllVoucherOrderByValidFromAsc()
+VR -> DB: SELECT v FROM Voucher v ORDER BY v.validFrom ASC
+DB --> VR: List<Voucher>
+VR --> VS: List<Voucher>
+VS --> VC: List<Voucher>
+VC -> VS: getVoucherAnalytics()
+VS -> VR: findAll().size()
+VR -> DB: SELECT COUNT(*) FROM Voucher
+DB --> VR: Integer
+VR --> VS: Integer
+VS -> VR: countByActiveTrue()
+VR -> DB: SELECT COUNT(v) FROM Voucher v WHERE v.isActive = true
+DB --> VR: Integer
+VR --> VS: Integer
+VS -> VR: totalUsedVoucher()
+VR -> DB: SELECT SUM(v.timesUsed) FROM Voucher v
+DB --> VR: Integer
+VR --> VS: Integer
+VS -> VR: totalSavedAllOrders()
+VR -> DB: Complex query for total savings
+DB --> VR: Double
+VR --> VS: Double
+VS --> VC: VoucherStatsDTO
+VC --> M: voucher-list.html
+
+== Update Voucher ==
+M -> VC: GET /manager/vouchers/edit/{id}
+VC -> VS: getVoucherById(id)
+VS -> VR: findById(id)
+VR -> DB: SELECT * FROM Voucher WHERE id = ?
+DB --> VR: Optional<Voucher>
+VR --> VS: Optional<Voucher>
+VS --> VC: Optional<Voucher>
+VC -> VC: build VoucherDTO from Voucher
+VC -> VS: getVouchersSort()
+VS -> VR: findAllVoucherOrderByValidFromAsc()
+VR -> DB: SELECT v FROM Voucher v ORDER BY v.validFrom ASC
+DB --> VR: List<Voucher>
+VR --> VS: List<Voucher>
+VS --> VC: List<Voucher>
+VC -> VS: getVoucherAnalytics()
+VS --> VC: VoucherStatsDTO
+VC --> M: voucher-list.html (with edit modal)
+
+M -> VC: POST /manager/vouchers/save (VoucherDTO with id)
+VC -> VC: validate VoucherDTO
+alt Validation fails
+    VC --> M: voucher-list.html (with errors)
+else Validation passes
+    VC -> VS: updateVoucher(id, VoucherDTO)
+    VS -> VS: validate voucher data
+    VS -> VR: findById(id)
+    VR -> DB: SELECT * FROM Voucher WHERE id = ?
+    DB --> VR: Optional<Voucher>
+    VR --> VS: Optional<Voucher>
+    VS -> VM: updateVoucher(voucher, VoucherDTO)
+    VM --> VS: void
+    VS -> VR: save(Voucher)
+    VR -> DB: UPDATE Voucher SET ... WHERE id = ?
+    DB --> VR: Voucher
+    VR --> VS: Voucher
+    VS --> VC: success
+    VC --> M: redirect:/manager/vouchers
+end
+
+== Delete Voucher ==
+M -> VC: POST /manager/vouchers/toggle/{id}
+VC -> VS: toggleVoucherActive(id)
+VS -> VR: findById(id)
+VR -> DB: SELECT * FROM Voucher WHERE id = ?
+DB --> VR: Optional<Voucher>
+VR --> VS: Optional<Voucher>
+VS -> VS: setActive(!voucher.isActive())
+VS -> VR: save(Voucher)
+VR -> DB: UPDATE Voucher SET is_active = ? WHERE id = ?
+DB --> VR: Voucher
+VR --> VS: Voucher
+VS --> VC: success
+VC --> M: redirect:/manager/vouchers
+
+== Increment Usage ==
+participant "OrderService" as OS
+OS -> VS: incrementTimesUsed(voucherId)
+VS -> VR: findById(voucherId)
+VR -> DB: SELECT * FROM Voucher WHERE id = ?
+DB --> VR: Optional<Voucher>
+VR --> VS: Optional<Voucher>
+VS -> VS: setTimesUsed(timesUsed + 1)
+VS -> VR: save(Voucher)
+VR -> DB: UPDATE Voucher SET times_used = ? WHERE id = ?
+DB --> VR: Voucher
+VR --> VS: Voucher
+VS --> OS: success
+
+@enduml

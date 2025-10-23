@@ -14,9 +14,6 @@ import com.group1.swp.pizzario_swp391.entity.DiningTable;
 
 @Mapper(componentModel = "spring")
 public interface TableMapper {
-    // Base mapper
-    DiningTable toDiningTable(TableDTO tableDTO);
-    void updateDiningTable(@MappingTarget DiningTable diningTable, TableDTO tableDTO);
     TableDTO toTableDTO(DiningTable diningTable);
     List<TableDTO> toTableDTOs(List<DiningTable> diningTables);
     
@@ -27,6 +24,5 @@ public interface TableMapper {
     void updateDiningTable(@MappingTarget DiningTable diningTable, TableManagementDTO tableManagementDTO);
     
     // Cashier mapper (chỉ đọc)
-    TableForCashierDTO toTableForCashierDTO(DiningTable diningTable);
     List<TableForCashierDTO> toTableForCashierDTOs(List<DiningTable> diningTables);
 }

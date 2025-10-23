@@ -1,9 +1,7 @@
 package com.group1.swp.pizzario_swp391.controller.guest;
 
-import com.group1.swp.pizzario_swp391.entity.Session;
-import com.group1.swp.pizzario_swp391.repository.SessionRepository;
-import com.group1.swp.pizzario_swp391.service.*;
-import jakarta.servlet.http.HttpSession;
+import java.util.Optional;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -15,7 +13,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.Optional;
+import com.group1.swp.pizzario_swp391.entity.Session;
+import com.group1.swp.pizzario_swp391.repository.SessionRepository;
+import com.group1.swp.pizzario_swp391.service.CartService;
+import com.group1.swp.pizzario_swp391.service.CategoryService;
+import com.group1.swp.pizzario_swp391.service.OrderService;
+import com.group1.swp.pizzario_swp391.service.ProductService;
+import com.group1.swp.pizzario_swp391.service.TableService;
+
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 @RequestMapping("/guest")
@@ -32,7 +38,7 @@ public class GuestController{
 
     @GetMapping
     public String guestPage(Model model) {
-        model.addAttribute("tables", tableService.getAllTables());
+        model.addAttribute("tables", tableService.getAllTablesForGuest());
         return "guest-page/guest";
     }
 

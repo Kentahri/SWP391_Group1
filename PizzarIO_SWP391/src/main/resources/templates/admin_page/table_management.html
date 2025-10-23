@@ -14,7 +14,7 @@
     />
   </head>
 
-  <body>
+  <body th:data-error-table-id="${errorTableId}">
     <div class="app">
       <!-- SIDEBAR -->
       <div th:insert="~{fragments/sidebar :: sidebar('tables')}"></div>
@@ -194,7 +194,7 @@
         <!-- Modal: Update Table -->
         <div id="updateTableModal" class="modal-overlay" aria-hidden="true">
           <div class="modal" role="dialog" aria-modal="true">
-            <header>Cập nhật bàn</header>
+            <header id="updateModalHeader">Cập nhật bàn</header>
             <div class="content">
               <form id="updateTableForm" method="post">
                 <input
@@ -233,6 +233,11 @@
                     </select>
                   </label>
                 </div>
+                <!-- Hiển thị lỗi nếu có -->
+                <div th:if="${updateError != null}" id="updateErrorBox" class="error-box">
+                  <p th:text="${updateError}">Lỗi cập nhật</p>
+                </div>
+                
                 <div class="info-box">
                   <p>
                     ℹ️ Lưu ý: Trạng thái bàn (AVAILABLE/OCCUPIED...) do Cashier

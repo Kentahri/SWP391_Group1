@@ -3,7 +3,6 @@ package com.group1.swp.pizzario_swp391.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -12,12 +11,17 @@ import org.springframework.stereotype.Repository;
 
 import com.group1.swp.pizzario_swp391.entity.Reservation;
 
+import jakarta.persistence.LockModeType;
+
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select r from Reservation r where r.id = :id")
     Reservation findByIdWithLock(@Param("id") Long id);
+
+    @Query("SELECT r FROM Reservation r WHERE r.diningTable.id = :tableId AND r.startTime > :startTime AND r.status = 'CONFIRMED' ")
+    List<Reservation> getAllReservationsForUpdateTable(@Param("tableId") Integer tableId, @Param("startTime") LocalDateTime startTime);
 
     /**
      * Tìm các tất cả reservation cho 1 bàn cụ thể

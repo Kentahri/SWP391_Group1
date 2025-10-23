@@ -6,7 +6,7 @@ spring:
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     properties:
       hibernate:
         jdbc:
@@ -34,7 +34,7 @@ spring:
           ssl:
             trust: smtp.gmail.com
   profiles:
-    active: dev
+    active: prod
 
 server:
   port: ${SERVER_PORT}
@@ -42,9 +42,9 @@ server:
     context-path: ${SERVER_CONTEXT_PATH}
     session:
       cookie:
-        http-only: true
+        http-only: true #cookie k thể truy cập từ Javascript (chống XSS)
         secure: false
-        same-site: lax
+        same-site: lax #Chống CSRF
       timeout: 30m
 
 gemini:

@@ -43,6 +43,12 @@ window.initGuestWebSocket = function () {
             const data = JSON.parse(msg.body);
             console.log('[Guest] table broadcast:', data);
 
+            // Xử lý trường hợp bàn bị retired
+            if (data.type === 'TABLE_RETIRED') {
+                handleGuestTableRetired(data);
+                return;
+            }
+
             // Find the table tile in the DOM
             const tableEl = document.getElementById('table-' + data.tableId);
             if (!tableEl) return;
@@ -71,6 +77,32 @@ function highlightSuggestedTables(ids) {
         const el = document.getElementById('table-' + id);
         if (el) el.classList.add('suggest');
     });
+}
+
+/**
+ * Xử lý khi bàn được đánh dấu retired trên Guest page
+ */
+function handleGuestTableRetired(data) {
+    console.log('[Guest] Handling table retired:', data);
+    
+    const tableEl = document.getElementById('table-' + data.tableId);
+    if (tableEl) {
+        // Thêm animation fade out trước khi xóa
+        tableEl.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        tableEl.style.opacity = '0';
+        tableEl.style.transform = 'scale(0.8)';
+        
+        // Xóa bàn khỏi UI sau animation
+        setTimeout(() => {
+            tableEl.remove();
+        }, 500);
+    }
+    
+    // Hiển thị thông báo cho guest
+    const resultEl = document.getElementById('guest-result');
+    if (resultEl) {
+        resultEl.className = 'guest-result warning';
+    }
 }
 
 window.guestSelectTable = function (tableId, guestCount = 1) {
