@@ -30,19 +30,19 @@
 
             <div class="form-row">
                 <label>Tên</label>
-                <input type="text" th:field="*{name}" required/>
+                <input type="text" th:field="*{name}"/>
                 <div class="error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
             </div>
 
             <div class="form-row">
                 <label>Ngày sinh</label>
-                <input type="date" th:field="*{dateOfBirth}" required/>
+                <input type="date" th:field="*{dateOfBirth}"/>
                 <div class="error" th:if="${#fields.hasErrors('dateOfBirth')}" th:errors="*{dateOfBirth}"></div>
             </div>
 
             <div class="form-row">
                 <label>Số điện thoại</label>
-                <input type="text" th:field="*{phone}" required/>
+                <input type="text" th:field="*{phone}"/>
                 <div class="error" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></div>
             </div>
 
@@ -54,19 +54,19 @@
 
             <div class="form-row">
                 <label>Mật khẩu</label>
-                <input type="password" th:field="*{password}" required/>
+                <input type="password" th:field="*{password}"/>
                 <div class="error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
             </div>
 
             <div class="form-row">
                 <label>Email</label>
-                <input type="email" th:field="*{email}" required/>
+                <input type="email" th:field="*{email}"/>
                 <div class="error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
             </div>
 
             <div class="form-row">
                 <label>Vai trò</label>
-                <select th:field="*{role}" required>
+                <select th:field="*{role}">
                     <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"></option>
                 </select>
                 <div class="error" th:if="${#fields.hasErrors('role')}" th:errors="*{role}"></div>
