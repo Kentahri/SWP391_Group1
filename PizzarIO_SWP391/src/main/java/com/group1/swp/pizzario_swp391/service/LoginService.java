@@ -25,12 +25,6 @@ public class LoginService {
     private final LoginRepository loginRepository;
     private final StaffShiftRepository staffShiftRepository;
 
-    public Optional<Staff> authenticate(String email, String pas) {
-
-        return loginRepository.findByEmail(email)
-                .filter(db -> java.util.Objects.equals(db.getPassword(), pas));
-    }
-
     public Staff findByEmail(String email) {
         return loginRepository.findByEmail(email).orElseThrow();
     }
@@ -60,7 +54,7 @@ public class LoginService {
 
         StaffShift ss = targetShift.get();
         LocalDateTime shiftStart = ss.getShift().getStartTime();
-        
+
         Long minutesLate = Duration.between(shiftStart, now).toMinutes();
 
         LocalDateTime actualCheckIn;
@@ -68,34 +62,33 @@ public class LoginService {
         String noteDetail;
 
         Duration d = Duration.ofMinutes(Math.abs(minutesLate));
-        long h = d.toHoursPart();      // phần giờ
-        int m = d.toMinutesPart();     // phần phút còn lại
+        long h = d.toHoursPart();
+        int m = d.toMinutesPart();
         String formMinutesLate = h + " giờ " + m + " phút ";
 
-        if(minutesLate <= 0){
+        if (minutesLate <= 0) {
             status = StaffShift.Status.PRESENT;
             actualCheckIn = now;
             noteDetail = String.format("PRESENT - Check-in: %s\n", now.toLocalTime());
-        }else if (minutesLate <= 15) {
-
+        } else if (minutesLate <= 15) {
             status = StaffShift.Status.PRESENT;
             actualCheckIn = shiftStart;
             noteDetail = String.format("PRESENT (Muộn %s phút - Đã tha thứ) - Thực tế: %s - Ghi nhận: %s\n",
                     formMinutesLate, now.toLocalTime(), shiftStart.toLocalTime());
-
         } else {
-
             status = StaffShift.Status.LATE;
             actualCheckIn = now;
 
-            int penaltyPercent;
+            int penaltyPercent = 0;
             if (minutesLate <= 30) {
-                penaltyPercent = 5;
-            } else if (minutesLate <= 60) {
-                penaltyPercent = 10;
+                penaltyPercent = 5; // 5% for 15-30 minutes late
+            } else if (minutesLate < 50) {
+                penaltyPercent = 10; // 10% for 30-49 minutes late
             } else {
-                penaltyPercent = 15;
+                penaltyPercent = 15; // 15% for 50+ minutes late
             }
+
+            ss.setPenaltyPercent(penaltyPercent);
 
             noteDetail = String.format("LATE (Muộn %s phút - Phạt %d%%) - Check-in: %s\n",
                     formMinutesLate, penaltyPercent, now.toLocalTime());
@@ -111,9 +104,14 @@ public class LoginService {
 
     private Optional<StaffShift> findShiftToCheckIn(List<StaffShift> shifts, LocalDateTime now) {
         return shifts.stream()
-                .filter(ss -> ss.getCheckIn() == null) // Chưa check-in
-                .min(Comparator .comparing(ss -> {
-                    // Chọn ca có thời gian bắt đầu gần nhất
+                .filter(ss -> ss.getCheckIn() == null && ss.getStatus() != StaffShift.Status.ABSENT)
+                .filter(ss -> {
+                    LocalDateTime shiftStart = ss.getShift().getStartTime();
+                    LocalDateTime earliestCheckIn = shiftStart.minusHours(1); // 1 hour before
+                    LocalDateTime latestCheckIn = shiftStart.plusHours(1); // 1 hour after
+                    return now.isAfter(earliestCheckIn) && now.isBefore(latestCheckIn);
+                })
+                .min(Comparator.comparing(ss -> {
                     return Math.abs(Duration.between(ss.getShift().getStartTime(), now).toMinutes());
                 }));
     }
@@ -123,14 +121,29 @@ public class LoginService {
         LocalTime now = LocalTime.now();
 
         Staff staff = this.findByEmail(email);
-        StaffShift staffShift = staffShiftRepository.findCurrentShiftByStaffId(staff.getId(), today).get();
+        Optional<StaffShift> staffShiftOpt = staffShiftRepository.findCurrentShiftByStaffId(staff.getId(), today);
 
-        if (now.isBefore(staffShift.getShift().getEndTime().toLocalTime())){
+        if (staffShiftOpt.isEmpty()) {
+            throw new RuntimeException("Không tìm thấy ca làm việc hiện tại");
+        }
+
+        StaffShift staffShift = staffShiftOpt.get();
+
+        // Check if staff has already checked in
+        if (staffShift.getCheckIn() == null) {
+            throw new RuntimeException("Nhân viên chưa check-in, không thể check-out");
+        }
+
+        // Check if staff has already checked out
+        if (staffShift.getCheckOut() != null) {
+            throw new RuntimeException("Nhân viên đã check-out rồi");
+        }
+
+        if (now.isBefore(staffShift.getShift().getEndTime().toLocalTime())) {
             StaffShift.Status shiftType = StaffShift.Status.LEFT_EARLY;
             staffShift.setStatus(shiftType);
             staffShift.setNote(staffShift.getNote() + shiftType + " - " + now + " - ");
-        }
-        else{
+        } else {
             StaffShift.Status shiftType = StaffShift.Status.COMPLETED;
             staffShift.setStatus(shiftType);
             staffShift.setNote(staffShift.getNote() + shiftType + " - " + now + " - ");
@@ -139,5 +152,4 @@ public class LoginService {
         staffShift.setCheckOut(LocalDateTime.now());
         staffShiftRepository.save(staffShift);
     }
-
 }

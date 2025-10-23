@@ -9,7 +9,7 @@ import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface VoucherMapper {
-    Voucher toVoucher(VoucherDTO voucherDTO);
+    Voucher toVoucher(VoucherCreateDTO voucherDTO);
 
     @Mapping(target = "timesUsed", ignore = true)
     void updateVoucher(@MappingTarget Voucher voucher, VoucherDTO voucherDTO);

@@ -1,0 +1,77 @@
+@startuml Logout Sequence Diagram
+!theme plain
+title Staff Logout (Check-out) Sequence Diagram
+
+actor Staff as "Nhân viên"
+participant "Controller" as C
+participant "LoginService" as LS
+participant "LoginRepository" as LR
+participant "StaffShiftRepository" as SSR
+participant "StaffShift" as SS
+database "Database" as DB
+
+== Logout Process ==
+
+Staff -> C: POST /logout (email)
+activate C
+
+C -> LS: recordLogoutByEmail(email)
+activate LS
+
+LS -> LR: findByEmail(email)
+activate LR
+LR -> DB: SELECT * FROM Staff WHERE email = ?
+DB --> LR: Staff data
+LR --> LS: Staff
+deactivate LR
+
+LS -> SSR: findCurrentShiftByStaffId(staffId, today)
+activate SSR
+SSR -> DB: SELECT * FROM Staff_Shift WHERE staff_id = ? AND work_date = ? AND check_in IS NOT NULL
+DB --> SSR: StaffShift
+SSR --> LS: StaffShift
+deactivate SSR
+
+LS -> LS: Get current time and shift end time
+note right: now = LocalTime.now()\nshiftEndTime = staffShift.getShift().getEndTime()
+
+alt now.isBefore(shiftEndTime) - Left Early
+    LS -> SS: setStatus(LEFT_EARLY)
+    LS -> SS: setNote(previousNote + "LEFT_EARLY - " + now + " - ")
+    note right: Status: LEFT_EARLY\nNote: Previous notes + "LEFT_EARLY - {time} - "
+    
+else now.isAfter(shiftEndTime) - Completed
+    LS -> SS: setStatus(COMPLETED)
+    LS -> SS: setNote(previousNote + "COMPLETED - " + now + " - ")
+    note right: Status: COMPLETED\nNote: Previous notes + "COMPLETED - {time} - "
+end
+
+LS -> SS: setCheckOut(LocalDateTime.now())
+note right: Set actual logout time
+
+LS -> SSR: save(staffShift)
+activate SSR
+SSR -> DB: UPDATE Staff_Shift SET status, check_out, note
+DB --> SSR: Success
+SSR --> LS: Saved StaffShift
+deactivate SSR
+
+LS --> C: void (success)
+deactivate LS
+
+C --> Staff: Redirect to appropriate page
+deactivate C
+
+== Status Summary ==
+
+note over SS
+**StaffShift Status Values:**
+- SCHEDULED: Ca được lên lịch
+- PRESENT: Có mặt đúng giờ
+- LATE: Đi muộn (có phạt tiền)
+- ABSENT: Vắng mặt
+- COMPLETED: Hoàn thành ca
+- LEFT_EARLY: Ra sớm
+end note
+
+@enduml

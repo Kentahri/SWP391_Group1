@@ -26,6 +26,11 @@
               class="alert alert-success"
               th:text="${message}"
             ></div>
+            <div
+              th:if="${error != null}"
+              class="alert alert-danger"
+              th:text="${error}"
+            ></div>
             <p class="subtitle">Thêm, sửa, xóa các ca làm việc</p>
           </div>
 
@@ -165,9 +170,10 @@
                     </button>
                     <a
                       th:href="@{'/manager/shift/delete/' + ${shift.id}}"
-                      class="btn-icon btn-delete"
-                      title="Xóa"
-                      th:onclick="|return confirm('Bạn có chắc chắn muốn xóa ca #${shift.id}?');|"
+                      th:class="${canDelete[shift.id]} ? 'btn-icon btn-delete' : 'btn-icon btn-delete disabled'"
+                      th:title="${canDelete[shift.id]} ? 'Xóa' : 'Không thể xóa vì đã có nhân viên được phân công'"
+                      th:onclick="${canDelete[shift.id]} ? |return confirm('Bạn có chắc chắn muốn xóa ca #${shift.id}?');| : 'return false;'"
+                      th:style="${!canDelete[shift.id]} ? 'opacity: 0.5; cursor: not-allowed;' : ''"
                     >
                       Xóa
                     </a>

@@ -21,7 +21,7 @@ public class VoucherService {
     VoucherRepository voucherRepository;
     VoucherMapper voucherMapper;
 
-    public void createNewVoucher(VoucherDTO voucherDTO) {
+    public void createNewVoucher(VoucherCreateDTO voucherDTO) {
         // Validate type & value
         if (voucherDTO.getType() == null) {
             throw new IllegalArgumentException("Bạn phải chọn loại voucher.");
@@ -56,21 +56,9 @@ public class VoucherService {
         voucherRepository.save(voucher);
     }
 
-    public void createNewVoucher(VoucherCreateDTO dto) {
-        // TODO: mapping từ VoucherCreateDTO sang entity Voucher và lưu xuống database
-    }
-
     public List<Voucher> getAllVouchers() {
         return voucherRepository.findAll();
     }
-
-    public void incrementTimesUsed(Long voucherId) {
-        Voucher voucher = voucherRepository.findById(voucherId)
-                .orElseThrow(() -> new IllegalArgumentException("Voucher không tồn tại"));
-        voucher.setTimesUsed(voucher.getTimesUsed() + 1);
-        voucherRepository.save(voucher);
-    }
-
     public List<Voucher> getVouchersSort() {
         return voucherRepository.findAllVoucherOrderByValidFromAsc();
     }

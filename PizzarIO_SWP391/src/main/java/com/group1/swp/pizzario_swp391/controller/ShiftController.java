@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @ManagerUrl
 @Controller
@@ -34,6 +36,13 @@ public class ShiftController {
         List<ShiftDTO> shifts = service.getAllShift();
         model.addAttribute("shifts", shifts);
 
+        // Check which shifts can be deleted (no staff shifts)
+        Map<Integer, Boolean> canDelete = new HashMap<>();
+        for (ShiftDTO shift : shifts) {
+            canDelete.put(shift.getId(), !service.hasStaffShifts(shift.getId()));
+        }
+        model.addAttribute("canDelete", canDelete);
+
         // Add shift form and types for modal
         if (!model.containsAttribute("shiftForm")) {
             model.addAttribute("shiftForm", new ShiftDTO());
@@ -45,7 +54,7 @@ public class ShiftController {
 
     @GetMapping("/shift/create")
     public String create(@RequestParam(required = false, defaultValue = "staff_shifts") String returnPage,
-                         RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
 
         // Prepare empty form and flag to open modal in create mode
         redirectAttributes.addFlashAttribute("shiftForm", new ShiftDTO());
@@ -117,9 +126,15 @@ public class ShiftController {
     @GetMapping("/shift/delete/{id}")
     public String delete(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
 
-        service.deleteShift(id);
+        // Check if shift has any staff shifts
+        if (service.hasStaffShifts(id)) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Không thể xóa ca làm việc này vì đã có nhân viên được phân công. Vui lòng xóa các phân công trước.");
+            return "redirect:/manager/shifts";
+        }
 
-        redirectAttributes.addFlashAttribute("message", "Delete thành công");
+        service.deleteShift(id);
+        redirectAttributes.addFlashAttribute("message", "Xóa ca làm việc thành công");
         return "redirect:/manager/shifts";
     }
 

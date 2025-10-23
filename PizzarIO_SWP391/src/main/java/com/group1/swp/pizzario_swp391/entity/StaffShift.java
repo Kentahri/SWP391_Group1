@@ -50,4 +50,7 @@ public class StaffShift {
     @Column(name = "note", length = 500)
     private String note;
 
+    @Column(name = "penalty_percent")
+    private Integer penaltyPercent = 0; // phạt %
+
 }

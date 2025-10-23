@@ -1,0 +1,111 @@
+@startuml Login Sequence Diagram
+!theme plain
+title Staff Login (Check-in) Sequence Diagram
+
+actor Staff as "Nhân viên"
+participant "LoginController" as LC
+participant "LoginService" as LS
+participant "LoginRepository" as LR
+participant "StaffShiftRepository" as SSR
+participant "StaffShift" as SS
+database "Database" as DB
+
+== Login Process ==
+
+Staff -> LC: POST /signIn (email, password)
+activate LC
+
+LC -> LS: authenticate(email, password)
+activate LS
+
+LS -> LR: findByEmail(email)
+activate LR
+LR -> DB: SELECT * FROM Staff WHERE email = ?
+DB --> LR: Staff data
+LR --> LS: Optional<Staff>
+deactivate LR
+
+alt Authentication Success
+    LS --> LC: Optional<Staff> (present)
+    LC -> LS: recordLoginByEmail(email)
+    activate LS
+    
+    LS -> LR: findByEmail(email)
+    activate LR
+    LR -> DB: SELECT * FROM Staff WHERE email = ?
+    DB --> LR: Staff data
+    LR --> LS: Staff
+    deactivate LR
+    
+    LS -> SSR: findAllShiftsByStaffIdAndDate(staffId, today)
+    activate SSR
+    SSR -> DB: SELECT * FROM Staff_Shift WHERE staff_id = ? AND work_date = ?
+    DB --> SSR: List<StaffShift>
+    SSR --> LS: List<StaffShift>
+    deactivate SSR
+    
+    alt No shifts scheduled
+        LS --> LC: return false
+        note right: Log: "No shifts scheduled for staff"
+    else Has shifts
+        LS -> LS: findShiftToCheckIn(shifts, now)
+        activate LS
+        
+        loop For each shift
+            LS -> LS: Check conditions:
+            note right: - checkIn == null\n- status != ABSENT\n- time within ±1 hour
+        end
+        
+        alt No valid shift found
+            LS --> LC: return false
+            note right: Log: "No valid shift found"
+        else Valid shift found
+            LS -> LS: Calculate minutesLate = Duration.between(shiftStart, now)
+            
+            alt minutesLate <= 0 (On time or early)
+                LS -> SS: setStatus(PRESENT)
+                LS -> SS: setCheckIn(now)
+                LS -> SS: setNote("PRESENT - Check-in: {time}")
+                
+            else minutesLate <= 15 (Late but forgiven)
+                LS -> SS: setStatus(PRESENT)
+                LS -> SS: setCheckIn(shiftStart)
+                LS -> SS: setNote("PRESENT (Muộn X phút - Đã tha thứ)")
+                
+            else minutesLate > 15 (Late with penalty)
+                LS -> SS: setStatus(LATE)
+                LS -> SS: setCheckIn(now)
+                
+                alt minutesLate <= 20
+                    LS -> SS: setPenaltyPercent(5)
+                else minutesLate <= 40
+                    LS -> SS: setPenaltyPercent(10)
+                else minutesLate > 40
+                    LS -> SS: setPenaltyPercent(15)
+                end
+                
+                LS -> SS: setNote("LATE (Muộn X phút - Phạt Y%)")
+            end
+            
+            LS -> SSR: save(staffShift)
+            activate SSR
+            SSR -> DB: UPDATE Staff_Shift SET status, check_in, note, penalty_percent
+            DB --> SSR: Success
+            SSR --> LS: Saved StaffShift
+            deactivate SSR
+            
+            LS --> LC: return true
+        end
+        deactivate LS
+    end
+    deactivate LS
+    
+else Authentication Failed
+    LS --> LC: Optional<Staff> (empty)
+    LC --> Staff: Redirect to login with error
+end
+
+deactivate LS
+deactivate LC
+
+@enduml
