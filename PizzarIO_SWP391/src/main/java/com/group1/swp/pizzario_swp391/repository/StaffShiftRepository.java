@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface StaffShiftRepository extends JpaRepository<StaffShift, Integer> {
-  // Bảng phẳng để render UI
-  @Query("""
+    // Bảng phẳng để render UI
+    @Query("""
         select ss from StaffShift ss
         join fetch ss.staff s
         join fetch ss.shift sh
@@ -22,35 +22,35 @@ public interface StaffShiftRepository extends JpaRepository<StaffShift, Integer>
           and (:staffId is null or s.id = :staffId)
         order by ss.workDate desc, sh.startTime asc, s.name asc
       """)
-  List<StaffShift> search(
-      @Param("from") LocalDate from,
-      @Param("to") LocalDate to,
-      @Param("shiftId") Integer shiftId,
-      @Param("staffId") Integer staffId);
+    List<StaffShift> search(
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to,
+            @Param("shiftId") Integer shiftId,
+            @Param("staffId") Integer staffId);
 
-  void deleteByShift_Id(Integer shiftId);
+    void deleteByShift_Id(Integer shiftId);
 
-  @Query("""
+    @Query("""
         select ss from StaffShift ss
         where ss.staff.id = :staffId
               and ss.workDate = :today
       """)
-  Optional<StaffShift> findCurrentShiftByStaffId(
-      @Param("staffId") Integer staffId,
-      @Param("today") LocalDate today);
+    Optional<StaffShift> findCurrentShiftByStaffId(
+            @Param("staffId") Integer staffId,
+            @Param("today") LocalDate today);
 
-  // Tổng số giờ làm
-  @Query(value = """
+    // Tổng số giờ làm
+    @Query(value = """
     SELECT COALESCE(SUM(DATEDIFF(HOUR, ss.check_in, ss.check_out)), 0)
     FROM staff_shift ss
     WHERE ss.status IN ('COMPLETED','LEFT_EARLY')
       AND ss.check_in IS NOT NULL
       AND ss.check_out IS NOT NULL
 """, nativeQuery = true)
-  Integer totalHours();
+    Integer totalHours();
 
-  // Tổng tiền lương
-  @Query(value = """
+    // Tổng tiền lương
+    @Query(value = """
     SELECT COALESCE(
         SUM(CAST(DATEDIFF(HOUR, ss.check_in, ss.check_out) AS float) * CAST(ss.hourly_wage AS float)),
         0.0
@@ -60,28 +60,28 @@ public interface StaffShiftRepository extends JpaRepository<StaffShift, Integer>
       AND ss.check_in IS NOT NULL
       AND ss.check_out IS NOT NULL
 """, nativeQuery = true)
-  Double totalWage();
+    Double totalWage();
 
-  @Query("""
+    @Query("""
           SELECT COUNT(ss)
           FROM StaffShift ss
           WHERE ss.status = 'COMPLETED'
       """)
-  Integer completedShift();
+    Integer completedShift();
 
-  @Query("""
+    @Query("""
         select ss from StaffShift ss
         join fetch ss.staff s
         join fetch ss.shift sh
         where ss.workDate between :weekStart and :weekEnd
         order by ss.workDate asc, sh.startTime asc, s.name asc
       """)
-  List<StaffShift> findByWeekRange(
-          @Param("weekStart") LocalDate weekStart,
-          @Param("weekEnd") LocalDate weekEnd);
+    List<StaffShift> findByWeekRange(
+            @Param("weekStart") LocalDate weekStart,
+            @Param("weekEnd") LocalDate weekEnd);
 
-  // NEW: Method để lấy staff shifts theo staff và tuần
-  @Query("""
+    // NEW: Method để lấy staff shifts theo staff và tuần
+    @Query("""
         select ss from StaffShift ss
         join fetch ss.staff s
         join fetch ss.shift sh
@@ -89,13 +89,13 @@ public interface StaffShiftRepository extends JpaRepository<StaffShift, Integer>
           and (:staffId is null or s.id = :staffId)
         order by ss.workDate asc, sh.startTime asc, s.name asc
       """)
-  List<StaffShift> findByWeekRangeAndStaff(
-          @Param("weekStart") LocalDate weekStart,
-          @Param("weekEnd") LocalDate weekEnd,
-          @Param("staffId") Integer staffId);
+    List<StaffShift> findByWeekRangeAndStaff(
+            @Param("weekStart") LocalDate weekStart,
+            @Param("weekEnd") LocalDate weekEnd,
+            @Param("staffId") Integer staffId);
 
-  // NEW: Method để lấy staff shifts theo shift và tuần
-  @Query("""
+    // NEW: Method để lấy staff shifts theo shift và tuần
+    @Query("""
         select ss from StaffShift ss
         join fetch ss.staff s
         join fetch ss.shift sh
@@ -103,13 +103,13 @@ public interface StaffShiftRepository extends JpaRepository<StaffShift, Integer>
           and (:shiftId is null or sh.id = :shiftId)
         order by ss.workDate asc, sh.startTime asc, s.name asc
       """)
-  List<StaffShift> findByWeekRangeAndShift(
-          @Param("weekStart") LocalDate weekStart,
-          @Param("weekEnd") LocalDate weekEnd,
-          @Param("shiftId") Integer shiftId);
+    List<StaffShift> findByWeekRangeAndShift(
+            @Param("weekStart") LocalDate weekStart,
+            @Param("weekEnd") LocalDate weekEnd,
+            @Param("shiftId") Integer shiftId);
 
-  // NEW: Method để lấy staff shifts theo cả staff và shift trong tuần
-  @Query("""
+    // NEW: Method để lấy staff shifts theo cả staff và shift trong tuần
+    @Query("""
         select ss from StaffShift ss
         join fetch ss.staff s
         join fetch ss.shift sh
@@ -118,13 +118,13 @@ public interface StaffShiftRepository extends JpaRepository<StaffShift, Integer>
           and (:shiftId is null or sh.id = :shiftId)
         order by ss.workDate asc, sh.startTime asc, s.name asc
       """)
-  List<StaffShift> findByWeekRangeAndFilters(
-          @Param("weekStart") LocalDate weekStart,
-          @Param("weekEnd") LocalDate weekEnd,
-          @Param("staffId") Integer staffId,
-          @Param("shiftId") Integer shiftId);
+    List<StaffShift> findByWeekRangeAndFilters(
+            @Param("weekStart") LocalDate weekStart,
+            @Param("weekEnd") LocalDate weekEnd,
+            @Param("staffId") Integer staffId,
+            @Param("shiftId") Integer shiftId);
 
-  @Query("""
+    @Query("""
     select ss from StaffShift ss
     join fetch ss.shift sh
     join fetch ss.staff
@@ -132,10 +132,10 @@ public interface StaffShiftRepository extends JpaRepository<StaffShift, Integer>
           and ss.workDate = :today
     order by sh.startTime asc
 """)
-  List<StaffShift> findAllShiftsByStaffIdAndDate(
-          @Param("staffId") Integer staffId,
-          @Param("today") LocalDate today
-  );
+    List<StaffShift> findAllShiftsByStaffIdAndDate(
+            @Param("staffId") Integer staffId,
+            @Param("today") LocalDate today
+    );
 
-  List<StaffShift> findByWorkDateBetween(LocalDate start, LocalDate end);
+    List<StaffShift> findByWorkDateBetween(LocalDate start, LocalDate end);
 }

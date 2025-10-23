@@ -27,7 +27,6 @@ public class StaffCreateDTO {
     @Past(message = "Ngày sinh phải là ngày trong quá khứ")
     LocalDate dateOfBirth;
 
-    @NotBlank(message = "Số điện thoại không được để trống")
     @Pattern(regexp = "^[0-9]{10,11}$", message = "Số điện thoại phải có 10-11 chữ số")
     String phone;
 
@@ -39,7 +38,6 @@ public class StaffCreateDTO {
     @Email(message = "Email không đúng định dạng")
     String email;
 
-    @NotBlank(message = "Mật khẩu không được để trống")
     @Size(min = 6, message = "Mật khẩu phải có ít nhất 6 ký tự")
     String password;
 
