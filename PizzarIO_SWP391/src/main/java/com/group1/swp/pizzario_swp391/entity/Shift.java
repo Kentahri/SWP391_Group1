@@ -30,7 +30,8 @@ public class Shift {
     @OneToMany(mappedBy = "shift")
     private List<StaffShift> staffShifts = new ArrayList<>();
 
-    public Shift() {}
+    public Shift() {
+    }
 
     public Shift(ShiftType shiftName, LocalDateTime startTime, LocalDateTime endTime, LocalDateTime createdAt) {
         this.shiftName = shiftName;

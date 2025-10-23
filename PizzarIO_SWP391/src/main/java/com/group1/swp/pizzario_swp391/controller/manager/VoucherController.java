@@ -73,6 +73,10 @@ public class VoucherController {
             Model model,
             RedirectAttributes redirectAttributes) {
 
+        if(voucherForm.getType() == Voucher.VoucherType.PERCENTAGE && voucherForm.getValue() > 100) {
+            bindingResult.rejectValue("value", "value.invalid", "Giá trị voucher phải nhỏ hơn hoặc bằng 100");
+        }
+
         if (bindingResult.hasErrors()) {
             model.addAttribute("voucherTypes", Voucher.VoucherType.values());
             model.addAttribute("vouchers", voucherService.getVouchersSort());

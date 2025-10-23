@@ -18,7 +18,7 @@ public class Staff {
     private List<OtpMail> otpMails;
 
     public void addOtpMail(OtpMail otpMail) {
-        if(otpMails == null){
+        if (otpMails == null) {
             otpMails = new ArrayList<>();
         }
         otpMails.add(otpMail);
@@ -42,12 +42,15 @@ public class Staff {
     }
 
     public Staff() {
-        if (this.role == Role.CASHIER){orders = new ArrayList<>();}
+        if (this.role == Role.CASHIER) {
+            orders = new ArrayList<>();
+        }
         shifts = new ArrayList<>();
         otpMails = new ArrayList<>();
     }
 
-    public Staff(String name, LocalDate dateOfBirth, String phone, String address, String password, String email, Role role, boolean isActive) {
+    public Staff(String name, LocalDate dateOfBirth, String phone, String address, String password, String email,
+            Role role, boolean isActive) {
         this();
         this.name = name;
         this.dateOfBirth = dateOfBirth;

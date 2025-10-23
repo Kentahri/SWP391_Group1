@@ -28,7 +28,7 @@ public class StaffShiftDTO {
     private LocalDate workDate;
 
     @NotBlank(message = "Vui lòng chọn trạng thái")
-    private String status;
+    private String status = "SCHEDULED";
 
     private LocalDateTime checkIn;
 
@@ -40,4 +40,6 @@ public class StaffShiftDTO {
 
     @Size(max = 500, message = "Ghi chú không được vượt quá 500 ký tự")
     private String note;
+
+    private Integer penaltyPercent = 0;
 }

@@ -376,3 +376,22 @@
   color: #991b1b;
   border: 1px solid #fecaca;
 }
+
+.alert-danger {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+/* Disabled button styles */
+.btn-icon.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #9ca3af;
+  color: #6b7280;
+}
+
+.btn-icon.disabled:hover {
+  opacity: 0.5;
+  background: #9ca3af;
+}

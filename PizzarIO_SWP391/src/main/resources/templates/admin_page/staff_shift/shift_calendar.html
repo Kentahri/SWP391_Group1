@@ -6,12 +6,11 @@
     <title>Quản lý ca làm việc</title>
     <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
     <link rel="stylesheet" th:href="@{/css/admin_page/shift-management.css}" />
-    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
-    <meta
-      name="_csrf_parameter"
-      th:if="${_csrf != null}"
-      th:content="${_csrf.parameterName}"
-    />
+    <!-- Đảm bảo trong <head> có 3 meta này -->
+    <meta name="_csrf" content="[[${_csrf.token}]]"/>
+    <meta name="_csrf_parameter" content="[[${_csrf.parameterName}]]"/>
+    <meta name="_csrf_header" content="[[${_csrf.headerName}]]"/>
+
   </head>
   <body>
     <div class="app">
