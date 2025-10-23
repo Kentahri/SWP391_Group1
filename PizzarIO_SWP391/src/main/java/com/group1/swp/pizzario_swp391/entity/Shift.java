@@ -24,7 +24,6 @@ public class Shift {
     private LocalDateTime endTime;
     private LocalDateTime createdAt;
 
-    // 🧩 Thêm thuộc tính lương cho ca
     private double salaryPerShift;
 
     @OneToMany(mappedBy = "shift")
