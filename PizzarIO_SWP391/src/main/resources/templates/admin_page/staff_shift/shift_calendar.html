@@ -7,10 +7,9 @@
     <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
     <link rel="stylesheet" th:href="@{/css/admin_page/shift-management.css}" />
     <!-- Đảm bảo trong <head> có 3 meta này -->
-    <meta name="_csrf" content="[[${_csrf.token}]]"/>
-    <meta name="_csrf_parameter" content="[[${_csrf.parameterName}]]"/>
-    <meta name="_csrf_header" content="[[${_csrf.headerName}]]"/>
-
+    <meta name="_csrf" content="[[${_csrf.token}]]" />
+    <meta name="_csrf_parameter" content="[[${_csrf.parameterName}]]" />
+    <meta name="_csrf_header" content="[[${_csrf.headerName}]]" />
   </head>
   <body>
     <div class="app">
@@ -241,12 +240,17 @@
 
                     <div class="mb-3">
                       <label for="ssShiftId">Loại ca</label>
-                      <select id="ssShiftId" th:field="*{shiftId}">
+                      <select
+                        id="ssShiftId"
+                        th:field="*{shiftId}"
+                        onchange="updateSalaryFromShift()"
+                      >
                         <option value="" disabled>-- Chọn ca --</option>
                         <option
                           th:each="sh : ${allShifts}"
                           th:value="${sh.id}"
                           th:text="${sh.shiftName + ' (' + #temporals.format(sh.startTime,'HH:mm') + '-' + #temporals.format(sh.endTime,'HH:mm') + ')'}"
+                          th:data-salary="${sh.salaryPerShift}"
                         ></option>
                       </select>
                       <span
@@ -274,36 +278,29 @@
                     </div>
 
                     <div class="mb-3">
-                      <label for="hourlyWage">Lương/giờ (VNĐ)</label>
+                      <label for="hourlyWage">Lương/ca (VNĐ) - Tự động</label>
                       <input
                         id="hourlyWage"
                         type="number"
                         step="1000"
                         th:field="*{hourlyWage}"
-                        placeholder="35000"
+                        placeholder="Lương sẽ tự động cập nhật"
+                        readonly
+                        style="background-color: #f5f5f5"
                       />
-                      <span
-                        class="error-message"
-                        th:if="${#fields.hasErrors('hourlyWage')}"
-                        th:errors="*{hourlyWage}"
-                      ></span>
+                      <small class="text-muted"
+                        >Lương được tự động tính từ loại ca đã chọn</small
+                      >
                     </div>
 
                     <div class="mb-3">
                       <label for="ssStatus">Trạng thái</label>
-                      <select id="ssStatus" th:field="*{status}">
-                        <option value="" disabled>-- Chọn trạng thái --</option>
-                        <option
-                          th:each="st : ${T(com.group1.swp.pizzario_swp391.entity.StaffShift.Status).values()}"
-                          th:value="${st}"
-                          th:text="${st}"
-                        ></option>
+                      <select id="ssStatus" th:field="*{status}" disabled>
+                        <option value="SCHEDULED" selected>SCHEDULED</option>
                       </select>
-                      <span
-                        class="error-message"
-                        th:if="${#fields.hasErrors('status')}"
-                        th:errors="*{status}"
-                      ></span>
+                      <small class="text-muted"
+                        >Trạng thái mặc định là SCHEDULED</small
+                      >
                     </div>
 
                     <div class="mb-3">

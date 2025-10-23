@@ -5,6 +5,7 @@ import com.group1.swp.pizzario_swp391.dto.data_analytics.StatsStaffShiftDTO;
 import com.group1.swp.pizzario_swp391.dto.data_analytics.WeekDayDTO;
 import com.group1.swp.pizzario_swp391.dto.staffshift.StaffShiftDTO;
 import com.group1.swp.pizzario_swp391.dto.staffshift.StaffShiftResponseDTO;
+import com.group1.swp.pizzario_swp391.entity.Shift;
 import com.group1.swp.pizzario_swp391.entity.StaffShift;
 import com.group1.swp.pizzario_swp391.mapper.StaffShiftMapper;
 import com.group1.swp.pizzario_swp391.repository.ShiftRepository;
@@ -14,6 +15,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,16 +34,23 @@ public class StaffShiftService {
 
         @Transactional
         public void create(StaffShiftDTO staffShiftDTO) {
+                // Lấy thông tin shift để lấy salaryPerShift
+                Shift shift = shiftRepository.findById(staffShiftDTO.getShiftId())
+                                .orElseThrow(() -> new RuntimeException("Shift not found"));
+
+                // Tự động set lương từ shift
+                staffShiftDTO.setHourlyWage(BigDecimal.valueOf(shift.getSalaryPerShift()));
+
+                // Mặc định status là SCHEDULED
+                staffShiftDTO.setStatus("SCHEDULED");
 
                 StaffShift staffShift = staffShiftMapper.toStaffShift(staffShiftDTO);
 
                 staffShift.setStaff(staffRepository.findById(staffShiftDTO.getStaffId())
                                 .orElseThrow(() -> new RuntimeException("Staff not found")));
-                staffShift.setShift(shiftRepository.findById(staffShiftDTO.getShiftId())
-                                .orElseThrow(() -> new RuntimeException("Shift not found")));
+                staffShift.setShift(shift);
 
                 staffShiftRepository.save(staffShift);
-
         }
 
         public StaffShiftDTO getById(int id) {
@@ -55,10 +64,16 @@ public class StaffShiftService {
                 StaffShift staffShift = staffShiftRepository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("STAFF SHIFT NOT FOUND"));
 
+                // Lấy thông tin shift mới để cập nhật lương
+                Shift newShift = shiftRepository.findById(staffShiftDTO.getShiftId())
+                                .orElseThrow(() -> new RuntimeException("Shift not found"));
+
+                // Tự động cập nhật lương từ shift mới
+                staffShiftDTO.setHourlyWage(BigDecimal.valueOf(newShift.getSalaryPerShift()));
+
                 staffShift.setStaff(staffRepository.findById(staffShiftDTO.getStaffId())
                                 .orElseThrow(() -> new RuntimeException("Staff not found")));
-                staffShift.setShift(shiftRepository.findById(staffShiftDTO.getShiftId())
-                                .orElseThrow(() -> new RuntimeException("Shift not found")));
+                staffShift.setShift(newShift);
 
                 staffShiftMapper.updateStaffShift(staffShift, staffShiftDTO);
 

@@ -27,15 +27,15 @@ public class StaffShiftDTO {
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate workDate;
 
-    @NotBlank(message = "Vui lòng chọn trạng thái")
+    // Mặc định là SCHEDULED và không thể thay đổi
     private String status = "SCHEDULED";
 
     private LocalDateTime checkIn;
 
     private LocalDateTime checkOut;
 
-    @NotNull(message = "Vui lòng nhập lương theo giờ")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Lương theo giờ phải lớn hơn 0")
+    // Lương sẽ được tự động tính từ Shift entity
+    // Không cần validation vì sẽ được set tự động
     private BigDecimal hourlyWage;
 
     @Size(max = 500, message = "Ghi chú không được vượt quá 500 ký tự")

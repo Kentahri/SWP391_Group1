@@ -32,7 +32,9 @@
   function injectCsrfIntoAllForms() {
     const csrf = readCsrfMeta();
     if (!csrf.token || !csrf.parameter) return;
-    document.querySelectorAll("form").forEach((f) => ensureFormHasCsrf(f, csrf));
+    document
+      .querySelectorAll("form")
+      .forEach((f) => ensureFormHasCsrf(f, csrf));
   }
 
   // =========================
@@ -75,8 +77,8 @@
 
     // Dọn lỗi validation cũ (nếu bạn render lỗi client)
     form
-        .querySelectorAll(".field-error, .error, [data-error]")
-        .forEach((n) => (n.textContent = ""));
+      .querySelectorAll(".field-error, .error, [data-error]")
+      .forEach((n) => (n.textContent = ""));
 
     // Chỉ làm sạch id; KHÔNG đụng tới _csrf
     if (clearId) {
@@ -99,8 +101,10 @@
     if (window.openShiftModalFlag) {
       modal.classList.add("show");
       setModalTitle(
-          "shiftModalTitle",
-          window.openShiftModalFlag === "create" ? "Thêm loại ca mới" : "Sửa loại ca"
+        "shiftModalTitle",
+        window.openShiftModalFlag === "create"
+          ? "Thêm loại ca mới"
+          : "Sửa loại ca"
       );
       switchTab("shifts");
     }
@@ -111,7 +115,7 @@
 
   window.openShiftModal = function () {
     window.location.href =
-        "/pizzario/manager/shift/create?modal=true&returnPage=staff_shifts";
+      "/pizzario/manager/shift/create?modal=true&returnPage=staff_shifts";
   };
 
   window.closeShiftModal = function () {
@@ -127,6 +131,25 @@
   };
 
   // =========================
+  // Salary Auto-update
+  // =========================
+  window.updateSalaryFromShift = function () {
+    const shiftSelect = document.getElementById("ssShiftId");
+    const salaryInput = document.getElementById("hourlyWage");
+
+    if (shiftSelect && salaryInput) {
+      const selectedOption = shiftSelect.options[shiftSelect.selectedIndex];
+      const salary = selectedOption.getAttribute("data-salary");
+
+      if (salary) {
+        salaryInput.value = salary;
+      } else {
+        salaryInput.value = "";
+      }
+    }
+  };
+
+  // =========================
   // Staff Shift Modal
   // =========================
   function setupStaffShiftModal() {
@@ -139,9 +162,14 @@
     if (window.openStaffShiftModalFlag) {
       modal.classList.add("show");
       setModalTitle(
-          "staffShiftModalTitle",
-          window.openStaffShiftModalFlag === "create" ? "Thêm ca làm việc" : "Sửa ca làm việc"
+        "staffShiftModalTitle",
+        window.openStaffShiftModalFlag === "create"
+          ? "Thêm ca làm việc"
+          : "Sửa ca làm việc"
       );
+
+      // Tự động cập nhật lương khi mở modal
+      updateSalaryFromShift();
     }
 
     enableBackdropClose(modal, closeStaffShiftModal);
@@ -158,6 +186,13 @@
     resetStaffShiftForm(form, { clearId: true });
     setModalTitle("staffShiftModalTitle", "Thêm ca làm việc");
     injectCsrfIntoAllForms(); // đảm bảo vẫn còn _csrf nếu form vừa được render lại
+
+    // Set status mặc định
+    const statusSelect = form.querySelector("#ssStatus");
+    if (statusSelect) {
+      statusSelect.value = "SCHEDULED";
+    }
+
     modal.classList.add("show");
   };
 
@@ -177,8 +212,12 @@
   // Tabs & Filters & Navigation
   // =========================
   window.switchTab = function (tabName) {
-    document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"));
-    document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
+    document
+      .querySelectorAll(".tab-btn")
+      .forEach((btn) => btn.classList.remove("active"));
+    document
+      .querySelectorAll(".tab-content")
+      .forEach((c) => c.classList.remove("active"));
 
     const activeBtn = document.querySelector(`.tab-btn[onclick*="${tabName}"]`);
     const activeContent = document.getElementById(`tab-${tabName}`);
@@ -210,7 +249,8 @@
   };
 
   window.editShift = function (shiftId) {
-    window.location.href = "/pizzario/manager/staff_shifts/edit/" + shiftId + "?modal=true";
+    window.location.href =
+      "/pizzario/manager/staff_shifts/edit/" + shiftId + "?modal=true";
   };
 
   // =========================

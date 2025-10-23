@@ -80,7 +80,7 @@ public class StaffShiftController {
 
         if (!model.containsAttribute("staffShiftForm")) {
             StaffShiftDTO newForm = new StaffShiftDTO();
-            newForm.setStatus("SCHEDULED");
+            newForm.setStatus("SCHEDULED"); // Mặc định là SCHEDULED
             model.addAttribute("staffShiftForm", newForm);
         }
 
@@ -131,8 +131,10 @@ public class StaffShiftController {
             @RequestParam(required = false) Long filterStaffId,
             @RequestParam(required = false) Long filterShiftId,
             RedirectAttributes redirectAttributes) {
-        // Create empty form for create mode
-        redirectAttributes.addFlashAttribute("staffShiftForm", new StaffShiftDTO());
+        // Create empty form for create mode với status mặc định
+        StaffShiftDTO newForm = new StaffShiftDTO();
+        newForm.setStatus("SCHEDULED");
+        redirectAttributes.addFlashAttribute("staffShiftForm", newForm);
         redirectAttributes.addFlashAttribute("openStaffShiftModal", "create");
 
         // Build redirect URL with preserved parameters
@@ -286,18 +288,10 @@ public class StaffShiftController {
             }
         }
 
-        // Validation 5: Ensure required fields are not null for both CREATE and EDIT
-        if (staffShiftDTO.getStaffId() == null) {
-            bindingResult.rejectValue("staffId", "error.required", "Vui lòng chọn nhân viên");
-        }
-        if (staffShiftDTO.getShiftId() == null) {
-            bindingResult.rejectValue("shiftId", "error.required", "Vui lòng chọn loại ca");
-        }
-        if (staffShiftDTO.getWorkDate() == null) {
-            bindingResult.rejectValue("workDate", "error.required", "Vui lòng chọn ngày làm việc");
-        }
-        if (staffShiftDTO.getStatus() == null || staffShiftDTO.getStatus().trim().isEmpty()) {
-            bindingResult.rejectValue("status", "error.required", "Vui lòng chọn trạng thái");
+
+        // Đảm bảo status luôn là SCHEDULED cho create mode
+        if (isCreateMode) {
+            staffShiftDTO.setStatus("SCHEDULED");
         }
 
         if (bindingResult.hasErrors()) {
