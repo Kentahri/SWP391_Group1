@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- =============================================================== -->
+<!-- FRAGMENT CHO GIỎ HÀNG (CART)                                     -->
+<!-- =============================================================== -->
+<div th:fragment="cart-view" class="cart-section">
+    <h2>My Cart 🛒</h2>
+    <div class="items-list" id="cartList">
+        <th:block th:if="${#lists.isEmpty(cartItems)}">
+            <p class="empty-message">Your cart is empty.</p>
+        </th:block>
+        <div class="cart-item" th:each="item : ${cartItems}">
+            <div class="item-details">
+                <div class="name" th:text="${item.productName}">Product Name</div>
+                <div class="price" th:text="${#numbers.formatCurrency(item.totalPrice)}">0đ</div>
+            </div>
+            <div class="item-qty">
+                <form class="ajax-form" th:action="@{/guest/cart/update}" method="post">
+                    <input type="hidden" name="sessionId" th:value="${sessionId}"/>
+                    <input type="hidden" name="tableId" th:value="${tableId}"/>
+                    <input type="hidden" name="productId" th:value="${item.productId}"/>
+                    <input type="hidden" name="quantity" th:value="${item.quantity - 1}"/>
+                    <button type="submit">-</button>
+                </form>
+                <span th:text="${item.quantity}">1</span>
+                <form class="ajax-form" th:action="@{/guest/cart/update}" method="post">
+                    <input type="hidden" name="sessionId" th:value="${sessionId}"/>
+                    <input type="hidden" name="tableId" th:value="${tableId}"/>
+                    <input type="hidden" name="productId" th:value="${item.productId}"/>
+                    <input type="hidden" name="quantity" th:value="${item.quantity + 1}"/>
+                    <button type="submit">+</button>
+                </form>
+            </div>
+            <form class="ajax-form" th:action="@{/guest/cart/remove}" method="post">
+                <input type="hidden" name="sessionId" th:value="${sessionId}"/>
+                <input type="hidden" name="tableId" th:value="${tableId}"/>
+                <input type="hidden" name="productId" th:value="${item.productId}"/>
+                <button class="remove-btn" type="submit">✕</button>
+            </form>
+        </div>
+    </div>
+    <div class="summary">
+        <th:block th:with="cartTotalSum=${#aggregates.sum(cartItems.![totalPrice])}">
+            <div class="row" th:if="${!#lists.isEmpty(cartItems)}">
+                <span>Total</span>
+                <span class="total" id="cartTotal" th:text="${#numbers.formatCurrency(cartTotalSum)}">0₫</span>
+            </div>
+        </th:block>
+    </div>
+    <form class="ajax-form" th:action="@{/guest/order/place}" method="post">
+        <input type="hidden" name="sessionId" th:value="${sessionId}"/>
+        <input type="hidden" name="tableId" th:value="${tableId}"/>
+        <button class="btn btn-primary" type="submit" th:disabled="${#lists.isEmpty(cartItems)}">
+            Place my Order 🧾
+        </button>
+    </form>
+</div>
+
+</body>
+</html>
