@@ -1,0 +1,192 @@
+@startuml
+title Staff Management System - Manager View
+
+package "Controller Layer" {
+    class StaffController {
+        - StaffService staffService
+        - ShiftService shiftService
+        + listStaffs(Model) : String
+        + createForm(Model) : String
+        + create(StaffCreateDTO, BindingResult, Model, RedirectAttributes) : String
+        + edit(Model, int) : String
+        + updateStaff(int, StaffUpdateDTO, BindingResult, Model, RedirectAttributes) : String
+        + toggleActive(int, RedirectAttributes) : String
+    }
+}
+
+package "Service Layer" {
+    class StaffService {
+        - StaffRepository staffRepository
+        - LoginRepository loginRepository
+        - StaffResponseMapper staffMapper
+        - PasswordEncoder passwordEncoder
+        + getAllStaff() : List<StaffResponseDTO>
+        + getStaffForUpdate(int) : StaffUpdateDTO
+        + createNewStaff(StaffCreateDTO) : String
+        + updateStaff(int, StaffUpdateDTO) : String
+        + toggleStaffActive(int) : void
+        + findByEmail(String) : Staff
+        + updatePasswordByEmail(String, String) : void
+    }
+    
+    class ShiftService {
+        + findAllDto() : List<ShiftDTO>
+        + getWeeklyPayrollTotals() : Map<String, Long>
+    }
+}
+
+package "Repository Layer" {
+    class StaffRepository {
+        + findAll() : List<Staff>
+        + findById(int) : Optional<Staff>
+        + save(Staff) : Staff
+        + existsByEmail(String) : boolean
+        + existsByPhone(String) : boolean
+        + findByEmail(String) : Optional<Staff>
+        + countByIsActiveTrue() : int
+    }
+    
+    class LoginRepository {
+        + findByEmail(String) : Optional<Staff>
+    }
+}
+
+package "Entity Layer" {
+    class Staff {
+        - int id
+        - String name
+        - LocalDate dateOfBirth
+        - String phone
+        - String address
+        - String password
+        - String email
+        - Role role
+        - boolean isActive
+        - List<OtpMail> otpMails
+        - List<StaffShift> shifts
+        - List<Order> orders
+        + addOtpMail(OtpMail) : void
+        + addShift(StaffShift) : void
+        + addOrder(Order) : void
+    }
+    
+    enum Role {
+        CASHIER
+        MANAGER
+        KITCHEN
+    }
+}
+
+package "DTO Layer" {
+    class StaffCreateDTO {
+        + String name
+        + LocalDate dateOfBirth
+        + String phone
+        + String address
+        + String email
+        + String password
+        + Role role
+        + boolean active
+    }
+    
+    class StaffUpdateDTO {
+        + String name
+        + LocalDate dateOfBirth
+        + String phone
+        + String address
+        + String email
+        + Role role
+        + boolean active
+    }
+    
+    class StaffResponseDTO {
+        + int id
+        + String name
+        + LocalDate dateOfBirth
+        + String phone
+        + String address
+        + String email
+        + Role role
+        + boolean active
+        + getDateOfBirthFormatted() : String
+        + getRoleText() : String
+        + getStatusText() : String
+    }
+}
+
+package "Mapper Layer" {
+    class StaffResponseMapper {
+        + toResponseDTO(Staff) : StaffResponseDTO
+        + toEntity(StaffCreateDTO) : Staff
+        + updateEntity(Staff, StaffUpdateDTO) : void
+    }
+}
+
+package "View Layer" {
+    class StaffListHTML {
+        + list.html
+        + Staff table with actions
+        + Statistics cards
+        + Payroll chart
+    }
+    
+    class StaffCreateHTML {
+        + create.html
+        + Create staff form
+    }
+    
+    class StaffEditHTML {
+        + edit.html
+        + Edit staff form
+    }
+}
+
+' Relationships
+StaffController --> StaffService : uses
+StaffController --> ShiftService : uses
+StaffService --> StaffRepository : uses
+StaffService --> LoginRepository : uses
+StaffService --> StaffResponseMapper : uses
+StaffService --> PasswordEncoder : uses
+
+StaffRepository --> Staff : manages
+LoginRepository --> Staff : manages
+StaffResponseMapper --> Staff : maps to/from
+StaffResponseMapper --> StaffCreateDTO : maps to/from
+StaffResponseMapper --> StaffUpdateDTO : maps to/from
+StaffResponseMapper --> StaffResponseDTO : maps to/from
+
+Staff --> Role : has
+StaffController --> StaffCreateDTO : uses
+StaffController --> StaffUpdateDTO : uses
+StaffController --> StaffResponseDTO : uses
+
+StaffController --> StaffListHTML : renders
+StaffController --> StaffCreateHTML : renders
+StaffController --> StaffEditHTML : renders
+
+note right of StaffController
+  Manager có thể:
+  - Xem danh sách nhân viên
+  - Tạo nhân viên mới
+  - Chỉnh sửa thông tin nhân viên
+  - Bật/tắt trạng thái hoạt động
+end note
+
+note right of StaffService
+  Business Logic:
+  - Kiểm tra email/phone trùng lặp
+  - Mã hóa password
+  - Validation dữ liệu
+  - Toggle active status
+end note
+
+note right of Staff
+  Entity chính:
+  - Quản lý thông tin nhân viên
+  - Liên kết với OtpMail, StaffShift, Order
+  - Role-based access control
+end note
+
+@enduml
+

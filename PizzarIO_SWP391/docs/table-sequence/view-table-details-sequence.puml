@@ -1,0 +1,39 @@
+@startuml
+title View Table Details - Manager
+
+actor Manager
+participant Browser
+participant JavaScript
+
+Manager -> Browser: Click on table in map
+Browser -> JavaScript: onClick event with table data
+
+note right
+Table data from HTML attributes:
+- data-id: table ID
+- data-status: table status  
+- data-capacity: capacity
+- data-condition: table condition
+- data-created-at: created time
+- data-updated-at: updated time
+end note
+
+JavaScript -> JavaScript: Extract table data from DOM
+JavaScript -> Browser: Update detail panel
+Browser --> Manager: Display table details
+
+note right
+Information displayed:
+- Table name: "Table X"
+- Status: AVAILABLE/OCCUPIED/RESERVED/WAITING_PAYMENT
+- Capacity: X people
+- Condition: NEW/GOOD/WORN/DAMAGED/UNDER_REPAIR/RETIRED
+- Created and updated time
+end note
+
+Manager -> Browser: Click "Update Table"
+Browser -> JavaScript: onClick updateTableBtn
+JavaScript -> Browser: Open modal with pre-filled form
+Browser --> Manager: Display update modal
+
+@enduml

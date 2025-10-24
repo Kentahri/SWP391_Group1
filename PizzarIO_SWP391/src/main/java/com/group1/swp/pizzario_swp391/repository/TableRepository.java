@@ -15,9 +15,11 @@ public interface TableRepository extends JpaRepository<DiningTable, Integer> {
     List<DiningTable> getAllTablesForCashier();
 
     @Query("select dt from DiningTable dt where dt.tableCondition != 'RETIRED'")
-    List<DiningTable> getAllTablesForManager();
+    List<DiningTable> getAllTablesForGuest();
+
+    List<DiningTable> getDiningTableByTableCondition(DiningTable.TableCondition tableCondition);
 
     @Query("select dt from DiningTable dt where dt.tableCondition != 'RETIRED'")
-    List<DiningTable> getAllTablesForGuest();
+    List<DiningTable> getDiningTableByTableConditionExceptRetired();
 
 }

@@ -1,0 +1,52 @@
+@startuml
+title Create Table - Manager
+
+actor Manager
+participant Browser
+participant TableController
+participant TableService
+participant TableRepository
+participant Database
+
+Manager -> Browser: Click "Add New Table"
+Browser --> Manager: Display create table modal
+
+note right
+Modal displays:
+- Form with capacity field
+- Info: New table will automatically have 
+  status=AVAILABLE, condition=NEW
+- Submit and Cancel buttons
+end note
+
+Manager -> Browser: Enter capacity and click "Add"
+Browser -> TableController: POST /manager/tables/add
+
+TableController -> TableController: Validate TableCreateDTO
+
+alt Validation successful
+    TableController -> TableService: createNewTable(TableCreateDTO)
+    
+    TableService -> TableService: Set default values
+    note right
+    Automatically set:
+    - tableStatus = AVAILABLE
+    - tableCondition = NEW
+    - createdAt = now()
+    - updatedAt = now()
+    end note
+    
+    TableService -> TableRepository: save(DiningTable)
+    TableRepository -> Database: INSERT INTO Dining_Table
+    Database --> TableRepository: Saved DiningTable with ID
+    TableRepository --> TableService: DiningTable with ID
+    TableService --> TableController: Success
+    
+    TableController -> Browser: Redirect to /manager/tables
+
+else Validation failed
+    TableController -> Browser: HTML with error messages
+    Browser --> Manager: Display form with validation errors
+end
+
+@enduml

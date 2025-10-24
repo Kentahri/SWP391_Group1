@@ -1,0 +1,147 @@
+@startuml
+title Edit Staff - Manager
+
+actor Manager
+participant Browser
+participant StaffController
+participant StaffService
+participant StaffRepository
+participant Database
+
+Manager -> Browser: Click "Edit" on staff row
+Browser -> StaffController: GET /manager/staff/edit/{id}
+StaffController -> StaffService: getStaffForUpdate(id)
+StaffService -> StaffRepository: findById(id)
+StaffRepository -> Database: SELECT * FROM Staff WHERE id = ?
+Database --> StaffRepository: Staff
+StaffRepository --> StaffService: Staff
+StaffService -> StaffService: Map Staff to StaffUpdateDTO
+StaffService --> StaffController: StaffUpdateDTO
+StaffController -> Browser: Display edit form with pre-filled data
+Browser --> Manager: Show edit staff form
+
+note right
+Pre-filled form with:
+- Current staff information
+- All fields editable except password
+- Role dropdown
+- Active checkbox
+end note
+
+Manager -> Browser: Update information and click "Save"
+Browser -> StaffController: POST /manager/staff/edit/{id}
+
+StaffController -> StaffController: Validate StaffUpdateDTO
+
+alt Validation successful
+    StaffController -> StaffService: updateStaff(id, StaffUpdateDTO)
+    
+    StaffService -> StaffRepository: findById(id)
+    StaffRepository -> Database: SELECT * FROM Staff WHERE id = ?
+    Database --> StaffRepository: Staff
+    StaffRepository --> StaffService: Staff
+    
+    alt Staff not found
+        StaffService --> StaffController: "Staff not found"
+        StaffController -> Browser: HTML with error message
+        Browser --> Manager: Display staff not found error
+    else Staff exists
+        StaffService -> StaffService: Check if email changed
+        alt Email changed
+            StaffService -> StaffRepository: existsByEmail(newEmail)
+            StaffRepository -> Database: SELECT * FROM Staff WHERE email = ?
+            Database --> StaffRepository: boolean
+            StaffRepository --> StaffService: boolean
+            
+            alt Email already exists
+                StaffService --> StaffController: "Email đã tồn tại!"
+                StaffController -> Browser: HTML with error message
+                Browser --> Manager: Display email error
+            else Email available
+                StaffService -> StaffService: Check if phone changed
+                alt Phone changed
+                    StaffService -> StaffRepository: existsByPhone(newPhone)
+                    StaffRepository -> Database: SELECT * FROM Staff WHERE phone = ?
+                    Database --> StaffRepository: boolean
+                    StaffRepository --> StaffService: boolean
+                    
+                    alt Phone already exists
+                        StaffService --> StaffController: "Số điện thoại đã tồn tại!"
+                        StaffController -> Browser: HTML with error message
+                        Browser --> Manager: Display phone error
+                    else Phone available
+                        StaffService -> StaffService: Update staff with new data
+                        StaffService -> StaffRepository: save(staff)
+                        StaffRepository -> Database: UPDATE Staff SET ...
+                        Database --> StaffRepository: Updated Staff
+                        StaffRepository --> StaffService: Saved Staff
+                        StaffService --> StaffController: null (success)
+                        
+                        StaffController -> Browser: Redirect to /manager/staff
+                        Browser -> StaffController: GET /manager/staff
+                        StaffController -> StaffService: getAllStaff()
+                        StaffService -> StaffRepository: findAll()
+                        StaffRepository -> Database: SELECT * FROM Staff
+                        Database --> StaffRepository: List<Staff>
+                        StaffRepository --> StaffService: List<Staff>
+                        StaffService --> StaffController: List<StaffResponseDTO>
+                        StaffController -> Browser: HTML with updated staff
+                        Browser --> Manager: Display staff list with updated information
+                    end
+                else Phone not changed
+                    StaffService -> StaffService: Update staff with new data
+                    StaffService -> StaffRepository: save(staff)
+                    StaffRepository -> Database: UPDATE Staff SET ...
+                    Database --> StaffRepository: Updated Staff
+                    StaffRepository --> StaffService: Saved Staff
+                    StaffService --> StaffController: null (success)
+                    
+                    StaffController -> Browser: Redirect to /manager/staff
+                    Browser --> Manager: Display updated staff list
+                end
+            end
+        else Email not changed
+            StaffService -> StaffService: Check if phone changed
+            alt Phone changed
+                StaffService -> StaffRepository: existsByPhone(newPhone)
+                StaffRepository -> Database: SELECT * FROM Staff WHERE phone = ?
+                Database --> StaffRepository: boolean
+                StaffRepository --> StaffService: boolean
+                
+                alt Phone already exists
+                    StaffService --> StaffController: "Số điện thoại đã tồn tại!"
+                    StaffController -> Browser: HTML with error message
+                    Browser --> Manager: Display phone error
+                else Phone available
+                    StaffService -> StaffService: Update staff with new data
+                    StaffService -> StaffRepository: save(staff)
+                    StaffRepository -> Database: UPDATE Staff SET ...
+                    Database --> StaffRepository: Updated Staff
+                    StaffRepository --> StaffService: Saved Staff
+                    StaffService --> StaffController: null (success)
+                    
+                    StaffController -> Browser: Redirect to /manager/staff
+                    Browser --> Manager: Display updated staff list
+                end
+            else Phone not changed
+                StaffService -> StaffService: Update staff with new data
+                StaffService -> StaffRepository: save(staff)
+                StaffRepository -> Database: UPDATE Staff SET ...
+                Database --> StaffRepository: Updated Staff
+                StaffRepository --> StaffService: Saved Staff
+                StaffService --> StaffController: null (success)
+                
+                StaffController -> Browser: Redirect to /manager/staff
+                Browser --> Manager: Display updated staff list
+            end
+        end
+    end
+
+else Validation failed
+    StaffController -> Browser: HTML with validation errors
+    Browser --> Manager: Display form with validation errors
+end
+
+@enduml
+
+

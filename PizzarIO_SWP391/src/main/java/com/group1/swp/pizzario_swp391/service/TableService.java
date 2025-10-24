@@ -54,17 +54,24 @@ public class TableService {
     }
 
     /**
-     * Lấy tất cả bàn (Guest) - không bao gồm bàn retired
+     * Lọc bàn theo điều kiện cho manager
      */
-    public List<TableDTO> getAllTables() {
-        return tableMapper.toTableDTOs(tableRepository.getAllTablesForGuest());
+    public List<TableDTO> findTableByCondition(DiningTable.TableCondition condition) {
+        return tableMapper.toTableDTOs(tableRepository.getDiningTableByTableCondition(condition));
     }
 
     /**
-     * Lấy tất cả bàn cho Manager - không bao gồm bàn retired
+     * Lọc các bàn đang không ở trạng thái RETIRED
+     */
+    public List<TableDTO> findNonRetiredTables() {
+        return tableMapper.toTableDTOs(tableRepository.getDiningTableByTableConditionExceptRetired());
+    }
+
+    /**
+     * Lấy tất cả bàn cho Manager
      */
     public List<TableDTO> getAllTablesForManager() {
-        return tableMapper.toTableDTOs(tableRepository.getAllTablesForManager());
+        return tableMapper.toTableDTOs(tableRepository.findAll());
     }
 
     /**
@@ -80,6 +87,18 @@ public class TableService {
     public TableDTO getTableById(Integer id) {
         return tableMapper.toTableDTO(tableRepository.findById(id).
                 orElseThrow(() -> new RuntimeException("Table not found")));
+    }
+
+    /**
+     * Lấy danh sách bàn cho Cashier
+     */
+    public List<TableForCashierDTO> getTablesForCashier() {
+        return tableMapper.toTableForCashierDTOs(tableRepository.getAllTablesForCashier());
+    }
+
+
+    public void add(DiningTable table) {
+        tableRepository.save(table);
     }
 
     /**
@@ -111,17 +130,6 @@ public class TableService {
 
     }
 
-    /**
-     * Lấy danh sách bàn cho Cashier
-     */
-    public List<TableForCashierDTO> getTablesForCashier() {
-        return tableMapper.toTableForCashierDTOs(tableRepository.getAllTablesForCashier());
-    }
-
-
-    public void add(DiningTable table) {
-        tableRepository.save(table);
-    }
 
     /**
      * Lấy order detail của bàn (nếu có session và order đang active)
