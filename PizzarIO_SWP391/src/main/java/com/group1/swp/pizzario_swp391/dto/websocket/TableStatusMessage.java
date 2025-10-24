@@ -3,7 +3,11 @@ package com.group1.swp.pizzario_swp391.dto.websocket;
 import java.time.LocalDateTime;
 
 import com.group1.swp.pizzario_swp391.entity.DiningTable;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 /**
  * WebSocket message for table status updates
  * Broadcast to cashier and all guest tablets when table status changes
@@ -26,7 +30,8 @@ public class TableStatusMessage {
         TABLE_OCCUPIED,      // Guest selected table
         TABLE_RELEASED,      // Cashier released table
         TABLE_RESERVED,      // Table reserved
-        TABLE_PAYMENT_PENDING // Waiting for payment
+        TABLE_PAYMENT_PENDING, // Waiting for payment
+        TABLE_RETIRED        // Table marked as retired by manager
     }
 }
 

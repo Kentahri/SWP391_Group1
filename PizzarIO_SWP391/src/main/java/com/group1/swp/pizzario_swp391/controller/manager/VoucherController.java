@@ -2,6 +2,7 @@ package com.group1.swp.pizzario_swp391.controller.manager;
 
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import com.group1.swp.pizzario_swp391.dto.voucher.VoucherDTO;
+import com.group1.swp.pizzario_swp391.dto.voucher.VoucherCreateDTO;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +35,7 @@ public class VoucherController {
     @GetMapping("/vouchers/new")
     public String newVoucher(Model model) {
         model.addAttribute("voucherTypes", Voucher.VoucherType.values());
-        model.addAttribute("voucherForm", new VoucherDTO());
+        model.addAttribute("voucherForm", new VoucherCreateDTO());
         model.addAttribute("vouchers", voucherService.getVouchersSort());
         model.addAttribute("stats", voucherService.getVoucherAnalytics());
         model.addAttribute("openModal", "create");
@@ -67,32 +68,32 @@ public class VoucherController {
     }
 
     @PostMapping("/vouchers/save")
-    public String saveVoucher(@Valid @ModelAttribute("voucherForm") VoucherDTO voucherForm,
+    public String saveVoucher(@Valid @ModelAttribute("voucherForm") VoucherCreateDTO voucherForm,
             BindingResult bindingResult,
             Model model,
             RedirectAttributes redirectAttributes) {
+
+        if(voucherForm.getType() == Voucher.VoucherType.PERCENTAGE && voucherForm.getValue() > 100) {
+            bindingResult.rejectValue("value", "value.invalid", "Giá trị voucher phải nhỏ hơn hoặc bằng 100");
+        }
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("voucherTypes", Voucher.VoucherType.values());
             model.addAttribute("vouchers", voucherService.getVouchersSort());
             model.addAttribute("stats", voucherService.getVoucherAnalytics());
-            model.addAttribute("openModal", voucherForm.getId() == null ? "create" : "edit");
+            model.addAttribute("openModal", "create");
             model.addAttribute("hasErrors", true);
             return "admin_page/voucher/voucher-list";
         }
 
         try {
-            if (voucherForm.getId() == null) {
-                voucherService.createNewVoucher(voucherForm);
-            } else {
-                voucherService.updateVoucher(voucherForm.getId(), voucherForm);
-            }
+            voucherService.createNewVoucher(voucherForm);
             return "redirect:/manager/vouchers";
         } catch (Exception ex) {
             model.addAttribute("voucherTypes", Voucher.VoucherType.values());
             model.addAttribute("vouchers", voucherService.getVouchersSort());
             model.addAttribute("stats", voucherService.getVoucherAnalytics());
-            model.addAttribute("openModal", voucherForm.getId() == null ? "create" : "edit");
+            model.addAttribute("openModal", "create");
             model.addAttribute("errorMessage", ex.getMessage());
             return "admin_page/voucher/voucher-list";
         }

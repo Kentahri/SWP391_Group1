@@ -3,17 +3,16 @@ package com.group1.swp.pizzario_swp391.controller.cashier;
 import java.security.Principal;
 import java.util.List;
 
+import com.group1.swp.pizzario_swp391.annotation.CashierUrl;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -34,8 +33,7 @@ import jakarta.validation.Valid;
  * Cashier Dashboard Controller
  * Handle HTTP requests for cashier page with traditional POST/GET
  */
-@Controller
-@RequestMapping("/cashier")
+@CashierUrl
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class CashierDashboardController {
@@ -56,7 +54,7 @@ public class CashierDashboardController {
             model.addAttribute("tables", tables);
             model.addAttribute("reservationCreateDTO", new ReservationCreateDTO());
             return "cashier-page/cashier-dashboard";
-        } catch (Exception e) {
+        } catch (Exception _) {
             model.addAttribute("error", "Không thể tải dữ liệu. Vui lòng thử lại.");
             return "error-page";
         }

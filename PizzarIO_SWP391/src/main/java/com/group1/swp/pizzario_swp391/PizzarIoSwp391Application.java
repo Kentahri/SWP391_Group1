@@ -27,7 +27,7 @@ public class PizzarIoSwp391Application {
         SpringApplication.run(PizzarIoSwp391Application.class, args);
     }
 
-    @Bean
+    //@Bean
     CommandLineRunner initData(StaffService service, TableService tableService) {
         return (String[] args) -> {
             PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -49,7 +49,7 @@ public class PizzarIoSwp391Application {
                     java.time.LocalDate.of(1992, 8, 20),
                     "0907654321",
                     "TP.HCM",
-                    "123456",
+                    passwordEncoder.encode("123456789"),
                     "huy@gmail.com",
                     Staff.Role.MANAGER,
                     true

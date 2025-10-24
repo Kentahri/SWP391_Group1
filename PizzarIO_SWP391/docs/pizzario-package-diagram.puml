@@ -1,0 +1,306 @@
+@startuml PizzarIO Package Diagram
+
+!define CONTROLLER_COLOR #E1F5FE
+!define SERVICE_COLOR #F3E5F5
+!define REPOSITORY_COLOR #E8F5E8
+!define ENTITY_COLOR #FFF3E0
+!define DTO_COLOR #FCE4EC
+!define CONFIG_COLOR #F1F8E9
+!define UTILITY_COLOR #E8EAF6
+
+package "com.group1.swp.pizzario_swp391" <<Rectangle>> CONTROLLER_COLOR {
+    
+    package "controller" <<Rectangle>> CONTROLLER_COLOR {
+        package "cashier" {
+            [CashierDashboardController]
+        }
+        
+        package "guest" {
+            [GuestController]
+            [MembershipController]
+        }
+        
+        package "kitchen" {
+            [KitchenController]
+            [KitchenProductController]
+        }
+        
+        package "manager" {
+            [CategoryController]
+            [ProductController]
+            [SettingsController]
+            [StaffController]
+            [TableController]
+            [VoucherController]
+        }
+        
+        package "websocket" {
+            [GuestWebSocketController]
+        }
+        
+        [DashBoardController]
+        [GeminiChatController]
+        [LoginController]
+        [OtpEmailController]
+        [ShiftController]
+        [StaffShiftController]
+    }
+    
+    package "service" <<Rectangle>> SERVICE_COLOR {
+        [CartService]
+        [CategoryService]
+        [DataAnalyticsReportService]
+        [GeminiChatService]
+        [GuestService]
+        [JpaUserDetailsService]
+        [LoginService]
+        [MembershipService]
+        [OrderItemService]
+        [OrderService]
+        [OtpMailService]
+        [ProductService]
+        [ReservationSchedulerService]
+        [ReservationService]
+        [ShiftService]
+        [StaffService]
+        [StaffShiftService]
+        [TableService]
+        [VoucherService]
+        [WebSocketService]
+    }
+    
+    package "repository" <<Rectangle>> REPOSITORY_COLOR {
+        [CategoryRepository]
+        [LoginRepository]
+        [MembershipRepository]
+        [OrderItemRepository]
+        [OrderRepository]
+        [OtpMailRepository]
+        [ProductRepository]
+        [ReservationRepository]
+        [SessionRepository]
+        [ShiftRepository]
+        [StaffRepository]
+        [StaffShiftRepository]
+        [TableRepository]
+        [VoucherRepository]
+    }
+    
+    package "entity" <<Rectangle>> ENTITY_COLOR {
+        [Category]
+        [DiningTable]
+        [Membership]
+        [Order]
+        [OrderItem]
+        [OtpMail]
+        [Product]
+        [Reservation]
+        [Session]
+        [Shift]
+        [Staff]
+        [StaffShift]
+        [Voucher]
+    }
+    
+    package "dto" <<Rectangle>> DTO_COLOR {
+        package "cart" {
+            [CartItemDTO]
+        }
+        
+        package "category" {
+            [CategoryCreateDTO]
+            [CategoryDetailDTO]
+            [CategoryDTO]
+            [CategoryResponseDTO]
+            [CategoryUpdateDTO]
+        }
+        
+        package "chatbot" {
+            [GeminiChatRequest]
+            [GeminiChatResponse]
+        }
+        
+        package "data_analytics" {
+            [AnalyticsDTO]
+            [ProductStatsDTO]
+            [SalesDTO]
+            [StaffShiftCalendarDTO]
+            [StatsStaffShiftDTO]
+            [VoucherStatsDTO]
+            [WeekDayDTO]
+        }
+        
+        package "kitchen" {
+            [KitchenOrderDTO]
+        }
+        
+        package "membership" {
+            [MembershipDTO]
+            [MembershipRegistrationDTO]
+            [VerifyMembershipDTO]
+        }
+        
+        package "order" {
+            [OrderDetailDTO]
+            [OrderItemDTO]
+            [OrderSummaryDTO]
+        }
+        
+        package "product" {
+            [ProductCreateDTO]
+            [ProductResponseDTO]
+            [ProductUpdateDTO]
+            [ProductDTO]
+        }
+        
+        package "reservation" {
+            [ReservationCreateDTO]
+            [ReservationDTO]
+            [ReservationUpdateDTO]
+        }
+        
+        package "staff" {
+            [StaffCreateDTO]
+            [StaffDTO]
+            [StaffResponseDTO]
+            [StaffUpdateDTO]
+            [StaffWithShiftsDTO]
+        }
+        
+        package "staffshift" {
+            [StaffShiftCreateDTO]
+            [StaffShiftDTO]
+        }
+        
+        package "table" {
+            [TableCreateDTO]
+            [TableDTO]
+            [TableForCashierDTO]
+            [TableManagementDTO]
+        }
+        
+        package "voucher" {
+            [VoucherCreateDTO]
+            [VoucherDTO]
+            [VoucherResponseDTO]
+            [VoucherUpdateDTO]
+        }
+        
+        package "websocket" {
+            [TableSelectionRequest]
+            [TableSelectionResponse]
+            [TableStatusMessage]
+        }
+        
+        [ShiftDTO]
+    }
+    
+    package "mapper" <<Rectangle>> REPOSITORY_COLOR {
+        [CategoryMapper]
+        [CategoryResponseMapper]
+        [MembershipMapper]
+        [OrderItemMapper]
+        [ProductMapper]
+        [ProductResponseMapper]
+        [ReservationMapper]
+        [ShiftMapper]
+        [StaffMapper]
+        [StaffResponseMapper]
+        [StaffShiftMapper]
+        [TableMapper]
+        [VoucherMapper]
+        [VoucherResponseMapper]
+    }
+    
+    package "config" <<Rectangle>> CONFIG_COLOR {
+        [DevSecurityConfig]
+        [GeminiConfig]
+        [ProdSecurityConfig]
+        [SchedulerConfig]
+        [WebSocketConfig]
+    }
+    
+    package "annotation" <<Rectangle>> UTILITY_COLOR {
+        [CashierUrl]
+        [GuestManager]
+        [KitchenUrl]
+        [ManagerUrl]
+    }
+    
+    package "event" <<Rectangle>> UTILITY_COLOR {
+        package "reservation" {
+            [ReservationNoShowEvent]
+        }
+    }
+    
+    package "exception" <<Rectangle>> UTILITY_COLOR {
+        [ValidationException]
+    }
+    
+    [PizzarIoSwp391Application]
+}
+
+' Package Dependencies
+"controller" ..> "service" : uses
+"controller" ..> "dto" : uses
+"controller" ..> "mapper" : uses
+
+"service" ..> "repository" : uses
+"service" ..> "entity" : uses
+"service" ..> "dto" : uses
+"service" ..> "mapper" : uses
+
+"repository" ..> "entity" : manages
+
+"mapper" ..> "entity" : converts
+"mapper" ..> "dto" : converts
+
+"config" ..> "service" : configures
+"config" ..> "repository" : configures
+
+"event" ..> "service" : triggers
+
+' Notes
+note top of "controller"
+  Presentation Layer
+  Handles HTTP requests
+  Role-based access control
+end note
+
+note top of "service"
+  Business Logic Layer
+  Core application logic
+  Transaction management
+end note
+
+note top of "repository"
+  Data Access Layer
+  Database operations
+  JPA repositories
+end note
+
+note top of "entity"
+  Domain Models
+  JPA entities
+  Database mapping
+end note
+
+note top of "dto"
+  Data Transfer Objects
+  API contracts
+  Request/Response models
+end note
+
+note top of "mapper"
+  Object Mapping
+  Entity ↔ DTO conversion
+  MapStruct implementation
+end note
+
+note top of "config"
+  Configuration
+  Security, WebSocket, Scheduler
+  Environment-specific settings
+end note
+
+@enduml

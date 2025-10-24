@@ -94,72 +94,99 @@
         color: var(--accent);
         font-weight: 600;
       }
+      .error { color:#ef4444; font-weight:600; margin-bottom:12px; }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>Edit Staff</h1>
+      <div class="card">
+        <h1>Chỉnh sửa nhân viên</h1>
 
       <div th:if="${error}" style="color: red">
         <p th:text="${error}"></p>
       </div>
 
-      <form
-        th:action="@{'/manager/edit/' + ${staffID}}"
-        th:object="${staff}"
-        method="post"
-      >
-        <input
-          type="hidden"
-          th:if="${_csrf != null}"
-          th:name="${_csrf.parameterName}"
-          th:value="${_csrf.token}"
-        />
-        <div>
-          <label>Name:</label>
-          <input type="text" th:field="*{name}" required />
-        </div>
+        <form
+          th:action="@{'/manager/staff/edit/' + ${staffID}}"
+          th:object="${staff}"
+          method="post"
+        >
+          <div class="form-row">
+            <label>Tên</label>
+            <input type="text" th:field="*{name}"/>
+            <div
+              class="error"
+              th:if="${#fields.hasErrors('name')}"
+              th:errors="*{name}"
+            ></div>
+          </div>
 
-        <div>
-          <label>Date of Birth:</label>
-          <input type="date" th:field="*{dateOfBirth}" required />
-        </div>
+          <div class="form-row">
+            <label>Ngày sinh</label>
+            <input type="date" th:field="*{dateOfBirth}"/>
+            <div
+              class="error"
+              th:if="${#fields.hasErrors('dateOfBirth')}"
+              th:errors="*{dateOfBirth}"
+            ></div>
+          </div>
 
-        <div>
-          <label>Phone:</label>
-          <input type="text" th:field="*{phone}" required />
-        </div>
+          <div class="form-row">
+            <label>Số điện thoại</label>
+            <input type="text" th:field="*{phone}"/>
+            <div
+              class="error"
+              th:if="${#fields.hasErrors('phone')}"
+              th:errors="*{phone}"
+            ></div>
+          </div>
 
-        <div>
-          <label>Address:</label>
-          <input type="text" th:field="*{address}" />
-        </div>
+          <div class="form-row">
+            <label>Địa chỉ</label>
+            <input type="text" th:field="*{address}" />
+            <div
+              class="error"
+              th:if="${#fields.hasErrors('address')}"
+              th:errors="*{address}"
+            ></div>
+          </div>
 
         <div>
           <label>Email:</label>
-          <input type="email" th:field="*{email}" required />
+          <input type="text" th:field="*{email}"/>
         </div>
 
-        <div>
-          <label>Role:</label>
-          <select th:field="*{role}">
-            <option
-              th:each="r : ${roles}"
-              th:value="${r}"
-              th:text="${r}"
-              th:selected="${r == staff.role}"
-            ></option>
-          </select>
-        </div>
+          <div class="form-row">
+            <label>Vai trò</label>
+            <select th:field="*{role}">
+              <option
+                th:each="r : ${roles}"
+                th:value="${r}"
+                th:text="${r}"
+                th:selected="${r == staff.role}"
+              ></option>
+            </select>
+            <div
+              class="error"
+              th:if="${#fields.hasErrors('role')}"
+              th:errors="*{role}"
+            ></div>
+          </div>
 
-        <div>
-          <label><input type="checkbox" th:field="*{active}" /> Active</label>
-        </div>
+          <div class="form-row">
+            <label><input type="checkbox" th:field="*{active}" /> Hoạt động</label>
+            <div
+              class="error"
+              th:if="${#fields.hasErrors('active')}"
+              th:errors="*{active}"
+            ></div>
+          </div>
 
-        <button type="submit">Update</button>
-      </form>
+          <button type="submit">Cập nhật</button>
+        </form>
 
-      <a class="back-link" th:href="@{/manager/staff}">⬅ Back to List</a>
+        <a class="back-link" th:href="@{/manager/staff}">⬅ Quay lại</a>
+      </div>
     </div>
   </body>
 </html>

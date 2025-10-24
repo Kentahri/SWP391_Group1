@@ -25,7 +25,7 @@
 				       th:if="${_csrf != null}"
 				       th:name="${_csrf.parameterName}"
 				       th:value="${_csrf.token}"/>
-				<button type="submit" class="btn-logout">Logout</button>
+				<button type="submit" class="btn-logout" onclick="alert('Bạn có muốn đăng xuất không?')">Logout</button>
 			</form>
 		</div>
 	</header>

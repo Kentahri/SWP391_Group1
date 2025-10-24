@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import com.group1.swp.pizzario_swp391.dto.voucher.VoucherCreateDTO;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -20,7 +21,7 @@ public class VoucherService {
     VoucherRepository voucherRepository;
     VoucherMapper voucherMapper;
 
-    public void createNewVoucher(VoucherDTO voucherDTO) {
+    public void createNewVoucher(VoucherCreateDTO voucherDTO) {
         // Validate type & value
         if (voucherDTO.getType() == null) {
             throw new IllegalArgumentException("Bạn phải chọn loại voucher.");
@@ -58,14 +59,6 @@ public class VoucherService {
     public List<Voucher> getAllVouchers() {
         return voucherRepository.findAll();
     }
-
-    public void incrementTimesUsed(Long voucherId) {
-        Voucher voucher = voucherRepository.findById(voucherId)
-                .orElseThrow(() -> new IllegalArgumentException("Voucher không tồn tại"));
-        voucher.setTimesUsed(voucher.getTimesUsed() + 1);
-        voucherRepository.save(voucher);
-    }
-
     public List<Voucher> getVouchersSort() {
         return voucherRepository.findAllVoucherOrderByValidFromAsc();
     }

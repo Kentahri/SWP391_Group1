@@ -1,0 +1,163 @@
+@startuml Voucher CRUD Class Diagram
+
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam class {
+    BackgroundColor #E8F4FD
+    BorderColor #2E86AB
+    ArrowColor #2E86AB
+}
+
+package "Entity Layer" {
+    class Voucher {
+        - Long id
+        - String code
+        - VoucherType type
+        - double value
+        - String description
+        - int maxUses
+        - int timesUsed
+        - double minOrderAmount
+        - LocalDateTime validFrom
+        - LocalDateTime validTo
+        - boolean isActive
+        - List<Order> orders
+        --
+        + Voucher()
+        + Voucher(code, type, value, minOrderAmount, validFrom, validTo, isActive)
+        + addOrder(Order order)
+    }
+    
+    enum VoucherType {
+        PERCENTAGE
+        FIXED_AMOUNT
+    }
+}
+
+package "DTO Layer" {
+    class VoucherDTO {
+        - Long id
+        - String code
+        - VoucherType type
+        - Double value
+        - String description
+        - Integer maxUses
+        - Integer timesUsed
+        - Double minOrderAmount
+        - LocalDateTime validFrom
+        - LocalDateTime validTo
+        - boolean active
+        --
+        + isValidDateRange() : boolean
+        + isValidValue() : boolean
+    }
+    
+    class VoucherCreateDTO {
+        - String code
+        - VoucherType type
+        - Double value
+        - String description
+        - Integer maxUses
+        - Double minOrderAmount
+        - LocalDateTime validFrom
+        - LocalDateTime validTo
+        - boolean active
+        --
+        + isValidDateRange() : boolean
+        + isValidValue() : boolean
+    }
+    
+    class VoucherResponseDTO {
+        - Long id
+        - String code
+        - VoucherType type
+        - double value
+        - String description
+        - int maxUses
+        - int timesUsed
+        - double minOrderAmount
+        - LocalDateTime validFrom
+        - LocalDateTime validTo
+        - boolean isActive
+        --
+        + getValidFromFormatted() : String
+        + getValidToFormatted() : String
+        + getTypeText() : String
+        + getValueFormatted() : String
+        + getMinOrderAmountFormatted() : String
+        + getStatusText() : String
+        + isExpired() : boolean
+        + isUsedUp() : boolean
+        + isValid() : boolean
+    }
+    
+    class VoucherStatsDTO {
+        - Integer totalVoucher
+        - Integer activeVoucher
+        - Integer usedVoucher
+        - Double saveMoneyCustomer
+    }
+}
+
+package "Repository Layer" {
+    interface VoucherRepository {
+        + findAllVoucherOrderByValidFromAsc() : List<Voucher>
+        + totalUsedVoucher() : Integer
+        + countByActiveTrue() : Integer
+        + totalSavedAllOrders() : Double
+    }
+}
+
+package "Service Layer" {
+    class VoucherService {
+        - VoucherRepository voucherRepository
+        - VoucherMapper voucherMapper
+        --
+        + createNewVoucher(VoucherDTO voucherDTO) : void
+        + updateVoucher(Long id, VoucherDTO voucherDTO) : void
+        + getVoucherById(Long id) : Optional<Voucher>
+        + getAllVouchers() : List<Voucher>
+        + getVouchersSort() : List<Voucher>
+        + deleteVoucher(Long id) : void
+        + incrementTimesUsed(Long voucherId) : void
+        + toggleVoucherActive(Long id) : void
+        + getVoucherAnalytics() : VoucherStatsDTO
+    }
+}
+
+package "Controller Layer" {
+    class VoucherController {
+        - VoucherService voucherService
+        --
+        + listVouchers(Model model) : String
+        + newVoucher(Model model) : String
+        + editVoucher(Long id, Model model) : String
+        + saveVoucher(VoucherDTO voucherForm, BindingResult bindingResult, Model model, RedirectAttributes redirectAttributes) : String
+        + toggleActive(Long id) : String
+    }
+}
+
+package "Mapper Layer" {
+    interface VoucherMapper {
+        + toVoucher(VoucherDTO voucherDTO) : Voucher
+        + updateVoucher(Voucher voucher, VoucherDTO voucherDTO) : void
+    }
+}
+
+' Relationships
+Voucher ||--o{ Order : "has many"
+Voucher ||--|| VoucherType : "has type"
+
+VoucherRepository ||--|| Voucher : "manages"
+VoucherService ||--|| VoucherRepository : "uses"
+VoucherService ||--|| VoucherMapper : "uses"
+
+VoucherController ||--|| VoucherService : "uses"
+
+VoucherMapper ||--|| Voucher : "maps to"
+VoucherMapper ||--|| VoucherDTO : "maps from"
+
+VoucherDTO ||--|| VoucherCreateDTO : "extends"
+VoucherResponseDTO ||--|| Voucher : "represents"
+
+@enduml

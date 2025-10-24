@@ -68,16 +68,14 @@ public class DataAnalyticsReportService {
         return ((current - previous) * 100.0) / previous;
     }
 
-    
     public List<ProductStatsDTO> getTopBestSellingProducts() {
         Pageable topFive = PageRequest.of(0, 5);
         List<ProductStatsDTO> products = orderRepository.findTopBestSellingProducts(topFive);
 
-        
         List<ProductStatsDTO> result = new ArrayList<>();
         for (int i = 0; i < products.size(); i++) {
             ProductStatsDTO product = products.get(i);
-            
+
             ProductStatsDTO newProduct = new ProductStatsDTO(
                     (long) (i + 1), // topId: thứ hạng
                     product.productName(),
@@ -121,15 +119,25 @@ public class DataAnalyticsReportService {
         Long prevNewCustomers = countNewCustomers(previousOrders, prevStartDate);
         Double newCustomersDelta = calculateDelta(newCustomers, prevNewCustomers);
 
-        Long aov = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-        Long prevAov = prevOrders > 0 ? prevRevenue / prevOrders : 0;
-        Double aovDelta = calculateDelta(aov, prevAov);
+        Double aov = totalOrders > 0 ? (double) totalRevenue / totalOrders : 0.0;
+        Double prevAov = prevOrders > 0 ? (double) prevRevenue / prevOrders : 0.0;
+        Double aovDelta = calculateDelta(aov.longValue(), prevAov.longValue());
 
-        Long oldCustomer = currentOrders.size() - newCustomers;
-        Double retentionRate = oldCustomer / (double) currentOrders.size() * 100;
+        // Tính tổng số khách hàng trong kỳ hiện tại
+        Set<Long> currentCustomerIds = currentOrders.stream()
+                .map(Order::getMembership)
+                .filter(Objects::nonNull)
+                .map(Membership::getId)
+                .collect(Collectors.toSet());
+
+        Long totalCustomers = (long) currentCustomerIds.size();
+        Long oldCustomers = totalCustomers - newCustomers;
+
+        // Tính retention rate chính xác
+        Double retentionRate = totalCustomers > 0 ? (oldCustomers * 100.0) / totalCustomers : 0.0;
 
         return new AnalyticsDTO(totalRevenue, revenueDelta, totalOrders, ordersDelta, newCustomers, newCustomersDelta,
-                aov, aovDelta, oldCustomer, retentionRate);
+                aov, aovDelta, oldCustomers, retentionRate);
     }
 
     private Long countNewCustomers(List<Order> orders, LocalDate startDate) {

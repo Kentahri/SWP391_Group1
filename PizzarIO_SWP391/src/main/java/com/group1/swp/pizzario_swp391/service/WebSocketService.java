@@ -1,24 +1,16 @@
 package com.group1.swp.pizzario_swp391.service;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
-import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
-import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionResponse;
-import com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage;
-import com.group1.swp.pizzario_swp391.entity.*;
-import com.group1.swp.pizzario_swp391.repository.OrderRepository;
-import com.group1.swp.pizzario_swp391.repository.SessionRepository;
-import com.group1.swp.pizzario_swp391.repository.TableRepository;
-import jakarta.persistence.OptimisticLockException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
+import com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage;
+import com.group1.swp.pizzario_swp391.entity.DiningTable;
 
 /**
  * Service to handle WebSocket business logic for Cashier operations
@@ -66,6 +58,28 @@ public class WebSocketService{
                 .build();
 
         messagingTemplate.convertAndSend("/topic/tables-guest", guestMessage);
+    }
+
+    /**
+     * Broadcast table retired status to cashier and guests
+     * When manager marks a table as retired, notify all clients to remove it from UI
+     */
+    public void broadcastTableRetired(int tableId, String updatedBy) {
+        TableStatusMessage retiredMessage = TableStatusMessage.builder()
+                .type(TableStatusMessage.MessageType.TABLE_RETIRED)
+                .tableId(tableId)
+                .updatedBy(updatedBy)
+                .timestamp(LocalDateTime.now())
+                .message("Bàn " + tableId + " đã được đánh dấu là retired và sẽ không hiển thị nữa")
+                .build();
+
+        // Send to cashier
+        messagingTemplate.convertAndSend("/topic/tables-cashier", retiredMessage);
+        
+        // Send to guests
+        messagingTemplate.convertAndSend("/topic/tables-guest", retiredMessage);
+        
+        log.info("Broadcasted table {} retired status to all clients", tableId);
     }
 }
 

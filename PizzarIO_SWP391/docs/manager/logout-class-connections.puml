@@ -1,0 +1,46 @@
+@startuml Logout Class Connections
+!theme plain
+title Logout System - Class Connections
+
+class LoginController
+class LoginService
+class LoginRepository
+class StaffShiftRepository
+class Staff
+class StaffShift
+class Shift
+class ProdSecurityConfig
+
+' Logout Flow Connections
+LoginController --> LoginService : "POST /logout"
+LoginService --> LoginRepository : "findByEmail()"
+LoginService --> StaffShiftRepository : "recordLogoutByEmail()"
+
+' Repository to Entity Connections
+LoginRepository --> Staff : "findByEmail()"
+StaffShiftRepository --> StaffShift : "findCurrentShiftByStaffId()"
+StaffShiftRepository --> Shift : "manages"
+
+' Entity Relationships
+Staff ||--o{ StaffShift : "has shifts"
+Shift ||--o{ StaffShift : "contains"
+
+' Security Config Connections
+ProdSecurityConfig --> LoginService : "auditLogoutSuccessHandler()"
+
+note right of LoginService
+**Logout Process:**
+1. recordLogoutByEmail(email)
+2. Find current active shift
+3. Check if leaving early or completed
+4. Update shift status and check-out time
+5. Save updated shift record
+end note
+
+note right of StaffShift
+**Logout Status Logic:**
+- LEFT_EARLY: Ra sớm (before shift end time)
+- COMPLETED: Hoàn thành ca (after shift end time)
+end note
+
+@enduml

@@ -26,6 +26,7 @@ public interface StaffShiftMapper {
     @Mapping(target = "checkOut", source = "checkOut")
     @Mapping(target = "hourlyWage", source = "hourlyWage")
     @Mapping(target = "note", source = "note")
+    @Mapping(target = "penaltyPercent", source = "penaltyPercent")
     StaffShiftDTO toStaffShiftDTO(StaffShift staffShift);
 
     // Convert DTO to Entity
@@ -34,6 +35,7 @@ public interface StaffShiftMapper {
     @Mapping(target = "shift", ignore = true)
     @Mapping(target = "workDate", source = "workDate")
     @Mapping(target = "note", source = "note")
+    @Mapping(target = "penaltyPercent", source = "penaltyPercent")
     StaffShift toStaffShift(StaffShiftDTO staffShiftDTO);
 
     // Update Entity from DTO
@@ -42,6 +44,7 @@ public interface StaffShiftMapper {
     @Mapping(target = "shift", ignore = true)
     @Mapping(target = "workDate", source = "workDate")
     @Mapping(target = "note", source = "note")
+    @Mapping(target = "penaltyPercent", source = "penaltyPercent")
     void updateStaffShift(@MappingTarget StaffShift staffShift, StaffShiftDTO staffShiftDTO);
 
     // NEW: Convert Entity to Response DTO
@@ -55,7 +58,7 @@ public interface StaffShiftMapper {
     @Mapping(target = "shiftStatus", source = "status")
     @Mapping(target = "checkIn", source = "checkIn")
     @Mapping(target = "checkOut", source = "checkOut")
-    @Mapping(target = "hourlyWage", source = "hourlyWage")
+    @Mapping(target = "hourlyWage", source = "shift.salaryPerShift")
     @Mapping(target = "note", source = "note")
     StaffShiftResponseDTO toResponseDTO(StaffShift staffShift);
 
@@ -126,7 +129,8 @@ public interface StaffShiftMapper {
     default Double calculateTotalWage(StaffShiftResponseDTO shift) {
         if (shift.getCheckIn() != null && shift.getCheckOut() != null && shift.getHourlyWage() != null) {
             long hours = Duration.between(shift.getCheckIn(), shift.getCheckOut()).toHours();
-            return hours * shift.getHourlyWage().doubleValue();
+            int penalty = shift.getPenaltyPercent() != null ? shift.getPenaltyPercent() : 0;
+            return hours * shift.getHourlyWage().doubleValue() * (100 - penalty) / 100;
         }
         return 0.0;
     }

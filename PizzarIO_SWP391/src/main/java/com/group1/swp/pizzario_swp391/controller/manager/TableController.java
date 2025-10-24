@@ -1,6 +1,8 @@
 package com.group1.swp.pizzario_swp391.controller.manager;
 
-import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -9,15 +11,13 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import com.group1.swp.pizzario_swp391.dto.table.TableCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.table.TableManagementDTO;
 import com.group1.swp.pizzario_swp391.entity.DiningTable;
 import com.group1.swp.pizzario_swp391.service.TableService;
 
 import jakarta.validation.Valid;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 
 @Controller
 @ManagerUrl
@@ -35,7 +35,7 @@ public class TableController {
         model.addAttribute("tableCreateDTO", new TableCreateDTO());
         model.addAttribute("tableManagementDTO", new TableManagementDTO());
         model.addAttribute("tableConditions", DiningTable.TableCondition.values());
-        model.addAttribute("tables", tableService.getAllTables());
+        model.addAttribute("tables", tableService.getAllTablesForManager());
         return "admin_page/table_management";
     }
 
@@ -50,7 +50,7 @@ public class TableController {
         if (result.hasErrors()) {
             model.addAttribute("tableManagementDTO", new TableManagementDTO());
             model.addAttribute("tableConditions", DiningTable.TableCondition.values());
-            model.addAttribute("tables", tableService.getAllTables());
+            model.addAttribute("tables", tableService.getAllTablesForManager());
             return "admin_page/table_management";
         }
         tableService.createNewTable(tableCreateDTO);
@@ -69,10 +69,21 @@ public class TableController {
         if (result.hasErrors()) {
             model.addAttribute("tableCreateDTO", new TableCreateDTO());
             model.addAttribute("tableConditions", DiningTable.TableCondition.values());
-            model.addAttribute("tables", tableService.getAllTables());
+            model.addAttribute("tables", tableService.getAllTablesForManager());
             return "admin_page/table_management";
         }
-        tableService.updateTable(id, tableManagementDTO);
-        return "redirect:/manager/tables";
+        
+        try {
+            tableService.updateTable(id, tableManagementDTO);
+            return "redirect:/manager/tables";
+        } catch (RuntimeException e) {
+            // Thêm lỗi vào model để hiển thị trên giao diện
+            model.addAttribute("tableCreateDTO", new TableCreateDTO());
+            model.addAttribute("tableConditions", DiningTable.TableCondition.values());
+            model.addAttribute("tables", tableService.getAllTablesForManager());
+            model.addAttribute("updateError", e.getMessage());
+            model.addAttribute("errorTableId", id);
+            return "admin_page/table_management";
+        }
     }
 }

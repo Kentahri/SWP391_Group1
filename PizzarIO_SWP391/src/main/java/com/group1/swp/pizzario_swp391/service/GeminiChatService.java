@@ -44,7 +44,7 @@ public class GeminiChatService {
                     .temperature(0.7f) // Độ sáng tạo, ngẫu nhiên của câu trả lời
                     .topK(40f) // Giới hạn số lựa chọn token
                     .topP(0.95f)  // Xác suất tích lũy
-                    .maxOutputTokens(400)
+                    .maxOutputTokens(900)
                     .build();
 
             log.info("🚀 Calling Gemini API...");

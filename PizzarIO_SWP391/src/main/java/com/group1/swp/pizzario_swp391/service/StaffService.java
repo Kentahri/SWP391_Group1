@@ -3,7 +3,6 @@ package com.group1.swp.pizzario_swp391.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 // ...existing code...
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -55,6 +54,13 @@ public class StaffService {
                 .collect(Collectors.toList());
     }
 
+    public List<StaffResponseDTO> getStaffWithoutManager() {
+        List<Staff> staffList = staffRepository.findAll();
+        return staffList.stream()
+                .filter(staff -> staff.getRole() != Staff.Role.MANAGER)
+                .map(staffMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
 
     public StaffUpdateDTO getStaffForUpdate(int id) {
         Staff staff = staffRepository.findById(id)
@@ -90,12 +96,19 @@ public class StaffService {
         if (staff == null) {
             return STAFF_NOT_FOUND;
         }
-        if (staffRepository.existsByEmailAndIdNot(updateDTO.getEmail(), id)) {
+
+        // Only check email uniqueness if email has changed
+        if (!staff.getEmail().equals(updateDTO.getEmail()) &&
+                staffRepository.existsByEmail(updateDTO.getEmail())) {
             return "Email đã tồn tại!";
         }
-        if (staffRepository.existsByPhoneAndIdNot(updateDTO.getPhone(), id)) {
+
+        // Only check phone uniqueness if phone has changed
+        if (!staff.getPhone().equals(updateDTO.getPhone()) &&
+                staffRepository.existsByPhone(updateDTO.getPhone())) {
             return "Số điện thoại đã tồn tại!";
         }
+
         staffMapper.updateEntity(staff, updateDTO);
         staffRepository.save(staff);
         return null;
@@ -108,9 +121,7 @@ public class StaffService {
         staffRepository.deleteById(id);
     }
 
-
-
-    public void add(Staff staff){
+    public void add(Staff staff) {
         staffRepository.save(staff);
     }
 
@@ -124,13 +135,20 @@ public class StaffService {
 
     public Staff findByEmail(String email) {
         Staff staff = loginRepository.findByEmail(email).orElse(null);
-        if(staff == null){
+        if (staff == null) {
             throw new IllegalArgumentException("Không tìm thấy nhân viên với email: " + email);
         }
         return staff;
     }
 
     public void updateStaff(Staff staff) {
+        staffRepository.save(staff);
+    }
+
+    public void toggleStaffActive(int id) {
+        Staff staff = staffRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(STAFF_NOT_FOUND));
+        staff.setActive(!staff.isActive());
         staffRepository.save(staff);
     }
 }

@@ -1,0 +1,45 @@
+@startuml Login Class Connections
+!theme plain
+title Login System - Class Connections
+
+class LoginController
+class LoginService
+class LoginRepository
+class StaffShiftRepository
+class Staff
+class StaffShift
+class Shift
+class StaffLoginDTO
+class ProdSecurityConfig
+class JpaUserDetailsService
+
+' Login Flow Connections
+LoginController --> LoginService : "POST /signIn"
+LoginService --> LoginRepository : "authenticate()"
+LoginService --> StaffShiftRepository : "recordLoginByEmail()"
+
+' Repository to Entity Connections
+LoginRepository --> Staff : "findByEmail()"
+StaffShiftRepository --> StaffShift : "findAllShiftsByStaffIdAndDate()"
+StaffShiftRepository --> Shift : "manages"
+
+' Entity Relationships
+Staff ||--o{ StaffShift : "has shifts"
+Shift ||--o{ StaffShift : "contains"
+
+' DTO and Config Connections
+LoginController --> StaffLoginDTO : "uses"
+ProdSecurityConfig --> LoginService : "roleBasedSuccessHandler()"
+ProdSecurityConfig --> JpaUserDetailsService : "authentication"
+JpaUserDetailsService --> LoginRepository : "loadUserByUsername()"
+
+note right of LoginService
+**Login Process:**
+1. authenticate(email, password)
+2. recordLoginByEmail(email)
+3. Find scheduled shifts
+4. Update shift status
+5. Apply penalties if late
+end note
+
+@enduml
