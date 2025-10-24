@@ -38,7 +38,7 @@ public class CartService{
         return cart;
     }
 
-    public void addToCart(HttpSession session, Long productId, int quantity) {
+    public void addToCart(HttpSession session, Long productId, int quantity, String note) {
         Map<Long, CartItemDTO> cart = getCart(session);
         Product product = productRepository.findById(productId).orElseThrow(() -> new RuntimeException("Product not found"));
 
@@ -49,7 +49,7 @@ public class CartService{
             cart.put(productId, cartItem);
         } else {
             double currentPrice = getCurrentPrice(product);
-            cartItem = new CartItemDTO(productId, product.getName(), product.getImageURL(), quantity, currentPrice, currentPrice * quantity, null);
+            cartItem = new CartItemDTO(productId, product.getName(), product.getImageURL(), quantity, currentPrice, currentPrice * quantity, note);
             cart.put(productId, cartItem);
         }
     }

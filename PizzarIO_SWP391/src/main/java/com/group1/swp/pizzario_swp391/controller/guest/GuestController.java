@@ -1,28 +1,23 @@
 package com.group1.swp.pizzario_swp391.controller.guest;
 
-import java.util.Optional;
-
+import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
+import com.group1.swp.pizzario_swp391.entity.Session;
+import com.group1.swp.pizzario_swp391.repository.SessionRepository;
+import com.group1.swp.pizzario_swp391.service.*;
+import jakarta.servlet.http.HttpSession;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.group1.swp.pizzario_swp391.entity.Session;
-import com.group1.swp.pizzario_swp391.repository.SessionRepository;
-import com.group1.swp.pizzario_swp391.service.CartService;
-import com.group1.swp.pizzario_swp391.service.CategoryService;
-import com.group1.swp.pizzario_swp391.service.OrderService;
-import com.group1.swp.pizzario_swp391.service.ProductService;
-import com.group1.swp.pizzario_swp391.service.TableService;
+import java.util.Optional;
 
-import jakarta.servlet.http.HttpSession;
-
+@Slf4j
 @Controller
 @RequestMapping("/guest")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -35,11 +30,23 @@ public class GuestController{
     CartService cartService;
     OrderService orderService;
     SessionRepository sessionRepository;
+    private final GuestService guestService;
 
     @GetMapping
     public String guestPage(Model model) {
-        model.addAttribute("tables", tableService.getAllTablesForGuest());
+        model.addAttribute("tables", tableService.getAllTables());
         return "guest-page/guest";
+    }
+
+    /**
+     * Handle table selection from guest tablet
+     * Guest sends: { tableId, sessionId, guestCount }
+     * Response sent to: /queue/guest-{sessionId}
+     */
+    @MessageMapping("/guest/select-table")
+    public void selectTable(TableSelectionRequest request) {
+        log.info("Guest {} requesting table {}", request.getSessionId(), request.getTableId());
+        tableService.handleTableSelection(request);
     }
 
     @GetMapping("/menu")
@@ -78,13 +85,27 @@ public class GuestController{
         return "guest-page/view_menu";
     }
 
+    @GetMapping("/product/detail/{id}")
+    public String getProductDetail(@PathVariable("id") Long productId,
+                                   @RequestParam("sessionId") Long sessionId,
+                                   @RequestParam("tableId") Integer tableId,
+                                   Model model) {
+        var product = productService.getProductById(productId);
+        model.addAttribute("product", product);
+        model.addAttribute("sessionId", sessionId);
+        model.addAttribute("tableId", tableId);
+        return "guest-page/fragments/product_detail :: detail-content";
+    }
+
     @PostMapping("/cart/add")
     public String addToCart(@RequestParam("sessionId") Long sessionId,
                             @RequestParam("tableId") Integer tableId,
                             @RequestParam("productId") Long productId,
+                            @RequestParam("quantity") Integer quantity,
+                            @RequestParam("note") String note,
                             HttpSession session,
                             RedirectAttributes redirectAttributes) {
-        cartService.addToCart(session, productId, 1);
+        cartService.addToCart(session, productId, quantity, note);
         redirectAttributes.addAttribute("sessionId", sessionId);
         redirectAttributes.addAttribute("tableId", tableId);
         return "redirect:/guest/menu";

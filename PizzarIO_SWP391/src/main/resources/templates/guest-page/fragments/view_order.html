@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- =============================================================== -->
+<!-- FRAGMENT CHO DANH SÁCH ĐÃ ĐẶT (ORDER)                            -->
+<!-- =============================================================== -->
+<div th:fragment="order-view" class="order-section">
+    <h2>My Order 🗒️</h2>
+    <div class="items-list" id="orderedItemsList">
+        <th:block th:if="${#lists.isEmpty(orderedItems)}">
+            <p class="empty-message">You haven't ordered anything yet.</p>
+        </th:block>
+        <div class="order-item" th:each="item : ${orderedItems}">
+            <div class="item-details">
+                <div class="name" th:text="${item.productName} + ' x' + ${item.quantity}">Product Name</div>
+                <div class="price" th:text="${#numbers.formatCurrency(item.totalPrice)}">0đ</div>
+            </div>
+            <span class="status" th:text="${item.status}">PENDING</span>
+        </div>
+    </div>
+    <div class="summary">
+        <th:block th:with="orderTotalSum=${#aggregates.sum(orderedItems.![totalPrice])}">
+            <div class="row" th:if="${!#lists.isEmpty(orderedItems)}">
+                <span>Order Total</span>
+                <span class="total" id="orderTotal"
+                      th:text="${#numbers.formatCurrency(orderTotalSum)}">0₫</span>
+            </div>
+        </th:block>
+    </div>
+    <form th:action="@{/guest/table/release}" method="post">
+        <input type="hidden" name="tableId" th:value="${tableId}"/>
+        <button class="btn btn-secondary" type="submit">Request Payment</button>
+    </form>
+</div>
+
+</body>
+</html>

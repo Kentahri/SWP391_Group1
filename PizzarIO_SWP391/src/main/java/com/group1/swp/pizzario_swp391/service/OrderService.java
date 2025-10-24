@@ -1,12 +1,5 @@
 package com.group1.swp.pizzario_swp391.service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.group1.swp.pizzario_swp391.dto.cart.CartItemDTO;
 import com.group1.swp.pizzario_swp391.dto.kitchen.KitchenOrderDTO;
 import com.group1.swp.pizzario_swp391.dto.order.OrderItemDTO;
@@ -17,29 +10,29 @@ import com.group1.swp.pizzario_swp391.repository.OrderItemRepository;
 import com.group1.swp.pizzario_swp391.repository.OrderRepository;
 import com.group1.swp.pizzario_swp391.repository.ProductRepository;
 import com.group1.swp.pizzario_swp391.repository.SessionRepository;
-
 import jakarta.servlet.http.HttpSession;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+
 public class OrderService{
 
-    private final ProductRepository productRepository;
-    private final OrderItemRepository orderItemRepository;
-    private final OrderRepository orderRepository;
-    private final SessionRepository sessionRepository;
-    private final CartService cartService;
-    private final OrderItemMapper orderItemMapper;
-
-    public OrderService(ProductRepository productRepository, OrderItemRepository orderItemRepository, 
-                       OrderRepository orderRepository, SessionRepository sessionRepository, 
-                       CartService cartService, OrderItemMapper orderItemMapper) {
-        this.productRepository = productRepository;
-        this.orderItemRepository = orderItemRepository;
-        this.orderRepository = orderRepository;
-        this.sessionRepository = sessionRepository;
-        this.cartService = cartService;
-        this.orderItemMapper = orderItemMapper;
-    }
+    ProductRepository productRepository;
+    OrderItemRepository orderItemRepository;
+    OrderRepository orderRepository;
+    SessionRepository sessionRepository;
+    CartService cartService;
+    OrderItemMapper orderItemMapper;
 
     public List<OrderItemDTO> getOrderedItemsForView(Long sessionId) {
         List<OrderItemDTO> orderedItems = new ArrayList<>();

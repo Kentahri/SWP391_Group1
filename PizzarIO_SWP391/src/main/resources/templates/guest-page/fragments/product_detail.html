@@ -1,0 +1,30 @@
+<div th:fragment="detail-content">
+    <h2 th:text="${product.name}"></h2>
+    <img th:src="${product.imageURL ?: 'https://via.placeholder.com/200'}"
+         style="max-width: 100%; border-radius: 6px;">
+    <p><strong>Giá:</strong> <span th:text="${product.currentPriceFormatted}"></span></p>
+    <p><strong>Mô tả:</strong> <span th:text="${product.description ?: 'Chưa có mô tả.'}"></span></p>
+
+    <form th:action="@{/guest/cart/add}" method="post" style="margin-top: 15px;">
+        <input type="hidden" name="sessionId" th:value="${sessionId}">
+        <input type="hidden" name="tableId" th:value="${tableId}">
+        <input type="hidden" name="productId" th:value="${product.id}">
+
+        <label>Số lượng:</label>
+        <input type="number" name="quantity" value="1" min="1" style="width: 60px; margin-left: 8px;">
+
+        <br><br>
+        <label>Ghi chú:</label><br>
+        <textarea name="note" rows="3" style="width: 100%; border-radius: 4px; padding: 6px;"></textarea>
+
+        <div style="margin-top: 12px;">
+            <button type="submit"
+                    style="background: #007bff; color: white; padding: 8px 12px; border: none; border-radius: 4px;">Thêm
+                vào giỏ
+            </button>
+            <button type="button" onclick="document.getElementById('productModal').style.display='none'"
+                    style="margin-left: 8px;">Đóng
+            </button>
+        </div>
+    </form>
+</div>
