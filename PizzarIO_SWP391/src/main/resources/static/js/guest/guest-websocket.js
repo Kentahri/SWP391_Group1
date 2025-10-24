@@ -110,6 +110,8 @@ function handlePersonalMessage(message) {
             case 'CONFLICT':
                 handleTableSelectConflict(data);
                 break;
+            case 'TABLE_RETIRED':
+                handleGuestTableRetired(data);
             case 'ERROR':
             default:
                 handleTableSelectError(data);

@@ -11,9 +11,11 @@ import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionResponse;
 import com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage;
 import com.group1.swp.pizzario_swp391.entity.DiningTable;
 import com.group1.swp.pizzario_swp391.entity.Order;
+import com.group1.swp.pizzario_swp391.entity.Reservation;
 import com.group1.swp.pizzario_swp391.entity.Session;
 import com.group1.swp.pizzario_swp391.mapper.TableMapper;
 import com.group1.swp.pizzario_swp391.repository.OrderRepository;
+import com.group1.swp.pizzario_swp391.repository.ReservationRepository;
 import com.group1.swp.pizzario_swp391.repository.SessionRepository;
 import com.group1.swp.pizzario_swp391.repository.TableRepository;
 import jakarta.persistence.OptimisticLockException;
@@ -35,13 +37,14 @@ import java.util.stream.Collectors;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Slf4j
-public class TableService{
+public class TableService {
     TableRepository tableRepository;
     TableMapper tableMapper;
     SessionRepository sessionRepository;
     WebSocketService webSocketService;
+    ReservationRepository reservationRepository;
     OrderRepository orderRepository;
-    SimpMessagingTemplate messagingTemplate;
+    private final SimpMessagingTemplate simpMessagingTemplate;
 
     /**
      * Guest selects a table
@@ -121,7 +124,7 @@ public class TableService{
                     .message("Bạn đã chọn bàn số " + request.getTableId() + " thành công")
                     .build();
 
-            messagingTemplate.convertAndSend(
+            simpMessagingTemplate.convertAndSend(
                     "/queue/guest-" + request.getSessionId(),
                     response
             );
@@ -153,10 +156,8 @@ public class TableService{
                 .availableTables(availableTables)
                 .build();
 
-        messagingTemplate.convertAndSend("/queue/guest-" + sessionId, response);
+        simpMessagingTemplate.convertAndSend("/queue/guest-" + sessionId, response);
     }
-
-
     /**
      * Tạo bàn mới (Manager)
      * Manager chỉ nhập capacity, hệ thống tự set status=AVAILABLE và condition=NEW
@@ -175,10 +176,24 @@ public class TableService{
     }
 
     /**
-     * Lấy tất cả bàn (Manager)
+     * Lấy tất cả bàn (Guest) - không bao gồm bàn retired
      */
     public List<TableDTO> getAllTables() {
-        return tableMapper.toTableDTOs(tableRepository.findAll());
+        return tableMapper.toTableDTOs(tableRepository.getAllTablesForGuest());
+    }
+
+    /**
+     * Lấy tất cả bàn cho Manager - không bao gồm bàn retired
+     */
+    public List<TableDTO> getAllTablesForManager() {
+        return tableMapper.toTableDTOs(tableRepository.getAllTablesForManager());
+    }
+
+    /**
+     * Lấy tất cả bàn cho Guest - không bao gồm bàn retired
+     */
+    public List<TableDTO> getAllTablesForGuest() {
+        return tableMapper.toTableDTOs(tableRepository.getAllTablesForGuest());
     }
 
     /**
@@ -192,30 +207,39 @@ public class TableService{
     /**
      * Cập nhật bàn (Manager)
      * Manager chỉ cập nhật capacity và tableCondition
-     * TableStatus do Cashier quản lý
+     * Manager sẽ chỉ được cập nhật bàn thành trạng thái RETIRED nếu bàn đó đang trống (AVAILABLE)
      */
+    @Transactional
     public void updateTable(int id, TableManagementDTO tableManagementDTO) {
         DiningTable table = tableRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Table not found"));
-        tableMapper.updateDiningTable(table, tableManagementDTO);
-        table.setUpdatedAt(LocalDateTime.now());
-        tableRepository.save(table);
-    }
+        List<Reservation> reservationList = reservationRepository.getAllReservationsForUpdateTable(table.getId(), LocalDateTime.now());
+        if(table.getTableStatus() == DiningTable.TableStatus.AVAILABLE && reservationList.isEmpty()) {
+            // Lưu lại condition cũ để kiểm tra có phải retired không
+            DiningTable.TableCondition oldCondition = table.getTableCondition();
 
-    /**
-     * Xóa bàn (Manager)
-     */
-    public void deleteTable(int id) {
-        tableRepository.deleteById(id);
-    }
+            tableMapper.updateDiningTable(table, tableManagementDTO);
+            table.setUpdatedAt(LocalDateTime.now());
+            tableRepository.save(table);
 
+            // Nếu đánh dấu thành RETIRED, gửi WebSocket thông báo
+            if (tableManagementDTO.getTableCondition() == DiningTable.TableCondition.RETIRED
+                    && oldCondition != DiningTable.TableCondition.RETIRED) {
+                webSocketService.broadcastTableRetired(id, "Manager");
+            }
+        }else {
+            throw new RuntimeException("Bàn đang không trống hoặc đã được đặt trước!");
+        }
+
+    }
 
     /**
      * Lấy danh sách bàn cho Cashier
      */
     public List<TableForCashierDTO> getTablesForCashier() {
-        return tableMapper.toTableForCashierDTOs(tableRepository.findAll());
+        return tableMapper.toTableForCashierDTOs(tableRepository.getAllTablesForCashier());
     }
+
 
     public void add(DiningTable table) {
         tableRepository.save(table);
