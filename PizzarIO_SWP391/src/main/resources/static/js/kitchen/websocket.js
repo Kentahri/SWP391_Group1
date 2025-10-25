@@ -91,14 +91,21 @@ function handleNewOrder(message) {
         const orderData = JSON.parse(message.body);
         console.log('[Kitchen] Parsed order data:', orderData);
 
-        // Thêm order mới vào danh sách
-        addNewOrderToUI(orderData);
-        
-        // Hiển thị thông báo
-        showNotification(`Có order mới: ${orderData.code} - ${orderData.tableName || 'Take away'}`, 'info');
-        
-        // Play sound notification
-        playNotificationSound();
+        // Xử lý theo loại message
+        if (orderData.type === 'ORDER_UPDATED') {
+            console.log('[Kitchen] Order updated:', orderData);
+            upsertOrderCard(orderData);
+            showNotification(`Order ${orderData.code} đã được cập nhật`, 'info');
+        } else if (orderData.type === 'NEW_ORDER') {
+            console.log('[Kitchen] New order:', orderData);
+            upsertOrderCard(orderData);
+            showNotification(`Có order mới: ${orderData.code} - ${orderData.tableName || 'Take away'}`, 'info');
+            playNotificationSound();
+        } else {
+            // Fallback cho message không có type
+            upsertOrderCard(orderData);
+            showNotification(`Có order mới: ${orderData.code} - ${orderData.tableName || 'Take away'}`, 'info');
+        }
 
     } catch (error) {
         console.error('Error parsing new order message:', error);
@@ -226,25 +233,13 @@ function createOrderCardElement(orderData) {
         orderCard = document.createElement('div');
         orderCard.className = 'order-card';
         orderCard.setAttribute('data-order-id', orderData.orderId || orderData.id || 'unknown');
-        //
-        // --- SAFE FIELDS ONLY ---
         const code = orderData.code || 'N/A';
         const tableName = orderData.tableName || orderData.type || 'N/A';
         const priorityBadge = getPriorityBadgeHTML(orderData.priority);
         const statusBadge = getStatusBadgeHTML(orderData.status);
-        const totalItems = (typeof orderData.totalItems === 'number' && !isNaN(orderData.totalItems)) ? orderData.totalItems : 0;
-        const completedItems = (typeof orderData.completedItems === 'number' && !isNaN(orderData.completedItems)) ? orderData.completedItems : 0;
-        // percent phải là số 0..100
-        let progressPercent = 0;
-        if (typeof orderData.processPercent === 'number' && orderData.processPercent >= 0 && orderData.processPercent <= 100) {
-            progressPercent = orderData.processPercent;
-        } else if (totalItems > 0) {
-            progressPercent = Math.round(100 * completedItems / totalItems);
-        }
         const totalPrice = (typeof orderData.totalPrice === 'number' && !isNaN(orderData.totalPrice)) ? orderData.totalPrice : 0;
         const orderNote = (typeof orderData.note === 'string' && orderData.note.trim()) ? orderData.note : null;
-        // Không tự động convert timestamp sang timeAgo (quá rủi ro JS locale)
-        //
+        
         orderCard.innerHTML = `
             <div class="order-header">
                 <span class="order-id">${code}</span>
@@ -255,13 +250,6 @@ function createOrderCardElement(orderData) {
                 <span class="order-table"><i class="fa fa-map-marker-alt"></i> ${tableName}</span>
                 <span class="order-time"><i class="fa fa-clock"></i> <span>Vừa xong</span></span>
             </div>
-            <div class="order-progress">
-                <span>${totalItems} món</span>
-                <div class="progress-bar">
-                    <div class="progress" style="width: ${progressPercent}%"></div>
-                </div>
-                <span>${completedItems}/${totalItems}</span>
-            </div>
             ${orderNote ? `<div class="order-info"><span class="order-note"><i class="fa fa-sticky-note"></i> <span>${orderNote}</span></span></div>` : ''}
             <div class="order-total"><span class="total-price">Tổng: ${formatPrice(totalPrice)} VNĐ</span></div>
             <a href="/pizzario/kitchen/order/${orderData.orderId || orderData.id || 'unknown'}" class="order-detail-btn">Xem chi tiết</a>
@@ -270,7 +258,6 @@ function createOrderCardElement(orderData) {
         console.error('Error creating order card element:', error, orderData);
         orderCard = null;
     }
-    // Luôn luôn fallback rõ ràng nếu thất bại
     if (!orderCard || typeof orderCard !== 'object' || !orderCard.nodeType) {
         const fallbackCard = document.createElement('div');
         fallbackCard.className = 'order-card error';
@@ -351,6 +338,34 @@ function updateCompletedItems(orderElement, completed, total) {
     if (completedSpan) {
         completedSpan.textContent = `${completed}/${total}`;
     }
+}
+
+/**
+ * Upsert order card in UI
+ */
+function upsertOrderCard(orderData) {
+  const orderId = orderData.orderId || orderData.id;
+  let orderCard = document.querySelector(`.order-card[data-order-id="${orderId}"]`);
+  if (orderCard) {
+    // Update trường text content
+    const codeEl = orderCard.querySelector('.order-id');
+    if (codeEl) codeEl.textContent = orderData.code || 'N/A';
+    const tableEl = orderCard.querySelector('.order-table');
+    if (tableEl) tableEl.innerHTML = `<i class="fa fa-map-marker-alt"></i> ${orderData.tableName || orderData.type || 'N/A'}`;
+    // Update badge (trạng thái)
+    const oldBadge = orderCard.querySelector('.badge');
+    if (oldBadge) oldBadge.outerHTML = getStatusBadgeHTML(orderData.status);
+    const totalPrice = (typeof orderData.totalPrice === 'number' && !isNaN(orderData.totalPrice)) ? orderData.totalPrice : 0;
+    const totalPriceEl = orderCard.querySelector('.total-price');
+    if (totalPriceEl) totalPriceEl.textContent = `Tổng: ${formatPrice(totalPrice)} VNĐ`;
+    const orderNote = (typeof orderData.note === 'string' && orderData.note.trim()) ? orderData.note : null;
+    const noteWrapper = orderCard.querySelector('.order-info .order-note span:last-child');
+    if (noteWrapper) noteWrapper.textContent = orderNote || '';
+    orderCard.classList.add('updated-order');
+    setTimeout(() => orderCard.classList.remove('updated-order'), 1200);
+    return;
+  }
+  addNewOrderToUI(orderData);
 }
 
 // ==================== UTILITY FUNCTIONS ====================
