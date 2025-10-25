@@ -61,7 +61,7 @@ public class StaffShiftController {
         model.addAttribute("weekStartDate", weekStart);
         model.addAttribute("weekEndDate", weekEnd);
 
-        List<StaffResponseDTO> allStaff = staffService.getStaffWithoutManager();
+        List<StaffResponseDTO> allStaff = staffService.getAllStaff();
         List<ShiftDTO> allShifts = shiftService.getAllShift();
         model.addAttribute("allStaff", allStaff);
         model.addAttribute("allShifts", allShifts);
@@ -288,9 +288,18 @@ public class StaffShiftController {
             }
         }
 
+
         // Đảm bảo status luôn là SCHEDULED cho create mode
         if (isCreateMode) {
             staffShiftDTO.setStatus("SCHEDULED");
+
+
+
+
+
+
+
+
         }
 
         if (bindingResult.hasErrors()) {

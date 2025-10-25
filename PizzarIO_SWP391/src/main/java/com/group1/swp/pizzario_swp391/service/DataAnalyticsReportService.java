@@ -62,7 +62,7 @@ public class DataAnalyticsReportService {
     }
 
     // Tính % thay đổi
-    private Double calculateDelta(Long current, Long previous) {
+    private Double calculateDelta(Double current, Double previous) {
         if (previous == 0)
             return 0.0;
         return ((current - previous) * 100.0) / previous;
@@ -107,21 +107,21 @@ public class DataAnalyticsReportService {
 
         Long totalRevenue = calculateTotalRevenue(currentOrders);
         Long prevRevenue = calculateTotalRevenue(previousOrders);
-        Double revenueDelta = calculateDelta(totalRevenue, prevRevenue);
+        Double revenueDelta = calculateDelta(totalRevenue.doubleValue(), prevRevenue.doubleValue());
 
         // ĐƠN HÀNG
         Long totalOrders = (long) currentOrders.size();
         Long prevOrders = (long) previousOrders.size();
-        Double ordersDelta = calculateDelta(totalOrders, prevOrders);
+        Double ordersDelta = calculateDelta(totalOrders.doubleValue(), prevOrders.doubleValue());
 
         // KH MỚI
         Long newCustomers = countNewCustomers(currentOrders, startDate);
         Long prevNewCustomers = countNewCustomers(previousOrders, prevStartDate);
-        Double newCustomersDelta = calculateDelta(newCustomers, prevNewCustomers);
+        Double newCustomersDelta = calculateDelta(newCustomers.doubleValue(), prevNewCustomers.doubleValue());
 
         Double aov = totalOrders > 0 ? (double) totalRevenue / totalOrders : 0.0;
         Double prevAov = prevOrders > 0 ? (double) prevRevenue / prevOrders : 0.0;
-        Double aovDelta = calculateDelta(aov.longValue(), prevAov.longValue());
+        Double aovDelta = calculateDelta(aov, prevAov);
 
         // Tính tổng số khách hàng trong kỳ hiện tại
         Set<Long> currentCustomerIds = currentOrders.stream()

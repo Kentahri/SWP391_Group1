@@ -1,486 +1,496 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quản lý ca làm việc</title>
-    <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
-    <link rel="stylesheet" th:href="@{/css/admin_page/shift-management.css}" />
-    <!-- Đảm bảo trong <head> có 3 meta này -->
-    <meta name="_csrf" content="[[${_csrf.token}]]" />
-    <meta name="_csrf_parameter" content="[[${_csrf.parameterName}]]" />
-    <meta name="_csrf_header" content="[[${_csrf.headerName}]]" />
-  </head>
-  <body>
-    <div class="app">
-      <!-- SIDEBAR -->
-      <div th:insert="~{fragments/sidebar :: sidebar('staff_shifts')}"></div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quản lý ca làm việc</title>
+  <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
+  <link rel="stylesheet" th:href="@{/css/admin_page/shift-management.css}" />
+  <!-- Đảm bảo trong <head> có 3 meta này -->
+  <meta name="_csrf" content="[[${_csrf.token}]]" />
+  <meta name="_csrf_parameter" content="[[${_csrf.parameterName}]]" />
+  <meta name="_csrf_header" content="[[${_csrf.headerName}]]" />
 
-      <!-- MAIN -->
-      <main class="main">
-        <header class="page-header">
-          <div>
-            <h1>Quản lý ca làm việc</h1>
-            <p class="muted">Phân ca và theo dõi thời gian làm việc</p>
-          </div>
-          <div class="userbox">
-            <div class="avatar">M</div>
-            <div class="who">
-              <strong>Manager</strong>
-              <span class="muted">Quản lý</span>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <div th:insert="~{fragments/sidebar :: sidebar('staff_shifts')}"></div>
+
+  <!-- MAIN -->
+  <main class="main">
+    <header class="page-header">
+      <div>
+        <h1>Quản lý ca làm việc</h1>
+        <p class="muted">Phân ca và theo dõi thời gian làm việc</p>
+      </div>
+      <div class="userbox">
+        <div class="avatar">M</div>
+        <div class="who">
+          <strong>Manager</strong>
+          <span class="muted">Quản lý</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="container">
+      <!-- Success/Error Messages -->
+      <div
+              th:if="${message}"
+              class="alert alert-success"
+              th:text="${message}"
+      ></div>
+      <div
+              th:if="${error}"
+              class="alert alert-error"
+              th:text="${error}"
+      ></div>
+
+      <!-- Tabs Navigation -->
+      <div class="tabs-nav">
+        <a th:href="@{/manager/staff_shifts}" class="tab-btn active">
+          📅 Lịch phân công ca
+        </a>
+        <a th:href="@{/manager/shifts}" class="tab-btn">
+          ⚙️ Quản lý loại ca
+        </a>
+      </div>
+
+      <!-- Tab: Calendar View -->
+      <div id="tab-calendar" class="tab-content active">
+        <div class="stats-grid">
+          <div class="stat-card blue">
+            <div class="stat-content">
+              <h3>Tổng ca làm việc</h3>
+              <div
+                      class="stat-value"
+                      th:text="${stats != null ? stats.totalShifts : 0}"
+              >
+                14
+              </div>
             </div>
-          </div>
-        </header>
-
-        <div class="container">
-          <!-- Success/Error Messages -->
-          <div
-            th:if="${message}"
-            class="alert alert-success"
-            th:text="${message}"
-          ></div>
-          <div
-            th:if="${error}"
-            class="alert alert-error"
-            th:text="${error}"
-          ></div>
-
-          <!-- Tabs Navigation -->
-          <div class="tabs-nav">
-            <a th:href="@{/manager/staff_shifts}" class="tab-btn active">
-              📅 Lịch phân công ca
-            </a>
-            <a th:href="@{/manager/shifts}" class="tab-btn">
-              ⚙️ Quản lý loại ca
-            </a>
+            <div class="stat-icon blue">📅</div>
           </div>
 
-          <!-- Tab: Calendar View -->
-          <div id="tab-calendar" class="tab-content active">
-            <div class="stats-grid">
-              <div class="stat-card blue">
-                <div class="stat-content">
-                  <h3>Tổng ca làm việc</h3>
-                  <div
-                    class="stat-value"
-                    th:text="${stats != null ? stats.totalShifts : 0}"
-                  >
-                    14
-                  </div>
-                </div>
-                <div class="stat-icon blue">📅</div>
+          <div class="stat-card green">
+            <div class="stat-content">
+              <h3>Tổng giờ làm</h3>
+              <div
+                      class="stat-value"
+                      th:text="${stats != null ? stats.totalHours + 'h' : '0h'}"
+              >
+                109h
               </div>
+            </div>
+            <div class="stat-icon green">🕐</div>
+          </div>
 
-              <div class="stat-card green">
-                <div class="stat-content">
-                  <h3>Tổng giờ làm</h3>
-                  <div
-                    class="stat-value"
-                    th:text="${stats != null ? stats.totalHours + 'h' : '0h'}"
-                  >
-                    109h
-                  </div>
-                </div>
-                <div class="stat-icon green">🕐</div>
+          <div class="stat-card purple">
+            <div class="stat-content">
+              <h3>Tổng lương</h3>
+              <div
+                      class="stat-value"
+                      th:text="${stats != null ? #numbers.formatDecimal(stats.totalWage, 1, 'COMMA', 0, 'COMMA') + 'đ' : '0đ'}"
+              >
+                4.180.000đ
               </div>
+            </div>
+            <div class="stat-icon purple">👥</div>
+          </div>
 
-              <div class="stat-card purple">
-                <div class="stat-content">
-                  <h3>Tổng lương</h3>
-                  <div
-                    class="stat-value"
-                    th:text="${stats != null ? #numbers.formatDecimal(stats.totalWage, 1, 'COMMA', 0, 'COMMA') + 'đ' : '0đ'}"
-                  >
-                    4.180.000đ
-                  </div>
-                </div>
-                <div class="stat-icon purple">👥</div>
-              </div>
-
-              <div class="stat-card orange">
-                <div class="stat-content">
-                  <h3>Ca hoàn thành</h3>
-                  <div class="stat-value">
+          <div class="stat-card orange">
+            <div class="stat-content">
+              <h3>Ca hoàn thành</h3>
+              <div class="stat-value">
                     <span th:text="${stats != null ? stats.completedShifts : 0}"
-                      >11</span
+                    >11</span
                     >/<span th:text="${stats != null ? stats.totalShifts : 0}"
-                      >14</span
-                    >
-                  </div>
-                </div>
-                <div class="stat-icon orange">⚠️</div>
+              >14</span
+              >
               </div>
             </div>
+            <div class="stat-icon orange">⚠️</div>
+          </div>
+        </div>
 
-            <!-- Main Calendar Card -->
-            <div class="main-card">
-              <!-- Calendar Header with Filters -->
-              <div class="calendar-header">
-                <div class="calendar-title">
-                  <span>📅</span>
-                  <span>Lịch ca làm việc</span>
-                </div>
+        <!-- Main Calendar Card -->
+        <div class="main-card">
+          <!-- Calendar Header with Filters -->
+          <div class="calendar-header">
+            <div class="calendar-title">
+              <span>📅</span>
+              <span>Lịch ca làm việc</span>
+            </div>
 
-                <div class="calendar-controls">
-                  <div class="filter-group">
-                    <span class="filter-label">🔍</span>
-                    <select
-                      class="filter-select"
-                      id="staffFilter"
-                      onchange="filterByStaff()"
-                    >
-                      <option value="">Tất cả nhân viên</option>
-                      <option
-                        th:each="staff : ${allStaff}"
-                        th:value="${staff.id}"
-                        th:text="${staff.name}"
-                        th:selected="${selectedStaffId != null && selectedStaffId == staff.id}"
-                      ></option>
-                    </select>
-                  </div>
-
-                  <div class="filter-group">
-                    <select
-                      class="filter-select"
-                      id="shiftFilter"
-                      onchange="filterByShift()"
-                    >
-                      <option value="">Tất cả ca</option>
-                      <option
-                        th:each="shift : ${allShifts}"
-                        th:value="${shift.id}"
-                        th:text="${shift.shiftName}"
-                        th:selected="${selectedShiftId != null && selectedShiftId == shift.id}"
-                      ></option>
-                    </select>
-                  </div>
-
-                  <button class="add-btn" onclick="openStaffShiftModal()">
-                    + Thêm ca làm việc
-                  </button>
-                </div>
+            <div class="calendar-controls">
+              <div class="filter-group">
+                <span class="filter-label">🔍</span>
+                <select
+                        class="filter-select"
+                        id="staffFilter"
+                        onchange="filterByStaff()"
+                >
+                  <option value="">Tất cả nhân viên</option>
+                  <option
+                          th:each="staff : ${allStaff}"
+                          th:value="${staff.id}"
+                          th:text="${staff.name}"
+                          th:selected="${selectedStaffId != null && selectedStaffId == staff.id}"
+                  ></option>
+                </select>
               </div>
 
-              <!-- Staff Shift Assignment Modal -->
-              <div id="staffShiftModal" class="modal">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h2 id="staffShiftModalTitle">Thêm ca làm việc</h2>
-                    <span class="close" onclick="closeStaffShiftModal()"
-                      >&times;</span
-                    >
-                  </div>
+              <div class="filter-group">
+                <select
+                        class="filter-select"
+                        id="shiftFilter"
+                        onchange="filterByShift()"
+                >
+                  <option value="">Tất cả ca</option>
+                  <option
+                          th:each="shift : ${allShifts}"
+                          th:value="${shift.id}"
+                          th:text="${shift.shiftName}"
+                          th:selected="${selectedShiftId != null && selectedShiftId == shift.id}"
+                  ></option>
+                </select>
+              </div>
 
-                  <form
-                    id="staffShiftForm"
-                    method="post"
-                    th:object="${staffShiftForm}"
-                    th:action="@{/manager/staff_shifts/save}"
-                  >
-                    <input type="hidden" th:field="*{id}" />
-                    <input
-                      type="hidden"
-                      th:if="${_csrf != null}"
-                      th:name="${_csrf.parameterName}"
-                      th:value="${_csrf.token}"
-                    />
+              <button class="add-btn" onclick="openStaffShiftModal()">
+                + Thêm ca làm việc
+              </button>
+            </div>
+          </div>
 
-                    <!-- Preserve URL parameters when submitting form (use different names to avoid conflict) -->
-                    <input
-                      type="hidden"
-                      name="weekOffset"
-                      th:value="${param.weekOffset}"
-                    />
-                    <input
-                      type="hidden"
-                      name="filterStaffId"
-                      th:value="${selectedStaffId}"
-                    />
-                    <input
-                      type="hidden"
-                      name="filterShiftId"
-                      th:value="${selectedShiftId}"
-                    />
+          <!-- Staff Shift Assignment Modal -->
+          <div id="staffShiftModal" class="modal">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h2 id="staffShiftModalTitle">Thêm ca làm việc</h2>
+                <span class="close" onclick="closeStaffShiftModal()"
+                >&times;</span
+                >
+              </div>
 
-                    <!-- Display validation errors -->
-                    <div
-                      th:if="${#fields.hasErrors('*')}"
-                      class="alert alert-error"
-                      style="
+              <form
+                      id="staffShiftForm"
+                      method="post"
+                      th:object="${staffShiftForm}"
+                      th:action="@{/manager/staff_shifts/save}"
+              >
+                <input type="hidden" th:field="*{id}" />
+                <input
+                        type="hidden"
+                        th:if="${_csrf != null}"
+                        th:name="${_csrf.parameterName}"
+                        th:value="${_csrf.token}"
+                />
+
+                <!-- Preserve URL parameters when submitting form (use different names to avoid conflict) -->
+                <input
+                        type="hidden"
+                        name="weekOffset"
+                        th:value="${param.weekOffset}"
+                />
+                <input
+                        type="hidden"
+                        name="filterStaffId"
+                        th:value="${selectedStaffId}"
+                />
+                <input
+                        type="hidden"
+                        name="filterShiftId"
+                        th:value="${selectedShiftId}"
+                />
+
+                <!-- Display validation errors -->
+                <div
+                        th:if="${#fields.hasErrors('*')}"
+                        class="alert alert-error"
+                        style="
                         margin-bottom: 15px;
                         padding: 10px;
                         background-color: #fee;
                         border: 1px solid #fcc;
                         border-radius: 4px;
                       "
-                    >
-                      <strong>⚠️ Lỗi nhập liệu:</strong>
-                      <ul style="margin: 5px 0 0 20px">
-                        <li
-                          th:each="err : ${#fields.errors('*')}"
-                          th:text="${err}"
-                        ></li>
-                      </ul>
-                    </div>
+                >
+                  <strong>⚠️ Lỗi nhập liệu:</strong>
+                  <ul style="margin: 5px 0 0 20px">
+                    <li
+                            th:each="err : ${#fields.errors('*')}"
+                            th:text="${err}"
+                    ></li>
+                  </ul>
+                </div>
 
-                    <div class="mb-3">
-                      <label for="workDate">Ngày làm</label>
-                      <input
-                        id="workDate"
-                        type="date"
-                        th:field="*{workDate}"
-                        th:readonly="${staffShiftForm.id != null && staffShiftForm.id > 0}"
-                      />
-                      <span
-                        class="error-message"
-                        th:if="${#fields.hasErrors('workDate')}"
-                        th:errors="*{workDate}"
-                      ></span>
-                    </div>
+                <div class="mb-3">
+                  <label for="workDate">Ngày làm</label>
+                  <input
+                          id="workDate"
+                          type="date"
+                          th:field="*{workDate}"
+                          th:readonly="${staffShiftForm.id != null && staffShiftForm.id > 0}"
+                  />
+                  <span
+                          class="error-message"
+                          th:if="${#fields.hasErrors('workDate')}"
+                          th:errors="*{workDate}"
+                  ></span>
+                </div>
 
-                    <div class="mb-3">
-                      <label for="ssShiftId">Loại ca</label>
-                      <select
-                        id="ssShiftId"
-                        th:field="*{shiftId}"
-                        onchange="updateSalaryFromShift()"
-                      >
-                        <option value="" disabled>-- Chọn ca --</option>
-                        <option
-                          th:each="sh : ${allShifts}"
-                          th:value="${sh.id}"
-                          th:text="${sh.shiftName + ' (' + #temporals.format(sh.startTime,'HH:mm') + '-' + #temporals.format(sh.endTime,'HH:mm') + ')'}"
-                          th:data-salary="${sh.salaryPerShift}"
-                        ></option>
-                      </select>
-                      <span
-                        class="error-message"
-                        th:if="${#fields.hasErrors('shiftId')}"
-                        th:errors="*{shiftId}"
-                      ></span>
-                    </div>
+                <div class="mb-3">
+                  <label for="ssShiftId">Loại ca</label>
+                  <select
+                          id="ssShiftId"
+                          th:field="*{shiftId}"
+                          onchange="updateSalaryFromShift()"
+                  >
+                    <option value="" disabled>-- Chọn ca --</option>
+                    <option
+                            th:each="sh : ${allShifts}"
+                            th:value="${sh.id}"
+                            th:text="${sh.shiftName + ' (' + #temporals.format(sh.startTime,'HH:mm') + '-' + #temporals.format(sh.endTime,'HH:mm') + ')'}"
+                            th:data-salary="${sh.salaryPerShift}"
+                    ></option>
+                  </select>
+                  <span
+                          class="error-message"
+                          th:if="${#fields.hasErrors('shiftId')}"
+                          th:errors="*{shiftId}"
+                  ></span>
+                </div>
 
-                    <div class="mb-3">
-                      <label for="ssStaffId">Nhân viên</label>
-                      <select id="ssStaffId" th:field="*{staffId}">
-                        <option value="" disabled>-- Chọn nhân viên --</option>
-                        <option
-                          th:each="s : ${allStaff}"
-                          th:value="${s.id}"
-                          th:text="${s.name}"
-                        ></option>
-                      </select>
-                      <span
-                        class="error-message"
-                        th:if="${#fields.hasErrors('staffId')}"
-                        th:errors="*{staffId}"
-                      ></span>
-                    </div>
+                <div class="mb-3">
+                  <label for="ssStaffId">Nhân viên</label>
+                  <select id="ssStaffId" th:field="*{staffId}">
+                    <option value="" disabled>-- Chọn nhân viên --</option>
+                    <option
+                            th:each="s : ${allStaff}"
+                            th:value="${s.id}"
+                            th:text="${s.name}"
+                    ></option>
+                  </select>
+                  <span
+                          class="error-message"
+                          th:if="${#fields.hasErrors('staffId')}"
+                          th:errors="*{staffId}"
+                  ></span>
+                </div>
 
-                    <div class="mb-3">
-                      <label for="hourlyWage">Lương/ca (VNĐ) - Tự động</label>
-                      <input
-                        id="hourlyWage"
-                        type="number"
-                        step="1000"
-                        th:field="*{hourlyWage}"
-                        placeholder="Lương sẽ tự động cập nhật"
-                        readonly
-                        style="background-color: #f5f5f5"
-                      />
-                      <small class="text-muted"
-                        >Lương được tự động tính từ loại ca đã chọn</small
-                      >
-                    </div>
+                <div class="mb-3">
+                  <label for="hourlyWage">Lương/ca (VNĐ) - Tự động</label>
+                  <input
+                          id="hourlyWage"
+                          type="number"
+                          step="1000"
+                          th:field="*{hourlyWage}"
+                          placeholder="Lương sẽ tự động cập nhật"
+                          readonly
+                          style="background-color: #f5f5f5"
+                  />
+                  <small class="text-muted"
+                  >Lương được tự động tính từ loại ca đã chọn</small
+                  >
 
-                    <div class="mb-3">
-                      <label for="ssStatus">Trạng thái</label>
-                      <select id="ssStatus" th:field="*{status}" disabled>
-                        <option value="SCHEDULED" selected>SCHEDULED</option>
-                      </select>
-                      <small class="text-muted"
-                        >Trạng thái mặc định là SCHEDULED</small
-                      >
-                    </div>
 
-                    <div class="mb-3">
-                      <label for="ssNote">Ghi chú</label>
-                      <textarea
-                        id="ssNote"
-                        th:field="*{note}"
-                        rows="3"
-                        maxlength="500"
-                        style="
+                </div>
+
+                <div class="mb-3">
+                  <label for="ssStatus">Trạng thái</label>
+                  <select id="ssStatus" th:field="*{status}" disabled>
+                    <option value="SCHEDULED" selected>SCHEDULED</option>
+
+
+
+
+
+                  </select>
+                  <small class="text-muted"
+                  >Trạng thái mặc định là SCHEDULED</small
+                  >
+
+
+                </div>
+
+                <div class="mb-3">
+                  <label for="ssNote">Ghi chú</label>
+                  <textarea
+                          id="ssNote"
+                          th:field="*{note}"
+                          rows="3"
+                          maxlength="500"
+                          style="
                           width: 100%;
                           padding: 8px;
                           border: 1px solid #ddd;
                           border-radius: 4px;
                         "
-                        readonly
-                      ></textarea>
-                      <span
-                        class="error-message"
-                        th:if="${#fields.hasErrors('note')}"
-                        th:errors="*{note}"
-                      ></span>
-                    </div>
-
-                    <div class="modal-footer">
-                      <button type="submit" class="btn btn-primary">Lưu</button>
-                      <button
-                        type="button"
-                        class="btn btn-secondary"
-                        onclick="closeStaffShiftModal()"
-                      >
-                        Hủy
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              <!-- Week Navigation -->
-              <div class="week-navigation">
-                <button class="week-nav-btn" onclick="navigateWeek(-1)">
-                  ◀ Tuần trước
-                </button>
-
-                <div style="text-align: center">
-                  <div class="week-range">
-                    <span
-                      th:text="${#temporals.format(weekStartDate, 'dd/MM/yyyy')}"
-                      >5/10/2025</span
-                    >
-                    -
-                    <span
-                      th:text="${#temporals.format(weekEndDate, 'dd/MM/yyyy')}"
-                      >11/10/2025</span
-                    >
-                  </div>
-                  <div class="week-current">Tuần hiện tại</div>
+                          readonly
+                  ></textarea>
+                  <span
+                          class="error-message"
+                          th:if="${#fields.hasErrors('note')}"
+                          th:errors="*{note}"
+                  ></span>
                 </div>
 
-                <button class="week-nav-btn" onclick="navigateWeek(1)">
-                  Tuần sau ▶
-                </button>
-              </div>
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary">Lưu</button>
+                  <button
+                          type="button"
+                          class="btn btn-secondary"
+                          onclick="closeStaffShiftModal()"
+                  >
+                    Hủy
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
 
-              <!-- Calendar Grid -->
-              <div class="calendar-grid">
-                <!-- Loop qua 7 ngày trong tuần -->
-                <div
-                  class="day-column"
-                  th:each="day : ${weekDays}"
-                  th:classappend="${day.isToday} ? 'today' : ''"
+          <!-- Week Navigation -->
+          <div class="week-navigation">
+            <button class="week-nav-btn" onclick="navigateWeek(-1)">
+              ◀ Tuần trước
+            </button>
+
+            <div style="text-align: center">
+              <div class="week-range">
+                    <span
+                            th:text="${#temporals.format(weekStartDate, 'dd/MM/yyyy')}"
+                    >5/10/2025</span
+                    >
+                -
+                <span
+                        th:text="${#temporals.format(weekEndDate, 'dd/MM/yyyy')}"
+                >11/10/2025</span
                 >
-                  <div class="day-header">
-                    <div class="day-name" th:text="${day.dayName}">CN</div>
-                    <div
-                      class="day-number"
-                      th:text="${#temporals.format(day.date, 'dd')}"
-                    >
-                      5
-                    </div>
+              </div>
+              <div class="week-current">Tuần hiện tại</div>
+            </div>
+
+            <button class="week-nav-btn" onclick="navigateWeek(1)">
+              Tuần sau ▶
+            </button>
+          </div>
+
+          <!-- Calendar Grid -->
+          <div class="calendar-grid">
+            <!-- Loop qua 7 ngày trong tuần -->
+            <div
+                    class="day-column"
+                    th:each="day : ${weekDays}"
+                    th:classappend="${day.isToday} ? 'today' : ''"
+            >
+              <div class="day-header">
+                <div class="day-name" th:text="${day.dayName}">CN</div>
+                <div
+                        class="day-number"
+                        th:text="${#temporals.format(day.date, 'dd')}"
+                >
+                  5
+                </div>
+              </div>
+
+              <div class="shift-cards">
+                <!-- Loop qua các ca trong ngày -->
+                <div
+                        class="shift-card"
+                        th:each="shift : ${day.shifts}"
+                        th:classappend="${shift.shiftType}"
+                        th:onclick="|editShift(${shift.id})|"
+                        style="cursor: pointer"
+                >
+                  <div class="shift-type">
+                    <span class="icon">✏️</span>
+                    <span th:text="${shift.shiftName}">Sáng</span>
                   </div>
 
-                  <div class="shift-cards">
-                    <!-- Loop qua các ca trong ngày -->
-                    <div
-                      class="shift-card"
-                      th:each="shift : ${day.shifts}"
-                      th:classappend="${shift.shiftType}"
-                      th:onclick="|editShift(${shift.id})|"
-                      style="cursor: pointer"
-                    >
-                      <div class="shift-type">
-                        <span class="icon">✏️</span>
-                        <span th:text="${shift.shiftName}">Sáng</span>
-                      </div>
+                  <div
+                          class="shift-staff"
+                          th:text="${shift.staffName}"
+                  ></div>
 
-                      <div
-                        class="shift-staff"
-                        th:text="${shift.staffName}"
-                      ></div>
+                  <div
+                          class="shift-time"
+                          th:text="${shift.timeRange}"
+                  ></div>
 
-                      <div
-                        class="shift-time"
-                        th:text="${shift.timeRange}"
-                      ></div>
+                  <div
+                          class="shift-status"
+                          th:classappend="${shift.statusClass}"
+                          th:text="${shift.statusText}"
+                  ></div>
 
-                      <div
-                        class="shift-status"
-                        th:classappend="${shift.statusClass}"
-                        th:text="${shift.statusText}"
-                      ></div>
-
-                      <div
-                        class="shift-wage"
-                        th:text="${#numbers.formatDecimal(shift.totalWage, 0, 'POINT', 0, 'COMMA') + 'đ'}"
-                      ></div>
-                    </div>
-                  </div>
+                  <div
+                          class="shift-wage"
+                          th:text="${#numbers.formatDecimal(shift.totalWage, 0, 'POINT', 0, 'COMMA') + 'đ'}"
+                  ></div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <!-- End Tab: Calendar View -->
+      </div>
+    </div>
+    <!-- End Tab: Calendar View -->
 
-        <!-- Tab: Shift Types Management -->
-        <div id="tab-shifts" class="tab-content">
-          <div class="shift-management-card">
-            <div class="shift-header">
-              <h2>Quản lý loại ca làm việc</h2>
-              <button class="add-btn" onclick="openShiftModal()">
-                + Thêm loại ca mới
-              </button>
-            </div>
+    <!-- Tab: Shift Types Management -->
+    <div id="tab-shifts" class="tab-content">
+      <div class="shift-management-card">
+        <div class="shift-header">
+          <h2>Quản lý loại ca làm việc</h2>
+          <button class="add-btn" onclick="openShiftModal()">
+            + Thêm loại ca mới
+          </button>
+        </div>
 
-            <table class="shift-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Tên ca làm việc</th>
-                  <th>Giờ bắt đầu</th>
-                  <th>Giờ kết thúc</th>
-                  <th>Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr th:each="shift : ${shifts}">
-                  <td th:text="${shift.id}">1</td>
-                  <td th:text="${shift.shiftName}">Ca sáng</td>
-                  <td th:text="${shift.startTime}">08:00</td>
-                  <td th:text="${shift.endTime}">12:00</td>
-                  <td class="actions">
-                    <button
+        <table class="shift-table">
+          <thead>
+          <tr>
+            <th>ID</th>
+            <th>Tên ca làm việc</th>
+            <th>Giờ bắt đầu</th>
+            <th>Giờ kết thúc</th>
+            <th>Hành động</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="shift : ${shifts}">
+            <td th:text="${shift.id}">1</td>
+            <td th:text="${shift.shiftName}">Ca sáng</td>
+            <td th:text="${shift.startTime}">08:00</td>
+            <td th:text="${shift.endTime}">12:00</td>
+            <td class="actions">
+              <button
                       type="button"
                       class="primary-btn"
                       th:onclick="|editShiftType(${shift.id})|"
-                    >
-                      Sửa
-                    </button>
-                    <a
+              >
+                Sửa
+              </button>
+              <a
                       class="delete-btn"
                       th:href="@{'/manager/shift/delete/' + ${shift.id}}"
                       th:onclick="|return confirm('Bạn có chắc chắn muốn xóa ca #${shift.id}?');|"
-                      >Xóa</a
-                    >
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <!-- End Tab: Shift Types Management -->
-      </main>
+              >Xóa</a
+              >
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+    <!-- End Tab: Shift Types Management -->
+  </main>
+</div>
 
-    <script th:inline="javascript">
-      window.openShiftModalFlag = /*[[${openShiftModal}]]*/ null;
-      window.openStaffShiftModalFlag = /*[[${openStaffShiftModal}]]*/ null;
-      window.shiftTypes = /*[[${shiftTypes}]]*/ [];
-    </script>
-    <script th:src="@{/js/admin/shift-calendar.js}"></script>
-  </body>
+<script th:inline="javascript">
+  window.openShiftModalFlag = /*[[${openShiftModal}]]*/ null;
+  window.openStaffShiftModalFlag = /*[[${openStaffShiftModal}]]*/ null;
+  window.shiftTypes = /*[[${shiftTypes}]]*/ [];
+</script>
+<script th:src="@{/js/admin/shift-calendar.js}"></script>
+</body>
 </html>
