@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.context.event.EventListener;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.group1.swp.pizzario_swp391.config.Setting;
 import com.group1.swp.pizzario_swp391.dto.reservation.ReservationCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.reservation.ReservationDTO;
 import com.group1.swp.pizzario_swp391.dto.reservation.ReservationUpdateDTO;
@@ -32,12 +32,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ReservationService {
 
-    SimpMessagingTemplate messagingTemplate;
     ReservationRepository reservationRepository;
     TableRepository tableRepository;
     ReservationMapper reservationMapper;
     ReservationSchedulerService reservationSchedulerService;
     WebSocketService webSocketService;
+    Setting setting;
 
     /**
      * Tạo reservation mới cho bàn
@@ -53,7 +53,8 @@ public class ReservationService {
         Reservation saved = reservationRepository.save(reservation);
 
         DiningTable.TableStatus oldStatus = table.getTableStatus();
-        if (dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(15))) {
+        // Kiểm tra nếu bàn được đặt trước trong vòng đúng thời gian đã quy định tới, thì đổi trạng thái bàn thành RESERVED
+        if (dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(setting.getConflictReservationMinutes()))) {
             table.setTableStatus(DiningTable.TableStatus.RESERVED);
             tableRepository.save(table);
 
@@ -96,12 +97,12 @@ public class ReservationService {
 
         boolean checkConflictReservation = checkConflictReservationForCreate(dto.getTableId(), dto.getStartTime());
         if (checkConflictReservation) {
-            throw new RuntimeException("Thời gian đặt trước phải cách nhau ít nhất 90 phút.");
+            throw new RuntimeException("Thời gian đặt trước phải cách nhau ít nhất " + setting.getConflictReservationMinutes() + " phút.");
         }
 
         if ((table.getTableStatus().equals(DiningTable.TableStatus.OCCUPIED) || table.getTableStatus().equals(DiningTable.TableStatus.WAITING_PAYMENT))
-                && dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(90))) {
-            throw new RuntimeException("Bàn hiện đang có người ngồi, hãy đặt bàn cách thời điểm này ít nhất 90 phút");
+                && dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(setting.getConflictReservationMinutes()))) {
+            throw new RuntimeException("Bàn hiện đang có người ngồi, hãy đặt bàn cách thời điểm này ít nhất " + setting.getConflictReservationMinutes() + " phút");
         }
     }
 
@@ -132,23 +133,24 @@ public class ReservationService {
 
             boolean conflictReservations = checkConflictReservationForUpdate(reservationId, table.getId(), dto.getStartTime());
             if (conflictReservations) {
-                throw new RuntimeException("Thời gian đặt trước phải cách nhau ít nhất 90 phút.");
+                throw new RuntimeException("Thời gian đặt trước phải cách nhau ít nhất " + setting.getConflictReservationMinutes() + " phút.");
             }
 
             if ((table.getTableStatus().equals(DiningTable.TableStatus.OCCUPIED) ||
                     table.getTableStatus().equals(DiningTable.TableStatus.WAITING_PAYMENT))
-                    && dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(90))) {
-                throw new RuntimeException("Bàn hiện đang có người ngồi, hãy đặt bàn cách thời điểm này ít nhất 90 phút");
+                    && dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(setting.getConflictReservationMinutes()))) {
+                throw new RuntimeException("Bàn hiện đang có người ngồi, hãy đặt bàn cách thời điểm này ít nhất " + setting.getConflictReservationMinutes() + " phút");
             }
         }
     }
 
     private boolean checkConflictReservationForCreate(int tableId, LocalDateTime startTime) {
         boolean conflict = false;
+        int conflictMinutes = setting.getConflictReservationMinutes();
         List<Reservation> conflictReservations = reservationRepository.findConflictReservation(
                 tableId,
-                startTime.minusMinutes(90),
-                startTime.plusMinutes(90)
+                startTime.minusMinutes(conflictMinutes),
+                startTime.plusMinutes(conflictMinutes)
         );
         if(!conflictReservations.isEmpty()){
             conflict = true;
@@ -157,16 +159,17 @@ public class ReservationService {
     }
 
     /**
-     * Kiểm tra quanh 1 khoảng thời gian nhất định (± 90 phút)
+     * Kiểm tra quanh 1 khoảng thời gian nhất định (± conflictMinutes phút)
      */
     private boolean checkConflictReservationForUpdate(Long reservationId, int tableId, LocalDateTime startTime) {
         boolean conflict = false;
+        int conflictMinutes = setting.getConflictReservationMinutes();
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy reservation"));
         List<Reservation> conflictReservations = reservationRepository.findConflictReservation(
                 tableId,
-                startTime.minusMinutes(90),
-                startTime.plusMinutes(90)
+                startTime.minusMinutes(conflictMinutes),
+                startTime.plusMinutes(conflictMinutes)
         );
         conflictReservations.remove(reservation);
         if(!conflictReservations.isEmpty()){
@@ -188,7 +191,7 @@ public class ReservationService {
 
         DiningTable table = reservation.getDiningTable();
 
-        if (dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(15))) {
+        if (dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(setting.getAutoLockReservationMinutes()))) {
             table.setTableStatus(DiningTable.TableStatus.RESERVED);
         }else{
             table.setTableStatus(DiningTable.TableStatus.AVAILABLE);
@@ -309,9 +312,9 @@ public class ReservationService {
                     oldStatus,
                     table.getTableStatus(),
                     "SYSTEM",
-                    "Tự động khóa bàn trước 15 phút khi đến giờ đặt (Reservation #" + reservationId + ")"
+                    "Tự động khóa bàn trước " + setting.getNoShowWaitMinutes() + " phút khi đến giờ đặt (Reservation #" + reservationId + ")"
             );
-            log.info("Đã tự động khóa bàn {} trước 15 phút khi đến giờ đặt (Reservation #{})", table.getId(), reservationId);
+            log.info("Đã tự động khóa bàn {} trước " + setting.getNoShowWaitMinutes() + " khi đến giờ đặt (Reservation #{})", table.getId(), reservationId);
         } else {
             log.info("Bàn {} không ở trạng thái AVAILABLE, không thực hiện khóa tự động (Reservation #{})", table.getId(), reservationId);
         }
@@ -358,7 +361,7 @@ public class ReservationService {
         DiningTable.TableStatus oldStatus = table.getTableStatus();
 
         // Kiểm tra xem trong 90p tới còn reservation CONFIRMED nào khác không
-        List<Reservation> otherActiveReservations = reservationRepository.findConflictReservation(table.getId(), LocalDateTime.now(), LocalDateTime.now().plusMinutes(90));
+        List<Reservation> otherActiveReservations = reservationRepository.findConflictReservation(table.getId(), LocalDateTime.now(), LocalDateTime.now().plusMinutes(setting.getConflictReservationMinutes()));
 
         // Nếu không còn reservation nào và bàn vẫn RESERVED, mở lại
         if (otherActiveReservations.isEmpty()
@@ -377,7 +380,7 @@ public class ReservationService {
                     oldStatus,
                     table.getTableStatus(),
                     "SYSTEM",
-                    "Khách không đến sau 15 phút, bàn được mở lại (Reservation #" + reservationId + ")"
+                    "Khách không đến sau" + setting.getNoShowWaitMinutes() + "phút, bàn được mở lại (Reservation #" + reservationId + ")"
             );
         } else {
             webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
@@ -387,7 +390,7 @@ public class ReservationService {
                     oldStatus,
                     oldStatus,
                     "SYSTEM",
-                    "Có bàn đặt trước trong 90p nữa, bàn đã được khóa lại (Reservation #" + reservationId + ")"
+                    "Có bàn đặt trước trong " + setting.getConflictReservationMinutes() + " nữa, bàn đã được khóa lại (Reservation #" + reservationId + ")"
             );
         }
     }
