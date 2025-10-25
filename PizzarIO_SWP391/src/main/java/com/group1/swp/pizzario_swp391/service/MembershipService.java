@@ -13,7 +13,6 @@ import com.group1.swp.pizzario_swp391.mapper.MembershipMapper;
 import com.group1.swp.pizzario_swp391.repository.MembershipRepository;
 
 @Service
-@Transactional
 public class MembershipService {
     private final MembershipRepository membershipRepository;
     private final MembershipMapper membershipMapper;
@@ -32,7 +31,12 @@ public class MembershipService {
         return membershipRepository.findByPhoneNumber(phoneNumber);
     }
 
+    public Membership findEntityById(Long id) {
+        return membershipRepository.findById(id).orElse(null);
+    }
+
     // Đăng ký membership (gán points nếu có, mặc định 0)
+    @Transactional
     public Optional<MembershipDTO> register(MembershipRegistrationDTO registrationDTO) {
         String phone = registrationDTO.getPhoneNumber().trim();
         if (membershipRepository.findByPhoneNumber(phone).isPresent()) {
