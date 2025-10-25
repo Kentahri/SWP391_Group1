@@ -1,15 +1,16 @@
 package com.group1.swp.pizzario_swp391.repository;
 
-import com.group1.swp.pizzario_swp391.dto.data_analytics.ProductStatsDTO;
-import com.group1.swp.pizzario_swp391.entity.Order;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import com.group1.swp.pizzario_swp391.dto.data_analytics.ProductStatsDTO;
+import com.group1.swp.pizzario_swp391.entity.Order;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -40,4 +41,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         Order findFirstByMembership_IdOrderByCreatedAtAsc(Long membershipId);
 
         Long countByMembership_Id(Long membershipId);
+
+        List<Order> findByOrderStatus(com.group1.swp.pizzario_swp391.entity.Order.OrderStatus status);
+        List<Order> findByOrderType(com.group1.swp.pizzario_swp391.entity.Order.OrderType type);
+        List<Order> findByOrderStatusAndOrderType(com.group1.swp.pizzario_swp391.entity.Order.OrderStatus status, com.group1.swp.pizzario_swp391.entity.Order.OrderType type);
 }
