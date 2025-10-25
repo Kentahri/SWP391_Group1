@@ -1,0 +1,813 @@
+/* Payment Page Styles */
+body {
+  background-color: #e3f2fd;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.payment-page {
+  min-height: 100vh;
+  background-color: #e3f2fd;
+}
+
+/* Order Summary Top Section */
+.order-summary-top {
+  background: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.order-summary-top h3 {
+  color: #8d6e63;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.order-items-list {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.order-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.order-item-row:last-child {
+  border-bottom: none;
+}
+
+.order-item-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.item-name {
+  font-weight: 500;
+  color: #333;
+  font-size: 1rem;
+}
+
+.item-quantity {
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.order-item-price {
+  font-weight: 600;
+  color: #8d6e63;
+  font-size: 1rem;
+}
+
+.summary-divider {
+  border-color: #e0e0e0;
+  margin: 1rem 0;
+}
+
+.total-summary {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  color: #333;
+}
+
+.total-row {
+  font-size: 1.2rem;
+  color: #8d6e63;
+  font-weight: 600;
+  border-top: 2px solid #8d6e63;
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+}
+
+/* Main Payment Content */
+.main-payment-content {
+  padding: 2rem 0;
+}
+
+.payment-sections {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.section-title {
+  color: #8d6e63;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+/* Voucher Section */
+.voucher-section {
+  margin-bottom: 3rem;
+}
+
+.voucher-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.voucher-card {
+  background: white;
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.voucher-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.voucher-icon {
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 60px;
+  height: 40px;
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  border-radius: 0 20px 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: bold;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+}
+
+.voucher-icon i {
+  margin-right: 0.25rem;
+}
+
+.voucher-text {
+  font-size: 0.7rem;
+}
+
+.voucher-content {
+  margin-left: 2rem;
+}
+
+.voucher-description {
+  color: #8d6e63;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.apply-btn {
+  background: #2e7d32;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  float: right;
+}
+
+.apply-btn:hover {
+  background: #1b5e20;
+  transform: scale(1.05);
+}
+
+/* Membership Section */
+.membership-section {
+  margin-bottom: 3rem;
+}
+
+/* Fixed Membership Info Display */
+.membership-fixed-info {
+  margin-bottom: 1.5rem;
+}
+
+.membership-fixed-info .card {
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+}
+
+.membership-fixed-info .card-header {
+  border-radius: 12px 12px 0 0 !important;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.membership-fixed-info .card-body {
+  padding: 1.25rem;
+}
+
+.membership-fixed-info .row {
+  margin-bottom: 0.5rem;
+}
+
+.membership-fixed-info .row:last-child {
+  margin-bottom: 0;
+}
+
+.membership-info {
+  margin-bottom: 1rem;
+}
+
+.membership-verify {
+  background: white;
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.membership-form {
+  margin-bottom: 1rem;
+}
+
+.membership-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.membership-form label {
+  color: #8d6e63;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.membership-form .input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.membership-form .form-control {
+  border-radius: 10px;
+  border: 2px solid #e9ecef;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.membership-form .form-control:focus {
+  border-color: #42a5f5;
+  box-shadow: 0 0 0 0.2rem rgba(66, 165, 245, 0.25);
+}
+
+.membership-form .btn-outline-primary {
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.membership-form .btn-outline-primary:hover {
+  transform: scale(1.05);
+}
+
+.membership-options {
+  text-align: center;
+  padding-top: 1rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.membership-options .btn-outline-success {
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.membership-options .btn-outline-success:hover {
+  transform: scale(1.05);
+}
+
+/* Payment Method Section */
+.payment-method-section {
+  margin-bottom: 3rem;
+}
+
+.payment-methods-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.payment-method-item {
+  text-align: center;
+}
+
+.payment-radio {
+  display: none;
+}
+
+.payment-method-label {
+  display: block;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.payment-icon {
+  background: white;
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.payment-icon i {
+  font-size: 2rem;
+  color: #666;
+}
+
+.payment-text {
+  font-weight: 500;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.payment-radio:checked + .payment-method-label .payment-icon {
+  background: #42a5f5;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(66, 165, 245, 0.3);
+}
+
+.payment-radio:checked + .payment-method-label .payment-icon i {
+  color: white;
+}
+
+.payment-radio:checked + .payment-method-label .payment-text {
+  color: #42a5f5;
+  font-weight: 600;
+}
+
+/* Special styling for QR Banking */
+.qr-banking {
+  background: #42a5f5 !important;
+  color: white !important;
+}
+
+.qr-banking i {
+  color: white !important;
+}
+
+/* Payment Button Section */
+.payment-button-section {
+  text-align: center;
+  margin-top: 3rem;
+}
+
+.sidebar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 0;
+}
+
+.sidebar-content {
+  padding: 2rem 1.5rem;
+  color: white;
+}
+
+.sidebar h4 {
+  color: white;
+  font-weight: bold;
+}
+
+.order-summary {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.order-summary h5 {
+  color: white;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.order-item:last-child {
+  border-bottom: none;
+}
+
+.order-item-name {
+  color: white;
+  font-weight: 500;
+}
+
+.order-item-price {
+  color: #ffd700;
+  font-weight: 600;
+}
+
+.total-section {
+  color: white;
+}
+
+.total-section hr {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.total-amount {
+  font-size: 1.2rem;
+  color: #ffd700;
+}
+
+.main-content {
+  padding: 2rem;
+}
+
+.payment-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.payment-container h2 {
+  color: #333;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+/* Card Styles */
+.card {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 15px 15px 0 0 !important;
+  border: none;
+  padding: 1rem 1.5rem;
+}
+
+.card-header h5 {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Voucher Styles */
+.voucher-card {
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.voucher-card:hover {
+  border-color: #28a745;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+}
+
+.voucher-card.selected {
+  border-color: #28a745;
+  background-color: #f8fff9;
+}
+
+.apply-voucher-btn {
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.apply-voucher-btn:hover {
+  transform: scale(1.05);
+}
+
+.applied-voucher {
+  position: sticky;
+  top: 2rem;
+}
+
+/* Payment Method Styles */
+.payment-method-option {
+  margin-bottom: 1rem;
+}
+
+.payment-method-radio {
+  display: none;
+}
+
+.payment-method-label {
+  cursor: pointer;
+  display: block;
+  width: 100%;
+}
+
+.payment-method-card {
+  border: 2px solid #e9ecef;
+  border-radius: 15px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.payment-method-card:hover {
+  border-color: #007bff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+}
+
+.payment-method-card i {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.payment-method-card h6 {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.payment-method-card p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.payment-method-radio:checked + .payment-method-label .payment-method-card {
+  border-color: #007bff;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+}
+
+.payment-method-radio:checked + .payment-method-label .payment-method-card h6,
+.payment-method-radio:checked + .payment-method-label .payment-method-card p {
+  color: white;
+}
+
+/* Payment Button */
+.payment-btn {
+  background: linear-gradient(135deg, #42a5f5 0%, #1976d2 100%);
+  border: none;
+  border-radius: 50px;
+  padding: 1rem 3rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(66, 165, 245, 0.3);
+  color: white;
+}
+
+.payment-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(66, 165, 245, 0.4);
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+}
+
+.payment-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Loading Modal */
+.modal-content {
+  border: none;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .order-summary-top {
+    padding: 1rem 0;
+  }
+
+  .order-summary-top h3 {
+    font-size: 1.3rem;
+  }
+
+  .voucher-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .payment-methods-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .payment-icon {
+    height: 60px;
+    padding: 1rem;
+  }
+
+  .payment-icon i {
+    font-size: 1.5rem;
+  }
+
+  .payment-text {
+    font-size: 0.8rem;
+  }
+
+  .payment-btn {
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .order-summary-top {
+    padding: 0.75rem 0;
+  }
+
+  .order-items-list {
+    padding: 0 1rem;
+  }
+
+  .total-summary {
+    padding: 0 1rem;
+  }
+
+  .payment-methods-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .payment-icon {
+    height: 50px;
+    padding: 0.75rem;
+  }
+
+  .payment-icon i {
+    font-size: 1.2rem;
+  }
+
+  .payment-text {
+    font-size: 0.75rem;
+  }
+
+  .voucher-card {
+    padding: 1rem;
+  }
+
+  .voucher-description {
+    font-size: 0.85rem;
+  }
+
+  .apply-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.card:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+/* QR Section Styling */
+.qr-section {
+  text-align: center;
+  margin: 20px 0;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px solid #e9ecef;
+}
+
+.qr-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: #495057;
+}
+
+.qr-code {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 15px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.qr-instruction {
+  font-size: 14px;
+  color: #6c757d;
+  line-height: 1.5;
+}
+
+.qr-instruction strong {
+  color: #495057;
+  font-size: 16px;
+}
+
+/* Success/Error Messages */
+.alert {
+  border-radius: 10px;
+  border: none;
+  font-weight: 500;
+}
+
+.alert-success {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  color: #155724;
+}
+
+.alert-danger {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  color: #721c24;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
