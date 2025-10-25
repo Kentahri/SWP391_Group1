@@ -11,35 +11,55 @@
 	<!-- Top bar -->
 	<header class="topbar">
 		<div class="brand">🍕 PizzarIO</div>
-		<div>Tên: <p th:text="${staff.name}"></p></div>
-		<div>
+		<div class="staff-info">
+			<span>Tên: <strong th:text="${staff.name}"></strong></span>
+		</div>
+		<div class="datetime-info">
 			<div id="clock" class="clock">--:--:--</div>
 			<div id="date" class="date">--/--/----</div>
 		</div>
 		<div class="actions">
-			<button class="btn"><a th:href="@{/cashier/reservations/upcoming}">Xem đơn hàng đặt trước</a></button>
-			<button class="btn action" type="button">Tạo mới đơn hàng</button>
-			<button class="btn action" type="button">Xem lịch sử hóa đơn</button>
+			<button class="btn btn-secondary"><a th:href="@{/cashier/reservations/upcoming}" style="text-decoration: none">📅 Bàn đã đặt trước</a></button>
+			<button class="btn btn-primary" type="button">➕ Tạo đơn hàng</button>
+			<button class="btn btn-secondary" type="button">📋 Lịch sử</button>
 			<form th:action="@{/logout}" method="post">
 				<input type="hidden"
 				       th:if="${_csrf != null}"
 				       th:name="${_csrf.parameterName}"
 				       th:value="${_csrf.token}"/>
-				<button type="submit" class="btn-logout" onclick="alert('Bạn có muốn đăng xuất không?')">Logout</button>
+				<button type="submit" class="btn-logout" onclick="return confirmLogout()">🚪 Đăng xuất</button>
 			</form>
 		</div>
 	</header>
-	<div class="horizontal-divider"></div>
 	
 	<div class="layout">
-		<!-- Left: Table manager -->
+		<!-- Left: Table Management -->
 		<section class="panel left">
 			<div class="section-title">Quản lý bàn</div>
-			<div class="panel-header">
-				<span class="icon">🪑</span>
-				<span class="title">Table map</span>
+			
+			<!-- Legend -->
+			<div class="legend">
+				<div class="legend-items">
+					<div class="legend-item">
+						<span class="legend-dot available"></span>
+						<span>Bàn đang trống</span>
+					</div>
+					<div class="legend-item">
+						<span class="legend-dot occupied"></span>
+						<span>Bàn đang có khách</span>
+					</div>
+					<div class="legend-item">
+						<span class="legend-dot paid"></span>
+						<span>Bàn đang chờ thanh toán</span>
+					</div>
+					<div class="legend-item">
+						<span class="legend-dot reserved"></span>
+						<span>Bàn đã được đặt trước</span>
+					</div>
+				</div>
 			</div>
 			
+			<!-- Table Grid -->
 			<div class="table-grid" id="table-grid">
 				<a th:each="table : ${tables}"
 				   th:id="'table-' + ${table.id}"
@@ -49,27 +69,36 @@
 				            data-status=${table.tableStatus},
 				            data-capacity=${table.capacity}"
 				   style="text-decoration: none; color: inherit; cursor: pointer;">
-					<div class="table-dot"
-					     th:classappend="${table.tableStatus.toString().toLowerCase() == 'waiting_payment' ? ' show' : ''}"></div>
-					<div class="table-number">Bàn [[${table.id}]]</div>
-					<div class="table-status-text"
-					     th:text="${table.tableStatus == 'AVAILABLE' ? 'Trống' : (table.tableStatus == 'OCCUPIED' ? 'Có khách' : (table.tableStatus == 'WAITING_PAYMENT' ? 'Chờ thanh toán' : 'Đã đặt trước'))}">
-						Trống
+					<div class="table-icon">
+						<span th:if="${table.tableStatus == 'AVAILABLE'}">🪑</span>
+						<span th:if="${table.tableStatus == 'OCCUPIED'}">👥</span>
+						<span th:if="${table.tableStatus == 'WAITING_PAYMENT'}">✅</span>
+						<span th:if="${table.tableStatus == 'RESERVED'}">🕐</span>
 					</div>
-					<div class="table-note" th:if="${table.tableStatus == 'WAITING_PAYMENT'}">Tiền mặt</div>
-					<div class="table-capacity" th:if="${table.tableStatus == 'RESERVED'}">[[${table.capacity}]] người
+					<div class="table-number">Bàn [[${table.id}]]</div>
+					<div class="table-info">
+						<!-- Hiển thị số người -->
+						<div class="party-size" th:if="${table.tableStatus != 'AVAILABLE'}">
+							Số người tối đa: <span th:text="${table.capacity != null ? table.capacity : 'N/A'}">N/A</span>
+						</div>
+						
+						<!-- Hiển thị trạng thái -->
+						<div class="table-status-text">
+							<span th:if="${table.tableStatus == 'AVAILABLE'}">Available</span>
+							<span th:if="${table.tableStatus == 'OCCUPIED'}">Occupied</span>
+							<span th:if="${table.tableStatus == 'WAITING_PAYMENT'}">Paid</span>
+							<span th:if="${table.tableStatus == 'RESERVED'}">Reserved</span>
+						</div>
+						
+						<!-- Hiển thị thông tin bổ sung -->
+						<div class="table-extra-info" th:if="${table.tableStatus == 'WAITING_PAYMENT'}">
+							<span>Payment</span>
+						</div>
+						<div class="table-extra-info" th:if="${table.tableStatus == 'RESERVED'}">
+							<span>Reserved</span>
+						</div>
 					</div>
 				</a>
-			</div>
-			
-			<div class="legend">
-				<div class="legend-title">Chú thích:</div>
-				<div class="legend-items">
-					<div class="legend-item"><span class="box avail"></span><span>Bàn trống</span></div>
-					<div class="legend-item"><span class="box occ"></span><span>Đang có khách</span></div>
-					<div class="legend-item"><span class="box wait"></span><span>Chờ thanh toán</span></div>
-					<div class="legend-item"><span class="box res"></span><span>Đã đặt trước</span></div>
-				</div>
 			</div>
 		</section>
 		
@@ -181,7 +210,7 @@
 			<!-- Upcoming Reservations View -->
 			<div th:if="${upcomingReservations != null}" class="reservation-list">
 				<div class="reservation-header">
-					<a th:href="@{/cashier}" class="btn-back">← Quay lại</a>
+					<a th:href="@{/cashier}" class="btn-back-styled">← Quay lại</a>
 				</div>
 				
 				<!-- Search Form - chỉ hiện trong upcoming reservations -->
@@ -199,9 +228,11 @@
 				</div>
 				
 				<div class="reservation-items">
-					<div th:if="${#lists.isEmpty(upcomingReservations)}" class="no-reservations">
-						<div class="no-reservations-icon">📅</div>
-						<div class="no-reservations-text">Chưa có đơn đặt bàn nào</div>
+					<div th:if="${#lists.isEmpty(upcomingReservations)}" class="no-reservations-card">
+						<div class="no-reservations-content">
+							<div class="no-reservations-icon">📅</div>
+							<div class="no-reservations-text">Chưa có đơn đặt bàn nào</div>
+						</div>
 					</div>
 					
 					<div th:each="reservation : ${upcomingReservations}" class="reservation-card">
@@ -274,31 +305,33 @@
 			
 			<!-- Table Reservations View -->
 			<div th:if="${tableReservations != null}" class="reservation-list">
-				<div class="detail-card" style="margin-bottom: 16px;">
+				<div class="detail-card" style="margin-bottom: 16px; box-shadow: none">
 					<div class="reservation-header">
-						<a th:href="@{/cashier/tables/{id}/order(id=${selectedTableId})}" class="btn-back">
+						<a th:href="@{/cashier/tables/{id}/order(id=${selectedTableId})}" class="btn-back-styled">
 							← Quay lại bàn <span th:text="${selectedTableId}">—</span>
 						</a>
 					</div>
 				</div>
 				<div class="reservation-items">
-					<div th:if="${#lists.isEmpty(tableReservations)}" class="no-reservations">
-						<div class="no-reservations-icon">📅</div>
-						<div class="no-reservations-text">Chưa có đơn đặt bàn nào</div>
+					<div th:if="${#lists.isEmpty(tableReservations)}" class="no-reservations-card">
+						<div class="no-reservations-content">
+							<div class="no-reservations-icon">📅</div>
+							<div class="no-reservations-text">Chưa có đơn đặt bàn nào</div>
+						</div>
 					</div>
 					
 					<div th:each="reservation : ${tableReservations}" class="reservation-card">
-					<div class="reservation-card-header">
-						<div class="reservation-table-name">
-							<span style="font-weight: 700; color: #2c3e50;">Bàn <span th:text="${reservation.tableId}">#</span></span>
-							<span style="font-size: 12px; color: #6c757d; margin-left: 8px;">| Đơn #<span th:text="${reservation.id}">—</span></span>
+						<div class="reservation-card-header">
+							<div class="reservation-table-name">
+								<span style="font-weight: 700; color: #2c3e50;">Bàn <span th:text="${reservation.tableId}">#</span></span>
+								<span style="font-size: 12px; color: #6c757d; margin-left: 8px;">| Đơn #<span th:text="${reservation.id}">—</span></span>
+							</div>
+							<span th:class="'reservation-status ' + ${reservation.status.toString().toLowerCase()}" 
+							      th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' : 
+							                (reservation.status == 'ARRIVED' ? 'Đã đến' : 
+							                (reservation.status == 'CANCELED' ? 'Đã hủy' : 'Không đến'))}">
+							</span>
 						</div>
-						<span th:class="'reservation-status ' + ${reservation.status.toString().toLowerCase()}" 
-						      th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' : 
-						                (reservation.status == 'ARRIVED' ? 'Đã đến' : 
-						                (reservation.status == 'CANCELED' ? 'Đã hủy' : 'Không đến'))}">
-						</span>
-					</div>
 						
 						<div class="reservation-time">
 							🕐 <span th:text="${#temporals.format(reservation.startTime, 'EEE, dd MMM yyyy HH:mm')}">—</span>
@@ -323,34 +356,31 @@
 							</div>
 						</div>
 						
-					<div th:if="${reservation.status.toString() == 'CONFIRMED'}" class="reservation-actions" style="display: flex; flex-direction: column; gap: 8px;">
-						<!-- Nút mở bàn cho khách (nút chính) -->
-						<form th:action="@{/cashier/reservations/{id}/open(id=${reservation.id})}" method="post" 
-						      onsubmit="return confirm('Xác nhận khách đã đến và mở bàn?');">
-							<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-							<input type="hidden" name="returnUrl" th:value="'/cashier/tables/' + ${selectedTableId} + '/reservations'"/>
-							<button type="submit" class="btn-open-table" 
-							        style="width: 100%; padding: 12px; background-color: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px;">
-								🔓 Mở bàn cho khách
-							</button>
-						</form>
-						
-						<!-- Các nút phụ -->
-						<div style="display: flex; gap: 8px;">
-							<a th:href="@{/cashier/reservations/{id}/edit(id=${reservation.id}, returnUrl='/cashier/tables/' + ${selectedTableId} + '/reservations')}" 
-							   class="btn-edit-reservation"
-							   style="flex: 1; text-align: center; padding: 10px; background-color: #4CAF50; color: white; border-radius: 4px; text-decoration: none; border: none; cursor: pointer;">
-								✏️ Sửa
-							</a>
-							<form th:action="@{/cashier/reservations/{id}/delete(id=${reservation.id})}" method="post" 
-							      onsubmit="return confirm('Bạn có chắc chắn muốn hủy đặt bàn này?');"
-							      style="flex: 1;">
+						<div th:if="${reservation.status.toString() == 'CONFIRMED'}" class="reservation-actions">
+							<!-- Nút mở bàn cho khách (nút chính) -->
+							<form th:action="@{/cashier/reservations/{id}/open(id=${reservation.id})}" method="post" 
+							      onsubmit="return confirm('Xác nhận khách đã đến và mở bàn?');">
 								<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 								<input type="hidden" name="returnUrl" th:value="'/cashier/tables/' + ${selectedTableId} + '/reservations'"/>
-								<button type="submit" class="btn-cancel-reservation" style="width: 100%;">❌ Hủy đặt bàn</button>
+								<button type="submit" class="btn-open-table">
+									🔓 Mở bàn cho khách
+								</button>
 							</form>
+							
+							<!-- Các nút phụ -->
+							<div class="reservation-secondary-actions">
+								<a th:href="@{/cashier/reservations/{id}/edit(id=${reservation.id}, returnUrl='/cashier/tables/' + ${selectedTableId} + '/reservations')}" 
+								   class="btn-edit-reservation">
+									✏️ Sửa
+								</a>
+								<form th:action="@{/cashier/reservations/{id}/delete(id=${reservation.id})}" method="post" 
+								      onsubmit="return confirm('Bạn có chắc chắn muốn hủy đặt bàn này?');">
+									<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+									<input type="hidden" name="returnUrl" th:value="'/cashier/tables/' + ${selectedTableId} + '/reservations'"/>
+									<button type="submit" class="btn-cancel-reservation">❌ Hủy đặt bàn</button>
+								</form>
+							</div>
 						</div>
-					</div>
 					</div>
 				</div>
 			</div>
@@ -374,7 +404,11 @@
 
 <!-- Server Status Indicator - Góc trái dưới -->
 <div class="server-status-container">
-	<div id="server-status"><button class="btn" onclick="checkServerConnection()">Check connect to server</button></div>
+	<div id="server-status">
+		<button class="btn btn-server-check" onclick="checkServerConnection()">
+			🔗 Kiểm tra kết nối với server
+		</button>
+	</div>
 </div>
 
 <!-- Modal đặt bàn -->
@@ -522,6 +556,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script th:src="@{/js/cashier/utils.js}"></script>
+<script th:src="@{/js/cashier/reservation.js}"></script>
 <script>
     const $clock = document.getElementById('clock');
     const $date = document.getElementById('date');
@@ -547,8 +583,14 @@
             }, 5000);
         });
     });
+    
+    // Custom logout confirmation
+    function confirmLogout() {
+        return confirm('Bạn có muốn đăng xuất không?');
+    }
 </script>
 
+<script th:src="@{/js/cashier/cashier-dashboard.js}"></script>
 <script th:src="@{/js/cashier/utils.js}"></script>
 <script th:src="@{/js/cashier/websocket.js}"></script>
 <script th:src="@{/js/cashier/table.js}"></script>
@@ -575,6 +617,16 @@
                     modal.classList.add('show');
                     // Đảm bảo modal hiển thị đúng cách
                     document.body.style.overflow = 'hidden';
+                    
+                    // Format datetime-local input
+                    var startTimeInput = document.getElementById('update-start-time');
+                    if (startTimeInput && startTimeInput.value) {
+                        // Convert the datetime value to proper format for datetime-local input
+                        var dateValue = new Date(startTimeInput.value);
+                        if (!isNaN(dateValue.getTime())) {
+                            startTimeInput.value = formatDateTimeLocal(dateValue);
+                        }
+                    }
                 }
             }, 100);
         }

@@ -42,7 +42,7 @@ public class ReservationSchedulerService {
      * Lên kế hoạch xử lý tự động khóa bàn trước thời điểm khách đặt
      * Sử dụng autoLockReservationMinutes từ settings
      */
-    public void ScheduleAutoLockTable(Long reservationId, LocalDateTime startTime) {
+    public void scheduleAutoLockTable(Long reservationId, LocalDateTime startTime) {
         int autoLockMinutes = setting.getAutoLockReservationMinutes();
         LocalDateTime executionTime = startTime.minusMinutes(autoLockMinutes);
 
@@ -81,7 +81,7 @@ public class ReservationSchedulerService {
      */
     public void updateAutoLockTable(Long reservationId, LocalDateTime startTime) {
         cancelAutoLockTable(reservationId);
-        ScheduleAutoLockTable(reservationId, startTime);
+        scheduleAutoLockTable(reservationId, startTime);
     }
 
     /**

@@ -74,7 +74,7 @@ public class ReservationService {
             webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
         }
 
-        reservationSchedulerService.ScheduleAutoLockTable(reservation.getId(), reservation.getStartTime());
+        reservationSchedulerService.scheduleAutoLockTable(reservation.getId(), reservation.getStartTime());
         reservationSchedulerService.scheduleNoShowCheck(reservation.getId(), reservation.getStartTime());
         return reservationMapper.toReservationDTO(saved);
     }
