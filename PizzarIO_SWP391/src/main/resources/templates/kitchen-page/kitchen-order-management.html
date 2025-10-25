@@ -7,6 +7,11 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>KITCHEN-DASHBOARD</title>
     <link rel="stylesheet" th:href="@{/css/kitchen.css}">
+    
+    <!-- WebSocket Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script th:src="@{/js/kitchen/websocket.js}"></script>
 </head>
 <body>
 <div class="container">
@@ -23,16 +28,20 @@
         </form>
     </div>
     <div class="main-content">
+        <!-- Connection Status -->
+        <div id="connection-status" class="connection-status">Đang kết nối...</div>
+        
         <!-- Main order management content -->
         <h2 class="om-title">Quản lý Orders</h2>
         <div class="om-filter-bar">
-            <button class="om-tab active"><span class="om-icon">&#9679;</span> Đang xử lý</button>
-            <button class="om-tab"><span class="om-icon">&#x1F374;</span> Tại bàn</button>
-            <button class="om-tab"><span class="om-icon">&#x1F3EA;</span> Take away</button>
-            <button class="om-tab"><span class="om-icon">&#x2714;</span> Hoàn thành</button>
+            <a th:href="@{/kitchen/order-list}" class="om-tab" th:classappend="${status == null and type == null} ? 'active' : ''"><span class="om-icon">&#9679;</span> Đang xử lý (<span th:text="${processingCount}">0</span>)</a>
+            <a th:href="@{/kitchen/order-list(type='DINE_IN')}" class="om-tab" th:classappend="${type == 'DINE_IN'} ? 'active' : ''"><span class="om-icon">&#x1F374;</span> Tại bàn (<span th:text="${dineInCount}">0</span>)</a>
+            <a th:href="@{/kitchen/order-list(type='TAKE_AWAY')}" class="om-tab" th:classappend="${type == 'TAKE_AWAY'} ? 'active' : ''"><span class="om-icon">&#x1F3EA;</span> Take away (<span th:text="${takeAwayCount}">0</span>)</a>
+            <a th:href="@{/kitchen/order-list(status='COMPLETED')}" class="om-tab" th:classappend="${status == 'COMPLETED'} ? 'active' : ''"><span class="om-icon">&#x2714;</span> Hoàn thành (<span th:text="${completedCount}">0</span>)</a>
         </div>
-        <div class="order-list">
-            <div class="order-card" th:each="order : ${orders}">
+        <div class="order-list" id="order-list">
+            <!-- Hiển thị orders ban đầu từ Thymeleaf -->
+            <div class="order-card" th:each="order : ${orders}" th:attr="data-order-id=${order.id},data-status=${order.status},data-type=${order.type}">
                 <div class="order-header">
                     <span class="order-id" th:text="${order.code}">ORD-XXX</span>
                     <span class="badge blue" th:if="${order.priority eq 'NORMAL'}">Bình thường</span>
@@ -63,9 +72,12 @@
                 </div>
                 <a th:href="@{|/kitchen/order/${order.id}|}" class="order-detail-btn">Xem chi tiết</a>
             </div>
-            <div th:if="${#lists.isEmpty(orders)}">Không có đơn nào.</div>
+            <div th:if="${#lists.isEmpty(orders)}" class="no-orders">Không có đơn nào.</div>
         </div>
     </div>
 </div>
+<script>
+// Không cần filter client nữa
+</script>
 </body>
 </html>

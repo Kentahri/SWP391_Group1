@@ -23,7 +23,9 @@ import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
  * - /topic/tables-cashier: Broadcast table status to cashier
  * - /topic/tables-guest: Broadcast table availability to all tablets
  * - /topic/order-items: Broadcast order updates to cashier
+ * - /topic/kitchen-orders: Broadcast new orders to kitchen
  * - /queue/guest-{sessionId}: Personal messages for each guest tablet
+ * - /queue/kitchen-notifications: Personal notifications for kitchen
  */
 @Configuration
 @EnableWebSocketMessageBroker
