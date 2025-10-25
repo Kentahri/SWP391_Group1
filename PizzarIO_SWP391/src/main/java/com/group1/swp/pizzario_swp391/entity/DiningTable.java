@@ -15,12 +15,14 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import lombok.Data;
+import lombok.ToString;
 import org.hibernate.annotations.OptimisticLockType;
 import org.hibernate.annotations.OptimisticLocking;
 
 @Entity
 @Table(name = "[Dining_Table]")
 @Data
+@ToString(exclude = {"sessionList", "reservations"})
 @OptimisticLocking(type = OptimisticLockType.VERSION)
 public class DiningTable {
 

@@ -12,7 +12,7 @@ import java.util.List;
 @Entity
 @Table(name = "Voucher")
 @Data
-@ToString
+@ToString(exclude = {"orders", "value", "minOrderAmount"})
 public class Voucher {
 
     @OneToMany(mappedBy = "voucher")

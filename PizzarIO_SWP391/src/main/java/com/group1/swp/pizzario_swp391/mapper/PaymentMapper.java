@@ -9,4 +9,26 @@ import org.mapstruct.ReportingPolicy;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface PaymentMapper {
 
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "orderId", source = "id")
+    @Mapping(target = "orderTotal", source = "totalPrice")
+    @Mapping(target = "originalTotal", ignore = true) // Sẽ được tính toán trong service
+    @Mapping(target = "discountAmount", ignore = true) // Sẽ được tính toán trong service
+    @Mapping(target = "membershipId", source = "membership.id")
+    @Mapping(target = "membershipPoints", source = "membership.points")
+    @Mapping(target = "pointsUsed", constant = "0") // Có thể tính toán dựa trên logic business
+    @Mapping(target = "appliedVoucherId", source = "voucher.id")
+    @Mapping(target = "appliedVoucher", ignore = true) // Sẽ được map riêng nếu cần
+    @Mapping(target = "availableVouchers", ignore = true) // Sẽ được set riêng trong service
+    @Mapping(target = "paymentStatus", source = "paymentStatus")
+    @Mapping(target = "paymentMethod", source = "paymentMethod")
+    @Mapping(target = "customerName", ignore = true) // Sẽ được set riêng trong service
+    @Mapping(target = "customerPhone", source = "membership.phoneNumber")
+    @Mapping(target = "customerEmail", ignore = true) // Membership không có email field
+    @Mapping(target = "tableNumber", source = "session.table.id")
+    @Mapping(target = "orderType", source = "orderType")
+    @Mapping(target = "orderStatus", source = "orderStatus")
+    @Mapping(target = "createdAt", source = "createdAt")
+    @Mapping(target = "updatedAt", source = "updatedAt")
+    PaymentDTO toDTO(Order order);  
 }
