@@ -43,6 +43,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         Long countByMembership_Id(Long membershipId);
 
         List<Order> findByOrderStatus(com.group1.swp.pizzario_swp391.entity.Order.OrderStatus status);
+
         List<Order> findByOrderType(com.group1.swp.pizzario_swp391.entity.Order.OrderType type);
-        List<Order> findByOrderStatusAndOrderType(com.group1.swp.pizzario_swp391.entity.Order.OrderStatus status, com.group1.swp.pizzario_swp391.entity.Order.OrderType type);
+
+        List<Order> findByOrderStatusAndOrderType(com.group1.swp.pizzario_swp391.entity.Order.OrderStatus status,
+                        com.group1.swp.pizzario_swp391.entity.Order.OrderType type);
 }
