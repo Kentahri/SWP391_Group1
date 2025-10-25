@@ -80,14 +80,12 @@ public class OrderService{
         try {
             KitchenOrderMessage orderMessage = KitchenOrderMessage.builder()
                     .orderId(order.getId())
-                    .code("ORD-" + order.getId()) // Tạo code đơn giản
+                    .code(String.format("ORD-%05d", order.getId())) // Tạo code với padding 0
                     .tableName(order.getSession() != null && order.getSession().getTable() != null ? 
                             "Bàn " + order.getSession().getTable().getId() : "Take away")
                     .orderType(order.getOrderType() != null ? order.getOrderType().toString() : "DINE_IN")
                     .status(order.getOrderStatus() != null ? order.getOrderStatus().toString() : "PREPARING")
                     .priority("NORMAL") // Có thể thêm logic để xác định priority
-                    .totalItems(order.getOrderItems() != null ? order.getOrderItems().size() : 0)
-                    .completedItems(0)
                     .totalPrice(order.getTotalPrice())
                     .note(order.getNote())
                     .message("Có order mới từ " + (order.getSession() != null && order.getSession().getTable() != null ? 
