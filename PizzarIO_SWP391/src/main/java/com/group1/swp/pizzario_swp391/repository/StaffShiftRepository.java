@@ -52,20 +52,22 @@ public interface StaffShiftRepository extends JpaRepository<StaffShift, Integer>
   Integer totalHours();
 
   // Tổng tiền lương
+// Tổng tiền lương
   @Query(value = """
-          SELECT COALESCE(
-              SUM(
-                  CAST(DATEDIFF(HOUR, ss.check_in, ss.check_out) AS float)
-                  * CAST(ss.hourly_wage AS float)
-                  * (100 - COALESCE(ss.penalty_percent, 0)) / 100.0
-              ),
-              0.0
-          )
-          FROM [Staff_Shift] ss
-          WHERE ss.status IN ('COMPLETED','LEFT_EARLY')
-            AND ss.check_in IS NOT NULL
-            AND ss.check_out IS NOT NULL
-      """, nativeQuery = true)
+        SELECT COALESCE(
+            SUM(
+                CAST(DATEDIFF(HOUR, ss.check_in, ss.check_out) AS float)
+                * CAST(sh.salary_per_shift AS float)
+                * (100 - COALESCE(ss.penalty_percent, 0)) / 100.0
+            ),
+            0.0
+        )
+        FROM [Staff_Shift] ss
+        INNER JOIN [Shift] sh ON ss.shift_id = sh.id
+        WHERE ss.status IN ('COMPLETED','LEFT_EARLY')
+          AND ss.check_in IS NOT NULL
+          AND ss.check_out IS NOT NULL
+    """, nativeQuery = true)
   Double totalWage();
 
   @Query("""
