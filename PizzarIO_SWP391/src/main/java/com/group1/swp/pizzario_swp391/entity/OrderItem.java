@@ -15,7 +15,7 @@ import lombok.*;
 @Entity
 @Table(name = "[Order_Item]")
 @Data
-@ToString
+@ToString(exclude = {"order"})
 @NoArgsConstructor
 public class OrderItem {
 
