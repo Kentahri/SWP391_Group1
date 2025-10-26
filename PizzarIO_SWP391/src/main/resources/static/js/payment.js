@@ -303,6 +303,16 @@ document.addEventListener("DOMContentLoaded", function () {
     paymentMethodInput.name = "paymentMethod";
     paymentMethodInput.value = selectedPaymentMethod;
 
+    // Thêm CSRF token
+    const csrfToken = document.querySelector('meta[name="_csrf"]');
+    if (csrfToken) {
+      const csrfInput = document.createElement("input");
+      csrfInput.type = "hidden";
+      csrfInput.name = "_csrf";
+      csrfInput.value = csrfToken.getAttribute("content");
+      form.appendChild(csrfInput);
+    }
+
     console.log("Payment method input value:", paymentMethodInput.value);
     console.log("Payment method input name:", paymentMethodInput.name);
 
