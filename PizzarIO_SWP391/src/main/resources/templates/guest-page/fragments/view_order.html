@@ -28,10 +28,11 @@
             </div>
         </th:block>
     </div>
-    <form th:action="@{/guest/table/release}" method="post">
-        <input type="hidden" name="tableId" th:value="${tableId}"/>
-        <button class="btn btn-secondary" type="submit">Request Payment</button>
-    </form>
+    <div th:onclick="|releaseTable(${tableId})|">Request Payment</div>
+<!--    <form th:action="@{/guest/table/release}" method="post">-->
+<!--        <input type="hidden" name="tableId" th:value="${tableId}"/>-->
+<!--        <button class="btn btn-secondary" type="submit">Request Payment</button>-->
+<!--    </form>-->
 </div>
 
 </body>
