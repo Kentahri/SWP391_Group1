@@ -80,7 +80,7 @@ function handleTableReleaseSuccess(data) {
     }, 1500);
 }
 
-window.releaseTable = function (tableId, dbSessionId) {
+window.releaseTable = function (tableId) {
     if (!stompClient || !stompClient.connected) {
         showToast('Chưa kết nối tới máy chủ. Vui lòng đợi...', 'warning');
         return;
