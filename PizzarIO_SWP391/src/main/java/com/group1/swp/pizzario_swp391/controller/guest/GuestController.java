@@ -1,5 +1,6 @@
 package com.group1.swp.pizzario_swp391.controller.guest;
 
+import com.group1.swp.pizzario_swp391.dto.websocket.TableReleaseRequest;
 import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
 import com.group1.swp.pizzario_swp391.entity.Session;
 import com.group1.swp.pizzario_swp391.repository.SessionRepository;
@@ -43,7 +44,7 @@ public class GuestController{
      * Guest sends: { tableId, sessionId, guestCount }
      * Response sent to: /queue/guest-{sessionId}
      */
-    @MessageMapping("/guest/select-table")
+    @MessageMapping("/guest/table/select")
     public void selectTable(TableSelectionRequest request) {
         log.info("Guest {} requesting table {}", request.getSessionId(), request.getTableId());
         tableService.handleTableSelection(request);
@@ -147,18 +148,9 @@ public class GuestController{
         return "redirect:/guest/menu";
     }
 
-    @PostMapping("/table/release")
-    public String releaseTable(@RequestParam("tableId") Integer tableId,
-                               HttpSession session,
-                               RedirectAttributes redirectAttributes) {
-        try {
-            tableService.releaseTable(tableId, session);
-            // Optionally, add a success message to be displayed on the guest page
-            redirectAttributes.addFlashAttribute("releaseSuccess", "Bàn " + tableId + " đã được giải phóng. Cảm ơn quý khách!");
-        } catch (Exception e) {
-            // Optionally, handle errors
-            redirectAttributes.addFlashAttribute("releaseError", "Lỗi: không thể giải phóng bàn.");
-        }
-        return "redirect:/guest";
+    @MessageMapping("/guest/table/release")
+    public void releaseTable(TableReleaseRequest request) {
+        log.info("Guest {} requesting to release table {}", request.getSessionId(), request.getTableId());
+        tableService.handleTableRelease(request);
     }
 }
