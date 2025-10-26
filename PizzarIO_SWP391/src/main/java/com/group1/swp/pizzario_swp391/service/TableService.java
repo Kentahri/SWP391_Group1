@@ -6,9 +6,7 @@ import com.group1.swp.pizzario_swp391.dto.table.TableCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.table.TableDTO;
 import com.group1.swp.pizzario_swp391.dto.table.TableForCashierDTO;
 import com.group1.swp.pizzario_swp391.dto.table.TableManagementDTO;
-import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
-import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionResponse;
-import com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage;
+import com.group1.swp.pizzario_swp391.dto.websocket.*;
 import com.group1.swp.pizzario_swp391.entity.DiningTable;
 import com.group1.swp.pizzario_swp391.entity.Order;
 import com.group1.swp.pizzario_swp391.entity.Reservation;
@@ -37,7 +35,7 @@ import java.util.stream.Collectors;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Slf4j
-public class TableService {
+public class TableService{
     TableRepository tableRepository;
     TableMapper tableMapper;
     SessionRepository sessionRepository;
@@ -158,6 +156,7 @@ public class TableService {
 
         simpMessagingTemplate.convertAndSend("/queue/guest-" + sessionId, response);
     }
+
     /**
      * Tạo bàn mới (Manager)
      * Manager chỉ nhập capacity, hệ thống tự set status=AVAILABLE và condition=NEW
@@ -176,17 +175,24 @@ public class TableService {
     }
 
     /**
-     * Lấy tất cả bàn (Guest) - không bao gồm bàn retired
+     * Lọc bàn theo điều kiện cho manager
      */
-    public List<TableDTO> getAllTables() {
-        return tableMapper.toTableDTOs(tableRepository.getAllTablesForGuest());
+    public List<TableDTO> findTableByCondition(DiningTable.TableCondition condition) {
+        return tableMapper.toTableDTOs(tableRepository.getDiningTableByTableCondition(condition));
     }
 
     /**
-     * Lấy tất cả bàn cho Manager - không bao gồm bàn retired
+     * Lọc các bàn đang không ở trạng thái RETIRED
+     */
+    public List<TableDTO> findNonRetiredTables() {
+        return tableMapper.toTableDTOs(tableRepository.getDiningTableByTableConditionExceptRetired());
+    }
+
+    /**
+     * Lấy tất cả bàn cho Manager
      */
     public List<TableDTO> getAllTablesForManager() {
-        return tableMapper.toTableDTOs(tableRepository.getAllTablesForManager());
+        return tableMapper.toTableDTOs(tableRepository.findAll());
     }
 
     /**
@@ -205,6 +211,18 @@ public class TableService {
     }
 
     /**
+     * Lấy danh sách bàn cho Cashier
+     */
+    public List<TableForCashierDTO> getTablesForCashier() {
+        return tableMapper.toTableForCashierDTOs(tableRepository.getAllTablesForCashier());
+    }
+
+
+    public DiningTable add(DiningTable table) {
+        return tableRepository.save(table);
+    }
+
+    /**
      * Cập nhật bàn (Manager)
      * Manager chỉ cập nhật capacity và tableCondition
      * Manager sẽ chỉ được cập nhật bàn thành trạng thái RETIRED nếu bàn đó đang trống (AVAILABLE)
@@ -214,7 +232,7 @@ public class TableService {
         DiningTable table = tableRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Table not found"));
         List<Reservation> reservationList = reservationRepository.getAllReservationsForUpdateTable(table.getId(), LocalDateTime.now());
-        if(table.getTableStatus() == DiningTable.TableStatus.AVAILABLE && reservationList.isEmpty()) {
+        if (table.getTableStatus() == DiningTable.TableStatus.AVAILABLE && reservationList.isEmpty()) {
             // Lưu lại condition cũ để kiểm tra có phải retired không
             DiningTable.TableCondition oldCondition = table.getTableCondition();
 
@@ -227,23 +245,12 @@ public class TableService {
                     && oldCondition != DiningTable.TableCondition.RETIRED) {
                 webSocketService.broadcastTableRetired(id, "Manager");
             }
-        }else {
+        } else {
             throw new RuntimeException("Bàn đang không trống hoặc đã được đặt trước!");
         }
 
     }
 
-    /**
-     * Lấy danh sách bàn cho Cashier
-     */
-    public List<TableForCashierDTO> getTablesForCashier() {
-        return tableMapper.toTableForCashierDTOs(tableRepository.getAllTablesForCashier());
-    }
-
-
-    public void add(DiningTable table) {
-        tableRepository.save(table);
-    }
 
     /**
      * Lấy order detail của bàn (nếu có session và order đang active)
@@ -331,5 +338,62 @@ public class TableService {
 
         // Xóa giỏ hàng trong http session
         session.invalidate();
+    }
+
+    @Transactional
+    public void handleTableRelease(TableReleaseRequest request) {
+        try {
+            DiningTable table = tableRepository.findById(request.getTableId())
+                    .orElseThrow(() -> new RuntimeException("Table not found"));
+
+            if (table.getTableStatus() != DiningTable.TableStatus.OCCUPIED) {
+                // Optionally send an error back to the guest if the table is not occupied
+                log.warn("Attempt to release table {} which is not OCCUPIED. Current status: {}",
+                        request.getTableId(), table.getTableStatus());
+                return;
+            }
+
+            DiningTable.TableStatus oldStatus = table.getTableStatus();
+            table.setTableStatus(DiningTable.TableStatus.AVAILABLE);
+            table.setUpdatedAt(LocalDateTime.now());
+            tableRepository.save(table);
+
+            webSocketService.broadcastTableStatusToGuests(request.getTableId(), DiningTable.TableStatus.AVAILABLE);
+
+            // Broadcast to cashier to notify about the payment request
+            webSocketService.broadcastTableStatusToCashier(
+                    com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage.MessageType.TABLE_RELEASED,
+                    request.getTableId(),
+                    oldStatus,
+                    DiningTable.TableStatus.AVAILABLE,
+                    "Guest",
+                    "Bàn " + request.getTableId() + " đã được giải phóng."
+            );
+
+            // Send confirmation back to the guest
+            // You might want to create a specific response object for this
+            simpMessagingTemplate.convertAndSend(
+                    "/queue/guest-" + request.getSessionId(),
+                    TableReleaseResponse.builder()
+                            .type(TableReleaseResponse.ResponseType.SUCCESS)
+                            .tableId(request.getTableId())
+                            .message("Yêu cầu thanh toán đã được gửi. Vui lòng đợi thu ngân.")
+                            .build()
+            );
+
+            log.info("Guest {} requested payment for table {}", request.getSessionId(), request.getTableId());
+
+        } catch (Exception e) {
+            log.error("Error handling table release request for table {}", request.getTableId(), e);
+            // Optionally send an error message back to the guest
+            simpMessagingTemplate.convertAndSend(
+                    "/queue/guest-" + request.getSessionId(),
+                    TableReleaseResponse.builder()
+                            .type(TableReleaseResponse.ResponseType.ERROR)
+                            .tableId(request.getTableId())
+                            .message("Lỗi khi gửi yêu cầu thanh toán. Vui lòng thử lại.")
+                            .build()
+            );
+        }
     }
 }

@@ -1,0 +1,88 @@
+@startuml
+title View List Staff - Manager
+
+actor Manager
+participant Browser
+participant StaffController
+participant StaffService
+participant ShiftService
+participant StaffRepository
+participant Database
+
+Manager -> Browser: Access /manager/staff
+Browser -> StaffController: GET /manager/staff
+
+StaffController -> StaffService: getAllStaff()
+StaffService -> StaffRepository: findAll()
+StaffRepository -> Database: SELECT * FROM Staff
+Database --> StaffRepository: List<Staff>
+StaffRepository --> StaffService: List<Staff>
+StaffService -> StaffService: Map to StaffResponseDTO
+StaffService --> StaffController: List<StaffResponseDTO>
+
+StaffController -> StaffController: Add roles to model
+StaffController -> ShiftService: findAllDto()
+ShiftService --> StaffController: List<ShiftDTO>
+
+StaffController -> ShiftService: getWeeklyPayrollTotals()
+ShiftService --> StaffController: Map<String, Long>
+
+StaffController -> StaffController: Calculate statistics
+note right
+Statistics calculated:
+- totalStaff = staffs.size()
+- activeStaff = count of active staff
+- Chart labels and data for payroll
+end note
+
+StaffController -> Browser: HTML with staff list and statistics
+Browser --> Manager: Display staff management page
+
+note right
+Page displays:
+- Statistics cards (total staff, active staff, salary info)
+- Payroll chart (weekly payroll totals)
+- Staff table with:
+  * ID, Name, DOB, Phone, Address, Email, Role, Status
+  * Edit button for each staff
+  * Toggle active/inactive button
+- Add new staff button
+end note
+
+Manager -> Browser: Click "Toggle Active" on staff
+Browser -> StaffController: GET /manager/staff/toggle-active/{id}
+
+StaffController -> StaffService: toggleStaffActive(id)
+StaffService -> StaffRepository: findById(id)
+StaffRepository -> Database: SELECT * FROM Staff WHERE id = ?
+Database --> StaffRepository: Staff
+StaffRepository --> StaffService: Staff
+
+StaffService -> StaffService: staff.setActive(!staff.isActive())
+StaffService -> StaffRepository: save(staff)
+StaffRepository -> Database: UPDATE Staff SET is_active = ?
+Database --> StaffRepository: Updated Staff
+StaffRepository --> StaffService: Saved Staff
+StaffService --> StaffController: Success
+
+StaffController -> Browser: Redirect to /manager/staff
+Browser -> StaffController: GET /manager/staff
+StaffController -> StaffService: getAllStaff()
+StaffService -> StaffRepository: findAll()
+StaffRepository -> Database: SELECT * FROM Staff
+Database --> StaffRepository: List<Staff>
+StaffRepository --> StaffService: List<Staff>
+StaffService --> StaffController: List<StaffResponseDTO>
+StaffController -> Browser: HTML with updated staff list
+Browser --> Manager: Display updated staff list
+
+@enduml
+
+
+
+
+
+
+
+
+

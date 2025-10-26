@@ -41,9 +41,25 @@
             <h2>Sơ đồ bàn ăn</h2>
             <p class="muted">Click vào bàn để xem chi tiết</p>
           </div>
-          <button id="openAddTable" class="primary-btn" type="button">
-            ➕ Thêm bàn mới
-          </button>
+          <div class="header-actions">
+            <!-- Dropdown lọc bàn -->
+            <div class="filter-dropdown">
+              <label for="tableFilter">🔍 Lọc bàn:</label>
+              <select id="tableFilter" name="condition">
+                <option value="ALL" th:selected="${selectedCondition == 'ALL'}">Tất cả bàn</option>
+                <option value="NON_RETIRED" th:selected="${selectedCondition == 'NON_RETIRED'}">Bàn đang hoạt động</option>
+                <option 
+                  th:each="condition : ${tableConditions}" 
+                  th:value="${condition}" 
+                  th:text="${condition}"
+                  th:selected="${selectedCondition == condition.name()}"
+                ></option>
+              </select>
+            </div>
+            <button id="openAddTable" class="primary-btn" type="button">
+              ➕ Thêm bàn mới
+            </button>
+          </div>
         </div>
 
         <!-- Grid Layout: Sơ đồ bàn + Chi tiết bàn -->
@@ -99,31 +115,34 @@
                 <span id="detailUpdatedAt">—</span>
               </div>
 
-              <!-- Status Legend -->
+              <!-- Condition Legend -->
               <div class="status-legend">
-                <div class="legend-title">📊 Chú giải trạng thái</div>
+                <div class="legend-title">📊 Chú giải điều kiện của bàn</div>
                 <div class="legend-items">
                   <div class="legend-item">
-                    <span class="legend-dot available"></span>
-                    <span class="legend-text">AVAILABLE - Có sẵn</span>
+                    <span class="legend-dot new"></span>
+                    <span class="legend-text">NEW - Bàn mới</span>
                   </div>
                   <div class="legend-item">
-                    <span class="legend-dot occupied"></span>
-                    <span class="legend-text">OCCUPIED - Đang dùng</span>
+                    <span class="legend-dot good"></span>
+                    <span class="legend-text">GOOD - Bàn tốt</span>
                   </div>
                   <div class="legend-item">
-                    <span class="legend-dot paying"></span>
-                    <span class="legend-text">PAYING - Thanh toán</span>
+                    <span class="legend-dot worn"></span>
+                    <span class="legend-text">WORN - Bàn cũ</span>
                   </div>
                   <div class="legend-item">
-                    <span class="legend-dot reserved"></span>
-                    <span class="legend-text">RESERVED - Đã đặt</span>
+                    <span class="legend-dot damaged"></span>
+                    <span class="legend-text">DAMAGED - Bàn hỏng</span>
+                  </div>
+                  <div class="legend-item">
+                    <span class="legend-dot retired"></span>
+                    <span class="legend-text">RETIRED - Bàn đã nghỉ</span>
                   </div>
                 </div>
                 <div class="legend-note">
                   <small
-                    >ℹ️ Trạng thái bàn do Cashier quản lý, Manager chỉ
-                    xem</small
+                    >ℹ️ Màu sắc hiển thị theo điều kiện bàn, không phải trạng thái</small
                   >
                 </div>
               </div>

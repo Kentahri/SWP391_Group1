@@ -90,6 +90,48 @@
   margin-bottom: 24px;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Filter Dropdown */
+.filter-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-dropdown label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.filter-dropdown select {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  color: var(--text);
+  min-width: 180px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-dropdown select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(91, 103, 229, 0.1);
+}
+
+.filter-dropdown select:hover {
+  border-color: var(--primary);
+}
+
 .section-header h2 {
   margin: 0 0 4px 0;
   font-size: 20px;
@@ -224,61 +266,76 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Status Colors - Thống nhất màu sắc */
-.tile[data-status="AVAILABLE"] {
+/* Table Condition Colors - Hiển thị theo điều kiện bàn */
+.tile[data-condition="NEW"] {
+  background: #dbeafe;
+  border-color: #3b82f6;
+}
+
+.tile[data-condition="NEW"] .status-dot {
+  background: #3b82f6;
+}
+
+.tile[data-condition="NEW"] h4,
+.tile[data-condition="NEW"] small {
+  color: #1e40af;
+}
+
+.tile[data-condition="GOOD"] {
   background: #d1fae5;
   border-color: #10b981;
 }
 
-.tile[data-status="AVAILABLE"] .status-dot {
+.tile[data-condition="GOOD"] .status-dot {
   background: #10b981;
 }
 
-.tile[data-status="AVAILABLE"] h4,
-.tile[data-status="AVAILABLE"] small {
+.tile[data-condition="GOOD"] h4,
+.tile[data-condition="GOOD"] small {
   color: #065f46;
 }
 
-.tile[data-status="OCCUPIED"] {
-  background: #fee2e2;
-  border-color: #ef4444;
-}
-
-.tile[data-status="OCCUPIED"] .status-dot {
-  background: #ef4444;
-}
-
-.tile[data-status="OCCUPIED"] h4,
-.tile[data-status="OCCUPIED"] small {
-  color: #991b1b;
-}
-
-.tile[data-status="PAYING"] {
+.tile[data-condition="WORN"] {
   background: #fed7aa;
   border-color: #f59e0b;
 }
 
-.tile[data-status="PAYING"] .status-dot {
+.tile[data-condition="WORN"] .status-dot {
   background: #f59e0b;
 }
 
-.tile[data-status="PAYING"] h4,
-.tile[data-status="PAYING"] small {
+.tile[data-condition="WORN"] h4,
+.tile[data-condition="WORN"] small {
   color: #92400e;
 }
 
-.tile[data-status="RESERVED"] {
-  background: #e9d5ff;
-  border-color: #a78bfa;
+.tile[data-condition="DAMAGED"] {
+  background: #fee2e2;
+  border-color: #ef4444;
 }
 
-.tile[data-status="RESERVED"] .status-dot {
-  background: #a78bfa;
+.tile[data-condition="DAMAGED"] .status-dot {
+  background: #ef4444;
 }
 
-.tile[data-status="RESERVED"] h4,
-.tile[data-status="RESERVED"] small {
-  color: #5b21b6;
+.tile[data-condition="DAMAGED"] h4,
+.tile[data-condition="DAMAGED"] small {
+  color: #991b1b;
+}
+
+.tile[data-condition="RETIRED"] {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+  opacity: 0.6;
+}
+
+.tile[data-condition="RETIRED"] .status-dot {
+  background: #9ca3af;
+}
+
+.tile[data-condition="RETIRED"] h4,
+.tile[data-condition="RETIRED"] small {
+  color: #6b7280;
 }
 
 /* Detail Panel */
@@ -378,20 +435,24 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-.legend-dot.available {
+.legend-dot.new {
+  background: #3b82f6;
+}
+
+.legend-dot.good {
   background: #10b981;
 }
 
-.legend-dot.occupied {
-  background: #ef4444;
-}
-
-.legend-dot.paying {
+.legend-dot.worn {
   background: #f59e0b;
 }
 
-.legend-dot.reserved {
-  background: #a78bfa;
+.legend-dot.damaged {
+  background: #ef4444;
+}
+
+.legend-dot.retired {
+  background: #9ca3af;
 }
 
 .legend-text {
@@ -598,6 +659,24 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .filter-dropdown {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .filter-dropdown select {
+    width: 100%;
+    min-width: auto;
   }
 
   .primary-btn {

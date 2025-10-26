@@ -1,0 +1,86 @@
+@startuml
+title Create New Staff - Manager
+
+actor Manager
+participant Browser
+participant StaffController
+participant StaffService
+participant StaffRepository
+participant PasswordEncoder
+participant Database
+
+Manager -> Browser: Click "Add New Staff"
+Browser -> StaffController: GET /manager/staff/create
+StaffController -> Browser: Display create staff form
+Browser --> Manager: Show create staff modal
+
+note right
+Form fields:
+- Name
+- Date of Birth
+- Phone
+- Address
+- Email
+- Password
+- Role (CASHIER/MANAGER/KITCHEN)
+- Active status
+end note
+
+Manager -> Browser: Fill form and click "Save"
+Browser -> StaffController: POST /manager/staff/create
+
+StaffController -> StaffController: Validate StaffCreateDTO
+
+alt Validation successful
+    StaffController -> StaffService: createNewStaff(StaffCreateDTO)
+    
+    StaffService -> StaffRepository: existsByEmail(email)
+    StaffRepository -> Database: SELECT * FROM Staff WHERE email = ?
+    Database --> StaffRepository: boolean
+    StaffRepository --> StaffService: boolean
+    
+    alt Email already exists
+        StaffService --> StaffController: "Email đã được sử dụng"
+        StaffController -> Browser: HTML with error message
+        Browser --> Manager: Display email error
+    else Email available
+        StaffService -> StaffRepository: existsByPhone(phone)
+        StaffRepository -> Database: SELECT * FROM Staff WHERE phone = ?
+        Database --> StaffRepository: boolean
+        StaffRepository --> StaffService: boolean
+        
+        alt Phone already exists
+            StaffService --> StaffController: "Số điện thoại đã được sử dụng"
+            StaffController -> Browser: HTML with error message
+            Browser --> Manager: Display phone error
+        else Phone available
+            StaffService -> StaffService: Map DTO to Entity
+            StaffService -> PasswordEncoder: encode(password)
+            PasswordEncoder --> StaffService: Encoded password
+            StaffService -> StaffService: Set encoded password to staff
+            
+            StaffService -> StaffRepository: save(staff)
+            StaffRepository -> Database: INSERT INTO Staff
+            Database --> StaffRepository: Saved Staff with ID
+            StaffRepository --> StaffService: Staff with ID
+            StaffService --> StaffController: null (success)
+            
+            StaffController -> Browser: Redirect to /manager/staff
+            Browser -> StaffController: GET /manager/staff
+            StaffController -> StaffService: getAllStaff()
+            StaffService -> StaffRepository: findAll()
+            StaffRepository -> Database: SELECT * FROM Staff
+            Database --> StaffRepository: List<Staff>
+            StaffRepository --> StaffService: List<Staff>
+            StaffService --> StaffController: List<StaffResponseDTO>
+            StaffController -> Browser: HTML with new staff
+            Browser --> Manager: Display staff list with new staff
+        end
+    end
+
+else Validation failed
+    StaffController -> Browser: HTML with validation errors
+    Browser --> Manager: Display form with validation errors
+end
+
+@enduml

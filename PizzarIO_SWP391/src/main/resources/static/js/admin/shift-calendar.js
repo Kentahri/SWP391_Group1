@@ -33,8 +33,8 @@
     const csrf = readCsrfMeta();
     if (!csrf.token || !csrf.parameter) return;
     document
-      .querySelectorAll("form")
-      .forEach((f) => ensureFormHasCsrf(f, csrf));
+        .querySelectorAll("form")
+        .forEach((f) => ensureFormHasCsrf(f, csrf));
   }
 
   // =========================
@@ -77,8 +77,8 @@
 
     // Dọn lỗi validation cũ (nếu bạn render lỗi client)
     form
-      .querySelectorAll(".field-error, .error, [data-error]")
-      .forEach((n) => (n.textContent = ""));
+        .querySelectorAll(".field-error, .error, [data-error]")
+        .forEach((n) => (n.textContent = ""));
 
     // Chỉ làm sạch id; KHÔNG đụng tới _csrf
     if (clearId) {
@@ -101,10 +101,10 @@
     if (window.openShiftModalFlag) {
       modal.classList.add("show");
       setModalTitle(
-        "shiftModalTitle",
-        window.openShiftModalFlag === "create"
-          ? "Thêm loại ca mới"
-          : "Sửa loại ca"
+          "shiftModalTitle",
+          window.openShiftModalFlag === "create"
+              ? "Thêm loại ca mới"
+              : "Sửa loại ca"
       );
       switchTab("shifts");
     }
@@ -115,7 +115,7 @@
 
   window.openShiftModal = function () {
     window.location.href =
-      "/pizzario/manager/shift/create?modal=true&returnPage=staff_shifts";
+        "/pizzario/manager/shift/create?modal=true&returnPage=staff_shifts";
   };
 
   window.closeShiftModal = function () {
@@ -162,10 +162,10 @@
     if (window.openStaffShiftModalFlag) {
       modal.classList.add("show");
       setModalTitle(
-        "staffShiftModalTitle",
-        window.openStaffShiftModalFlag === "create"
-          ? "Thêm ca làm việc"
-          : "Sửa ca làm việc"
+          "staffShiftModalTitle",
+          window.openStaffShiftModalFlag === "create"
+              ? "Thêm ca làm việc"
+              : "Sửa ca làm việc"
       );
 
       // Tự động cập nhật lương khi mở modal
@@ -213,11 +213,11 @@
   // =========================
   window.switchTab = function (tabName) {
     document
-      .querySelectorAll(".tab-btn")
-      .forEach((btn) => btn.classList.remove("active"));
+        .querySelectorAll(".tab-btn")
+        .forEach((btn) => btn.classList.remove("active"));
     document
-      .querySelectorAll(".tab-content")
-      .forEach((c) => c.classList.remove("active"));
+        .querySelectorAll(".tab-content")
+        .forEach((c) => c.classList.remove("active"));
 
     const activeBtn = document.querySelector(`.tab-btn[onclick*="${tabName}"]`);
     const activeContent = document.getElementById(`tab-${tabName}`);
@@ -250,7 +250,7 @@
 
   window.editShift = function (shiftId) {
     window.location.href =
-      "/pizzario/manager/staff_shifts/edit/" + shiftId + "?modal=true";
+        "/pizzario/manager/staff_shifts/edit/" + shiftId + "?modal=true";
   };
 
   // =========================

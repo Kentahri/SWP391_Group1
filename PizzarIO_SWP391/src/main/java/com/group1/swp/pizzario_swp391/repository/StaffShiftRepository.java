@@ -44,7 +44,7 @@ public interface StaffShiftRepository extends JpaRepository<StaffShift, Integer>
   // Tổng số giờ làm
   @Query(value = """
           SELECT COALESCE(SUM(DATEDIFF(HOUR, ss.check_in, ss.check_out)), 0)
-          FROM staff_shift ss
+          FROM [Staff_Shift] ss
           WHERE ss.status IN ('COMPLETED','LEFT_EARLY')
             AND ss.check_in IS NOT NULL
             AND ss.check_out IS NOT NULL
@@ -61,7 +61,7 @@ public interface StaffShiftRepository extends JpaRepository<StaffShift, Integer>
               ),
               0.0
           )
-          FROM staff_shift ss
+          FROM [Staff_Shift] ss
           WHERE ss.status IN ('COMPLETED','LEFT_EARLY')
             AND ss.check_in IS NOT NULL
             AND ss.check_out IS NOT NULL
