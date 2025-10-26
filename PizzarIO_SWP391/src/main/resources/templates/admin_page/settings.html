@@ -1,49 +1,194 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Cài đặt • Admin Dashboard</title>
-    <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
-    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
-    <meta
-      name="_csrf_parameter"
-      th:if="${_csrf != null}"
-      th:content="${_csrf.parameterName}"
-    />
-  </head>
-  <body>
-    <div class="app">
-      <!-- SIDEBAR -->
-      <div th:insert="~{fragments/sidebar :: sidebar('settings')}"></div>
+<head>
+	<meta charset="utf-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1"/>
+	<title>Cài đặt • Admin Dashboard</title>
+	<link rel="stylesheet" th:href="@{/css/admin_page/styles.css}"/>
+	<link rel="stylesheet" th:href="@{/css/admin_page/settings.css}"/>
+	<meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}"/>
+	<meta
+			name="_csrf_parameter"
+			th:if="${_csrf != null}"
+			th:content="${_csrf.parameterName}"
+	/>
+</head>
+<body>
+<div class="app">
+	<!-- SIDEBAR -->
+	<div th:insert="~{fragments/sidebar :: sidebar('settings')}"></div>
+	
+	<!-- MAIN -->
+	<main class="main">
+		<header class="page-header">
+			<div>
+				<h1>Cài đặt</h1>
+				<p class="muted">Cấu hình hệ thống</p>
+			</div>
+			<div class="userbox">
+				<div class="avatar">M</div>
+				<div class="who">
+					<strong id="currentUser">—</strong>
+					<span id="currentRole" class="muted">—</span>
+				</div>
+			</div>
+		</header>
+		
+		<section>
+			<div class="content-wrapper settings-container">
+				<!-- Success/Error Messages -->
+				<div th:if="${successMessage}" class="alert alert-success">
+					<span th:text="${successMessage}"></span>
+				</div>
+				<div th:if="${errorMessage}" class="alert alert-error">
+					<span th:text="${errorMessage}"></span>
+				</div>
+				
+				<!-- Two Column Layout -->
+				<div class="settings-layout">
+					<!-- Left Column: Current Settings Display -->
+					<div class="settings-left">
+						<div class="card">
+							<div class="card-title">Cài đặt hiện tại</div>
+							<div class="card-body">
+								<div class="settings-display">
+									<div class="setting-item">
+										<strong>Thời gian tối thiểu giữa các lần đặt bàn:</strong>
+										<span th:text="${setting.conflictReservationMinutes} + ' phút'"></span>
+									</div>
+									<div class="setting-item">
+										<strong>Thời gian tự động khóa bàn khi đã có khách đặt trước:</strong>
+										<span th:text="${setting.autoLockReservationMinutes} + ' phút'"></span>
+									</div>
+									<div class="setting-item">
+										<strong>Thời gian chờ trước khi hủy khách không đến:</strong>
+										<span th:text="${setting.noShowWaitMinutes} + ' phút'"></span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					
+					<!-- Right Column: Settings Form -->
+					<div class="settings-right">
+						<div class="card">
+							<div class="card-title">Chỉnh sửa cài đặt</div>
+							<div class="card-body">
+								<form th:action="@{/manager/settings}" method="post" th:object="${setting}">
+									<div class="form-group">
+										<label for="conflictReservationMinutes">Thời gian tối thiểu giữa các lần đặt bàn
+											(phút)</label>
+										<input
+												type="number"
+												id="conflictReservationMinutes"
+												th:field="*{conflictReservationMinutes}"
+												class="form-control"
+												min="1"
+												max="1440"
+												required
+										/>
+										<small class="form-text">Khoảng thời gian tối thiểu giữa các lần đặt bàn để
+											tránh xung đột</small>
+									</div>
+									
+									<div class="form-group">
+										<label for="autoLockReservationMinutes">Thời gian tự động khóa bàn khi đã có
+											khách đặt trước (phút)</label>
+										<input
+												type="number"
+												id="autoLockReservationMinutes"
+												th:field="*{autoLockReservationMinutes}"
+												class="form-control"
+												min="1"
+												max="1440"
+												required
+										/>
+										<small class="form-text">Thời gian trước giờ đặt bàn mà bàn sẽ bị khóa tự
+											động</small>
+									</div>
+									
+									<div class="form-group">
+										<label for="noShowWaitMinutes">Thời gian chờ trước khi hủy khách không đến
+											(phút)</label>
+										<input
+												type="number"
+												id="noShowWaitMinutes"
+												th:field="*{noShowWaitMinutes}"
+												class="form-control"
+												min="1"
+												max="1440"
+												required
+										/>
+										<small class="form-text">Thời gian chờ sau giờ đặt bàn trước khi hủy do khách
+											không đến</small>
+									</div>
+									
+									<div class="form-actions">
+										<button type="submit" class="btn btn-primary">
+											Lưu cài đặt
+										</button>
+									</div>
+								</form>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+		
+		<script>
 
-      <!-- MAIN -->
-      <main class="main">
-        <header class="page-header">
-          <div>
-            <h1>Cài đặt</h1>
-            <p class="muted">Cấu hình hệ thống</p>
-          </div>
-          <div class="userbox">
-            <div class="avatar">M</div>
-            <div class="who">
-              <strong id="currentUser">—</strong>
-              <span id="currentRole" class="muted">—</span>
-            </div>
-          </div>
-        </header>
+            // Form validation and enhancement
+            document.addEventListener('DOMContentLoaded', function () {
+                const form = document.querySelector('form');
+                const submitBtn = document.querySelector('.btn-primary');
 
-        <section>
-          <div class="content-wrapper">
-            <div class="card">
-              <div class="card-title">Cài đặt hệ thống</div>
-              <div class="card-body">
-                <p>Trang cài đặt đang được phát triển...</p>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
-  </body>
+                // Add loading state to submit button
+                form.addEventListener('submit', function () {
+                    submitBtn.classList.add('loading');
+                    submitBtn.disabled = true;
+                });
+
+                // Real-time validation
+                const inputs = document.querySelectorAll('.form-control');
+                inputs.forEach(input => {
+                    input.addEventListener('input', function () {
+                        validateInput(this);
+                    });
+
+                    input.addEventListener('blur', function () {
+                        validateInput(this);
+                    });
+                });
+
+                function validateInput(input) {
+                    const value = parseInt(input.value);
+                    const min = parseInt(input.min);
+                    const max = parseInt(input.max);
+
+                    if (value < min || value > max) {
+                        input.classList.add('invalid');
+                        input.setCustomValidity(`Giá trị phải từ ${min} đến ${max} phút`);
+                    } else {
+                        input.classList.remove('invalid');
+                        input.setCustomValidity('');
+                    }
+                }
+
+                // Auto-hide alerts after 5 seconds
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(alert => {
+                    setTimeout(() => {
+                        alert.style.opacity = '0';
+                        alert.style.transform = 'translateY(-20px)';
+                        setTimeout(() => {
+                            alert.remove();
+                        }, 300);
+                    }, 5000);
+                });
+            });
+		</script>
+	</main>
+</div>
+</body>
 </html>
