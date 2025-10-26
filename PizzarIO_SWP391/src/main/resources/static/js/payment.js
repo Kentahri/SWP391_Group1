@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const membershipPoints = window.paymentData.membershipPoints;
   const appliedVoucherId = window.paymentData.appliedVoucherId;
   const availableVouchers = window.paymentData.availableVouchers;
+  const source = window.paymentData.source;
 
   // DOM Elements
   const subtotalElement = document.getElementById("subtotalTop");
@@ -303,6 +304,15 @@ document.addEventListener("DOMContentLoaded", function () {
     paymentMethodInput.name = "paymentMethod";
     paymentMethodInput.value = selectedPaymentMethod;
 
+    // Thêm source nếu có
+    if (source) {
+      const sourceInput = document.createElement("input");
+      sourceInput.type = "hidden";
+      sourceInput.name = "source";
+      sourceInput.value = source;
+      form.appendChild(sourceInput);
+    }
+
     // Thêm CSRF token
     const csrfToken = document.querySelector('meta[name="_csrf"]');
     if (csrfToken) {
@@ -315,6 +325,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     console.log("Payment method input value:", paymentMethodInput.value);
     console.log("Payment method input name:", paymentMethodInput.name);
+    if (source) {
+      console.log("Source input value:", source);
+    }
 
     form.appendChild(paymentMethodInput);
     document.body.appendChild(form);

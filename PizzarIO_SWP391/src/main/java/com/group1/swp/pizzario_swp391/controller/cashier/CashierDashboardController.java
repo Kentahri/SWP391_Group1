@@ -20,6 +20,7 @@ import com.group1.swp.pizzario_swp391.dto.reservation.ReservationUpdateDTO;
 import com.group1.swp.pizzario_swp391.dto.table.TableForCashierDTO;
 import com.group1.swp.pizzario_swp391.entity.Staff;
 import com.group1.swp.pizzario_swp391.mapper.ReservationMapper;
+import com.group1.swp.pizzario_swp391.service.OrderService;
 import com.group1.swp.pizzario_swp391.service.ReservationService;
 import com.group1.swp.pizzario_swp391.service.StaffService;
 import com.group1.swp.pizzario_swp391.service.TableService;
@@ -42,6 +43,7 @@ public class CashierDashboardController {
     StaffService staffService;
     ReservationService reservationService;
     ReservationMapper reservationMapper;
+    OrderService orderService;
 
     @GetMapping
     public String cashierDashboard(Model model, Principal principal) {
@@ -351,6 +353,60 @@ public class CashierDashboardController {
         } catch (Exception _) {
             redirectAttributes.addFlashAttribute("errorMessage", "Đã xảy ra lỗi. Vui lòng thử lại.");
             return "redirect:/cashier";
+        }
+    }
+
+    /**
+     * Xem lịch sử hóa đơn
+     */
+    @GetMapping("/history")
+    public String viewPaymentHistory(Model model, Principal principal) {
+        try {
+            String email = principal.getName();
+            Staff staff = staffService.findByEmail(email);
+
+            List<TableForCashierDTO> tables = tableService.getTablesForCashier();
+            var paymentHistory = orderService.getPaymentHistory();
+
+            model.addAttribute("staff", staff);
+            model.addAttribute("tables", tables);
+            model.addAttribute("paymentHistory", paymentHistory);
+            model.addAttribute("showHistory", true);
+            model.addAttribute("reservationCreateDTO", new ReservationCreateDTO());
+            return "cashier-page/cashier-dashboard";
+        } catch (Exception e) {
+            model.addAttribute("error", "Không thể tải lịch sử hóa đơn. Vui lòng thử lại.");
+            return "error-page";
+        }
+    }
+
+    /**
+     * Xem chi tiết order từ lịch sử
+     */
+    @GetMapping("/history/{orderId}")
+    public String viewOrderDetail(@PathVariable Long orderId, Model model, Principal principal) {
+        try {
+            String email = principal.getName();
+            Staff staff = staffService.findByEmail(email);
+
+            // Lấy chi tiết order từ payment history
+            var paymentHistory = orderService.getPaymentHistory();
+            var orderDetail = paymentHistory.stream()
+                    .filter(order -> order.getOrderId().equals(orderId))
+                    .findFirst()
+                    .orElse(null);
+
+            if (orderDetail == null) {
+                model.addAttribute("error", "Không tìm thấy đơn hàng này trong lịch sử.");
+                return "error-page";
+            }
+
+            model.addAttribute("staff", staff);
+            model.addAttribute("orderDetail", orderDetail);
+            return "cashier-page/order-detail";
+        } catch (Exception e) {
+            model.addAttribute("error", "Không thể tải chi tiết đơn hàng. Vui lòng thử lại.");
+            return "error-page";
         }
     }
 }

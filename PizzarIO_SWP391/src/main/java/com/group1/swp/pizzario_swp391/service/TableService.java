@@ -298,6 +298,8 @@ public class TableService{
                 .createdByStaffName(order.getStaff() != null ? order.getStaff().getName() : null)
                 .voucherCode(order.getVoucher() != null ? order.getVoucher().getCode() : null)
                 .discountAmount(order.getVoucher() != null ? order.getVoucher().getValue() : null)
+                .customerName(order.getMembership() != null ? order.getMembership().getName() : "Khách vãng lai")
+                .customerPhone(order.getMembership() != null ? order.getMembership().getPhoneNumber() : null)
                 .build();
     }
 
@@ -336,8 +338,10 @@ public class TableService{
                 "Bàn " + tableId + " đã được giải phóng."
         );
 
-        // Xóa giỏ hàng trong http session
-        session.invalidate();
+        // Xóa giỏ hàng trong http session (chỉ khi session không null)
+        if (session != null) {
+            session.invalidate();
+        }
     }
 
     @Transactional
@@ -348,30 +352,31 @@ public class TableService{
 
             if (table.getTableStatus() != DiningTable.TableStatus.OCCUPIED) {
                 // Optionally send an error back to the guest if the table is not occupied
-                log.warn("Attempt to release table {} which is not OCCUPIED. Current status: {}",
+                log.warn("Attempt to request payment for table {} which is not OCCUPIED. Current status: {}",
                         request.getTableId(), table.getTableStatus());
                 return;
             }
 
             DiningTable.TableStatus oldStatus = table.getTableStatus();
-            table.setTableStatus(DiningTable.TableStatus.AVAILABLE);
+            // Set table to WAITING_PAYMENT status when guest requests payment
+            table.setTableStatus(DiningTable.TableStatus.WAITING_PAYMENT);
             table.setUpdatedAt(LocalDateTime.now());
             tableRepository.save(table);
 
-            webSocketService.broadcastTableStatusToGuests(request.getTableId(), DiningTable.TableStatus.AVAILABLE);
+            // Broadcast table status change to all guests
+            webSocketService.broadcastTableStatusToGuests(request.getTableId(), DiningTable.TableStatus.WAITING_PAYMENT);
 
             // Broadcast to cashier to notify about the payment request
             webSocketService.broadcastTableStatusToCashier(
                     com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage.MessageType.TABLE_RELEASED,
                     request.getTableId(),
                     oldStatus,
-                    DiningTable.TableStatus.AVAILABLE,
+                    DiningTable.TableStatus.WAITING_PAYMENT,
                     "Guest",
-                    "Bàn " + request.getTableId() + " đã được giải phóng."
+                    "Bàn " + request.getTableId() + " đang chờ thanh toán."
             );
 
             // Send confirmation back to the guest
-            // You might want to create a specific response object for this
             simpMessagingTemplate.convertAndSend(
                     "/queue/guest-" + request.getSessionId(),
                     TableReleaseResponse.builder()
@@ -384,8 +389,8 @@ public class TableService{
             log.info("Guest {} requested payment for table {}", request.getSessionId(), request.getTableId());
 
         } catch (Exception e) {
-            log.error("Error handling table release request for table {}", request.getTableId(), e);
-            // Optionally send an error message back to the guest
+            log.error("Error handling payment request for table {}", request.getTableId(), e);
+            // Send an error message back to the guest
             simpMessagingTemplate.convertAndSend(
                     "/queue/guest-" + request.getSessionId(),
                     TableReleaseResponse.builder()

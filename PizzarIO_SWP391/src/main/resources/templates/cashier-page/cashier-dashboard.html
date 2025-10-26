@@ -1,675 +1,1849 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Cashier Dashboard - Table Management</title>
-	<link rel="stylesheet" th:href="@{/css/cashier-dashboard.css}">
-</head>
-<body>
-<div class="dashboard-container">
-	<!-- Top bar -->
-	<header class="topbar">
-		<div class="brand">🍕 PizzarIO</div>
-		<div class="staff-info">
-			<span>Tên: <strong th:text="${staff.name}"></strong></span>
-		</div>
-		<div class="datetime-info">
-			<div id="clock" class="clock">--:--:--</div>
-			<div id="date" class="date">--/--/----</div>
-		</div>
-		<div class="actions">
-			<button class="btn btn-secondary"><a th:href="@{/cashier/reservations/upcoming}" style="text-decoration: none">📅 Bàn đã đặt trước</a></button>
-			<button class="btn btn-primary" type="button">➕ Tạo đơn hàng</button>
-			<button class="btn btn-secondary" type="button">📋 Lịch sử</button>
-			<form th:action="@{/logout}" method="post">
-				<input type="hidden"
-				       th:if="${_csrf != null}"
-				       th:name="${_csrf.parameterName}"
-				       th:value="${_csrf.token}"/>
-				<button type="submit" class="btn-logout" onclick="return confirmLogout()">🚪 Đăng xuất</button>
-			</form>
-		</div>
-	</header>
-	
-	<div class="layout">
-		<!-- Left: Table Management -->
-		<section class="panel left">
-			<div class="section-title">Quản lý bàn</div>
-			
-			<!-- Legend -->
-			<div class="legend">
-				<div class="legend-items">
-					<div class="legend-item">
-						<span class="legend-dot available"></span>
-						<span>Bàn đang trống</span>
-					</div>
-					<div class="legend-item">
-						<span class="legend-dot occupied"></span>
-						<span>Bàn đang có khách</span>
-					</div>
-					<div class="legend-item">
-						<span class="legend-dot paid"></span>
-						<span>Bàn đang chờ thanh toán</span>
-					</div>
-					<div class="legend-item">
-						<span class="legend-dot reserved"></span>
-						<span>Bàn đã được đặt trước</span>
-					</div>
-				</div>
-			</div>
-			
-			<!-- Table Grid -->
-			<div class="table-grid" id="table-grid">
-				<a th:each="table : ${tables}"
-				   th:id="'table-' + ${table.id}"
-				   th:class="'table-card ' + ${table.tableStatus.toString().toLowerCase()} + ${selectedTableId != null && selectedTableId == table.id ? ' selected' : ''}"
-				   th:href="@{/cashier/tables/{id}/order(id=${table.id})}"
-				   th:attr="data-id=${table.id},
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cashier Dashboard - Table Management</title>
+    <link rel="stylesheet" th:href="@{/css/cashier-dashboard.css}" />
+    <style>
+      .order-status.preparing {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .order-status.served {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
+      .order-status.completed {
+        background: #d4edda;
+        color: #155724;
+      }
+      .payment-status.paid {
+        background: #d4edda;
+        color: #155724;
+      }
+      .payment-status.unpaid {
+        background: #f8d7da;
+        color: #721c24;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <!-- Top bar -->
+      <header class="topbar">
+        <div class="brand">🍕 PizzarIO</div>
+        <div class="staff-info">
+          <span>Tên: <strong th:text="${staff.name}"></strong></span>
+        </div>
+        <div class="datetime-info">
+          <div id="clock" class="clock">--:--:--</div>
+          <div id="date" class="date">--/--/----</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-secondary">
+            <a
+              th:href="@{/cashier/reservations/upcoming}"
+              style="text-decoration: none"
+              >📅 Bàn đã đặt trước</a
+            >
+          </button>
+          <button class="btn btn-primary" type="button">➕ Tạo đơn hàng</button>
+          <button class="btn btn-secondary" type="button">
+            <a th:href="@{/cashier/history}" style="text-decoration: none"
+              >📋 Lịch sử</a
+            >
+          </button>
+          <form th:action="@{/logout}" method="post">
+            <input
+              type="hidden"
+              th:if="${_csrf != null}"
+              th:name="${_csrf.parameterName}"
+              th:value="${_csrf.token}"
+            />
+            <button
+              type="submit"
+              class="btn-logout"
+              onclick="return confirmLogout()"
+            >
+              🚪 Đăng xuất
+            </button>
+          </form>
+        </div>
+      </header>
+
+      <div class="layout">
+        <!-- Left: Table Management -->
+        <section class="panel left">
+          <div class="section-title">Quản lý bàn</div>
+
+          <!-- Legend -->
+          <div class="legend">
+            <div class="legend-items">
+              <div class="legend-item">
+                <span class="legend-dot available"></span>
+                <span>Bàn đang trống</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot occupied"></span>
+                <span>Bàn đang có khách</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot paid"></span>
+                <span>Bàn đang chờ thanh toán</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot reserved"></span>
+                <span>Bàn đã được đặt trước</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table Grid -->
+          <div class="table-grid" id="table-grid">
+            <a
+              th:each="table : ${tables}"
+              th:id="'table-' + ${table.id}"
+              th:class="'table-card ' + ${table.tableStatus.toString().toLowerCase()} + ${selectedTableId != null && selectedTableId == table.id ? ' selected' : ''}"
+              th:href="@{/cashier/tables/{id}/order(id=${table.id})}"
+              th:attr="data-id=${table.id},
 				            data-status=${table.tableStatus},
 				            data-capacity=${table.capacity}"
-				   style="text-decoration: none; color: inherit; cursor: pointer;">
-					<div class="table-icon">
-						<span th:if="${table.tableStatus == 'AVAILABLE'}">🪑</span>
-						<span th:if="${table.tableStatus == 'OCCUPIED'}">👥</span>
-						<span th:if="${table.tableStatus == 'WAITING_PAYMENT'}">✅</span>
-						<span th:if="${table.tableStatus == 'RESERVED'}">🕐</span>
-					</div>
-					<div class="table-number">Bàn [[${table.id}]]</div>
-					<div class="table-info">
-						<!-- Hiển thị số người -->
-						<div class="party-size" th:if="${table.tableStatus != 'AVAILABLE'}">
-							Số người tối đa: <span th:text="${table.capacity != null ? table.capacity : 'N/A'}">N/A</span>
-						</div>
-						
-						<!-- Hiển thị trạng thái -->
-						<div class="table-status-text">
-							<span th:if="${table.tableStatus == 'AVAILABLE'}">Available</span>
-							<span th:if="${table.tableStatus == 'OCCUPIED'}">Occupied</span>
-							<span th:if="${table.tableStatus == 'WAITING_PAYMENT'}">Paid</span>
-							<span th:if="${table.tableStatus == 'RESERVED'}">Reserved</span>
-						</div>
-						
-						<!-- Hiển thị thông tin bổ sung -->
-						<div class="table-extra-info" th:if="${table.tableStatus == 'WAITING_PAYMENT'}">
-							<span>Payment</span>
-						</div>
-						<div class="table-extra-info" th:if="${table.tableStatus == 'RESERVED'}">
-							<span>Reserved</span>
-						</div>
-					</div>
-				</a>
-			</div>
-		</section>
-		
-		<!-- Right: Table details -->
-		<section class="panel right">
-			<div class="section-title" id="right-panel-title">
-				<span th:text="${upcomingReservations != null ? 'Danh sách đặt bàn sắp tới' : (tableReservations != null ? 'Đơn đặt trước - Bàn ' + selectedTableId : 'Đơn bàn chi tiết')}">Đơn bàn chi tiết</span>
-			</div>
-			
-			<!-- Table Detail View (default - no table selected) -->
-			<div id="table-detail" class="table-detail" th:if="${orderDetail == null && selectedTableId == null && upcomingReservations == null && tableReservations == null}">
-				<div class="placeholder">Chọn 1 bàn để xem chi tiết</div>
-			</div>
-			
-			<!-- Empty Table View (table selected but no order) -->
-			<div th:if="${selectedTableId != null && orderDetail == null && upcomingReservations == null && tableReservations == null}" class="table-detail">
-				<div class="detail-card">
-					<div class="detail-row"><strong>Bàn số:</strong> <span th:text="${selectedTableId}">—</span></div>
-					
-					<div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
-						<button class="btn-reserve" th:onclick="'openReservationModal(' + ${selectedTableId} + ')'">
-							📅 Đặt trước bàn này
-						</button>
-						<a th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}" class="btn-view-reservations">
-							📋 Xem đơn đặt trước
-						</a>
-					</div>
-				</div>
-			</div>
-			
-			<!-- Order Detail View (when table is selected and has order) -->
-			<div th:if="${orderDetail != null}" class="table-detail">
-				<div class="detail-card">
-					<div class="detail-row"><strong>Bàn số:</strong> <span th:text="${selectedTableId}">—</span></div>
-					<div class="detail-row"><strong>Số người tối đa:</strong> <span th:text="${tableCapacity}">—</span></div>
-				</div>
-				<div class="order-detail-card">
-					<div class="order-header">
-						<span th:class="'order-status ' + ${orderDetail.orderStatus.toString().toLowerCase()}" 
-						      th:text="${orderDetail.orderStatus == 'PREPARING' ? 'Đang chuẩn bị' : (orderDetail.orderStatus == 'SERVED' ? 'Đã phục vụ' : (orderDetail.orderStatus == 'COMPLETED' ? 'Hoàn thành' : orderDetail.orderStatus))}">
-						</span>
-					</div>
-					
-					<div class="order-meta">
-						<div class="meta-row">
-							<span class="meta-label">Mã đơn:</span>
-							<span class="meta-value">#<span th:text="${orderDetail.orderId}">—</span></span>
-						</div>
-						<div class="meta-row">
-							<span class="meta-label">Trạng thái thanh toán:</span>
-							<span th:class="'meta-value payment-' + ${orderDetail.paymentStatus.toString().toLowerCase()}" 
-							      th:text="${orderDetail.paymentStatus == 'UNPAID' ? 'Chưa thanh toán' : (orderDetail.paymentStatus == 'PAID' ? 'Đã thanh toán' : 'Đang xử lý')}">
-							</span>
-						</div>
-						<div class="meta-row" th:if="${orderDetail.paymentMethod != null}">
-							<span class="meta-label">Phương thức:</span>
-							<span class="meta-value" th:text="${orderDetail.paymentMethod == 'CASH' ? 'Tiền mặt' : (orderDetail.paymentMethod == 'QR' ? 'QR Code' : 'Thẻ tín dụng')}"></span>
-						</div>
-					</div>
+              style="text-decoration: none; color: inherit; cursor: pointer"
+            >
+              <div class="table-icon">
+                <span th:if="${table.tableStatus == 'AVAILABLE'}">🪑</span>
+                <span th:if="${table.tableStatus == 'OCCUPIED'}">👥</span>
+                <span th:if="${table.tableStatus == 'WAITING_PAYMENT'}"
+                  >✅</span
+                >
+                <span th:if="${table.tableStatus == 'RESERVED'}">🕐</span>
+              </div>
+              <div class="table-number">Bàn [[${table.id}]]</div>
+              <div class="table-info">
+                <!-- Hiển thị số người -->
+                <div
+                  class="party-size"
+                  th:if="${table.tableStatus != 'AVAILABLE'}"
+                >
+                  Số người tối đa:
+                  <span
+                    th:text="${table.capacity != null ? table.capacity : 'N/A'}"
+                    >N/A</span
+                  >
+                </div>
 
-					<div class="order-items-section">
-						<div class="section-header-small">
-							<span>Món đã gọi</span>
-							<span class="item-count" th:text="${#lists.isEmpty(orderDetail.items) ? '0' : #aggregates.sum(orderDetail.items.![quantity])} + ' món'">0 món</span>
-						</div>
-						<div class="order-items-list">
-							<div th:if="${#lists.isEmpty(orderDetail.items)}" class="no-items">Chưa có món nào</div>
-							<div th:each="item : ${orderDetail.items}" class="order-item">
-								<div class="order-item-info">
-									<div class="item-name" th:text="${item.productName}">—</div>
-									<div class="item-detail">
-										<span class="item-quantity">x<span th:text="${item.quantity}">1</span></span>
-										<span class="item-price" th:text="${#numbers.formatCurrency(item.unitPrice)}">0đ</span>
-									</div>
-									<div th:if="${item.note != null && !#strings.isEmpty(item.note)}" class="item-note">📝 <span th:text="${item.note}"></span></div>
-								</div>
-								<div class="item-total" th:text="${#numbers.formatCurrency(item.totalPrice)}">0đ</div>
-							</div>
-						</div>
-					</div>
+                <!-- Hiển thị trạng thái -->
+                <div class="table-status-text">
+                  <span th:if="${table.tableStatus == 'AVAILABLE'}"
+                    >Available</span
+                  >
+                  <span th:if="${table.tableStatus == 'OCCUPIED'}"
+                    >Occupied</span
+                  >
+                  <span th:if="${table.tableStatus == 'WAITING_PAYMENT'}"
+                    >Paid</span
+                  >
+                  <span th:if="${table.tableStatus == 'RESERVED'}"
+                    >Reserved</span
+                  >
+                </div>
 
-					<div class="order-summary">
-						<div th:if="${orderDetail.voucherCode != null}" class="summary-row">
-							<span>Voucher:</span>
-							<span class="voucher-code" th:text="${orderDetail.voucherCode}">—</span>
-						</div>
-						<div th:if="${orderDetail.discountAmount != null && orderDetail.discountAmount > 0}" class="summary-row discount">
-							<span>Giảm giá:</span>
-							<span th:text="'-' + ${#numbers.formatCurrency(orderDetail.discountAmount)}">-0đ</span>
-						</div>
-						<div class="summary-row total">
-							<span>Tổng cộng:</span>
-							<span class="total-amount" th:text="${#numbers.formatCurrency(orderDetail.totalPrice)}">0đ</span>
-						</div>
-					</div>
+                <!-- Hiển thị thông tin bổ sung -->
+                <div
+                  class="table-extra-info"
+                  th:if="${table.tableStatus == 'WAITING_PAYMENT'}"
+                >
+                  <span>Payment</span>
+                </div>
+                <div
+                  class="table-extra-info"
+                  th:if="${table.tableStatus == 'RESERVED'}"
+                >
+                  <span>Reserved</span>
+                </div>
+              </div>
+            </a>
+          </div>
+        </section>
 
-					<div th:if="${orderDetail.note != null && !#strings.isEmpty(orderDetail.note)}" class="order-note">
-						<strong>Ghi chú:</strong> <span th:text="${orderDetail.note}"></span>
-					</div>
-				</div>
-				
-				<div style="margin-top: 12px;">
-					<a th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}" class="btn-view-reservations">
-						📋 Xem đơn đặt trước
-					</a>
-				</div>
-			</div>
-			
-			<!-- Upcoming Reservations View -->
-			<div th:if="${upcomingReservations != null}" class="reservation-list">
-				<div class="reservation-header">
-					<a th:href="@{/cashier}" class="btn-back-styled">← Quay lại</a>
-				</div>
-				
-				<!-- Search Form - chỉ hiện trong upcoming reservations -->
-				<div class="search-container" style="margin: 16px 0;">
-					<form th:action="@{/cashier/reservations/upcoming}" method="get" style="display: flex; gap: 8px;">
-						<input type="text" 
-						       name="search" 
-						       th:value="${searchKeyword}" 
-						       placeholder="Tìm theo tên, SĐT, hoặc số bàn..." 
-						       class="search-input"
-						       style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
-						<button type="submit" class="btn btn-primary" style="padding: 10px 20px; white-space: nowrap;">🔍 Tìm kiếm</button>
-						<a th:href="@{/cashier/reservations/upcoming}" class="btn btn-secondary" style="padding: 10px 20px; text-decoration: none; display: inline-block;">↻ Xóa lọc</a>
-					</form>
-				</div>
-				
-				<div class="reservation-items">
-					<div th:if="${#lists.isEmpty(upcomingReservations)}" class="no-reservations-card">
-						<div class="no-reservations-content">
-							<div class="no-reservations-icon">📅</div>
-							<div class="no-reservations-text">Chưa có đơn đặt bàn nào</div>
-						</div>
-					</div>
-					
-					<div th:each="reservation : ${upcomingReservations}" class="reservation-card">
-					<div class="reservation-card-header">
-						<div class="reservation-table-name">
-							<span style="font-weight: 700; color: #2c3e50;" th:text="${reservation.tableName}">Bàn #</span>
-							<span style="font-size: 12px; color: #6c757d; margin-left: 8px;">| Đơn #<span th:text="${reservation.id}">—</span></span>
-						</div>
-						<span th:class="'reservation-status ' + ${reservation.status.toString().toLowerCase()}" 
-						      th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' : 
+        <!-- Right: Table details -->
+        <section class="panel right">
+          <div
+            class="section-title"
+            id="right-panel-title"
+            th:if="${showHistory == null || !showHistory}"
+          >
+            <span
+              th:text="${upcomingReservations != null ? 'Danh sách đặt bàn sắp tới' : (tableReservations != null ? 'Đơn đặt trước - Bàn ' + selectedTableId : 'Đơn bàn chi tiết')}"
+              >Đơn bàn chi tiết</span
+            >
+          </div>
+
+          <!-- Table Detail View (default - no table selected) -->
+          <div
+            id="table-detail"
+            class="table-detail"
+            th:if="${orderDetail == null && selectedTableId == null && upcomingReservations == null && tableReservations == null && (showHistory == null || !showHistory)}"
+          >
+            <div class="placeholder">Chọn 1 bàn để xem chi tiết</div>
+          </div>
+
+          <!-- Empty Table View (table selected but no order) -->
+          <div
+            th:if="${selectedTableId != null && orderDetail == null && upcomingReservations == null && tableReservations == null && (showHistory == null || !showHistory)}"
+            class="table-detail"
+          >
+            <div class="detail-card">
+              <div class="detail-row">
+                <strong>Bàn số:</strong>
+                <span th:text="${selectedTableId}">—</span>
+              </div>
+
+              <div
+                style="
+                  margin-top: 12px;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 8px;
+                "
+              >
+                <button
+                  class="btn-reserve"
+                  th:onclick="'openReservationModal(' + ${selectedTableId} + ')'"
+                >
+                  📅 Đặt trước bàn này
+                </button>
+                <a
+                  th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}"
+                  class="btn-view-reservations"
+                >
+                  📋 Xem đơn đặt trước
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Order Detail View (when table is selected and has order) -->
+          <div
+            th:if="${orderDetail != null && (showHistory == null || !showHistory)}"
+            class="table-detail"
+          >
+            <div class="detail-card">
+              <div class="detail-row">
+                <strong>Bàn số:</strong>
+                <span th:text="${selectedTableId}">—</span>
+              </div>
+              <div class="detail-row">
+                <strong>Số người tối đa:</strong>
+                <span th:text="${tableCapacity}">—</span>
+              </div>
+            </div>
+            <div class="order-detail-card">
+              <div class="order-header">
+                <span
+                  th:class="'order-status ' + ${orderDetail.orderStatus.toString().toLowerCase()}"
+                  th:text="${orderDetail.orderStatus == 'PREPARING' ? 'Đang chuẩn bị' : (orderDetail.orderStatus == 'SERVED' ? 'Đã phục vụ' : (orderDetail.orderStatus == 'COMPLETED' ? 'Hoàn thành' : orderDetail.orderStatus))}"
+                >
+                </span>
+              </div>
+
+              <div class="order-meta">
+                <div class="meta-row">
+                  <span class="meta-label">Mã đơn:</span>
+                  <span class="meta-value"
+                    >#<span th:text="${orderDetail.orderId}">—</span></span
+                  >
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Khách hàng:</span>
+                  <span
+                    class="meta-value"
+                    th:text="${orderDetail.customerName ?: 'Khách vãng lai'}"
+                    >—</span
+                  >
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Trạng thái thanh toán:</span>
+                  <span
+                    th:class="'meta-value payment-' + ${orderDetail.paymentStatus.toString().toLowerCase()}"
+                    th:text="${orderDetail.paymentStatus.toString() == 'UNPAID' ? 'Chưa thanh toán' : (orderDetail.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : 'Đang xử lý')}"
+                  >
+                  </span>
+                </div>
+                <div
+                  class="meta-row"
+                  th:if="${orderDetail.paymentMethod != null}"
+                >
+                  <span class="meta-label">Phương thức:</span>
+                  <span
+                    class="meta-value"
+                    th:text="${orderDetail.paymentMethod == 'CASH' ? 'Tiền mặt' : (orderDetail.paymentMethod == 'QR_BANKING' ? 'QR Code' : 'Thẻ tín dụng')}"
+                  ></span>
+                </div>
+              </div>
+
+              <div class="order-items-section">
+                <div class="section-header-small">
+                  <span>Món đã gọi</span>
+                  <span
+                    class="item-count"
+                    th:text="${#lists.isEmpty(orderDetail.items) ? '0' : #aggregates.sum(orderDetail.items.![quantity])} + ' món'"
+                    >0 món</span
+                  >
+                </div>
+                <div class="order-items-list">
+                  <div
+                    th:if="${#lists.isEmpty(orderDetail.items)}"
+                    class="no-items"
+                  >
+                    Chưa có món nào
+                  </div>
+                  <div th:each="item : ${orderDetail.items}" class="order-item">
+                    <div class="order-item-info">
+                      <div class="item-name" th:text="${item.productName}">
+                        —
+                      </div>
+                      <div class="item-detail">
+                        <span class="item-quantity"
+                          >x<span th:text="${item.quantity}">1</span></span
+                        >
+                        <span
+                          class="item-price"
+                          th:text="${#numbers.formatCurrency(item.unitPrice)}"
+                          >0đ</span
+                        >
+                      </div>
+                      <div
+                        th:if="${item.note != null && !#strings.isEmpty(item.note)}"
+                        class="item-note"
+                      >
+                        📝 <span th:text="${item.note}"></span>
+                      </div>
+                    </div>
+                    <div
+                      class="item-total"
+                      th:text="${#numbers.formatCurrency(item.totalPrice)}"
+                    >
+                      0đ
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="order-summary">
+                <div
+                  th:if="${orderDetail.voucherCode != null}"
+                  class="summary-row"
+                >
+                  <span>Voucher:</span>
+                  <span
+                    class="voucher-code"
+                    th:text="${orderDetail.voucherCode}"
+                    >—</span
+                  >
+                </div>
+                <div
+                  th:if="${orderDetail.discountAmount != null && orderDetail.discountAmount > 0}"
+                  class="summary-row discount"
+                >
+                  <span>Giảm giá:</span>
+                  <span
+                    th:text="'-' + ${#numbers.formatCurrency(orderDetail.discountAmount)}"
+                    >-0đ</span
+                  >
+                </div>
+                <div class="summary-row total">
+                  <span>Tổng cộng:</span>
+                  <span
+                    class="total-amount"
+                    th:text="${#numbers.formatCurrency(orderDetail.totalPrice)}"
+                    >0đ</span
+                  >
+                </div>
+              </div>
+
+              <div
+                th:if="${orderDetail.note != null && !#strings.isEmpty(orderDetail.note)}"
+                class="order-note"
+              >
+                <strong>Ghi chú:</strong>
+                <span th:text="${orderDetail.note}"></span>
+              </div>
+            </div>
+
+            <div
+              style="
+                margin-top: 12px;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+              "
+            >
+              <!-- Payment Request Button - Only show if order is unpaid -->
+              <a
+                th:if="${orderDetail.paymentStatus.toString() == 'UNPAID' && orderDetail.sessionId != null}"
+                th:href="@{'/guest/payment/session/' + ${orderDetail.sessionId} + '?source=cashier'}"
+                class="btn"
+                style="
+                  padding: 12px 24px;
+                  background-color: #28a745;
+                  color: white;
+                  border: none;
+                  border-radius: 4px;
+                  text-decoration: none;
+                  font-weight: bold;
+                  text-align: center;
+                  cursor: pointer;
+                  display: block;
+                "
+              >
+                💳 Yêu cầu thanh toán
+              </a>
+
+              <!-- Payment Status - Show if already paid -->
+              <div
+                th:if="${orderDetail.paymentStatus.toString() == 'PAID'}"
+                style="
+                  padding: 12px 24px;
+                  background-color: #d4edda;
+                  color: #155724;
+                  border-radius: 4px;
+                  text-align: center;
+                  font-weight: bold;
+                "
+              >
+                ✅ Đã thanh toán
+              </div>
+
+              <a
+                th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}"
+                class="btn-view-reservations"
+              >
+                📋 Xem đơn đặt trước
+              </a>
+            </div>
+          </div>
+
+          <!-- Upcoming Reservations View -->
+          <div th:if="${upcomingReservations != null}" class="reservation-list">
+            <div class="reservation-header">
+              <a th:href="@{/cashier}" class="btn-back-styled">← Quay lại</a>
+            </div>
+
+            <!-- Search Form - chỉ hiện trong upcoming reservations -->
+            <div class="search-container" style="margin: 16px 0">
+              <form
+                th:action="@{/cashier/reservations/upcoming}"
+                method="get"
+                style="display: flex; gap: 8px"
+              >
+                <input
+                  type="text"
+                  name="search"
+                  th:value="${searchKeyword}"
+                  placeholder="Tìm theo tên, SĐT, hoặc số bàn..."
+                  class="search-input"
+                  style="
+                    flex: 1;
+                    padding: 10px;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    font-size: 14px;
+                  "
+                />
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  style="padding: 10px 20px; white-space: nowrap"
+                >
+                  🔍 Tìm kiếm
+                </button>
+                <a
+                  th:href="@{/cashier/reservations/upcoming}"
+                  class="btn btn-secondary"
+                  style="
+                    padding: 10px 20px;
+                    text-decoration: none;
+                    display: inline-block;
+                  "
+                  >↻ Xóa lọc</a
+                >
+              </form>
+            </div>
+
+            <div class="reservation-items">
+              <div
+                th:if="${#lists.isEmpty(upcomingReservations)}"
+                class="no-reservations-card"
+              >
+                <div class="no-reservations-content">
+                  <div class="no-reservations-icon">📅</div>
+                  <div class="no-reservations-text">
+                    Chưa có đơn đặt bàn nào
+                  </div>
+                </div>
+              </div>
+
+              <div
+                th:each="reservation : ${upcomingReservations}"
+                class="reservation-card"
+              >
+                <div class="reservation-card-header">
+                  <div class="reservation-table-name">
+                    <span
+                      style="font-weight: 700; color: #2c3e50"
+                      th:text="${reservation.tableName}"
+                      >Bàn #</span
+                    >
+                    <span
+                      style="font-size: 12px; color: #6c757d; margin-left: 8px"
+                      >| Đơn #<span th:text="${reservation.id}">—</span></span
+                    >
+                  </div>
+                  <span
+                    th:class="'reservation-status ' + ${reservation.status.toString().toLowerCase()}"
+                    th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' : 
 						                (reservation.status == 'ARRIVED' ? 'Đã đến' : 
-						                (reservation.status == 'CANCELED' ? 'Đã hủy' : 'Không đến'))}">
-						</span>
-					</div>
-						
-						<div class="reservation-time">
-							🕐 Thời gian: <span th:text="${#temporals.format(reservation.startTime, 'EEE, dd MMM yyyy HH:mm')}">—</span>
-						</div>
-						
-						<div class="reservation-info">
-							<div class="reservation-info-row">
-								<span class="reservation-info-label">👤 Khách hàng:</span>
-								<span class="reservation-info-value" th:text="${reservation.customerName}">—</span>
-							</div>
-							<div class="reservation-info-row">
-								<span class="reservation-info-label">📞 Số điện thoại:</span>
-								<span class="reservation-info-value" th:text="${reservation.customerPhone}">—</span>
-							</div>
-							<div class="reservation-info-row">
-								<span class="reservation-info-label">👥 Số khách:</span>
-								<span class="reservation-info-value" th:text="${reservation.capacityExpected + ' người'}">— người</span>
-							</div>
-							<div th:if="${reservation.note != null && !#strings.isEmpty(reservation.note)}" class="reservation-info-row">
-								<span class="reservation-info-label">📝 Ghi chú:</span>
-								<span class="reservation-info-value" th:text="${reservation.note}">—</span>
-							</div>
-						</div>
-						
-					<div th:if="${reservation.status.toString() == 'CONFIRMED'}" class="reservation-actions" style="display: flex; flex-direction: column; gap: 8px;">
-						<!-- Nút mở bàn cho khách (nút chính) -->
-						<form th:action="@{/cashier/reservations/{id}/open(id=${reservation.id})}" method="post" 
-						      onsubmit="return confirm('Xác nhận khách đã đến và mở bàn?');">
-							<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-							<input type="hidden" name="returnUrl" value="/cashier/reservations/upcoming"/>
-							<button type="submit" class="btn-open-table" 
-							        style="width: 100%; padding: 12px; background-color: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px;">
-								🔓 Mở bàn cho khách
-							</button>
-						</form>
-						
-						<!-- Các nút phụ -->
-						<div style="display: flex; gap: 8px;">
-							<a th:href="@{/cashier/reservations/{id}/edit(id=${reservation.id}, returnUrl='/cashier/reservations/upcoming')}" 
-							   class="btn-edit-reservation"
-							   style="flex: 1; text-align: center; padding: 10px; background-color: #4CAF50; color: white; border-radius: 4px; text-decoration: none; border: none; cursor: pointer;">
-								✏️ Sửa
-							</a>
-							<form th:action="@{/cashier/reservations/{id}/delete(id=${reservation.id})}" method="post" 
-							      onsubmit="return confirm('Bạn có chắc chắn muốn hủy đặt bàn này?');"
-							      style="flex: 1;">
-								<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-								<input type="hidden" name="returnUrl" value="/cashier/reservations/upcoming"/>
-								<button type="submit" class="btn-cancel-reservation" style="width: 100%;">❌ Hủy đặt bàn</button>
-							</form>
-						</div>
-					</div>
-					</div>
-				</div>
-			</div>
-			
-			<!-- Table Reservations View -->
-			<div th:if="${tableReservations != null}" class="reservation-list">
-				<div class="detail-card" style="margin-bottom: 16px; box-shadow: none">
-					<div class="reservation-header">
-						<a th:href="@{/cashier/tables/{id}/order(id=${selectedTableId})}" class="btn-back-styled">
-							← Quay lại bàn <span th:text="${selectedTableId}">—</span>
-						</a>
-					</div>
-				</div>
-				<div class="reservation-items">
-					<div th:if="${#lists.isEmpty(tableReservations)}" class="no-reservations-card">
-						<div class="no-reservations-content">
-							<div class="no-reservations-icon">📅</div>
-							<div class="no-reservations-text">Chưa có đơn đặt bàn nào</div>
-						</div>
-					</div>
-					
-					<div th:each="reservation : ${tableReservations}" class="reservation-card">
-						<div class="reservation-card-header">
-							<div class="reservation-table-name">
-								<span style="font-weight: 700; color: #2c3e50;">Bàn <span th:text="${reservation.tableId}">#</span></span>
-								<span style="font-size: 12px; color: #6c757d; margin-left: 8px;">| Đơn #<span th:text="${reservation.id}">—</span></span>
-							</div>
-							<span th:class="'reservation-status ' + ${reservation.status.toString().toLowerCase()}" 
-							      th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' : 
+						                (reservation.status == 'CANCELED' ? 'Đã hủy' : 'Không đến'))}"
+                  >
+                  </span>
+                </div>
+
+                <div class="reservation-time">
+                  🕐 Thời gian:
+                  <span
+                    th:text="${#temporals.format(reservation.startTime, 'EEE, dd MMM yyyy HH:mm')}"
+                    >—</span
+                  >
+                </div>
+
+                <div class="reservation-info">
+                  <div class="reservation-info-row">
+                    <span class="reservation-info-label">👤 Khách hàng:</span>
+                    <span
+                      class="reservation-info-value"
+                      th:text="${reservation.customerName}"
+                      >—</span
+                    >
+                  </div>
+                  <div class="reservation-info-row">
+                    <span class="reservation-info-label"
+                      >📞 Số điện thoại:</span
+                    >
+                    <span
+                      class="reservation-info-value"
+                      th:text="${reservation.customerPhone}"
+                      >—</span
+                    >
+                  </div>
+                  <div class="reservation-info-row">
+                    <span class="reservation-info-label">👥 Số khách:</span>
+                    <span
+                      class="reservation-info-value"
+                      th:text="${reservation.capacityExpected + ' người'}"
+                      >— người</span
+                    >
+                  </div>
+                  <div
+                    th:if="${reservation.note != null && !#strings.isEmpty(reservation.note)}"
+                    class="reservation-info-row"
+                  >
+                    <span class="reservation-info-label">📝 Ghi chú:</span>
+                    <span
+                      class="reservation-info-value"
+                      th:text="${reservation.note}"
+                      >—</span
+                    >
+                  </div>
+                </div>
+
+                <div
+                  th:if="${reservation.status.toString() == 'CONFIRMED'}"
+                  class="reservation-actions"
+                  style="display: flex; flex-direction: column; gap: 8px"
+                >
+                  <!-- Nút mở bàn cho khách (nút chính) -->
+                  <form
+                    th:action="@{/cashier/reservations/{id}/open(id=${reservation.id})}"
+                    method="post"
+                    onsubmit="return confirm('Xác nhận khách đã đến và mở bàn?');"
+                  >
+                    <input
+                      type="hidden"
+                      th:name="${_csrf.parameterName}"
+                      th:value="${_csrf.token}"
+                    />
+                    <input
+                      type="hidden"
+                      name="returnUrl"
+                      value="/cashier/reservations/upcoming"
+                    />
+                    <button
+                      type="submit"
+                      class="btn-open-table"
+                      style="
+                        width: 100%;
+                        padding: 12px;
+                        background-color: #2196f3;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        font-size: 15px;
+                      "
+                    >
+                      🔓 Mở bàn cho khách
+                    </button>
+                  </form>
+
+                  <!-- Các nút phụ -->
+                  <div style="display: flex; gap: 8px">
+                    <a
+                      th:href="@{/cashier/reservations/{id}/edit(id=${reservation.id}, returnUrl='/cashier/reservations/upcoming')}"
+                      class="btn-edit-reservation"
+                      style="
+                        flex: 1;
+                        text-align: center;
+                        padding: 10px;
+                        background-color: #4caf50;
+                        color: white;
+                        border-radius: 4px;
+                        text-decoration: none;
+                        border: none;
+                        cursor: pointer;
+                      "
+                    >
+                      ✏️ Sửa
+                    </a>
+                    <form
+                      th:action="@{/cashier/reservations/{id}/delete(id=${reservation.id})}"
+                      method="post"
+                      onsubmit="return confirm('Bạn có chắc chắn muốn hủy đặt bàn này?');"
+                      style="flex: 1"
+                    >
+                      <input
+                        type="hidden"
+                        th:name="${_csrf.parameterName}"
+                        th:value="${_csrf.token}"
+                      />
+                      <input
+                        type="hidden"
+                        name="returnUrl"
+                        value="/cashier/reservations/upcoming"
+                      />
+                      <button
+                        type="submit"
+                        class="btn-cancel-reservation"
+                        style="width: 100%"
+                      >
+                        ❌ Hủy đặt bàn
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment History View -->
+          <div
+            th:if="${paymentHistory != null && showHistory == true}"
+            class="reservation-list"
+          >
+            <div class="reservation-header">
+              <a th:href="@{/cashier}" class="btn-back-styled">← Quay lại</a>
+            </div>
+
+            <h2
+              style="
+                font-size: 24px;
+                font-weight: 700;
+                color: #2c3e50;
+                margin-bottom: 20px;
+                padding: 20px 0;
+              "
+            >
+              📋 Lịch sử hóa đơn
+            </h2>
+
+            <div
+              th:if="${#lists.isEmpty(paymentHistory)}"
+              class="no-reservations-card"
+            >
+              <div class="no-reservations-content">
+                <div class="no-reservations-icon">📄</div>
+                <div class="no-reservations-text">Chưa có hóa đơn nào</div>
+              </div>
+            </div>
+
+            <div
+              th:each="order : ${paymentHistory}"
+              class="reservation-card"
+              style="max-width: 100%"
+            >
+              <!-- Order Header -->
+              <div class="reservation-card-header" style="margin-bottom: 16px">
+                <div>
+                  <div
+                    style="
+                      font-size: 18px;
+                      font-weight: 700;
+                      color: #2c3e50;
+                      margin-bottom: 4px;
+                    "
+                  >
+                    Đơn hàng #<span th:text="${order.orderId}">—</span>
+                  </div>
+                  <div style="font-size: 12px; color: #6c757d">
+                    📅
+                    <span
+                      th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"
+                      >—</span
+                    >
+                  </div>
+                </div>
+                <span
+                  th:style="${order.orderStatus == 'PREPARING' ? 'background: #fff3cd; color: #856404;' : (order.orderStatus == 'SERVED' ? 'background: #d1ecf1; color: #0c5460;' : 'background: #d4edda; color: #155724;')}"
+                  style="
+                    padding: 4px 12px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                  "
+                >
+                  <span
+                    th:text="${order.orderStatus == 'PREPARING' ? 'Đang chuẩn bị' : (order.orderStatus == 'SERVED' ? 'Đã phục vụ' : 'Hoàn thành')}"
+                    >—</span
+                  >
+                </span>
+              </div>
+
+              <!-- Order Details Section -->
+              <div
+                class="reservation-info"
+                style="
+                  background: #f8f9fa;
+                  padding: 12px;
+                  border-radius: 8px;
+                  margin-bottom: 12px;
+                "
+              >
+                <div class="reservation-info-row">
+                  <span class="reservation-info-label">🪑 Bàn:</span>
+                  <span
+                    class="reservation-info-value"
+                    th:text="${order.tableName ?: 'Take-away'}"
+                    >—</span
+                  >
+                </div>
+                <div class="reservation-info-row">
+                  <span class="reservation-info-label">🍽️ Loại đơn:</span>
+                  <span
+                    class="reservation-info-value"
+                    th:text="${order.orderType != null && order.orderType.toString() == 'DINE_IN' ? 'Tại cửa hàng' : 'Take-away'}"
+                    >—</span
+                  >
+                </div>
+                <div class="reservation-info-row">
+                  <span class="reservation-info-label">💳 Phương thức Thanh Toán:</span>
+                  <span
+                    class="reservation-info-value"
+                    th:text="${order.paymentMethod != null ? (order.paymentMethod.toString() == 'CASH' ? 'Tiền mặt' : (order.paymentMethod.toString() == 'QR_BANKING' ? 'QR Code' : (order.paymentMethod.toString() == 'CREDIT_CARD' ? 'Thẻ tín dụng' : order.paymentMethod.toString()))) : 'N/A'}"
+                    >—</span
+                  >
+                </div>
+              </div>
+
+              <!-- Order Summary -->
+              <div
+                style="
+                  margin-top: 16px;
+                  padding-top: 12px;
+                  border-top: 2px solid #e8e8e8;
+                "
+              >
+                <div
+                  class="summary-row total"
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    font-weight: 700;
+                    font-size: 16px;
+                    color: #2c3e50;
+                  "
+                >
+                  <span>Tổng cộng:</span>
+                  <span
+                    style="color: #e74c3c; font-size: 18px"
+                    th:text="${#numbers.formatCurrency(order.totalPrice)}"
+                    >0đ</span
+                  >
+                </div>
+              </div>
+
+              <!-- Action Button -->
+              <div style="margin-top: 12px; text-align: center">
+                <button
+                  th:onclick="'toggleOrderDetail(' + ${order.orderId} + ')'"
+                  th:id="'toggle-btn-' + ${order.orderId}"
+                  class="btn-detail-order"
+                  style="
+                    padding: 8px 16px;
+                    background-color: #007bff;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: background-color 0.2s;
+                  "
+                  onmouseover="this.style.backgroundColor='#0056b3'"
+                  onmouseout="this.style.backgroundColor='#007bff'"
+                >
+                  📋 Xem chi tiết
+                </button>
+              </div>
+
+              <!-- Order Detail Section (Hidden by default) -->
+              <div
+                th:id="'order-detail-' + ${order.orderId}"
+                class="order-detail-section"
+                style="
+                  display: none;
+                  margin-top: 16px;
+                  padding: 16px;
+                  background: #f8f9fa;
+                  border-radius: 8px;
+                  border: 1px solid #e9ecef;
+                "
+              >
+                <!-- Receipt Header -->
+                <div style="text-align: center; margin-bottom: 20px">
+                  <div
+                    style="
+                      font-size: 18px;
+                      font-weight: bold;
+                      margin-bottom: 8px;
+                      text-transform: uppercase;
+                    "
+                  >
+                    CHI TIẾT ĐƠN HÀNG
+                  </div>
+                  <div
+                    style="
+                      font-size: 16px;
+                      font-weight: bold;
+                      margin-bottom: 4px;
+                    "
+                  >
+                    PizzarIO
+                  </div>
+                  <div style="font-size: 12px; margin-bottom: 4px">
+                    KM29 - ĐL. Thăng Long
+                  </div>
+                  <div style="font-size: 12px; margin-bottom: 10px">
+                    ĐT: 0123456678-0987654321
+                  </div>
+                  <div
+                    style="text-align: center; margin: 10px 0; font-size: 12px"
+                  >
+                    *****************
+                  </div>
+                </div>
+
+                <!-- Order Status -->
+                <div style="text-align: center; margin-bottom: 15px">
+                  <span
+                    th:class="'order-status ' + ${order.orderStatus.toString().toLowerCase()}"
+                    th:text="${order.orderStatus == 'PREPARING' ? 'Đang chuẩn bị' : (order.orderStatus == 'SERVED' ? 'Đã phục vụ' : 'Hoàn thành')}"
+                    style="
+                      padding: 4px 12px;
+                      border-radius: 20px;
+                      font-size: 12px;
+                      font-weight: 600;
+                      text-transform: uppercase;
+                      margin-right: 8px;
+                    "
+                  >
+                  </span>
+                  <span
+                    th:class="'payment-status ' + ${order.paymentStatus.toString().toLowerCase()}"
+                    th:text="${order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'}"
+                    style="
+                      padding: 4px 12px;
+                      border-radius: 20px;
+                      font-size: 12px;
+                      font-weight: 600;
+                      text-transform: uppercase;
+                    "
+                  >
+                  </span>
+                </div>
+
+                <!-- Transaction Information -->
+                <div style="margin-bottom: 15px; font-size: 12px">
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      margin-bottom: 4px;
+                    "
+                  >
+                    <span
+                      th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy')}"
+                      >20-09-2025</span
+                    >
+                    <span
+                      th:text="${#temporals.format(order.createdAt, 'HH:mm:ss')}"
+                      >11:02:37</span
+                    >
+                  </div>
+                  <div style="margin-bottom: 4px">
+                    Mã đơn hàng:
+                    <strong>#<span th:text="${order.orderId}">—</span></strong>
+                  </div>
+                  <div style="margin-bottom: 4px">
+                    Khách hàng:
+                    <span th:text="${order.customerName ?: 'Khách vãng lai'}"
+                      >Khách vãng lai</span
+                    >
+                    <span
+                      th:if="${order.customerPhone != null}"
+                      style="color: #6c757d"
+                    >
+                      (SĐT: <span th:text="${order.customerPhone}">—</span>)
+                    </span>
+                  </div>
+                  <div style="margin-bottom: 4px">
+                    <span th:if="${order.tableName != null}">
+                      Bàn: <span th:text="${order.tableName}">05</span>
+                    </span>
+                    <span th:if="${order.tableName == null}">
+                      Loại đơn: Take-away
+                    </span>
+                  </div>
+                  <div
+                    th:if="${order.createdByStaffName != null}"
+                    style="margin-bottom: 10px"
+                  >
+                    Nhân viên phục vụ:
+                    <span th:text="${order.createdByStaffName}">—</span>
+                  </div>
+                </div>
+
+                <!-- Items Header -->
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 12px;
+                    font-weight: bold;
+                    margin-bottom: 8px;
+                    border-bottom: 1px solid #000;
+                    padding-bottom: 4px;
+                  "
+                >
+                  <div>Tên món</div>
+                  <div>Số lượng</div>
+                  <div>Thành tiền</div>
+                </div>
+
+                <!-- Order Items -->
+                <div
+                  th:each="item : ${order.items}"
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 12px;
+                    margin-bottom: 4px;
+                  "
+                >
+                  <div th:text="${item.productName}">Pizza Bò</div>
+                  <div th:text="${item.quantity}">1</div>
+                  <div
+                    th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT')}"
+                  >
+                    245,000
+                  </div>
+                </div>
+
+                <!-- Discount Information -->
+                <div
+                  th:if="${order.discountAmount != null && order.discountAmount > 0}"
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 12px;
+                    margin-bottom: 4px;
+                  "
+                >
+                  <div>Giảm giá:</div>
+                  <div>-</div>
+                  <div
+                    th:text="'-' + ${#numbers.formatDecimal(order.discountAmount, 0, 'COMMA', 0, 'POINT')}"
+                  >
+                    -0
+                  </div>
+                </div>
+
+                <!-- Tax Information -->
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 12px;
+                    margin-bottom: 4px;
+                  "
+                >
+                  <div>Thuế (10%):</div>
+                  <div>-</div>
+                  <div
+                    th:text="${#numbers.formatDecimal(order.totalPrice * 0.1 / 1.1, 0, 'COMMA', 0, 'POINT')}"
+                  >
+                    0
+                  </div>
+                </div>
+
+                <!-- Total Section -->
+                <div
+                  style="
+                    margin-top: 15px;
+                    border-top: 1px solid #000;
+                    padding-top: 8px;
+                  "
+                >
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      font-size: 14px;
+                      font-weight: bold;
+                      margin-bottom: 4px;
+                    "
+                  >
+                    <span>Tạm tính:</span>
+                    <span
+                      th:text="${#numbers.formatDecimal(order.totalPrice / 1.1, 0, 'COMMA', 0, 'POINT')}"
+                      >745,000</span
+                    >
+                  </div>
+                  <div
+                    th:if="${order.discountAmount != null && order.discountAmount > 0}"
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      font-size: 14px;
+                      font-weight: bold;
+                      margin-bottom: 4px;
+                    "
+                  >
+                    <span>Giảm giá:</span>
+                    <span
+                      th:text="'-' + ${#numbers.formatDecimal(order.discountAmount, 0, 'COMMA', 0, 'POINT')}"
+                      >-0</span
+                    >
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      font-size: 14px;
+                      font-weight: bold;
+                      margin-bottom: 4px;
+                    "
+                  >
+                    <span>Thuế (10%):</span>
+                    <span
+                      th:text="${#numbers.formatDecimal(order.totalPrice * 0.1 / 1.1, 0, 'COMMA', 0, 'POINT')}"
+                      >0</span
+                    >
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      font-size: 16px;
+                      font-weight: bold;
+                      border-top: 1px solid #000;
+                      padding-top: 8px;
+                    "
+                  >
+                    <span>Tổng cộng:</span>
+                    <span
+                      th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')}"
+                      >745,000</span
+                    >
+                  </div>
+                </div>
+
+                <!-- Payment Method Section -->
+                <div
+                  style="
+                    text-align: center;
+                    margin: 20px 0;
+                    padding: 15px;
+                    background: #f9f9f9;
+                    border-radius: 8px;
+                  "
+                >
+                  <div
+                    style="
+                      font-size: 14px;
+                      font-weight: bold;
+                      margin-bottom: 10px;
+                    "
+                  >
+                    Phương thức thanh toán
+                  </div>
+                  <div
+                    th:if="${order.paymentMethod != null && order.paymentMethod.toString() == 'QR_BANKING'}"
+                  >
+                    <div
+                      style="
+                        color: #007bff;
+                        font-size: 16px;
+                        margin-bottom: 10px;
+                      "
+                    >
+                      <strong>Thanh toán bằng QR Banking</strong><br />
+                      <span style="font-size: 12px"
+                        >Đã thanh toán thành công</span
+                      >
+                    </div>
+                  </div>
+                  <div
+                    th:if="${order.paymentMethod != null && order.paymentMethod.toString() == 'CASH'}"
+                  >
+                    <div
+                      style="
+                        color: #2e7d32;
+                        font-size: 16px;
+                        margin-bottom: 10px;
+                      "
+                    >
+                      <strong>Thanh toán bằng tiền mặt</strong><br />
+                      <span style="font-size: 12px"
+                        >Đã thanh toán thành công</span
+                      >
+                    </div>
+                  </div>
+                  <div
+                    th:if="${order.paymentMethod != null && order.paymentMethod.toString() == 'CREDIT_CARD'}"
+                  >
+                    <div
+                      style="
+                        color: #6f42c1;
+                        font-size: 16px;
+                        margin-bottom: 10px;
+                      "
+                    >
+                      <strong>Thanh toán bằng thẻ tín dụng</strong><br />
+                      <span style="font-size: 12px"
+                        >Đã thanh toán thành công</span
+                      >
+                    </div>
+                  </div>
+                  <div th:if="${order.paymentMethod == null}">
+                    <div
+                      style="
+                        color: #6c757d;
+                        font-size: 16px;
+                        margin-bottom: 10px;
+                      "
+                    >
+                      <strong>Phương thức thanh toán không xác định</strong
+                      ><br />
+                      <span style="font-size: 12px"
+                        >Đã thanh toán thành công</span
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Order Note -->
+                <div
+                  th:if="${order.note != null && !#strings.isEmpty(order.note)}"
+                  style="
+                    margin: 15px 0;
+                    padding: 10px;
+                    background: #f8f9fa;
+                    border-radius: 4px;
+                  "
+                >
+                  <strong>Ghi chú đơn hàng:</strong><br />
+                  <span th:text="${order.note}"></span>
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="text-align: center; margin-top: 20px">
+                  <button
+                    onclick="printReceipt()"
+                    style="
+                      padding: 10px 20px;
+                      margin: 5px;
+                      background-color: #007bff;
+                      color: white;
+                      border: none;
+                      border-radius: 4px;
+                      cursor: pointer;
+                      font-size: 14px;
+                      font-weight: bold;
+                    "
+                  >
+                    In hóa đơn
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table Reservations View -->
+          <div th:if="${tableReservations != null}" class="reservation-list">
+            <div
+              class="detail-card"
+              style="margin-bottom: 16px; box-shadow: none"
+            >
+              <div class="reservation-header">
+                <a
+                  th:href="@{/cashier/tables/{id}/order(id=${selectedTableId})}"
+                  class="btn-back-styled"
+                >
+                  ← Quay lại bàn <span th:text="${selectedTableId}">—</span>
+                </a>
+              </div>
+            </div>
+            <div class="reservation-items">
+              <div
+                th:if="${#lists.isEmpty(tableReservations)}"
+                class="no-reservations-card"
+              >
+                <div class="no-reservations-content">
+                  <div class="no-reservations-icon">📅</div>
+                  <div class="no-reservations-text">
+                    Chưa có đơn đặt bàn nào
+                  </div>
+                </div>
+              </div>
+
+              <div
+                th:each="reservation : ${tableReservations}"
+                class="reservation-card"
+              >
+                <div class="reservation-card-header">
+                  <div class="reservation-table-name">
+                    <span style="font-weight: 700; color: #2c3e50"
+                      >Bàn <span th:text="${reservation.tableId}">#</span></span
+                    >
+                    <span
+                      style="font-size: 12px; color: #6c757d; margin-left: 8px"
+                      >| Đơn #<span th:text="${reservation.id}">—</span></span
+                    >
+                  </div>
+                  <span
+                    th:class="'reservation-status ' + ${reservation.status.toString().toLowerCase()}"
+                    th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' : 
 							                (reservation.status == 'ARRIVED' ? 'Đã đến' : 
-							                (reservation.status == 'CANCELED' ? 'Đã hủy' : 'Không đến'))}">
-							</span>
-						</div>
-						
-						<div class="reservation-time">
-							🕐 <span th:text="${#temporals.format(reservation.startTime, 'EEE, dd MMM yyyy HH:mm')}">—</span>
-						</div>
-						
-						<div class="reservation-info">
-							<div class="reservation-info-row">
-								<span class="reservation-info-label">👤 Khách hàng:</span>
-								<span class="reservation-info-value" th:text="${reservation.customerName}">—</span>
-							</div>
-							<div class="reservation-info-row">
-								<span class="reservation-info-label">📞 Số điện thoại:</span>
-								<span class="reservation-info-value" th:text="${reservation.customerPhone}">—</span>
-							</div>
-							<div class="reservation-info-row">
-								<span class="reservation-info-label">👥 Số khách:</span>
-								<span class="reservation-info-value" th:text="${reservation.capacityExpected + ' người'}">— người</span>
-							</div>
-							<div th:if="${reservation.note != null && !#strings.isEmpty(reservation.note)}" class="reservation-info-row">
-								<span class="reservation-info-label">📝 Ghi chú:</span>
-								<span class="reservation-info-value" th:text="${reservation.note}">—</span>
-							</div>
-						</div>
-						
-						<div th:if="${reservation.status.toString() == 'CONFIRMED'}" class="reservation-actions">
-							<!-- Nút mở bàn cho khách (nút chính) -->
-							<form th:action="@{/cashier/reservations/{id}/open(id=${reservation.id})}" method="post" 
-							      onsubmit="return confirm('Xác nhận khách đã đến và mở bàn?');">
-								<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-								<input type="hidden" name="returnUrl" th:value="'/cashier/tables/' + ${selectedTableId} + '/reservations'"/>
-								<button type="submit" class="btn-open-table">
-									🔓 Mở bàn cho khách
-								</button>
-							</form>
-							
-							<!-- Các nút phụ -->
-							<div class="reservation-secondary-actions">
-								<a th:href="@{/cashier/reservations/{id}/edit(id=${reservation.id}, returnUrl='/cashier/tables/' + ${selectedTableId} + '/reservations')}" 
-								   class="btn-edit-reservation">
-									✏️ Sửa
-								</a>
-								<form th:action="@{/cashier/reservations/{id}/delete(id=${reservation.id})}" method="post" 
-								      onsubmit="return confirm('Bạn có chắc chắn muốn hủy đặt bàn này?');">
-									<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-									<input type="hidden" name="returnUrl" th:value="'/cashier/tables/' + ${selectedTableId} + '/reservations'"/>
-									<button type="submit" class="btn-cancel-reservation">❌ Hủy đặt bàn</button>
-								</form>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</section>
-	</div>
-</div>
+							                (reservation.status == 'CANCELED' ? 'Đã hủy' : 'Không đến'))}"
+                  >
+                  </span>
+                </div>
 
-<div class="toast-container" id="toast-container">
-	<!-- Flash messages từ redirect (chỉ hiển thị nếu không phải lỗi validation modal) -->
-	<div th:if="${successMessage}" class="toast success" style="display: block;">
-		<span th:text="${successMessage}"></span>
-	</div>
-	<div th:if="${errorMessage != null and (showReservationModal == null or !showReservationModal)}" class="toast error" style="display: block;">
-		<span th:text="${errorMessage}"></span>
-	</div>
-</div>
+                <div class="reservation-time">
+                  🕐
+                  <span
+                    th:text="${#temporals.format(reservation.startTime, 'EEE, dd MMM yyyy HH:mm')}"
+                    >—</span
+                  >
+                </div>
 
-<!-- Modal Toast Container cho errors trong modal -->
-<div class="modal-toast-container" id="modal-toast-container"></div>
+                <div class="reservation-info">
+                  <div class="reservation-info-row">
+                    <span class="reservation-info-label">👤 Khách hàng:</span>
+                    <span
+                      class="reservation-info-value"
+                      th:text="${reservation.customerName}"
+                      >—</span
+                    >
+                  </div>
+                  <div class="reservation-info-row">
+                    <span class="reservation-info-label"
+                      >📞 Số điện thoại:</span
+                    >
+                    <span
+                      class="reservation-info-value"
+                      th:text="${reservation.customerPhone}"
+                      >—</span
+                    >
+                  </div>
+                  <div class="reservation-info-row">
+                    <span class="reservation-info-label">👥 Số khách:</span>
+                    <span
+                      class="reservation-info-value"
+                      th:text="${reservation.capacityExpected + ' người'}"
+                      >— người</span
+                    >
+                  </div>
+                  <div
+                    th:if="${reservation.note != null && !#strings.isEmpty(reservation.note)}"
+                    class="reservation-info-row"
+                  >
+                    <span class="reservation-info-label">📝 Ghi chú:</span>
+                    <span
+                      class="reservation-info-value"
+                      th:text="${reservation.note}"
+                      >—</span
+                    >
+                  </div>
+                </div>
 
+                <div
+                  th:if="${reservation.status.toString() == 'CONFIRMED'}"
+                  class="reservation-actions"
+                >
+                  <!-- Nút mở bàn cho khách (nút chính) -->
+                  <form
+                    th:action="@{/cashier/reservations/{id}/open(id=${reservation.id})}"
+                    method="post"
+                    onsubmit="return confirm('Xác nhận khách đã đến và mở bàn?');"
+                  >
+                    <input
+                      type="hidden"
+                      th:name="${_csrf.parameterName}"
+                      th:value="${_csrf.token}"
+                    />
+                    <input
+                      type="hidden"
+                      name="returnUrl"
+                      th:value="'/cashier/tables/' + ${selectedTableId} + '/reservations'"
+                    />
+                    <button type="submit" class="btn-open-table">
+                      🔓 Mở bàn cho khách
+                    </button>
+                  </form>
 
-<!-- Server Status Indicator - Góc trái dưới -->
-<div class="server-status-container">
-	<div id="server-status">
-		<button class="btn btn-server-check" onclick="checkServerConnection()">
-			🔗 Kiểm tra kết nối với server
-		</button>
-	</div>
-</div>
+                  <!-- Các nút phụ -->
+                  <div class="reservation-secondary-actions">
+                    <a
+                      th:href="@{/cashier/reservations/{id}/edit(id=${reservation.id}, returnUrl='/cashier/tables/' + ${selectedTableId} + '/reservations')}"
+                      class="btn-edit-reservation"
+                    >
+                      ✏️ Sửa
+                    </a>
+                    <form
+                      th:action="@{/cashier/reservations/{id}/delete(id=${reservation.id})}"
+                      method="post"
+                      onsubmit="return confirm('Bạn có chắc chắn muốn hủy đặt bàn này?');"
+                    >
+                      <input
+                        type="hidden"
+                        th:name="${_csrf.parameterName}"
+                        th:value="${_csrf.token}"
+                      />
+                      <input
+                        type="hidden"
+                        name="returnUrl"
+                        th:value="'/cashier/tables/' + ${selectedTableId} + '/reservations'"
+                      />
+                      <button type="submit" class="btn-cancel-reservation">
+                        ❌ Hủy đặt bàn
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
 
-<!-- Modal đặt bàn -->
-<div id="reservation-modal" class="modal">
-	<div class="modal-content">
-		<div class="modal-header">
-			<h2>Đặt trước bàn</h2>
-			<span class="modal-close" onclick="closeReservationModal()">&times;</span>
-		</div>
-		<div class="modal-body">
-			<form id="reservation-form" th:action="@{/cashier/reservations}" method="post" th:object="${reservationCreateDTO}">
-				<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-				<input type="hidden" id="table-id-hidden" th:field="*{tableId}"/>
-				
-				<!-- Hiển thị lỗi chung (global errors) -->
-				<div th:if="${#fields.hasGlobalErrors()}" class="form-alert-error">
-					<span class="alert-icon">⚠️</span>
-					<div th:each="error : ${#fields.globalErrors()}" th:text="${error}" class="error-message"></div>
-				</div>
-				
-				<div class="form-group">
-					<label for="table-id-display">Bàn số</label>
-					<input type="text" id="table-id-display" readonly class="form-control" th:field="*{tableId}">
-				</div>
-				
-				<div class="form-group">
-					<label for="customer-name">Tên khách hàng <span class="required">*</span></label>
-					<input type="text" id="customer-name" th:field="*{customerName}" required 
-					       th:classappend="${#fields.hasErrors('customerName')} ? 'is-invalid' : ''"
-					       class="form-control">
-					<div class="invalid-feedback" th:if="${#fields.hasErrors('customerName')}" th:errors="*{customerName}"></div>
-				</div>
-				
-				<div class="form-group">
-					<label for="customer-phone">Số điện thoại <span class="required">*</span></label>
-					<input type="tel" id="customer-phone" th:field="*{customerPhone}" required 
-					       th:classappend="${#fields.hasErrors('customerPhone')} ? 'is-invalid' : ''"
-					       class="form-control">
-					<div class="invalid-feedback" th:if="${#fields.hasErrors('customerPhone')}" th:errors="*{customerPhone}"></div>
-				</div>
-				
-				<div class="form-group">
-					<label for="customer-capacity">Số lượng dự kiến <span class="required">*</span></label>
-					<input type="number" id="customer-capacity" th:field="*{capacityExpected}" required 
-					       th:classappend="${#fields.hasErrors('capacityExpected')} ? 'is-invalid' : ''"
-					       class="form-control">
-					<div class="invalid-feedback" th:if="${#fields.hasErrors('capacityExpected')}" th:errors="*{capacityExpected}"></div>
-				</div>
-				
-				<div class="form-row">
-					<div class="form-group half">
-						<label for="start-time">Thời gian bắt đầu <span class="required">*</span></label>
-						<input type="datetime-local" id="start-time" th:field="*{startTime}" required 
-						       th:classappend="${#fields.hasErrors('startTime')} ? 'is-invalid' : ''"
-						       class="form-control">
-						<div class="invalid-feedback" th:if="${#fields.hasErrors('startTime')}" th:errors="*{startTime}"></div>
-					</div>
-				</div>
-				
-				<div class="form-group">
-					<label for="note">Ghi chú (tùy chọn)</label>
-					<textarea id="note" th:field="*{note}" 
-					          th:classappend="${#fields.hasErrors('note')} ? 'is-invalid' : ''"
-					          class="form-control" rows="3"
-					          placeholder="Nhập ghi chú nếu có..."></textarea>
-					<div class="invalid-feedback" th:if="${#fields.hasErrors('note')}" th:errors="*{note}"></div>
-				</div>
-			</form>
-		</div>
-		<div class="modal-footer">
-			<button type="button" class="btn btn-secondary" onclick="closeReservationModal()">Hủy</button>
-			<button type="submit" form="reservation-form" class="btn btn-primary">Xác nhận đặt bàn</button>
-		</div>
-	</div>
-</div>
+    <div class="toast-container" id="toast-container">
+      <!-- Flash messages từ redirect (chỉ hiển thị nếu không phải lỗi validation modal) -->
+      <div
+        th:if="${successMessage}"
+        class="toast success"
+        style="display: block"
+      >
+        <span th:text="${successMessage}"></span>
+      </div>
+      <div
+        th:if="${errorMessage != null and (showReservationModal == null or !showReservationModal)}"
+        class="toast error"
+        style="display: block"
+      >
+        <span th:text="${errorMessage}"></span>
+      </div>
+    </div>
 
-<!-- Modal cập nhật đặt bàn -->
-<div id="update-reservation-modal" class="modal" th:if="${reservationUpdateDTO != null}">
-	<div class="modal-content">
-		<div class="modal-header">
-			<h2>Cập nhật đặt bàn</h2>
-			<span class="modal-close" onclick="closeUpdateModal()">&times;</span>
-		</div>
-		<div class="modal-body">
-			<form id="update-reservation-form" 
-			      th:action="@{/cashier/reservations/{id}/update(id=${reservationUpdateDTO.id})}" 
-			      method="post" 
-			      th:object="${reservationUpdateDTO}">
-				<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-				<input type="hidden" name="returnUrl" th:value="${returnUrl}"/>
-				
-				<!-- Hiển thị lỗi chung (global errors) -->
-				<div th:if="${#fields.hasGlobalErrors()}" class="form-alert-error">
-					<span class="alert-icon">⚠️</span>
-					<div th:each="error : ${#fields.globalErrors()}" th:text="${error}" class="error-message"></div>
-				</div>
-				
-				<div class="form-group">
-					<label for="update-table-id">Bàn số</label>
-					<input type="text" id="update-table-id" readonly class="form-control" th:value="'Bàn ' + ${reservationUpdateDTO.tableId}">
-				</div>
-				
-				<div class="form-group">
-					<label for="update-customer-name">Tên khách hàng <span class="required">*</span></label>
-					<input type="text" id="update-customer-name" th:field="*{customerName}" required 
-					       th:classappend="${#fields.hasErrors('customerName')} ? 'is-invalid' : ''"
-					       class="form-control">
-					<div class="invalid-feedback" th:if="${#fields.hasErrors('customerName')}" th:errors="*{customerName}"></div>
-				</div>
-				
-				<div class="form-group">
-					<label for="update-customer-phone">Số điện thoại <span class="required">*</span></label>
-					<input type="tel" id="update-customer-phone" th:field="*{customerPhone}" required 
-					       th:classappend="${#fields.hasErrors('customerPhone')} ? 'is-invalid' : ''"
-					       class="form-control">
-					<div class="invalid-feedback" th:if="${#fields.hasErrors('customerPhone')}" th:errors="*{customerPhone}"></div>
-				</div>
-				
-				<div class="form-group">
-					<label for="update-customer-capacity">Số lượng dự kiến <span class="required">*</span></label>
-					<input type="number" id="update-customer-capacity" th:field="*{capacityExpected}" required 
-					       th:classappend="${#fields.hasErrors('capacityExpected')} ? 'is-invalid' : ''"
-					       class="form-control">
-					<div class="invalid-feedback" th:if="${#fields.hasErrors('capacityExpected')}" th:errors="*{capacityExpected}"></div>
-				</div>
-				
-				<div class="form-row">
-					<div class="form-group half">
-						<label for="update-start-time">Thời gian bắt đầu <span class="required">*</span></label>
-						<input type="datetime-local" id="update-start-time" th:field="*{startTime}" required 
-						       th:classappend="${#fields.hasErrors('startTime')} ? 'is-invalid' : ''"
-						       class="form-control">
-						<div class="invalid-feedback" th:if="${#fields.hasErrors('startTime')}" th:errors="*{startTime}"></div>
-					</div>
-				</div>
-				
-				<div class="form-group">
-					<label for="update-note">Ghi chú (tùy chọn)</label>
-					<textarea id="update-note" th:field="*{note}" 
-					          th:classappend="${#fields.hasErrors('note')} ? 'is-invalid' : ''"
-					          class="form-control" rows="3"
-					          placeholder="Nhập ghi chú nếu có..."></textarea>
-					<div class="invalid-feedback" th:if="${#fields.hasErrors('note')}" th:errors="*{note}"></div>
-				</div>
-			</form>
-		</div>
-		<div class="modal-footer">
-			<button type="button" class="btn btn-secondary" onclick="closeUpdateModal()">Hủy</button>
-			<button type="submit" form="update-reservation-form" class="btn btn-primary">Cập nhật</button>
-		</div>
-	</div>
-</div>
+    <!-- Modal Toast Container cho errors trong modal -->
+    <div class="modal-toast-container" id="modal-toast-container"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-<script th:src="@{/js/cashier/utils.js}"></script>
-<script th:src="@{/js/cashier/reservation.js}"></script>
-<script>
-    const $clock = document.getElementById('clock');
-    const $date = document.getElementById('date');
+    <!-- Server Status Indicator - Góc trái dưới -->
+    <div class="server-status-container">
+      <div id="server-status">
+        <button class="btn btn-server-check" onclick="checkServerConnection()">
+          🔗 Kiểm tra kết nối với server
+        </button>
+      </div>
+    </div>
 
-    function render() {
+    <!-- Modal đặt bàn -->
+    <div id="reservation-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Đặt trước bàn</h2>
+          <span class="modal-close" onclick="closeReservationModal()"
+            >&times;</span
+          >
+        </div>
+        <div class="modal-body">
+          <form
+            id="reservation-form"
+            th:action="@{/cashier/reservations}"
+            method="post"
+            th:object="${reservationCreateDTO}"
+          >
+            <input
+              type="hidden"
+              th:name="${_csrf.parameterName}"
+              th:value="${_csrf.token}"
+            />
+            <input type="hidden" id="table-id-hidden" th:field="*{tableId}" />
+
+            <!-- Hiển thị lỗi chung (global errors) -->
+            <div th:if="${#fields.hasGlobalErrors()}" class="form-alert-error">
+              <span class="alert-icon">⚠️</span>
+              <div
+                th:each="error : ${#fields.globalErrors()}"
+                th:text="${error}"
+                class="error-message"
+              ></div>
+            </div>
+
+            <div class="form-group">
+              <label for="table-id-display">Bàn số</label>
+              <input
+                type="text"
+                id="table-id-display"
+                readonly
+                class="form-control"
+                th:field="*{tableId}"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="customer-name"
+                >Tên khách hàng <span class="required">*</span></label
+              >
+              <input
+                type="text"
+                id="customer-name"
+                th:field="*{customerName}"
+                required
+                th:classappend="${#fields.hasErrors('customerName')} ? 'is-invalid' : ''"
+                class="form-control"
+              />
+              <div
+                class="invalid-feedback"
+                th:if="${#fields.hasErrors('customerName')}"
+                th:errors="*{customerName}"
+              ></div>
+            </div>
+
+            <div class="form-group">
+              <label for="customer-phone"
+                >Số điện thoại <span class="required">*</span></label
+              >
+              <input
+                type="tel"
+                id="customer-phone"
+                th:field="*{customerPhone}"
+                required
+                th:classappend="${#fields.hasErrors('customerPhone')} ? 'is-invalid' : ''"
+                class="form-control"
+              />
+              <div
+                class="invalid-feedback"
+                th:if="${#fields.hasErrors('customerPhone')}"
+                th:errors="*{customerPhone}"
+              ></div>
+            </div>
+
+            <div class="form-group">
+              <label for="customer-capacity"
+                >Số lượng dự kiến <span class="required">*</span></label
+              >
+              <input
+                type="number"
+                id="customer-capacity"
+                th:field="*{capacityExpected}"
+                required
+                th:classappend="${#fields.hasErrors('capacityExpected')} ? 'is-invalid' : ''"
+                class="form-control"
+              />
+              <div
+                class="invalid-feedback"
+                th:if="${#fields.hasErrors('capacityExpected')}"
+                th:errors="*{capacityExpected}"
+              ></div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group half">
+                <label for="start-time"
+                  >Thời gian bắt đầu <span class="required">*</span></label
+                >
+                <input
+                  type="datetime-local"
+                  id="start-time"
+                  th:field="*{startTime}"
+                  required
+                  th:classappend="${#fields.hasErrors('startTime')} ? 'is-invalid' : ''"
+                  class="form-control"
+                />
+                <div
+                  class="invalid-feedback"
+                  th:if="${#fields.hasErrors('startTime')}"
+                  th:errors="*{startTime}"
+                ></div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="note">Ghi chú (tùy chọn)</label>
+              <textarea
+                id="note"
+                th:field="*{note}"
+                th:classappend="${#fields.hasErrors('note')} ? 'is-invalid' : ''"
+                class="form-control"
+                rows="3"
+                placeholder="Nhập ghi chú nếu có..."
+              ></textarea>
+              <div
+                class="invalid-feedback"
+                th:if="${#fields.hasErrors('note')}"
+                th:errors="*{note}"
+              ></div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            onclick="closeReservationModal()"
+          >
+            Hủy
+          </button>
+          <button type="submit" form="reservation-form" class="btn btn-primary">
+            Xác nhận đặt bàn
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal cập nhật đặt bàn -->
+    <div
+      id="update-reservation-modal"
+      class="modal"
+      th:if="${reservationUpdateDTO != null}"
+    >
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Cập nhật đặt bàn</h2>
+          <span class="modal-close" onclick="closeUpdateModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+          <form
+            id="update-reservation-form"
+            th:action="@{/cashier/reservations/{id}/update(id=${reservationUpdateDTO.id})}"
+            method="post"
+            th:object="${reservationUpdateDTO}"
+          >
+            <input
+              type="hidden"
+              th:name="${_csrf.parameterName}"
+              th:value="${_csrf.token}"
+            />
+            <input type="hidden" name="returnUrl" th:value="${returnUrl}" />
+
+            <!-- Hiển thị lỗi chung (global errors) -->
+            <div th:if="${#fields.hasGlobalErrors()}" class="form-alert-error">
+              <span class="alert-icon">⚠️</span>
+              <div
+                th:each="error : ${#fields.globalErrors()}"
+                th:text="${error}"
+                class="error-message"
+              ></div>
+            </div>
+
+            <div class="form-group">
+              <label for="update-table-id">Bàn số</label>
+              <input
+                type="text"
+                id="update-table-id"
+                readonly
+                class="form-control"
+                th:value="'Bàn ' + ${reservationUpdateDTO.tableId}"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="update-customer-name"
+                >Tên khách hàng <span class="required">*</span></label
+              >
+              <input
+                type="text"
+                id="update-customer-name"
+                th:field="*{customerName}"
+                required
+                th:classappend="${#fields.hasErrors('customerName')} ? 'is-invalid' : ''"
+                class="form-control"
+              />
+              <div
+                class="invalid-feedback"
+                th:if="${#fields.hasErrors('customerName')}"
+                th:errors="*{customerName}"
+              ></div>
+            </div>
+
+            <div class="form-group">
+              <label for="update-customer-phone"
+                >Số điện thoại <span class="required">*</span></label
+              >
+              <input
+                type="tel"
+                id="update-customer-phone"
+                th:field="*{customerPhone}"
+                required
+                th:classappend="${#fields.hasErrors('customerPhone')} ? 'is-invalid' : ''"
+                class="form-control"
+              />
+              <div
+                class="invalid-feedback"
+                th:if="${#fields.hasErrors('customerPhone')}"
+                th:errors="*{customerPhone}"
+              ></div>
+            </div>
+
+            <div class="form-group">
+              <label for="update-customer-capacity"
+                >Số lượng dự kiến <span class="required">*</span></label
+              >
+              <input
+                type="number"
+                id="update-customer-capacity"
+                th:field="*{capacityExpected}"
+                required
+                th:classappend="${#fields.hasErrors('capacityExpected')} ? 'is-invalid' : ''"
+                class="form-control"
+              />
+              <div
+                class="invalid-feedback"
+                th:if="${#fields.hasErrors('capacityExpected')}"
+                th:errors="*{capacityExpected}"
+              ></div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group half">
+                <label for="update-start-time"
+                  >Thời gian bắt đầu <span class="required">*</span></label
+                >
+                <input
+                  type="datetime-local"
+                  id="update-start-time"
+                  th:field="*{startTime}"
+                  required
+                  th:classappend="${#fields.hasErrors('startTime')} ? 'is-invalid' : ''"
+                  class="form-control"
+                />
+                <div
+                  class="invalid-feedback"
+                  th:if="${#fields.hasErrors('startTime')}"
+                  th:errors="*{startTime}"
+                ></div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="update-note">Ghi chú (tùy chọn)</label>
+              <textarea
+                id="update-note"
+                th:field="*{note}"
+                th:classappend="${#fields.hasErrors('note')} ? 'is-invalid' : ''"
+                class="form-control"
+                rows="3"
+                placeholder="Nhập ghi chú nếu có..."
+              ></textarea>
+              <div
+                class="invalid-feedback"
+                th:if="${#fields.hasErrors('note')}"
+                th:errors="*{note}"
+              ></div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            onclick="closeUpdateModal()"
+          >
+            Hủy
+          </button>
+          <button
+            type="submit"
+            form="update-reservation-form"
+            class="btn btn-primary"
+          >
+            Cập nhật
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script th:src="@{/js/cashier/utils.js}"></script>
+    <script th:src="@{/js/cashier/reservation.js}"></script>
+    <script>
+      const $clock = document.getElementById("clock");
+      const $date = document.getElementById("date");
+
+      function render() {
         const now = new Date();
-        $clock.textContent = now.toLocaleTimeString('vi-VN', {hour12: false});
-        $date.textContent = now.toLocaleDateString('vi-VN',
-            {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'});
-    }
-    
-    render();
-    setInterval(render, 1000);
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const toasts = document.querySelectorAll('.toast-container .toast');
-        toasts.forEach(toast => {
-            setTimeout(() => {
-                toast.style.animation = 'slideInRight 0.3s ease reverse';
-                setTimeout(() => {
-                    toast.remove();
-                }, 300);
-            }, 5000);
+        $clock.textContent = now.toLocaleTimeString("vi-VN", { hour12: false });
+        $date.textContent = now.toLocaleDateString("vi-VN", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
         });
-    });
-    
-    // Custom logout confirmation
-    function confirmLogout() {
-        return confirm('Bạn có muốn đăng xuất không?');
-    }
-</script>
+      }
 
-<script th:src="@{/js/cashier/cashier-dashboard.js}"></script>
-<script th:src="@{/js/cashier/utils.js}"></script>
-<script th:src="@{/js/cashier/websocket.js}"></script>
-<script th:src="@{/js/cashier/table.js}"></script>
-<script th:src="@{/js/cashier/reservation.js}"></script>
+      render();
+      setInterval(render, 1000);
 
-<script th:inline="javascript">
-    window.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener("DOMContentLoaded", function () {
+        const toasts = document.querySelectorAll(".toast-container .toast");
+        toasts.forEach((toast) => {
+          setTimeout(() => {
+            toast.style.animation = "slideInRight 0.3s ease reverse";
+            setTimeout(() => {
+              toast.remove();
+            }, 300);
+          }, 5000);
+        });
+      });
+
+      // Custom logout confirmation
+      function confirmLogout() {
+        return confirm("Bạn có muốn đăng xuất không?");
+      }
+
+      // Toggle order detail functionality
+      function toggleOrderDetail(orderId) {
+        const detailSection = document.getElementById(
+          "order-detail-" + orderId
+        );
+        const toggleBtn = document.getElementById("toggle-btn-" + orderId);
+
+        if (
+          detailSection.style.display === "none" ||
+          detailSection.style.display === ""
+        ) {
+          // Show detail
+          detailSection.style.display = "block";
+          toggleBtn.textContent = "🙈 Ẩn";
+          toggleBtn.style.backgroundColor = "#6c757d";
+        } else {
+          // Hide detail
+          detailSection.style.display = "none";
+          toggleBtn.textContent = "📋 Xem chi tiết";
+          toggleBtn.style.backgroundColor = "#007bff";
+        }
+      }
+
+      // Print receipt functionality
+      function printReceipt() {
+        window.print();
+      }
+    </script>
+
+    <script th:src="@{/js/cashier/cashier-dashboard.js}"></script>
+    <script th:src="@{/js/cashier/utils.js}"></script>
+    <script th:src="@{/js/cashier/websocket.js}"></script>
+    <script th:src="@{/js/cashier/table.js}"></script>
+    <script th:src="@{/js/cashier/reservation.js}"></script>
+
+    <script th:inline="javascript">
+      window.addEventListener("DOMContentLoaded", function () {
         var showModal = /*[[${showReservationModal}]]*/ false;
         var showUpdateModal = /*[[${showUpdateModal}]]*/ false;
-        
+
         if (showModal) {
-            setTimeout(function() {
-                var modal = document.getElementById('reservation-modal');
-                if (modal) {
-                    modal.classList.add('show');
-                }
-            }, 100);
-        }
-        
-        if (showUpdateModal) {
-            setTimeout(function() {
-                var modal = document.getElementById('update-reservation-modal');
-                if (modal) {
-                    modal.classList.add('show');
-                    // Đảm bảo modal hiển thị đúng cách
-                    document.body.style.overflow = 'hidden';
-                    
-                    // Format datetime-local input
-                    var startTimeInput = document.getElementById('update-start-time');
-                    if (startTimeInput && startTimeInput.value) {
-                        // Convert the datetime value to proper format for datetime-local input
-                        var dateValue = new Date(startTimeInput.value);
-                        if (!isNaN(dateValue.getTime())) {
-                            startTimeInput.value = formatDateTimeLocal(dateValue);
-                        }
-                    }
-                }
-            }, 100);
-        }
-    });
-    
-    function closeUpdateModal() {
-        var modal = document.getElementById('update-reservation-modal');
-        if (modal) {
-            modal.classList.remove('show');
-            // Đảm bảo không có blur effect nào còn lại
-            document.body.style.overflow = '';
-            document.body.style.filter = '';
-        }
-    }
-    
-    // Xử lý khi click ra ngoài modal để đóng
-    document.addEventListener('click', function(event) {
-        var updateModal = document.getElementById('update-reservation-modal');
-        if (updateModal && event.target === updateModal) {
-            closeUpdateModal();
-        }
-    });
-    
-    // Xử lý khi nhấn ESC để đóng modal
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            var updateModal = document.getElementById('update-reservation-modal');
-            if (updateModal && updateModal.classList.contains('show')) {
-                closeUpdateModal();
+          setTimeout(function () {
+            var modal = document.getElementById("reservation-modal");
+            if (modal) {
+              modal.classList.add("show");
             }
+          }, 100);
         }
-    });
-</script>
 
-</body>
+        if (showUpdateModal) {
+          setTimeout(function () {
+            var modal = document.getElementById("update-reservation-modal");
+            if (modal) {
+              modal.classList.add("show");
+              // Đảm bảo modal hiển thị đúng cách
+              document.body.style.overflow = "hidden";
+
+              // Format datetime-local input
+              var startTimeInput = document.getElementById("update-start-time");
+              if (startTimeInput && startTimeInput.value) {
+                // Convert the datetime value to proper format for datetime-local input
+                var dateValue = new Date(startTimeInput.value);
+                if (!isNaN(dateValue.getTime())) {
+                  startTimeInput.value = formatDateTimeLocal(dateValue);
+                }
+              }
+            }
+          }, 100);
+        }
+      });
+
+      function closeUpdateModal() {
+        var modal = document.getElementById("update-reservation-modal");
+        if (modal) {
+          modal.classList.remove("show");
+          // Đảm bảo không có blur effect nào còn lại
+          document.body.style.overflow = "";
+          document.body.style.filter = "";
+        }
+      }
+
+      // Xử lý khi click ra ngoài modal để đóng
+      document.addEventListener("click", function (event) {
+        var updateModal = document.getElementById("update-reservation-modal");
+        if (updateModal && event.target === updateModal) {
+          closeUpdateModal();
+        }
+      });
+
+      // Xử lý khi nhấn ESC để đóng modal
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          var updateModal = document.getElementById("update-reservation-modal");
+          if (updateModal && updateModal.classList.contains("show")) {
+            closeUpdateModal();
+          }
+        }
+      });
+    </script>
+  </body>
 </html>
-
-
