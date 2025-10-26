@@ -10,6 +10,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage;
+import com.group1.swp.pizzario_swp391.dto.websocket.KitchenOrderMessage;
 import com.group1.swp.pizzario_swp391.entity.DiningTable;
 
 /**
@@ -80,6 +81,33 @@ public class WebSocketService{
         messagingTemplate.convertAndSend("/topic/tables-guest", retiredMessage);
         
         log.info("Broadcasted table {} retired status to all clients", tableId);
+    }
+
+    // ==================== KITCHEN WEBSOCKET METHODS ====================
+
+    /**
+     * Broadcast new order to kitchen
+     * Kitchen chỉ nhận thông tin order mới, không cập nhật order status
+     */
+    public void broadcastNewOrderToKitchen(KitchenOrderMessage orderMessage) {
+        orderMessage.setType(KitchenOrderMessage.MessageType.NEW_ORDER);
+        orderMessage.setTimestamp(LocalDateTime.now());
+        
+        messagingTemplate.convertAndSend("/topic/kitchen-orders", orderMessage);
+        log.info("Broadcasted new order {} to kitchen", orderMessage.getCode());
+    }
+
+    /**
+     * Send personal notification to kitchen
+     */
+    public void sendKitchenNotification(String message, String type) {
+        KitchenOrderMessage notification = KitchenOrderMessage.builder()
+                .message(message)
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        messagingTemplate.convertAndSend("/queue/kitchen-notifications", notification);
+        log.info("Sent kitchen notification: {}", message);
     }
 }
 

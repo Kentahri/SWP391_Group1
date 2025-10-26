@@ -23,12 +23,13 @@ public class StaffShiftResponseDTO {
     private String staffName;
     private Integer staffId;
 
-    private String shiftStatus; 
+    private String shiftStatus;
 
     private LocalDateTime checkIn;
     private LocalDateTime checkOut;
     private BigDecimal hourlyWage;
 
-
     private String note;
+
+    private Integer penaltyPercent;
 }

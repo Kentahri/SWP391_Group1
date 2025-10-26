@@ -1,15 +1,9 @@
 package com.group1.swp.pizzario_swp391.service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.group1.swp.pizzario_swp391.dto.cart.CartItemDTO;
 import com.group1.swp.pizzario_swp391.dto.kitchen.KitchenOrderDTO;
 import com.group1.swp.pizzario_swp391.dto.order.OrderItemDTO;
+import com.group1.swp.pizzario_swp391.dto.websocket.KitchenOrderMessage;
 import com.group1.swp.pizzario_swp391.entity.Order;
 import com.group1.swp.pizzario_swp391.entity.OrderItem;
 import com.group1.swp.pizzario_swp391.mapper.OrderItemMapper;
@@ -17,29 +11,30 @@ import com.group1.swp.pizzario_swp391.repository.OrderItemRepository;
 import com.group1.swp.pizzario_swp391.repository.OrderRepository;
 import com.group1.swp.pizzario_swp391.repository.ProductRepository;
 import com.group1.swp.pizzario_swp391.repository.SessionRepository;
-
 import jakarta.servlet.http.HttpSession;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+
 public class OrderService{
 
-    private final ProductRepository productRepository;
-    private final OrderItemRepository orderItemRepository;
-    private final OrderRepository orderRepository;
-    private final SessionRepository sessionRepository;
-    private final CartService cartService;
-    private final OrderItemMapper orderItemMapper;
-
-    public OrderService(ProductRepository productRepository, OrderItemRepository orderItemRepository, 
-                       OrderRepository orderRepository, SessionRepository sessionRepository, 
-                       CartService cartService, OrderItemMapper orderItemMapper) {
-        this.productRepository = productRepository;
-        this.orderItemRepository = orderItemRepository;
-        this.orderRepository = orderRepository;
-        this.sessionRepository = sessionRepository;
-        this.cartService = cartService;
-        this.orderItemMapper = orderItemMapper;
-    }
+    ProductRepository productRepository;
+    OrderItemRepository orderItemRepository;
+    OrderRepository orderRepository;
+    SessionRepository sessionRepository;
+    CartService cartService;
+    OrderItemMapper orderItemMapper;
+    WebSocketService webSocketService;
 
     public List<OrderItemDTO> getOrderedItemsForView(Long sessionId) {
         List<OrderItemDTO> orderedItems = new ArrayList<>();
@@ -73,6 +68,35 @@ public class OrderService{
         });
         orderRepository.save(order);
         cartService.clearCart(session);
+        
+        // Gửi thông báo order mới đến kitchen
+        notifyKitchenNewOrder(order);
+    }
+    
+    /**
+     * Gửi thông báo order mới đến kitchen
+     */
+    private void notifyKitchenNewOrder(Order order) {
+        try {
+            KitchenOrderMessage orderMessage = KitchenOrderMessage.builder()
+                    .orderId(order.getId())
+                    .code(String.format("ORD-%05d", order.getId())) // Tạo code với padding 0
+                    .tableName(order.getSession() != null && order.getSession().getTable() != null ? 
+                            "Bàn " + order.getSession().getTable().getId() : "Take away")
+                    .orderType(order.getOrderType() != null ? order.getOrderType().toString() : "DINE_IN")
+                    .status(order.getOrderStatus() != null ? order.getOrderStatus().toString() : "PREPARING")
+                    .priority("NORMAL") // Có thể thêm logic để xác định priority
+                    .totalPrice(order.getTotalPrice())
+                    .note(order.getNote())
+                    .message("Có order mới từ " + (order.getSession() != null && order.getSession().getTable() != null ? 
+                            "Bàn " + order.getSession().getTable().getId() : "Take away"))
+                    .build();
+            
+            webSocketService.broadcastNewOrderToKitchen(orderMessage);
+        } catch (Exception e) {
+            // Log error nhưng không làm fail transaction
+            System.err.println("Error notifying kitchen of new order: " + e.getMessage());
+        }
     }
 
     private Order getOrderForSession(Long sessionId) {
@@ -80,6 +104,25 @@ public class OrderService{
         return sessionRepository.findById(sessionId)
                 .map(com.group1.swp.pizzario_swp391.entity.Session::getOrder)
                 .orElse(null);
+    }
+
+    /**
+     * Lấy danh sách orders cho kitchen dashboard
+     * Có thể filter theo trạng thái (PREPARING, SERVED, COMPLETED...)
+     */
+    public List<KitchenOrderDTO> getKitchenOrdersByStatus(String status) {
+        List<Order> orders = orderRepository.findAll().stream()
+            .filter(order -> status == null || order.getOrderStatus().name().equalsIgnoreCase(status))
+            .sorted((o1, o2) -> {
+                if (o1.getCreatedAt() == null && o2.getCreatedAt() == null) return 0;
+                if (o1.getCreatedAt() == null) return 1;
+                if (o2.getCreatedAt() == null) return -1;
+                return o2.getCreatedAt().compareTo(o1.getCreatedAt());
+            })
+            .toList();
+        return orders.stream()
+            .map(KitchenOrderDTO::fromOrder)
+            .toList();
     }
 
     /**
@@ -102,6 +145,39 @@ public class OrderService{
         return orders.stream()
                 .map(KitchenOrderDTO::fromOrder)
                 .toList();
+    }
+
+    /**
+     * Backend tối ưu filter order đơn giản (status và/hoặc type)
+     */
+    public List<KitchenOrderDTO> getKitchenOrdersByFilter(String status, String type) {
+        List<Order> orders = new ArrayList<>();
+        if (status != null && !status.isBlank() && type != null && !type.isBlank()) {
+            Order.OrderStatus statusEnum = Order.OrderStatus.valueOf(status);
+            Order.OrderType typeEnum = Order.OrderType.valueOf(type);
+            orders = orderRepository.findByOrderStatusAndOrderType(statusEnum, typeEnum);
+        } else if (status != null && !status.isBlank()) {
+            Order.OrderStatus statusEnum = Order.OrderStatus.valueOf(status);
+            orders = orderRepository.findByOrderStatus(statusEnum);
+        } else if (type != null && !type.isBlank()) {
+            Order.OrderType typeEnum = Order.OrderType.valueOf(type);
+            orders = orderRepository.findByOrderType(typeEnum);
+        } else {
+            // Mặc định: PREPARING và SERVED (như cũ)
+            orders = orderRepository.findAll().stream()
+                    .filter(order -> order.getOrderStatus() == Order.OrderStatus.PREPARING 
+                            || order.getOrderStatus() == Order.OrderStatus.SERVED)
+                    .toList();
+        }
+        orders = orders.stream()
+                .sorted((o1, o2) -> {
+                    if (o1.getCreatedAt() == null && o2.getCreatedAt() == null) return 0;
+                    if (o1.getCreatedAt() == null) return 1;
+                    if (o2.getCreatedAt() == null) return -1;
+                    return o2.getCreatedAt().compareTo(o1.getCreatedAt());
+                })
+                .toList();
+        return orders.stream().map(KitchenOrderDTO::fromOrder).toList();
     }
 
     public KitchenOrderDTO getKitchenOrderById(Long orderId) {

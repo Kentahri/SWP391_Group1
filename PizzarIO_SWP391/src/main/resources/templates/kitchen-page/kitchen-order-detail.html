@@ -7,15 +7,27 @@
 </head>
 <body>
 <div class="container">
+    <div class="sidebar">
+        <h2>KITCHEN</h2>
+        <a th:href="@{/kitchen/order-list}" class="tab-link active">Order Management</a>
+        <a th:href="@{/kitchen/outstock}" class="tab-link">Out-of-Stock Management</a>
+        <form th:action="@{/logout}" method="post" class="logout-form">
+            <input type="hidden"
+                   th:if="${_csrf != null}"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}" />
+            <button type="submit" style="margin-top: 20px; width: 100%;">Logout</button>
+        </form>
+    </div>
     <div class="main-content">
-        <h2>Chi tiết Đơn hàng - <span th:text="${order.code}"></span></h2>
-        <div>
+        <h2 class="om-title">Chi tiết Đơn hàng - <span th:text="${order.code}"></span></h2>
+        <div style="margin-bottom:18px;">
             <b>Bàn:</b> <span th:text="${order.tableName}"></span> |
             <b>Trạng thái:</b> <span th:text="${order.status}"></span> |
             <b>Thời gian:</b> <span th:text="${order.timeAgo}"></span>
         </div>
-        <table>
-            <thead>
+        <table style="width:100%; background:#fff;border-radius:16px;border:1px solid #e6e7ea;box-shadow:0 2px 8px rgba(10,24,30,0.03);">
+            <thead style="background:#f2f3f5;">
                 <tr>
                     <th>Sản phẩm</th>
                     <th>Số lượng</th>
@@ -31,13 +43,35 @@
                     <td th:text="${item.quantity}"></td>
                     <td th:text="${#numbers.formatDecimal(item.unitPrice,0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
                     <td th:text="${#numbers.formatDecimal(item.totalPrice,0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
-                    <td th:text="${item.status}"></td>
+                    <td>
+                        <select th:id="'status-select-' + ${item.id}" th:data-id="${item.id}" th:value="${item.status}"
+                                th:onchange="updateStatusDropdown(this)" style="padding: 4px 10px; border-radius:5px;">
+                            <option th:value="'PENDING'" th:selected="${item.status?.name() == 'PENDING'}">Chờ xác nhận</option>
+                            <option th:value="'PREPARING'" th:selected="${item.status?.name() == 'PREPARING'}">Đang chế biến</option>
+                            <option th:value="'SERVED'" th:selected="${item.status?.name() == 'SERVED'}">Đã phục vụ</option>
+                            <option th:value="'CANCELLED'" th:selected="${item.status?.name() == 'CANCELLED'}">Đã hủy</option>
+                        </select>
+                    </td>
                     <td th:text="${item.note}"></td>
                 </tr>
             </tbody>
         </table>
-        <a th:href="@{/kitchen/order-list}" class="btn">Quay lại danh sách Order</a>
+        <a th:href="@{/kitchen/order-list}" class="btn" style="margin-top:30px;">Quay lại danh sách Order</a>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script th:src="@{/js/kitchen/websocket.js}"></script>
+<script>
+function updateStatusDropdown(selectEl) {
+    const itemId = selectEl.getAttribute('data-id');
+    const status = selectEl.value;
+    if (window.updateItemStatus && itemId) {
+        window.updateItemStatus(Number(itemId), status);
+    } else {
+        alert('Không thể cập nhật trạng thái món.');
+    }
+}
+</script>
 </body>
 </html>

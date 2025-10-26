@@ -3,7 +3,6 @@ package com.group1.swp.pizzario_swp391.config;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -20,6 +19,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 import com.group1.swp.pizzario_swp391.dto.staff.StaffLoginDTO;
 import com.group1.swp.pizzario_swp391.repository.StaffRepository;
@@ -52,7 +52,7 @@ public class ProdSecurityConfig {
             var a = auth.getAuthorities();
             String target = a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_MANAGER")) ? "/manager/analytics"
                     : a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_KITCHEN")) ? "/kitchen"
-                    : a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_CASHIER")) ? "/cashier" : "/";
+                            : a.stream().anyMatch(x -> x.getAuthority().equals("ROLE_CASHIER")) ? "/cashier" : "/";
             res.sendRedirect(req.getContextPath() + target);
         };
     }
@@ -91,37 +91,35 @@ public class ProdSecurityConfig {
                                         Collectors.toList())));
 
                 String emailErr = String.join("<br/>", byField.getOrDefault("email", List.of()));
-                String passErr  = String.join("<br/>", byField.getOrDefault("password", List.of()));
+                String passErr = String.join("<br/>", byField.getOrDefault("password", List.of()));
 
                 code = "validation";
-                msg  = (emailErr.isEmpty() ? "" : "<b>Email:</b> " + emailErr)
+                msg = (emailErr.isEmpty() ? "" : "<b>Email:</b> " + emailErr)
                         + (!emailErr.isEmpty() && !passErr.isEmpty() ? "<br/>" : "")
                         + (passErr.isEmpty() ? "" : "<b>Mật khẩu:</b> " + passErr);
-            }
-            else if (ex instanceof BadCredentialsException) {
+            } else if (ex instanceof BadCredentialsException) {
 
                 boolean checkMail = (email != null && staffRepository.existsByEmail(email));
-                if(!checkMail){
+                if (!checkMail) {
                     code = "email_not_found";
-                    msg  = "Email không tồn tại";
-                }
-                else {
+                    msg = "Email không tồn tại";
+                } else {
                     code = "bad_password";
-                    msg  = "Mật khẩu không đúng";
+                    msg = "Mật khẩu không đúng";
                 }
             } else if (ex instanceof AccountStatusException) {
                 // gồm Locked/AccountExpired/CredentialsExpired
                 code = "account_status";
-                msg  = "Tài khoản không ở trạng thái hợp lệ. Yêu cầu manager cấp quyền";
+                msg = "Tài khoản không ở trạng thái hợp lệ. Yêu cầu manager cấp quyền";
             } else if (ex instanceof InternalAuthenticationServiceException) {
                 code = "internal_auth";
-                msg  = "Lỗi nội bộ khi xác thực (vui lòng thử lại)";
+                msg = "Lỗi nội bộ khi xác thực (vui lòng thử lại)";
             } else if (ex instanceof AuthenticationException) {
                 code = "auth_error";
-                msg  = "Không thể xác thực. Vui lòng thử lại.";
+                msg = "Không thể xác thực. Vui lòng thử lại.";
             } else {
                 code = "unknown";
-                msg  = "Đăng nhập thất bại. Vui lòng thử lại.";
+                msg = "Đăng nhập thất bại. Vui lòng thử lại.";
             }
 
             req.getSession().setAttribute("LOGIN_ERROR_MSG", msg);
@@ -134,11 +132,12 @@ public class ProdSecurityConfig {
             HttpSecurity http,
             UserDetailsService userDetailsService,
             AuthenticationSuccessHandler roleBasedSuccessHandler,
-            LogoutSuccessHandler auditLogoutSuccessHandler, AuthenticationFailureHandler myFailureHandler) throws Exception {
+            LogoutSuccessHandler auditLogoutSuccessHandler, AuthenticationFailureHandler myFailureHandler)
+            throws Exception {
         http
                 .userDetailsService(userDetailsService)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/webjars/**", "/css/**", "/images/**", "/static/js/**",  "/js/**",
+                        .requestMatchers("/login", "/webjars/**", "/css/**", "/images/**", "/static/js/**", "/js/**",
                                 "/guest/**", "/missing_pass/**", "/ws/**", "/app/**", "/topic/**", "/queue/**",
                                 "/api/chatbot/**")
                         .permitAll()
@@ -147,6 +146,7 @@ public class ProdSecurityConfig {
                         .requestMatchers("/cashier/**").hasRole("CASHIER")
                         .anyRequest().authenticated())
                 .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .ignoringRequestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**", "/api/chatbot/**"))
                 .sessionManagement(session -> session
                         .sessionFixation().changeSessionId() // Đổi session ID sau khi login

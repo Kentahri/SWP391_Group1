@@ -105,7 +105,7 @@
       <div class="card">
         <h1>Kiểm tra thành viên</h1>
         <form
-          th:action="@{/guest/membership}"
+          th:action="@{'/guest/membership?sessionId=' + ${sessionId}}"
           method="post"
           th:object="${verifyMembershipDTO}"
         >
@@ -121,10 +121,18 @@
         </form>
 
         <div th:if="${error}" class="error" th:text="${error}"></div>
+        <div
+          th:if="${success}"
+          class="success"
+          th:text="${success}"
+          style="color: #10b981; font-weight: 600; margin-bottom: 10px"
+        ></div>
 
         <div class="register-section">
           <span>Chưa có tài khoản?</span>
-          <a th:href="@{/guest/membership/register}">Đăng ký</a>
+          <a th:href="@{'/guest/membership/register?sessionId=' + ${sessionId}}"
+            >Đăng ký</a
+          >
         </div>
 
         <div th:if="${membership}">
@@ -159,6 +167,16 @@
               </td>
             </tr>
           </table>
+
+          <!-- Nút quay về thanh toán -->
+          <div style="margin-top: 24px; text-align: center">
+            <a
+              th:href="@{'/guest/payment/session/' + ${sessionId}}"
+              class="primary-btn"
+            >
+              <i class="fas fa-arrow-left"></i> Quay lại thanh toán
+            </a>
+          </div>
         </div>
       </div>
     </div>

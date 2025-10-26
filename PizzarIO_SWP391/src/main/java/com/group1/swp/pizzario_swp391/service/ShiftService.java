@@ -28,16 +28,15 @@ public class ShiftService {
             "SANG", 150_000L,
             "CHIEU", 150_000L,
             "TOI", 200_000L,
-            "DEM", 250_000L
-    );
+            "DEM", 250_000L);
 
     public List<ShiftDTO> getAllShift() {
-        List<ShiftDTO> list = shiftMapper.toShiftDTOs( shiftRepository.findAll());
+        List<ShiftDTO> list = shiftMapper.toShiftDTOs(shiftRepository.findAll());
         return list;
     }
 
     public ShiftDTO getShiftById(int id) {
-        Shift shift =  shiftRepository.findById(id).orElseThrow(() -> new RuntimeException("Shift not existed"));
+        Shift shift = shiftRepository.findById(id).orElseThrow(() -> new RuntimeException("Shift not existed"));
         ShiftDTO dto = shiftMapper.toShiftDTO(shift);
 
         return dto;
@@ -74,6 +73,13 @@ public class ShiftService {
         shiftRepository.deleteById(id);
     }
 
+    /**
+     * Check if a shift has any associated staff shifts
+     */
+    public boolean hasStaffShifts(Integer shiftId) {
+        return staffShiftRepository.countByShift_Id(shiftId) > 0;
+    }
+
     public List<ShiftDTO> findAllDto() {
         List<Shift> shifts = shiftRepository.findAll();
         return shiftMapper.toShiftDTOs(shifts);
@@ -81,28 +87,32 @@ public class ShiftService {
 
     /**
      * Trả LinkedHashMap<label, totalSalary> cho 7 ngày (start..end) giữ thứ tự.
-     * Sử dụng StaffShift.workDate và Shift.shiftName để xác định mức lương assignment.
+     * Sử dụng StaffShift.workDate và Shift.shiftName để xác định mức lương
+     * assignment.
      */
     public LinkedHashMap<String, Long> getWeeklyPayrollTotals() {
         LinkedHashMap<String, Long> result = new LinkedHashMap<>();
         LocalDate today = LocalDate.now();
         LocalDate start = today.minusDays(6);
         List<LocalDate> days = new ArrayList<>();
-        for (int i = 0; i < 7; i++) days.add(start.plusDays(i));
+        for (int i = 0; i < 7; i++)
+            days.add(start.plusDays(i));
 
         List<StaffShift> assignments = staffShiftRepository.findByWorkDateBetween(start, today);
 
         // initialize totals
-        Map<LocalDate, Long> totals = days.stream().collect(Collectors.toMap(d -> d, d -> 0L, (a,b)->a, LinkedHashMap::new));
+        Map<LocalDate, Long> totals = days.stream()
+                .collect(Collectors.toMap(d -> d, d -> 0L, (a, b) -> a, LinkedHashMap::new));
 
         for (StaffShift ss : assignments) {
             LocalDate d = ss.getWorkDate();
-            if (d == null) continue;
+            if (d == null)
+                continue;
             String shiftName = ss.getShift() != null && ss.getShift().getShiftName() != null
                     ? ss.getShift().getShiftName().name()
                     : "SANG";
             long salary = defaultSalaryPerShift.getOrDefault(shiftName, 150_000L);
-            totals.computeIfPresent(d, (k,v) -> v + salary);
+            totals.computeIfPresent(d, (k, v) -> v + salary);
         }
 
         for (LocalDate d : days) {

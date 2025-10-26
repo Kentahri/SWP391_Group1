@@ -8,6 +8,10 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import com.group1.swp.pizzario_swp391.dto.membership.MembershipDTO;
 import com.group1.swp.pizzario_swp391.dto.membership.VerifyMembershipDTO;
@@ -24,13 +28,31 @@ public class MembershipController {
     }
 
     @GetMapping
-    public String showVerifyForm(Model model) {
+    public String showVerifyForm(@RequestParam Long sessionId, Model model) {
+        // Bắt buộc phải có sessionId
+        if (sessionId == null) {
+            return "redirect:/guest?error=" + 
+                   URLEncoder.encode("Vui lòng chọn bàn và đặt món trước khi xác thực thành viên", StandardCharsets.UTF_8);
+        }
+        
         model.addAttribute("verifyMembershipDTO", new VerifyMembershipDTO());
+        model.addAttribute("sessionId", sessionId);
         return "guest-page/membership_verify";
     }
 
     @PostMapping
-    public String verify(@Valid VerifyMembershipDTO verifyMembershipDTO, BindingResult bindingResult, Model model) {
+    public String verify(@Valid VerifyMembershipDTO verifyMembershipDTO, 
+                        BindingResult bindingResult, 
+                        @RequestParam Long sessionId,
+                        Model model) {
+        // Bắt buộc phải có sessionId
+        if (sessionId == null) {
+            return "redirect:/guest?error=" + 
+                   URLEncoder.encode("Vui lòng chọn bàn và đặt món trước khi xác thực thành viên", StandardCharsets.UTF_8);
+        }
+        
+        model.addAttribute("sessionId", sessionId);
+        
         if (bindingResult.hasErrors()) {
             model.addAttribute("verifyMembershipDTO", verifyMembershipDTO);
             model.addAttribute("error", "Vui lòng nhập số điện thoại hợp lệ.");
@@ -40,8 +62,8 @@ public class MembershipController {
         String phone = verifyMembershipDTO.getPhoneNumber().trim();
         var opt = membershipService.verifyByPhone(phone);
         if (opt.isPresent()) {
-            MembershipDTO membershipDTO = opt.get();
-            model.addAttribute("membership", membershipDTO);
+            // Luôn redirect về trang payment sau khi xác thực thành công
+            return "redirect:/guest/payment/session/" + sessionId + "?membershipVerified=true";
         } else {
             model.addAttribute("error", "Không tìm thấy thành viên với số điện thoại: " + phone);
         }
@@ -51,17 +73,32 @@ public class MembershipController {
 
     // NEW: registration endpoints
     @GetMapping("/register")
-    public String showRegistrationForm(Model model) {
+    public String showRegistrationForm(@RequestParam Long sessionId, Model model) {
+        // Bắt buộc phải có sessionId
+        if (sessionId == null) {
+            return "redirect:/guest?error=" + 
+                   URLEncoder.encode("Vui lòng chọn bàn và đặt món trước khi đăng ký thành viên", StandardCharsets.UTF_8);
+        }
+        
         model.addAttribute("registrationDTO", new MembershipRegistrationDTO());
+        model.addAttribute("sessionId", sessionId);
         return "guest-page/membership_register";
     }
 
     @PostMapping("/register")
     public String register(@Valid MembershipRegistrationDTO registrationDTO,
                            BindingResult bindingResult,
+                           @RequestParam Long sessionId,
                            Model model) {
+        // Bắt buộc phải có sessionId
+        if (sessionId == null) {
+            return "redirect:/guest?error=" + 
+                   URLEncoder.encode("Vui lòng chọn bàn và đặt món trước khi đăng ký thành viên", StandardCharsets.UTF_8);
+        }
+        
         // đảm bảo form object luôn trong model để Thymeleaf hiển thị lỗi trường
         model.addAttribute("registrationDTO", registrationDTO);
+        model.addAttribute("sessionId", sessionId);
 
         // nếu có lỗi validate, trả về từng lỗi cụ thể cho từng field
         if (bindingResult.hasErrors()) {
@@ -77,9 +114,8 @@ public class MembershipController {
         String phone = registrationDTO.getPhoneNumber().trim();
         var result = membershipService.register(registrationDTO);
         if (result.isPresent()) {
-            model.addAttribute("success", "Đăng ký thành công.");
-            model.addAttribute("membership", result.get());
-            model.addAttribute("registrationDTO", new MembershipRegistrationDTO());
+            // Luôn redirect về trang payment sau khi đăng ký thành công
+            return "redirect:/guest/payment/session/" + sessionId + "?membershipRegistered=true";
         } else {
             model.addAttribute("error", "Số điện thoại đã tồn tại: " + phone);
             model.addAttribute("registrationDTO", registrationDTO);

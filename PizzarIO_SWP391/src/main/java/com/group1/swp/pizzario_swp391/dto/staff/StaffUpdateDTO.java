@@ -29,15 +29,14 @@ public class StaffUpdateDTO {
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     LocalDate dateOfBirth;
 
-    @Pattern(regexp = "^[0-9]{10,11}$", message = "Số điện thoại phải có 10-11 chữ số")
+    @Pattern(regexp = "^0\\d{9,10}$", message = "Số điện thoại phải bắt đầu bằng 0 và có 10-11 chữ số")
     String phone;
 
     @NotBlank(message = "Địa chỉ không được để trống")
     @Size(max = 200, message = "Địa chỉ không được vượt quá 200 ký tự")
     String address;
 
-    @NotBlank(message = "Email không được để trống")
-    @Email(message = "Email không đúng định dạng")
+    @Pattern(regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",message = "Email không đúng định dạng")
     String email;
 
     @NotNull(message = "Vai trò không được để trống")

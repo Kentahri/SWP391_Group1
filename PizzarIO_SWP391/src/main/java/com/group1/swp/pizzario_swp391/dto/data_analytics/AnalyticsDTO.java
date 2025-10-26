@@ -18,7 +18,7 @@ public record AnalyticsDTO(
         Double newCustomersDelta,
 
         // AOV (Average Order Value)
-        Long aov,
+        Double aov,
         Double aovDelta,
 
         // Dữ liệu realtime hôm nay
@@ -36,17 +36,18 @@ public record AnalyticsDTO(
         Double cancelRate,
         String avgDeliveryTime) {
 
-    public AnalyticsDTO(Long totalRevenue, Double revenueDelta, Long totalOrders, Double ordersDelta, Long newCustomers, Double newCustomersDelta, Long aov, Double aovDelta, Long oldCustomer, Double retentionRate) {
+    public AnalyticsDTO(Long totalRevenue, Double revenueDelta, Long totalOrders, Double ordersDelta, Long newCustomers,
+            Double newCustomersDelta, Double aov, Double aovDelta, Long oldCustomer, Double retentionRate) {
         this(
                 totalRevenue, revenueDelta,
-                totalOrders,  ordersDelta,
-                newCustomers, newCustomersDelta,          // newCustomers, newCustomersDelta
-                aov,      aovDelta,   // aov, aovDelta
-                0L, 0L,          // todayOrders, todayRevenue
-                oldCustomer,            // todayNewCustomers, todayReturningCustomers
-                retentionRate,             // retentionRate
-                0.0, 0.0,        // completedRate, cancelRate
-                "-"              // avgDeliveryTime
+                totalOrders, ordersDelta,
+                newCustomers, newCustomersDelta, // newCustomers, newCustomersDelta
+                aov, aovDelta, // aov, aovDelta
+                0L, 0L, // todayOrders, todayRevenue
+                oldCustomer, // todayNewCustomers, todayReturningCustomers
+                retentionRate, // retentionRate
+                0.0, 0.0, // completedRate, cancelRate
+                "-" // avgDeliveryTime
         );
     }
 }

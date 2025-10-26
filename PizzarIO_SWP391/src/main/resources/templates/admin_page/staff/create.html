@@ -60,7 +60,7 @@
 
             <div class="form-row">
                 <label>Email</label>
-                <input type="email" th:field="*{email}"/>
+                <input type="text" th:field="*{email}"/>
                 <div class="error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
             </div>
 

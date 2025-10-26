@@ -35,10 +35,6 @@ public class OtpMailService {
         mailSender.send(message);
     }
 
-    public void addOtpMail(OtpMail otpMail){
-        otpMailRepository.save(otpMail);
-    }
-
     @Transactional
     public OtpMail createNewOtp(int staffId) {
         otpMailRepository.markAllUsedByStaff(staffId);

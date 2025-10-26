@@ -13,7 +13,7 @@ import java.util.List;
 @Entity
 @Table(name = "[Product]")
 @Data
-@ToString
+@ToString(exclude = {"orderItems"})
 public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
