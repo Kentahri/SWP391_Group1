@@ -34,7 +34,9 @@ public class GuestController{
     private final GuestService guestService;
 
     @GetMapping
-    public String guestPage(Model model) {
+    public String guestPage(Model model, HttpSession session) {
+        // clear gio hang cua khach cu khi co khach moi den
+        session.invalidate();
         model.addAttribute("tables", tableService.getAllTablesForGuest());
         return "guest-page/guest";
     }

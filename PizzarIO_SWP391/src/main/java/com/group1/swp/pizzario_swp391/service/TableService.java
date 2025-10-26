@@ -17,6 +17,7 @@ import com.group1.swp.pizzario_swp391.repository.ReservationRepository;
 import com.group1.swp.pizzario_swp391.repository.SessionRepository;
 import com.group1.swp.pizzario_swp391.repository.TableRepository;
 import jakarta.persistence.OptimisticLockException;
+import jakarta.servlet.http.HttpSession;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -298,6 +299,45 @@ public class TableService{
                 .voucherCode(order.getVoucher() != null ? order.getVoucher().getCode() : null)
                 .discountAmount(order.getVoucher() != null ? order.getVoucher().getValue() : null)
                 .build();
+    }
+
+    public void releaseTable(Integer tableId, HttpSession session) {
+        // Tìm bàn
+        DiningTable table = tableRepository.findById(tableId)
+                .orElseThrow(() -> new RuntimeException("Table not found with id: " + tableId));
+
+        // Lưu lại trạng thái cũ để gửi broadcast
+        DiningTable.TableStatus oldStatus = table.getTableStatus();
+
+        // Tìm session đang active của bàn
+        Session activeSession = sessionRepository.findByTableIdAndIsClosedFalse(tableId)
+                .orElse(null);
+
+        // Đóng session nếu có
+        if (activeSession != null) {
+            activeSession.setClosed(true);
+            activeSession.setClosedAt(LocalDateTime.now());
+            sessionRepository.save(activeSession);
+        }
+
+        // Cập nhật trạng thái bàn
+        table.setTableStatus(DiningTable.TableStatus.AVAILABLE);
+        table.setUpdatedAt(LocalDateTime.now());
+        tableRepository.save(table);
+
+        // Gửi broadcast cho tất cả client
+        webSocketService.broadcastTableStatusToGuests(tableId, DiningTable.TableStatus.AVAILABLE);
+        webSocketService.broadcastTableStatusToCashier(
+                com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage.MessageType.TABLE_RELEASED,
+                tableId,
+                oldStatus,
+                DiningTable.TableStatus.AVAILABLE,
+                "Guest",
+                "Bàn " + tableId + " đã được giải phóng."
+        );
+
+        // Xóa giỏ hàng trong http session
+        session.invalidate();
     }
 
     @Transactional
