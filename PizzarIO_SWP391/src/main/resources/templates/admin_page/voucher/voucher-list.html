@@ -83,6 +83,26 @@
             </div>
           </div>
 
+            <!-- 🔍 Thanh tìm kiếm -->
+            <form class="search-bar" th:action="@{/manager/vouchers}" method="get">
+                <input
+                        type="text"
+                        name="keyword"
+                        placeholder="Tìm theo mã"
+                        th:value="${param.keyword}"
+                />
+                <select name="status" th:value="${param.status}">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="active" th:selected="${param.status == 'active'}">
+                        Đang hoạt động
+                    </option>
+                    <option value="inactive" th:selected="${param.status == 'inactive'}">
+                        Ngừng hoạt động
+                    </option>
+                </select>
+                <button type="submit">Tìm kiếm</button>
+            </form>
+
           <!-- Modal -->
           <div id="voucherModal" class="modal">
             <div class="modal-content">
