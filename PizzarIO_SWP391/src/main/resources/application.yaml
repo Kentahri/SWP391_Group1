@@ -9,6 +9,7 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: create-drop
+    defer-datasource-initialization: true
 
     properties:
       hibernate:
@@ -22,6 +23,9 @@ spring:
     password: ${DB_PASSWORD}
     url: ${DB_URL}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  sql:
+    init:
+      mode: always
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}
