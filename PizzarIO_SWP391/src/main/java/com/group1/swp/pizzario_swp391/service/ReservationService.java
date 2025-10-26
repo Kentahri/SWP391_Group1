@@ -54,7 +54,7 @@ public class ReservationService {
 
         DiningTable.TableStatus oldStatus = table.getTableStatus();
         // Kiểm tra nếu bàn được đặt trước trong vòng đúng thời gian đã quy định tới, thì đổi trạng thái bàn thành RESERVED
-        if (dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(setting.getConflictReservationMinutes()))) {
+        if (dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(setting.getAutoLockReservationMinutes()))) {
             table.setTableStatus(DiningTable.TableStatus.RESERVED);
             tableRepository.save(table);
 
@@ -314,7 +314,7 @@ public class ReservationService {
                     "SYSTEM",
                     "Tự động khóa bàn trước " + setting.getNoShowWaitMinutes() + " phút khi đến giờ đặt (Reservation #" + reservationId + ")"
             );
-            log.info("Đã tự động khóa bàn {} trước " + setting.getNoShowWaitMinutes() + " khi đến giờ đặt (Reservation #{})", table.getId(), reservationId);
+            log.info("Đã tự động khóa bàn {} trước " + setting.getAutoLockReservationMinutes() + " khi đến giờ đặt (Reservation #{})", table.getId(), reservationId);
         } else {
             log.info("Bàn {} không ở trạng thái AVAILABLE, không thực hiện khóa tự động (Reservation #{})", table.getId(), reservationId);
         }

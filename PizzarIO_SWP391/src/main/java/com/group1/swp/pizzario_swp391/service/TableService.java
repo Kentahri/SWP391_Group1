@@ -97,8 +97,8 @@ public class TableService {
     }
 
 
-    public void add(DiningTable table) {
-        tableRepository.save(table);
+    public DiningTable add(DiningTable table) {
+        return tableRepository.save(table);
     }
 
     /**

@@ -105,10 +105,12 @@ public class CashierDashboardController {
                 bindingResult.rejectValue("capacityExpected", "error.capacityExpected", errorMessage);
             } else if (errorMessage.contains("Bàn đã được đặt") || errorMessage.contains("thời gian này")) {
                 bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
-            } else if (errorMessage.contains("90 phút") || errorMessage.contains("cách nhau")) {
+            } else if (errorMessage.contains("cách nhau ít nhất")) {
                 bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
-            } else if (errorMessage.contains("Không tìm thấy bàn")) {
-                bindingResult.rejectValue("tableId", "error.tableId", errorMessage);
+            } else if (errorMessage.contains("Bàn hiện đang có người ngồi")) {
+                bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
+            } else if(errorMessage.contains("Không tìm thấy bàn")) {
+                bindingResult.rejectValue("tableId", "error.reservation", errorMessage);
             }
         }
 
