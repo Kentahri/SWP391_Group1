@@ -106,6 +106,12 @@
             <artifactId>google-genai</artifactId>
             <version>1.23.0</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.14.0</version>
+        </dependency>
 <!--        Huy -->
         <dependency>
             <groupId>com.h2database</groupId>
