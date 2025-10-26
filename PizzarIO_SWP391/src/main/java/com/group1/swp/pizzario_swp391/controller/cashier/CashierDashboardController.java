@@ -3,10 +3,6 @@ package com.group1.swp.pizzario_swp391.controller.cashier;
 import java.security.Principal;
 import java.util.List;
 
-import com.group1.swp.pizzario_swp391.annotation.CashierUrl;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.group1.swp.pizzario_swp391.annotation.CashierUrl;
 import com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO;
 import com.group1.swp.pizzario_swp391.dto.reservation.ReservationCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.reservation.ReservationDTO;
@@ -28,6 +25,9 @@ import com.group1.swp.pizzario_swp391.service.StaffService;
 import com.group1.swp.pizzario_swp391.service.TableService;
 
 import jakarta.validation.Valid;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
 /**
  * Cashier Dashboard Controller
@@ -98,17 +98,19 @@ public class CashierDashboardController {
             Principal principal) {
 
         try {
-            reservationService.validateReservationBusinessLogic(dto);
+            reservationService.validateReservationBusinessLogicForCreate(dto);
         } catch (RuntimeException e) {
             String errorMessage = e.getMessage();
             if (errorMessage.contains("Vượt quá số người tối đa") || errorMessage.contains("số người")) {
                 bindingResult.rejectValue("capacityExpected", "error.capacityExpected", errorMessage);
             } else if (errorMessage.contains("Bàn đã được đặt") || errorMessage.contains("thời gian này")) {
                 bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
-            } else if (errorMessage.contains("90 phút") || errorMessage.contains("cách nhau")) {
+            } else if (errorMessage.contains("cách nhau ít nhất")) {
                 bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
-            } else if (errorMessage.contains("Không tìm thấy bàn")) {
-                bindingResult.rejectValue("tableId", "error.tableId", errorMessage);
+            } else if (errorMessage.contains("Bàn hiện đang có người ngồi")) {
+                bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
+            } else if(errorMessage.contains("Không tìm thấy bàn")) {
+                bindingResult.rejectValue("tableId", "error.reservation", errorMessage);
             }
         }
 
@@ -239,12 +241,17 @@ public class CashierDashboardController {
             Principal principal,
             @RequestParam(required = false) String returnUrl) {
 
+        // Kiểm tra business logic ngay cả khi có lỗi validation cơ bản
         boolean canValidateBusinessLogic = dto.getStartTime() != null && dto.getCapacityExpected() > 0;
 
         if (canValidateBusinessLogic) {
             try {
+                reservationService.validateReservationBusinessLogicForUpdate(id, dto);
+                
+                // Nếu validation thành công, thực hiện update
                 ReservationDTO updated = reservationService.updateReservation(id, dto);
 
+                // Nếu không có lỗi nào, redirect thành công
                 if (!bindingResult.hasErrors()) {
                     redirectAttributes.addFlashAttribute("successMessage", "Cập nhật đặt bàn thành công cho khách " + updated.getCustomerName());
 
@@ -261,22 +268,30 @@ public class CashierDashboardController {
                     bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
                 } else if (errorMessage.contains("90 phút") || errorMessage.contains("cách nhau")) {
                     bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
-                } else if (errorMessage.contains("đã bị hủy")) {
+                } else if (errorMessage.contains("đã đang có người ngồi")) {
                     bindingResult.reject("error.reservation", errorMessage);
                 }
             }
         }
 
+        // Render lại form với tất cả lỗi (validation + business logic)
         if (bindingResult.hasErrors()) {
             String email = principal.getName();
             Staff staff = staffService.findByEmail(email);
             List<TableForCashierDTO> tables = tableService.getTablesForCashier();
             List<ReservationDTO> upcomingReservations = reservationService.getUpcomingReservations();
 
+            // Sử dụng DTO từ form để giữ lại các lỗi validation
+            if (dto.getTableId() == null) {
+                ReservationDTO reservation = reservationService.findById(id);
+                dto.setTableId(reservation.getTableId());
+            }
+
             model.addAttribute("staff", staff);
             model.addAttribute("tables", tables);
             model.addAttribute("upcomingReservations", upcomingReservations);
             model.addAttribute("reservationCreateDTO", new ReservationCreateDTO());
+            model.addAttribute("reservationUpdateDTO", dto);
             model.addAttribute("showUpdateModal", true);
             model.addAttribute("returnUrl", returnUrl);
 

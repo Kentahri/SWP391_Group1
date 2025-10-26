@@ -6,17 +6,21 @@ import java.time.ZoneId;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
+import com.group1.swp.pizzario_swp391.config.Setting;
+import com.group1.swp.pizzario_swp391.event.reservation.AutoLockTableEvent;
 import com.group1.swp.pizzario_swp391.event.reservation.ReservationNoShowEvent;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
- * Service kiểm soát việc tự động khóa bàn sau 15p nếu khách không đến
+ * Service kiểm soát việc tự động khóa bàn và xử lý no-show dựa trên settings từ YAML
  */
 @Service
 @Slf4j
@@ -29,21 +33,82 @@ public class ReservationSchedulerService {
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
+    @Autowired
+    private Setting setting;
+
     private final Map<Long, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>(); // Map để lưu những reservation cần thực hiện
 
     /**
-     * Lên kế hoạch xử lý NO_SHOW cho reservation, Task sẽ chạy vào startTime + 15p
-     *
-     * @param reservationId ID của reservation
-     * @param startTime Thời gian bắt đầu reservation
+     * Lên kế hoạch xử lý tự động khóa bàn trước thời điểm khách đặt
+     * Sử dụng autoLockReservationMinutes từ settings
      */
-    public void scheduleNoShowCheck(Long reservationId, LocalDateTime startTime) {
-//        LocalDateTime executionTime = startTime.plusMinutes(15);
-        LocalDateTime executionTime = startTime.plusSeconds(5);
+    public void scheduleAutoLockTable(Long reservationId, LocalDateTime startTime) {
+        int autoLockMinutes = setting.getAutoLockReservationMinutes();
+        LocalDateTime executionTime = startTime.minusMinutes(autoLockMinutes);
 
         // Nếu thời gian đã qua, không schedule
         if (executionTime.isBefore(LocalDateTime.now())) {
-            log.warn("Reservation {} startTime đã qua, không schedule NO_SHOW check", reservationId);
+            log.warn("Reservation {} startTime đã gần (trong {} phút), không schedule auto lock table", 
+                    reservationId, autoLockMinutes);
+            return;
+        }
+
+        Instant scheduledInstant = executionTime.atZone(ZoneId.systemDefault()).toInstant();
+
+        ScheduledFuture<?> scheduledTask = taskScheduler.schedule(
+                () -> handleAutoLockTable(reservationId),
+                scheduledInstant
+        );
+
+        scheduledTasks.put(reservationId, scheduledTask);
+        log.info("Scheduled auto lock table for reservation {} at {} ({} minutes before start)", 
+                reservationId, executionTime, autoLockMinutes);
+    }
+
+    /**
+     * Hủy kế hoạch xử lý tự động khóa bàn trước thời điểm khách đặt
+     */
+    public void cancelAutoLockTable(Long reservationId) {
+        ScheduledFuture<?> task = scheduledTasks.remove(reservationId);
+        if (task != null && !task.isDone()) {
+            task.cancel(false);
+            log.info("Cancelled auto lock table for reservation {}", reservationId);
+        }
+    }
+
+    /**
+     * Cập nhật kế hoạch xử lý tự động khóa bàn trước thời điểm khách đặt
+     */
+    public void updateAutoLockTable(Long reservationId, LocalDateTime startTime) {
+        cancelAutoLockTable(reservationId);
+        scheduleAutoLockTable(reservationId, startTime);
+    }
+
+    /**
+     * Logic xử lý tự động khóa bàn, được gọi tự động khi đến giờ
+     */
+    private void handleAutoLockTable(Long reservationId) {
+        try {
+            log.info("Executing auto lock table for reservation {}", reservationId);
+            eventPublisher.publishEvent(new AutoLockTableEvent(this, reservationId));
+            scheduledTasks.remove(reservationId);
+        } catch (Exception e){
+            log.error("Error executing auto lock table for reservation {}: {}", reservationId, e.getMessage());
+        }
+    }
+
+    /**
+     * Lên kế hoạch xử lý NO_SHOW cho reservation
+     * Sử dụng noShowWaitMinutes từ settings
+     */
+    public void scheduleNoShowCheck(Long reservationId, LocalDateTime startTime) {
+        int noShowWaitMinutes = setting.getNoShowWaitMinutes();
+        LocalDateTime executionTime = startTime.plusMinutes(noShowWaitMinutes);
+
+        // Nếu thời gian đã qua, không schedule
+        if (executionTime.isBefore(LocalDateTime.now())) {
+            log.warn("Reservation {} startTime đã qua (quá {} phút), không schedule NO_SHOW check", 
+                    reservationId, noShowWaitMinutes);
             return;
         }
 
@@ -55,13 +120,12 @@ public class ReservationSchedulerService {
         );
 
         scheduledTasks.put(reservationId, scheduledTask);
-        log.info("Scheduled NO_SHOW check for reservation {} at {}", reservationId, executionTime);
+        log.info("Scheduled NO_SHOW check for reservation {} at {} ({} minutes after start)", 
+                reservationId, executionTime, noShowWaitMinutes);
     }
 
     /**
      * Hủy scheduled task khi reservation bị cancel hoặc khách đã đến
-     *
-     * @param reservationId ID của reservation
      */
     public void cancelNoShowCheck(Long reservationId) {
         ScheduledFuture<?> task = scheduledTasks.remove(reservationId);
@@ -73,9 +137,6 @@ public class ReservationSchedulerService {
 
     /**
      * Update khi reservation được chỉnh sửa thời gian
-     *
-     * @param reservationId
-     * @param startTime
      */
     public void updateNoShowCheck(Long reservationId, LocalDateTime startTime) {
         cancelNoShowCheck(reservationId);
@@ -84,8 +145,6 @@ public class ReservationSchedulerService {
 
     /**
      * Logic xử lý NO_SHOW check, được gọi tự động khi đến giờ
-     *
-     * @param reservationId
      */
     private void handleNoShow(Long reservationId) {
         try {

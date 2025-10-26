@@ -35,7 +35,7 @@ public class GuestController{
 
     @GetMapping
     public String guestPage(Model model) {
-        model.addAttribute("tables", tableService.getAllTables());
+        model.addAttribute("tables", tableService.getAllTablesForGuest());
         return "guest-page/guest";
     }
 

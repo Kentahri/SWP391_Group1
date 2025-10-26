@@ -3,6 +3,7 @@ package com.group1.swp.pizzario_swp391.entity;
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.List;
 @Entity
 @Table(name = "[Membership]")
 @Data
+@ToString(exclude = {"orders"})
 public class Membership {
 
     @OneToMany(mappedBy = "membership")

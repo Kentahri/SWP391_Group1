@@ -87,18 +87,50 @@
         background: #f3f4f6;
       }
       .register-redirect {
-          margin-top: 20px;
-          text-align: center;
-          color: var(--muted);
+        margin-top: 20px;
+        text-align: center;
+        color: var(--muted);
       }
       .register-redirect a {
-          color: var(--accent);
-          text-decoration: none;
-          font-weight: 600;
-          margin-left: 5px;
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+        margin-left: 5px;
       }
       .register-redirect a:hover {
-          text-decoration: underline;
+        text-decoration: underline;
+      }
+      .btn {
+        display: inline-block;
+        padding: 10px 18px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        margin: 5px;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: white;
+      }
+      .btn-outline-secondary {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--border);
+      }
+      .btn:hover {
+        opacity: 0.9;
+      }
+      .alert {
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+      }
+      .alert-success {
+        background: #f0f9ff;
+        color: #0369a1;
+        border: 1px solid #bae6fd;
       }
     </style>
   </head>
@@ -106,33 +138,72 @@
     <div class="container">
       <div class="card">
         <h1>Đăng ký thành viên</h1>
-        <form th:action="@{/guest/membership/register}" method="post" th:object="${registrationDTO}">
+        <form
+          th:action="@{'/guest/membership/register?sessionId=' + ${sessionId}}"
+          method="post"
+          th:object="${registrationDTO}"
+        >
           <div class="form-group">
             <label>Họ và tên:</label>
-            <input type="text" th:field="*{fullName}" placeholder="Họ và tên"/>
+            <input type="text" th:field="*{fullName}" placeholder="Họ và tên" />
             <!-- Hiển thị lỗi field cụ thể -->
-            <div th:if="${fullNameError != null}" class="error" th:text="${fullNameError}"></div>
+            <div
+              th:if="${fullNameError != null}"
+              class="error"
+              th:text="${fullNameError}"
+            ></div>
             <!-- hoặc dùng BindingResult trực tiếp -->
-            <div th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}" class="error"></div>
+            <div
+              th:if="${#fields.hasErrors('fullName')}"
+              th:errors="*{fullName}"
+              class="error"
+            ></div>
           </div>
 
           <div class="form-group">
             <label>Số điện thoại:</label>
-            <input type="text" th:field="*{phoneNumber}" placeholder="Số điện thoại"/>
+            <input
+              type="text"
+              th:field="*{phoneNumber}"
+              placeholder="Số điện thoại"
+            />
             <!-- Hiển thị lỗi field cụ thể -->
-            <div th:if="${phoneNumberError != null}" class="error" th:text="${phoneNumberError}"></div>
+            <div
+              th:if="${phoneNumberError != null}"
+              class="error"
+              th:text="${phoneNumberError}"
+            ></div>
             <!-- hoặc dùng BindingResult trực tiếp -->
-            <div th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}" class="error"></div>
+            <div
+              th:if="${#fields.hasErrors('phoneNumber')}"
+              th:errors="*{phoneNumber}"
+              class="error"
+            ></div>
           </div>
 
           <button type="submit" class="primary-btn">Đăng ký</button>
         </form>
 
         <!-- Chuyển đến trang xác thực -->
-          <div class="register-redirect">
-              <span>Đã có tài khoản ?</span>
-              <a th:href="@{/guest/membership}">Xác thực</a>
-          </div>
+        <div class="register-redirect">
+          <span>Đã có tài khoản ?</span>
+          <a th:href="@{'/guest/membership?sessionId=' + ${sessionId}}"
+            >Xác thực</a
+          >
+        </div>
+
+        <!-- Nút quay lại payment -->
+        <div
+          class="back-to-payment"
+          style="margin-top: 20px; text-align: center"
+        >
+          <a
+            th:href="@{'/guest/payment/session/' + ${sessionId}}"
+            class="btn btn-outline-secondary"
+          >
+            <i class="fas fa-arrow-left"></i> Quay lại thanh toán
+          </a>
+        </div>
 
         <div th:if="${error}" class="error" th:text="${error}"></div>
         <div th:if="${success}" class="success" th:text="${success}"></div>
@@ -169,6 +240,16 @@
               </td>
             </tr>
           </table>
+
+          <!-- Nút quay về thanh toán -->
+          <div style="margin-top: 24px; text-align: center">
+            <a
+              th:href="@{'/guest/payment/session/' + ${sessionId}}"
+              class="btn btn-primary"
+            >
+              <i class="fas fa-arrow-left"></i> Quay lại thanh toán
+            </a>
+          </div>
         </div>
       </div>
     </div>

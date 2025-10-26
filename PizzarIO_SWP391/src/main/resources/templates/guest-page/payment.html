@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thanh toán - PizzarIO</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link th:href="@{/css/payment.css}" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="container-fluid payment-page">
+      <!-- Order Summary Section at Top -->
+      <div class="order-summary-top">
+        <div class="container">
+          <h3 class="text-center mb-4">
+            <i class="fas fa-shopping-cart text-primary"></i>
+            Đơn hàng của bạn
+          </h3>
+          <div class="order-items-list" id="orderItemsTop">
+            <div th:each="item : ${orderItems}" class="order-item-row">
+              <div class="order-item-info">
+                <span class="item-name" th:text="${item.product.name}"
+                  >Product Name</span
+                >
+                <span class="item-quantity" th:text="'x' + ${item.quantity}"
+                  >x1</span
+                >
+              </div>
+              <div
+                class="order-item-price"
+                th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' VND'"
+              >
+                0 VND
+              </div>
+            </div>
+          </div>
+          <hr class="summary-divider" />
+          <div class="total-summary">
+            <div class="summary-row">
+              <span>Tạm tính:</span>
+              <span
+                id="subtotalTop"
+                th:text="${#numbers.formatDecimal(originalTotal, 0, 'COMMA', 0, 'POINT')} + ' VND'"
+                >0 VND</span
+              >
+            </div>
+            <div th:if="${discountAmount > 0}" class="summary-row">
+              <span>Giảm giá:</span>
+              <span
+                class="text-success"
+                id="discountAmountTop"
+                th:text="'-' + ${#numbers.formatDecimal(discountAmount, 0, 'COMMA', 0, 'POINT')} + ' VND'"
+                >-0 VND</span
+              >
+            </div>
+            <div class="summary-row">
+              <span>Thuế (10%):</span>
+              <span
+                id="taxAmountTop"
+                th:text="${#numbers.formatDecimal(finalTotal * 0.1, 0, 'COMMA', 0, 'POINT')} + ' VND'"
+                >0 VND</span
+              >
+            </div>
+            <hr class="summary-divider" />
+            <div class="summary-row total-row">
+              <strong>Tổng cộng:</strong>
+              <strong
+                id="totalAmountTop"
+                th:text="${#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT')} + ' VND'"
+                >0 VND</strong
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Payment Content -->
+      <div class="main-payment-content">
+        <div class="container">
+          <!-- Error Message from Server -->
+          <div
+            th:if="${errorMessage}"
+            class="alert alert-danger alert-dismissible fade show"
+            role="alert"
+          >
+            <i class="fas fa-exclamation-triangle"></i>
+            <span th:text="${errorMessage}">Error message</span>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="alert"
+            ></button>
+          </div>
+
+          <!-- Success Message from Server -->
+          <div
+            th:if="${successMessage}"
+            class="alert alert-success alert-dismissible fade show"
+            role="alert"
+          >
+            <i class="fas fa-check-circle"></i>
+            <span th:text="${successMessage}">Success message</span>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="alert"
+            ></button>
+          </div>
+
+          <div class="payment-sections">
+            <!-- Voucher Section -->
+            <div class="voucher-section">
+              <h4 class="section-title">Vouchers</h4>
+              <div class="voucher-grid">
+                <!-- Dynamic Vouchers from Backend -->
+                <div
+                  th:if="${#lists.isEmpty(availableVouchers)}"
+                  class="no-vouchers"
+                >
+                  <p class="text-muted">
+                    Không có voucher nào khả dụng cho đơn hàng này
+                  </p>
+                </div>
+
+                <div
+                  th:each="voucher : ${availableVouchers}"
+                  class="voucher-card"
+                  th:data-voucher-id="${voucher.id}"
+                  th:id="'voucher-' + ${voucher.id}"
+                >
+                  <div class="voucher-icon">
+                    <i class="fas fa-percentage"></i>
+                    <span class="voucher-text">VOUCHER</span>
+                  </div>
+                  <div class="voucher-content">
+                    <div class="voucher-info">
+                      <h6 class="voucher-code" th:text="${voucher.code}">
+                        VOUCHER_CODE
+                      </h6>
+                      <p
+                        class="voucher-description"
+                        th:text="${voucher.description}"
+                      >
+                        Mô tả voucher
+                      </p>
+                      <div class="voucher-details">
+                        <small class="text-muted">
+                          <span th:if="${voucher.type.name() == 'PERCENTAGE'}">
+                            Giảm <span th:text="${voucher.value}">0</span>%
+                          </span>
+                          <span
+                            th:if="${voucher.type.name() == 'FIXED_AMOUNT'}"
+                          >
+                            Giảm
+                            <span
+                              th:text="${#numbers.formatDecimal(voucher.value, 0, 'COMMA', 0, 'POINT')}"
+                              >0</span
+                            >
+                            VND
+                          </span>
+                          <br />
+                          Đơn hàng tối thiểu:
+                          <span
+                            th:text="${#numbers.formatDecimal(voucher.minOrderAmount, 0, 'COMMA', 0, 'POINT')}"
+                            >0</span
+                          >
+                          VND
+                        </small>
+                      </div>
+                    </div>
+                    <form
+                      th:action="@{'/guest/payment/session/' + ${sessionId}}"
+                      method="post"
+                      style="display: inline"
+                    >
+                      <input
+                        type="hidden"
+                        name="action"
+                        value="apply-voucher"
+                      />
+                      <input
+                        type="hidden"
+                        name="voucherId"
+                        th:value="${voucher.id}"
+                      />
+                      <button
+                        type="submit"
+                        class="apply-btn"
+                        th:id="'apply-btn-' + ${voucher.id}"
+                      >
+                        Áp dụng
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Applied Voucher Display -->
+              <div
+                th:if="${payment.appliedVoucherId != null}"
+                class="applied-voucher"
+              >
+                <div class="alert alert-success">
+                  <i class="fas fa-check-circle"></i>
+                  <strong>Voucher đã áp dụng:</strong>
+                  <span th:text="${payment.appliedVoucher?.code}"
+                    >VOUCHER_CODE</span
+                  >
+                  <form
+                    th:action="@{'/guest/payment/session/' + ${sessionId}}"
+                    method="post"
+                    style="display: inline"
+                  >
+                    <input type="hidden" name="action" value="remove-voucher" />
+                    <button
+                      type="submit"
+                      class="btn btn-sm btn-outline-danger ms-2"
+                    >
+                      <i class="fas fa-times"></i> Hủy
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <!-- Membership Section -->
+            <div class="membership-section">
+              <h4 class="section-title">
+                <i class="fas fa-user-circle"></i>
+                Thông tin thành viên
+              </h4>
+
+              <!-- Membership Info Display -->
+              <div th:if="${membership != null}" class="membership-info">
+                <div class="alert alert-success">
+                  <i class="fas fa-check-circle"></i>
+                  <strong>Thành viên:</strong>
+                  <span th:text="${membership.name}">Tên thành viên</span>
+                  <span class="text-muted"
+                    >(SĐT:
+                    <span th:text="${membership.phoneNumber}">0123456789</span
+                    >)</span
+                  >
+                  <br />
+                  <small
+                    >Điểm hiện tại:
+                    <strong
+                      th:text="${membership.points != null ? membership.points : 0}"
+                      >0</strong
+                    >
+                    điểm</small
+                  >
+                </div>
+              </div>
+
+              <!-- Fixed Membership Info Display (always show if membership exists) -->
+              <div th:if="${membership != null}" class="membership-fixed-info">
+                <div class="card">
+                  <div class="card-header bg-primary text-white">
+                    <i class="fas fa-user-circle"></i>
+                    Thông tin thành viên
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-md-6">
+                        <strong>Tên:</strong>
+                        <span th:text="${membership.name}">Tên thành viên</span>
+                      </div>
+                      <div class="col-md-6">
+                        <strong>Điểm:</strong>
+                        <span
+                          class="text-primary fw-bold"
+                          th:text="${membership.points != null ? membership.points : 0}"
+                          >0</span
+                        >
+                        <small class="text-muted">điểm</small>
+                      </div>
+                    </div>
+                    <div class="row mt-2">
+                      <div class="col-12">
+                        <small class="text-muted">
+                          <i class="fas fa-phone"></i>
+                          <span th:text="${membership.phoneNumber}"
+                            >0123456789</span
+                          >
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Membership Verification Form -->
+              <div th:if="${membership == null}" class="membership-verify">
+                <div class="membership-form">
+                  <form
+                    th:action="@{'/guest/payment/session/' + ${sessionId}}"
+                    method="post"
+                    id="membershipVerifyForm"
+                  >
+                    <input
+                      type="hidden"
+                      name="action"
+                      value="verify-membership"
+                    />
+                    <div class="form-group">
+                      <label for="phoneNumber"
+                        >Nhập số điện thoại để tích điểm:</label
+                      >
+                      <div class="input-group">
+                        <input
+                          type="text"
+                          id="phoneNumber"
+                          name="phoneNumber"
+                          class="form-control"
+                          placeholder="Số điện thoại"
+                          maxlength="10"
+                        />
+                        <button type="submit" class="btn btn-outline-primary">
+                          <i class="fas fa-search"></i> Kiểm tra
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+
+                  <div class="membership-options">
+                    <p class="text-muted mb-2">Chưa có tài khoản thành viên?</p>
+                    <a
+                      th:href="@{'/guest/membership/register?sessionId=' + ${sessionId}}"
+                      class="btn btn-outline-success btn-sm"
+                    >
+                      <i class="fas fa-user-plus"></i> Đăng ký thành viên
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Payment Method Section -->
+            <div class="payment-method-section">
+              <h4 class="section-title">Chọn phương thức thanh toán:</h4>
+              <div class="payment-methods-grid">
+                <!-- QR Banking -->
+                <div class="payment-method-item">
+                  <input
+                    type="radio"
+                    id="qrBanking"
+                    name="paymentMethod"
+                    value="QR_BANKING"
+                    class="payment-radio"
+                  />
+                  <label for="qrBanking" class="payment-method-label">
+                    <div class="payment-icon qr-banking">
+                      <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <span class="payment-text">QR banking</span>
+                  </label>
+                </div>
+
+                <!-- Tiền mặt (Cash) -->
+                <div class="payment-method-item">
+                  <input
+                    type="radio"
+                    id="cash"
+                    name="paymentMethod"
+                    value="CASH"
+                    class="payment-radio"
+                  />
+                  <label for="cash" class="payment-method-label">
+                    <div class="payment-icon cash-icon">
+                      <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <span class="payment-text">Tiền mặt</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Payment Button -->
+            <div class="payment-button-section">
+              <button
+                class="btn btn-primary btn-lg payment-btn"
+                id="confirmPaymentBtn"
+                disabled
+              >
+                <i class="fas fa-check-circle"></i>
+                Xác nhận thanh toán
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div
+      class="modal fade"
+      id="loadingModal"
+      tabindex="-1"
+      data-bs-backdrop="static"
+      data-bs-keyboard="false"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-body text-center">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Đang xử lý...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/payment.js}"></script>
+    <script>
+      // Pass data from server to JavaScript
+      window.paymentData = {
+        sessionId: /*[[${sessionId}]]*/ null,
+        orderTotal: /*[[${payment.orderTotal}]]*/ 0,
+        originalTotal: /*[[${originalTotal}]]*/ 0,
+        discountAmount: /*[[${discountAmount}]]*/ 0,
+        finalTotal: /*[[${finalTotal}]]*/ 0,
+        membershipPoints: /*[[${payment.membershipPoints}]]*/ 0,
+        appliedVoucherId: /*[[${payment.appliedVoucherId}]]*/ null,
+        availableVouchers: /*[[${availableVouchers}]]*/ [],
+      };
+
+      // Ensure sessionId is properly converted to number
+      if (window.paymentData.sessionId) {
+        window.paymentData.sessionId = parseInt(window.paymentData.sessionId);
+      }
+
+      // Debug: Check if sessionId is valid
+      console.log("=== TEMPLATE DEBUG ===");
+      console.log("Raw sessionId from Thymeleaf:", /*[[${sessionId}]]*/ "null");
+      console.log("SessionId from template:", window.paymentData.sessionId);
+      console.log("SessionId type:", typeof window.paymentData.sessionId);
+      console.log("SessionId is null:", window.paymentData.sessionId === null);
+      console.log(
+        "SessionId is undefined:",
+        window.paymentData.sessionId === undefined
+      );
+      console.log("SessionId is NaN:", isNaN(window.paymentData.sessionId));
+      console.log(
+        "SessionId value after parseInt:",
+        parseInt(window.paymentData.sessionId)
+      );
+      console.log("Full window.paymentData:", window.paymentData);
+    </script>
+  </body>
+</html>

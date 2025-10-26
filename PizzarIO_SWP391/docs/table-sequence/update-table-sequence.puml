@@ -1,0 +1,76 @@
+@startuml
+title Update Table - Manager
+
+actor Manager
+participant Browser
+participant TableController
+participant TableService
+participant TableRepository
+participant ReservationRepository
+participant WebSocketService
+participant Database
+
+Manager -> Browser: Click "Update Table" after selecting table
+Browser --> Manager: Display update modal with pre-filled form
+
+note right
+Modal displays:
+- Current capacity
+- Table condition dropdown
+- Submit and Cancel buttons
+end note
+
+Manager -> Browser: Update capacity and condition, click "Update"
+Browser -> TableController: POST /manager/tables/update/{id}
+
+TableController -> TableController: Validate TableManagementDTO
+
+alt Validation successful
+    TableController -> TableService: updateTable(id, TableManagementDTO)
+    
+    TableService -> TableRepository: findById(id)
+    TableRepository -> Database: SELECT * FROM Dining_Table WHERE id = ?
+    Database --> TableRepository: DiningTable
+    TableRepository --> TableService: DiningTable
+    
+    alt Table not found
+        TableService --> TableController: RuntimeException("Table not found")
+        TableController -> Browser: HTML with error message
+        Browser --> Manager: Display "Table not found" error
+        
+        alt Table not empty or has reservations
+            TableService --> TableController: RuntimeException("Table is not empty or has reservations!")
+            TableController -> Browser: HTML with error message
+            Browser --> Manager: Display cannot update error
+        else Table empty and no reservations have status CONFIRMED
+            TableService -> TableService: Update table with new data
+            TableService -> TableRepository: save(table)
+            TableRepository -> Database: UPDATE Dining_Table SET ...
+            Database --> TableRepository: Updated DiningTable
+            TableRepository --> TableService: Saved DiningTable
+            
+            alt Table marked as RETIRED
+                TableService -> WebSocketService: broadcastTableRetired(id, "Manager")
+                WebSocketService --> WebSocketService: Send WebSocket message to all clients
+            end
+            
+            TableService --> TableController: Success
+            TableController -> Browser: Redirect to /manager/tables
+            Browser -> TableController: GET /manager/tables
+            TableController -> TableService: getAllTablesForManager()
+            TableService -> TableRepository: getAllTablesForManager()
+            TableRepository -> Database: SELECT * FROM Dining_Table
+            Database --> TableRepository: List<DiningTable>
+            TableRepository --> TableService: List<DiningTable>
+            TableService --> TableController: List<TableDTO>
+            TableController -> Browser: HTML with updated table
+            Browser --> Manager: Display table map with updated information
+        end
+    end
+
+else Validation failed
+    TableController -> Browser: HTML with error messages
+    Browser --> Manager: Display form with validation errors
+end
+
+@enduml

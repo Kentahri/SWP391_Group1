@@ -32,13 +32,6 @@ function subscribeToTopics() {
         console.log('Table update received:', update);
         handleTableUpdate(update);
     });
-
-    // Kênh riêng cho nhân viên thu ngân để nhận thông báo
-    stompClient.subscribe('/queue/cashier-' + window.currentStaffId, function (message) {
-        const notification = JSON.parse(message.body);
-        console.log('Personal notification:', notification);
-        showToast(notification.message || notification, 'info');
-    });
 }
 
 /**
