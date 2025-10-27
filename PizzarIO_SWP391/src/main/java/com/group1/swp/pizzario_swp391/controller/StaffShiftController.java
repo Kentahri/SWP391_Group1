@@ -12,6 +12,7 @@ import com.group1.swp.pizzario_swp391.entity.StaffShift;
 import com.group1.swp.pizzario_swp391.repository.StaffShiftRepository;
 import com.group1.swp.pizzario_swp391.service.ShiftService;
 import com.group1.swp.pizzario_swp391.service.StaffService;
+import com.group1.swp.pizzario_swp391.service.StaffShiftManagementService;
 import com.group1.swp.pizzario_swp391.service.StaffShiftService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -36,11 +37,12 @@ import java.util.*;
 public class StaffShiftController {
 
     StaffShiftService staffShiftService;
-    StaffShiftRepository staffShiftRepository;
 
     StaffService staffService;
     ShiftService shiftService;
     // removed unused mapperResponse
+
+    StaffShiftManagementService staffShiftManagementService;
 
     @GetMapping("/staff_shifts")
     public String listStaffShifts(
@@ -265,7 +267,7 @@ public class StaffShiftController {
         // Validation 4: Check duplicate - Same staff + same date + same shift
         if (staffShiftDTO.getWorkDate() != null && staffShiftDTO.getStaffId() != null
                 && staffShiftDTO.getShiftId() != null) {
-            List<StaffShift> existingShifts = staffShiftRepository.findAllShiftsByStaffIdAndDate(
+            List<StaffShift> existingShifts = staffShiftService.findAllShiftsByStaffIdAndDate(
                     staffShiftDTO.getStaffId(),
                     staffShiftDTO.getWorkDate());
 
@@ -288,18 +290,9 @@ public class StaffShiftController {
             }
         }
 
-
         // Đảm bảo status luôn là SCHEDULED cho create mode
         if (isCreateMode) {
             staffShiftDTO.setStatus("SCHEDULED");
-
-
-
-
-
-
-
-
         }
 
         if (bindingResult.hasErrors()) {
@@ -316,7 +309,7 @@ public class StaffShiftController {
             ra.addFlashAttribute("message", "Cập nhật ca làm việc thành công");
         } else {
             // Create new staff shift
-            staffShiftService.create(staffShiftDTO);
+            staffShiftManagementService.createStaffShiftFromDTO(staffShiftDTO);
             ra.addFlashAttribute("message", "Thêm ca làm việc thành công");
         }
 

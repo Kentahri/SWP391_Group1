@@ -2,11 +2,13 @@ package com.group1.swp.pizzario_swp391.service;
 
 import com.group1.swp.pizzario_swp391.entity.Staff;
 import com.group1.swp.pizzario_swp391.entity.StaffShift;
+import com.group1.swp.pizzario_swp391.event.staff.StaffShiftUpdatedEvent;
 import com.group1.swp.pizzario_swp391.repository.LoginRepository;
 import com.group1.swp.pizzario_swp391.repository.StaffShiftRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -24,6 +26,7 @@ public class LoginService {
 
     private final LoginRepository loginRepository;
     private final StaffShiftRepository staffShiftRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public Staff findByEmail(String email) {
         return loginRepository.findByEmail(email).orElseThrow();
@@ -99,6 +102,12 @@ public class LoginService {
         ss.setCheckIn(actualCheckIn);
         staffShiftRepository.save(ss);
 
+        // ✅ THÊM: Trigger event để cancel absent check task
+        eventPublisher.publishEvent(new StaffShiftUpdatedEvent(this, ss, true));
+
+        log.info("LoginService: Checked in staff {} for shift {} - triggered event",
+                staff.getName(), ss.getId());
+
         return true;
     }
 
@@ -116,6 +125,7 @@ public class LoginService {
                 }));
     }
 
+    @Transactional
     public void recordLogoutByEmail(String email) {
         LocalDate today = LocalDate.now();
         LocalTime now = LocalTime.now();
@@ -151,5 +161,11 @@ public class LoginService {
 
         staffShift.setCheckOut(LocalDateTime.now());
         staffShiftRepository.save(staffShift);
+
+        // ✅ THÊM: Trigger event để cancel auto-complete task
+        eventPublisher.publishEvent(new StaffShiftUpdatedEvent(this, staffShift, true));
+
+        log.info("LoginService: Checked out staff {} for shift {} - triggered event",
+                staff.getName(), staffShift.getId());
     }
 }

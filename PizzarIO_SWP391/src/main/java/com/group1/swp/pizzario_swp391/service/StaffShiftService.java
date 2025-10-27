@@ -31,12 +31,13 @@ public class StaffShiftService {
         private final StaffShiftMapper staffShiftMapper;
         private final StaffRepository staffRepository;
         private final ShiftRepository shiftRepository;
+        private final StaffShiftManagementService staffShiftManagementService;
 
         @Transactional
         public void create(StaffShiftDTO staffShiftDTO) {
                 // Lấy thông tin shift để lấy salaryPerShift
                 Shift shift = shiftRepository.findById(staffShiftDTO.getShiftId())
-                                .orElseThrow(() -> new RuntimeException("Shift not found"));
+                        .orElseThrow(() -> new RuntimeException("Shift not found"));
 
                 // Tự động set lương từ shift
                 staffShiftDTO.setHourlyWage(BigDecimal.valueOf(shift.getSalaryPerShift()));
@@ -44,13 +45,16 @@ public class StaffShiftService {
                 // Mặc định status là SCHEDULED
                 staffShiftDTO.setStatus("SCHEDULED");
 
+                // ✅ BUSINESS LOGIC: Convert DTO to Entity
                 StaffShift staffShift = staffShiftMapper.toStaffShift(staffShiftDTO);
 
                 staffShift.setStaff(staffRepository.findById(staffShiftDTO.getStaffId())
-                                .orElseThrow(() -> new RuntimeException("Staff not found")));
+                        .orElseThrow(() -> new RuntimeException("Staff not found")));
                 staffShift.setShift(shift);
 
+                // ✅ SỬA: Save trực tiếp vào Repository (không có event)
                 staffShiftRepository.save(staffShift);
+
         }
 
         public StaffShiftDTO getById(int id) {
@@ -145,5 +149,9 @@ public class StaffShiftService {
                 }
 
                 return weekDays;
+        }
+
+        public List<StaffShift> findAllShiftsByStaffIdAndDate(Integer staffId, LocalDate workDate) {
+                return staffShiftRepository.findAllShiftsByStaffIdAndDate(staffId, workDate);
         }
 }
