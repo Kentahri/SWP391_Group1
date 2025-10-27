@@ -127,12 +127,11 @@ public class OrderService{
 
     /**
      * Lấy danh sách orders cho kitchen dashboard
-     * Bao gồm các orders đang trong trạng thái PREPARING và SERVED
+     * Bao gồm các orders đang trong trạng thái PREPARING
      */
     public List<KitchenOrderDTO> getKitchenOrders() {
         List<Order> orders = orderRepository.findAll().stream()
-                .filter(order -> order.getOrderStatus() == Order.OrderStatus.PREPARING 
-                        || order.getOrderStatus() == Order.OrderStatus.SERVED)
+                .filter(order -> order.getOrderStatus() == Order.OrderStatus.PREPARING)
                 .sorted((o1, o2) -> {
                     // Sắp xếp theo thời gian tạo, order mới nhất trước
                     if (o1.getCreatedAt() == null && o2.getCreatedAt() == null) return 0;
@@ -163,10 +162,9 @@ public class OrderService{
             Order.OrderType typeEnum = Order.OrderType.valueOf(type);
             orders = orderRepository.findByOrderType(typeEnum);
         } else {
-            // Mặc định: PREPARING và SERVED (như cũ)
+            // Mặc định: PREPARING
             orders = orderRepository.findAll().stream()
-                    .filter(order -> order.getOrderStatus() == Order.OrderStatus.PREPARING 
-                            || order.getOrderStatus() == Order.OrderStatus.SERVED)
+                    .filter(order -> order.getOrderStatus() == Order.OrderStatus.PREPARING)
                     .toList();
         }
         orders = orders.stream()
