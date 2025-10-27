@@ -8,6 +8,8 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
@@ -55,16 +57,40 @@ public class GeminiChatService {
 
 
     private static final String SYSTEM_PROMPT = """
-            Bạn là trợ lý ảo thông minh của nhà hàng pizza PizzarIO.
+            Bạn là chatbot tư vấn món ăn của nhà hàng PizzarIO 🍕✨
+            Nhiệm vụ của bạn là giúp khách chọn món một cách dễ dàng, nhanh chóng và vui vẻ.
             
-            Nhiệm vụ của bạn:
-            - Trả lời các câu hỏi về menu pizza, giá cả, khuyến mãi
-            - Tư vấn món ăn phù hợp
-            - Giải đáp thắc mắc về giờ mở cửa, địa chỉ, dịch vụ
+            Phong cách trả lời:
+            - Dễ thương, nhiệt tình, thân thiện 😄
+            - Câu trả lời ngắn gọn, rõ ràng, dễ đọc (không dùng câu dài).
+            - Khuyến khích, gợi ý, không ép buộc.
+            - Dùng emoji hợp lý (1–3 emoji mỗi câu, đừng lạm dụng).
+            - Nếu người dùng hỏi chung chung → hỏi lại để làm rõ nhu cầu (ví dụ: ăn mấy người? thích vị gì?).
             
+            Khi tư vấn món:
+            - Nếu khách hỏi món rẻ nhất → gợi ý các món giá thấp dễ chọn.
+            - Nếu khách hỏi món đắt / cao cấp → gợi ý món .
+            - Nếu khách hỏi khuyến mãi → ưu tiên món đang flash sale hoặc voucher.
+            - Nếu khách hỏi combo → gợi ý combo kèm nước/khai vị cho tiện.
+            - Nếu khách hỏi bán chạy → giới thiệu các món bán được nhiều.
+            --> Tất cả sẽ dựa trên dữ liệu về món sẽ được đính kèm ở bên dưới, chứ không tự bịa ra.
             
+            Không làm:
+            - Không trả lời như robot.
+            - Không nói lan man dài dòng.
+            - Không nhắc đến mô hình AI hay cách bạn được tạo ra.
             
-            Phong cách: Thân thiện, ngắn gọn, dễ hiểu, sử dụng emoji phù hợp.
+            Cuối mỗi câu trả lời:
+            - Gợi ý hành động tiếp theo, ví dụ:
+              “Bạn muốn mình chọn giúp size phù hợp không? 😊”
+              “Muốn mình xem món nào hợp với khẩu vị phô mai không nè? 🧀”
+            
+            Ví dụ câu trả lời chuẩn:
+            “Bạn muốn tìm món giá dễ thương đúng không nè? 😄 \s
+            Mình đề xuất thử Pizza Hải Sản Mini và Pizza Bò Phô Mai size S, vừa ngon vừa tiết kiệm 💛 \s
+            Bạn ăn mấy người để mình gợi ý chuẩn hơn nha? 😋”
+            
+            Dưới đây là dữ liệu món ăn được cung cấp dựa trên câu hỏi của người dùng:
             """;
 
     private String normalize(String input) {
@@ -83,15 +109,15 @@ public class GeminiChatService {
         regexIntentDetector.init(provider);
         String raw = normalize(input);
         log.debug("📝 Normalized input: {}", raw);
-        
+
         Intent regexIntent = regexIntentDetector.analyzerUserIntent(raw);
         log.debug("🎯 Regex intent: {}", regexIntent);
-        
+
         if (regexIntent != Intent.OTHER) {
             log.info("✅ Intent detected by regex: {}", regexIntent);
             return regexIntent;
         }
-        
+
         fuzzyIntentDetector.init(provider);
         Intent fuzzyIntent = fuzzyIntentDetector.detect(raw);
         log.info("✅ Intent detected by fuzzy: {}", fuzzyIntent);
@@ -104,8 +130,7 @@ public class GeminiChatService {
             log.info("🔍 Starting chat with message: {}", userMessage);
             Intent intent = detect(userMessage);
             log.info("✅ Detected intent: {}", intent);
-            
-            StringBuilder fullPrompt;
+
             String requirement;
             switch (intent) {
                 case CHEAPEST -> {
@@ -134,20 +159,18 @@ public class GeminiChatService {
                 }
             }
 
-            log.info("📝 Requirement generated, length: {}", requirement.length());
-            fullPrompt = new StringBuilder(SYSTEM_PROMPT).append("\n").append(requirement);
+            requirement = requirement + "\n\nKhách hàng hỏi: " + userMessage;
+            String fullPrompt = SYSTEM_PROMPT + "\n" + requirement;
             log.info("🤖 Calling Gemini API with model: {}", model);
-            
+
             GenerateContentConfig config = GenerateContentConfig.builder()
                     .temperature(0.7f)
                     .topK(50f)
                     .topP(0.85f)
-                    .maxOutputTokens(2000)
+                    .maxOutputTokens(1024)
                     .build();
 
-            String response = geminiClient.models.generateContent(model, fullPrompt.toString(), config).text();
-            log.info("✅ Got response from Gemini, length: {}", response.length());
-            return response;
+            return geminiClient.models.generateContent(model, fullPrompt, config).text();
         } catch (Exception e) {
             log.error("❌ Error in chat method: ", e);
             return "Xin lỗi, tôi đang gặp lỗi. Vui lòng thử lại sau! 😔";
@@ -159,8 +182,9 @@ public class GeminiChatService {
         try {
             log.info("🔍 Fetching cheapest products...");
             List<Product> cheapestProducts = getCheapestProducts();
-            log.info("✅ Found {} cheapest products", cheapestProducts.size());
-
+            if (cheapestProducts.isEmpty()) {
+                return "Hiện tại không có sản phẩm giá thấp trong menu. Vui lòng xem các sản phẩm khác nhé! 💎";
+            }
             String response = buildProductResponse(cheapestProducts, "giá rẻ nhất");
             log.info("📝 Built response for cheapest products");
             return response;
@@ -173,7 +197,9 @@ public class GeminiChatService {
     private String handleHighestIntent() {
         try {
             List<Product> highestProducts = getHighestPriceProducts();
-
+            if (highestProducts.isEmpty()) {
+                return "Hiện tại không có sản phẩm cao cấp trong menu. Vui lòng xem các sản phẩm khác nhé! 💎";
+            }
             String response = buildProductResponse(highestProducts, "giá cao nhất");
             log.info("Highest products found: {}", highestProducts.size());
             return response;
@@ -221,7 +247,9 @@ public class GeminiChatService {
     private String handleBestSellerIntent() {
         try {
             List<Product> bestSellerProducts = getBestSellerProducts();
-
+            if (bestSellerProducts.isEmpty()) {
+                return "Hiện tại chưa có sản phẩm bán chạy. Vui lòng xem các sản phẩm trong menu nhé! 🔥";
+            }
             String response = buildProductResponse(bestSellerProducts, "bán chạy");
             log.info("Best seller products found: {}", bestSellerProducts.size());
             return response;
@@ -234,15 +262,14 @@ public class GeminiChatService {
 
 
     private List<Product> getCheapestProducts() {
-        log.debug("📦 Querying database for cheapest products...");
-        List<Product> products = productRepository.findCheapestProducts();
-        log.debug("✅ Retrieved {} products from database", products.size());
-        return products;
+        Pageable pageable = PageRequest.of(0, 5);
+        return productRepository.findCheapestProducts(pageable);
     }
 
 
     private List<Product> getHighestPriceProducts() {
-        return productRepository.findHighestPriceProducts();
+        Pageable pageable = PageRequest.of(0, 5);
+        return productRepository.findHighestPriceProducts(pageable);
     }
 
     private List<Product> getPromotionProducts() {
@@ -278,7 +305,7 @@ public class GeminiChatService {
 
     private String buildProductResponse(List<Product> products, String type) {
         StringBuilder response = new StringBuilder();
-        
+
         switch (type.toLowerCase()) {
             case "giá rẻ nhất" -> response.append("Các món giá rẻ nhất:");
             case "giá cao nhất" -> response.append("Các món cao cấp:");
@@ -289,11 +316,9 @@ public class GeminiChatService {
 
         for (int i = 0; i < Math.min(products.size(), 5); i++) {
             Product product = products.get(i);
-            response.append("\n\n🍕 ").append(product.getName());
+            response.append(product.getName());
 
-            if (product.getBasePrice() > 0) {
-                response.append(" - ").append(formatPrice(product.getBasePrice()));
-            }
+            response.append(" - ").append(formatPrice(product.getBasePrice()));
 
             if (product.getDescription() != null && !product.getDescription().isEmpty()) {
                 response.append("\n   ").append(product.getDescription());
