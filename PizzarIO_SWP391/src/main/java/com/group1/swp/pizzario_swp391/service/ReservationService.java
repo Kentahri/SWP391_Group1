@@ -207,7 +207,7 @@ public class ReservationService {
     /**
      * Khóa bàn tự động nếu đã đến thời gian quy định
      */
-    @Scheduled(fixedRate = 5000)
+    //@Scheduled(fixedRate = 5000)
     @Transactional
     public synchronized void closeTable() {
         log.info("🔄 Scheduled: closeTable() is running...");

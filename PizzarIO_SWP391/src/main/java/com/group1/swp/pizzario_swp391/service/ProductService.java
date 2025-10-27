@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.group1.swp.pizzario_swp391.dto.websocket.ProductStatusMessage;
 import lombok.AccessLevel;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,8 @@ public class ProductService {
     ProductRepository productRepository;
     ProductResponseMapper productMapper;
     CategoryRepository categoryRepository;
+
+    WebSocketService webSocketService;
 
     static final String PRODUCT_NOT_FOUND = "Product not found";
     static final String CATEGORY_NOT_FOUND = "Category not found";
@@ -70,6 +73,12 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException(CATEGORY_NOT_FOUND + " with ID: " + createDTO.getCategoryId()));
         product.setCategory(category);
 
+        webSocketService.broadcastProductChange(
+                ProductStatusMessage.MessageType.PRODUCT_CREATED,
+                product,
+                "Manager"
+        );
+
         productRepository.save(product);
     }
 
@@ -89,6 +98,13 @@ public class ProductService {
         }
 
         productRepository.save(product);
+
+        webSocketService.broadcastProductChange(
+                ProductStatusMessage.MessageType.PRODUCT_UPDATED,
+                product,
+                "Manager"
+        );
+
     }
 
     public void updateProductActive(Long id, Boolean active) {
@@ -96,6 +112,9 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException(PRODUCT_NOT_FOUND));
         product.setActive(active != null && active);
         product.setUpdatedAt(java.time.LocalDateTime.now());
+
+        Product savedProduct = productRepository.save(product);
+
         productRepository.save(product);
     }
 
@@ -106,12 +125,24 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
+    // Cập nhật method toggleProductActive()
     public void toggleProductActive(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(PRODUCT_NOT_FOUND));
-        product.setActive(!product.isActive());
+
+        boolean newStatus = !product.isActive();
+
+        product.setActive(newStatus);
         product.setUpdatedAt(LocalDateTime.now());
         productRepository.save(product);
+
+        // Broadcast WebSocket message to all guests
+
+        webSocketService.broadcastProductChange(
+                ProductStatusMessage.MessageType.PRODUCT_TOGGLED,
+                product,
+                "Manager"
+        );
     }
 
     public List<ProductResponseDTO> searchProducts(String query) {

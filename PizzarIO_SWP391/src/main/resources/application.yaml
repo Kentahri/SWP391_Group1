@@ -48,6 +48,12 @@ server:
         same-site: lax #Chống CSRF
       timeout: 30m
 
+logging:
+  level:
+    com.group1.swp.pizzario_swp391.service.StaffScheduleService: DEBUG
+    com.group1.swp.pizzario_swp391.service.StaffShiftManagementService: DEBUG
+    org.springframework.context.event: DEBUG
+
 gemini:
   api:
     key: ${GEMINI_API_KEY}
