@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import com.group1.swp.pizzario_swp391.dto.data_analytics.ProductStatsDTO;
 import com.group1.swp.pizzario_swp391.entity.Order;
+import com.group1.swp.pizzario_swp391.entity.Product;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -37,6 +38,20 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                                 ORDER BY SUM(oi.quantity) DESC
                         """)
         List<ProductStatsDTO> findTopBestSellingProducts(Pageable pageable);
+
+        @Query("""
+                                    SELECT p
+                                    FROM Order o
+                                    JOIN o.orderItems oi
+                                    JOIN oi.product p
+                                    WHERE o.orderStatus = 'COMPLETED' AND o.paymentStatus = 'PAID'
+                                    GROUP BY p.id, p.name, p.description, p.imageURL, p.basePrice, 
+                                             p.flashSalePrice, p.flashSaleStart, p.flashSaleEnd, 
+                                             p.active, p.createdAt, p.updatedAt, p.category
+                                    ORDER BY SUM(oi.quantity) DESC
+                                    limit :quantity
+                           \s""")
+        List<Product> findTopBestSellingProductsForGemini(int quantity);
 
         Order findFirstByMembership_IdOrderByCreatedAtAsc(Long membershipId);
 

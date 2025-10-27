@@ -4,7 +4,6 @@ import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,31 +14,33 @@ import org.springframework.stereotype.Service;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentConfig;
 import com.group1.swp.pizzario_swp391.entity.Product;
+import com.group1.swp.pizzario_swp391.repository.OrderRepository;
 import com.group1.swp.pizzario_swp391.repository.ProductRepository;
 import com.group1.swp.pizzario_swp391.utils.FuzzyIntentDetector;
 import com.group1.swp.pizzario_swp391.utils.RegexIntentDetector;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
+@Slf4j
 public class GeminiChatService {
+
 
     private final Client geminiClient;
     private final FuzzyIntentDetector fuzzyIntentDetector;
     private final RegexIntentDetector regexIntentDetector;
     private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
 
     @Value("${gemini.api.model}")
     private String model;
 
     public enum Intent {CHEAPEST, HIGHEST, PROMOTION, COMBO, BEST_SELLER, OTHER}
 
-    @Component
     public interface SynonymProvider {
         Map<Intent, List<String>> getSynonyms();
     }
 
-    private final class SynonymProviderImpl implements SynonymProvider {
+    private static final class SynonymProviderImpl implements SynonymProvider {
         @Override
         public Map<Intent, List<String>> getSynonyms() {
             return Map.of(
@@ -53,7 +54,7 @@ public class GeminiChatService {
     }
 
 
-    private final String systemPrompt = """
+    private static final String SYSTEM_PROMPT = """
             Bạn là trợ lý ảo thông minh của nhà hàng pizza PizzarIO.
             
             Nhiệm vụ của bạn:
@@ -77,73 +78,101 @@ public class GeminiChatService {
     }
 
     private Intent detect(String input) {
-        regexIntentDetector.init(new SynonymProviderImpl());
+        log.debug("🔍 Detecting intent for input: {}", input);
+        SynonymProviderImpl provider = new SynonymProviderImpl();
+        regexIntentDetector.init(provider);
         String raw = normalize(input);
+        log.debug("📝 Normalized input: {}", raw);
+        
         Intent regexIntent = regexIntentDetector.analyzerUserIntent(raw);
-        if (regexIntent != Intent.OTHER) return regexIntent;
-        return fuzzyIntentDetector.detect(raw);
+        log.debug("🎯 Regex intent: {}", regexIntent);
+        
+        if (regexIntent != Intent.OTHER) {
+            log.info("✅ Intent detected by regex: {}", regexIntent);
+            return regexIntent;
+        }
+        
+        fuzzyIntentDetector.init(provider);
+        Intent fuzzyIntent = fuzzyIntentDetector.detect(raw);
+        log.info("✅ Intent detected by fuzzy: {}", fuzzyIntent);
+        return fuzzyIntent;
     }
 
 
     public String chat(String userMessage) {
         try {
+            log.info("🔍 Starting chat with message: {}", userMessage);
             Intent intent = detect(userMessage);
-            log.info("Detected intent: {}", intent);
-
+            log.info("✅ Detected intent: {}", intent);
+            
+            StringBuilder fullPrompt;
+            String requirement;
             switch (intent) {
-                case CHEAPEST:
-                    return handleCheapestIntent();
-
-                case HIGHEST:
-                    return handleHighestIntent();
-
-                case PROMOTION:
-                    return handlePromotionIntent();
-
-                case COMBO:
-                    return handleComboIntent();
-
-                case BEST_SELLER:
-                    return handleBestSellerIntent();
-
-//                case OTHER:
-                default:
-                    return null;
+                case CHEAPEST -> {
+                    log.info("💰 Handling CHEAPEST intent...");
+                    requirement = handleCheapestIntent();
+                }
+                case HIGHEST -> {
+                    log.info("💎 Handling HIGHEST intent...");
+                    requirement = handleHighestIntent();
+                }
+                case PROMOTION -> {
+                    log.info("🎉 Handling PROMOTION intent...");
+                    requirement = handlePromotionIntent();
+                }
+                case COMBO -> {
+                    log.info("🍕 Handling COMBO intent...");
+                    requirement = handleComboIntent();
+                }
+                case BEST_SELLER -> {
+                    log.info("🔥 Handling BEST_SELLER intent...");
+                    requirement = handleBestSellerIntent();
+                }
+                default -> {
+                    log.info("❓ Handling OTHER intent (general chat)...");
+                    requirement = "";
+                }
             }
 
+            log.info("📝 Requirement generated, length: {}", requirement.length());
+            fullPrompt = new StringBuilder(SYSTEM_PROMPT).append("\n").append(requirement);
+            log.info("🤖 Calling Gemini API with model: {}", model);
+            
+            GenerateContentConfig config = GenerateContentConfig.builder()
+                    .temperature(0.7f)
+                    .topK(50f)
+                    .topP(0.85f)
+                    .maxOutputTokens(2000)
+                    .build();
+
+            String response = geminiClient.models.generateContent(model, fullPrompt.toString(), config).text();
+            log.info("✅ Got response from Gemini, length: {}", response.length());
+            return response;
         } catch (Exception e) {
-            log.error("Error in chat method: ", e);
+            log.error("❌ Error in chat method: ", e);
             return "Xin lỗi, tôi đang gặp lỗi. Vui lòng thử lại sau! 😔";
         }
     }
 
-    // ========== Query Methods (Placeholder - User will implement queries later) ==========
 
     private String handleCheapestIntent() {
-        //  parameter kept for future use in context-aware responses
         try {
+            log.info("🔍 Fetching cheapest products...");
             List<Product> cheapestProducts = getCheapestProducts();
-            if (cheapestProducts.isEmpty()) {
-                return "Hiện tại không có sản phẩm nào trong menu. Vui lòng thử lại sau! 😊";
-            }
+            log.info("✅ Found {} cheapest products", cheapestProducts.size());
 
             String response = buildProductResponse(cheapestProducts, "giá rẻ nhất");
-            log.info("Cheapest products found: {}", cheapestProducts.size());
+            log.info("📝 Built response for cheapest products");
             return response;
-
         } catch (Exception e) {
-            log.error("Error handling cheapest intent: ", e);
+            log.error("❌ Error handling cheapest intent: ", e);
             return "Không thể tìm sản phẩm giá rẻ nhất. Vui lòng thử lại sau!";
         }
     }
 
     private String handleHighestIntent() {
-        //  parameter kept for future use in context-aware responses
         try {
             List<Product> highestProducts = getHighestPriceProducts();
-            if (highestProducts.isEmpty()) {
-                return "Hiện tại không có sản phẩm nào trong menu. Vui lòng thử lại sau! 😊";
-            }
 
             String response = buildProductResponse(highestProducts, "giá cao nhất");
             log.info("Highest products found: {}", highestProducts.size());
@@ -156,7 +185,6 @@ public class GeminiChatService {
     }
 
     private String handlePromotionIntent() {
-        //  parameter kept for future use in context-aware responses
         try {
             List<Product> promotionProducts = getPromotionProducts();
             if (promotionProducts.isEmpty()) {
@@ -174,7 +202,6 @@ public class GeminiChatService {
     }
 
     private String handleComboIntent() {
-        //  parameter kept for future use in context-aware responses
         try {
             List<Product> comboProducts = getComboProducts();
             if (comboProducts.isEmpty()) {
@@ -192,12 +219,8 @@ public class GeminiChatService {
     }
 
     private String handleBestSellerIntent() {
-        //  parameter kept for future use in context-aware responses
         try {
             List<Product> bestSellerProducts = getBestSellerProducts();
-            if (bestSellerProducts.isEmpty()) {
-                return "Hiện tại không có sản phẩm nào trong menu. Vui lòng thử lại sau! 😊";
-            }
 
             String response = buildProductResponse(bestSellerProducts, "bán chạy");
             log.info("Best seller products found: {}", bestSellerProducts.size());
@@ -210,36 +233,19 @@ public class GeminiChatService {
     }
 
 
-
-    // ========== Database Query Methods (Placeholder - To be implemented) ==========
-
-    /**
-     * TODO: Implement query to get cheapest products
-     * Query suggestion: ORDER BY base_price ASC, LIMIT to top 5-10 products
-     */
     private List<Product> getCheapestProducts() {
-        // Placeholder - User will implement the actual query
-        return List.of(); // TODO: queryProductRepository().findCheapestProducts()
+        log.debug("📦 Querying database for cheapest products...");
+        List<Product> products = productRepository.findCheapestProducts();
+        log.debug("✅ Retrieved {} products from database", products.size());
+        return products;
     }
 
-    /**
-     * TODO: Implement query to get highest price products
-     * Query suggestion: ORDER BY base_price DESC, LIMIT to top 5-10 products
-     */
+
     private List<Product> getHighestPriceProducts() {
-        // Placeholder - User will implement the actual query
-        return List.of(); // TODO: productRepository.findHighestPriceProducts()
+        return productRepository.findHighestPriceProducts();
     }
 
-    /**
-     * TODO: Implement query to get products with active promotions
-     * Query suggestion: WHERE flash_sale_price IS NOT NULL
-     *                   AND flash_sale_start <= NOW()
-     *                   AND flash_sale_end >= NOW()
-     *                   AND is_active = true
-     */
     private List<Product> getPromotionProducts() {
-        // Placeholder - User will implement the actual query
         List<Product> allProducts = productRepository.findAll();
         LocalDateTime now = LocalDateTime.now();
 
@@ -250,17 +256,11 @@ public class GeminiChatService {
                         && !product.getFlashSaleStart().isAfter(now)
                         && !product.getFlashSaleEnd().isBefore(now)
                         && product.isActive())
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    /**
-     * TODO: Implement query to get combo products
-     * Query suggestion: JOIN with Category table
-     *                   WHERE category.name LIKE '%combo%'
-     *                   AND is_active = true
-     */
+
     private List<Product> getComboProducts() {
-        // Placeholder - User will implement the actual query
         List<Product> allProducts = productRepository.findAll();
 
         return allProducts.stream()
@@ -268,34 +268,23 @@ public class GeminiChatService {
                         && product.getCategory().getName() != null
                         && product.getCategory().getName().toLowerCase().contains("combo")
                         && product.isActive())
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    /**
-     * TODO: Implement query to get best seller products
-     * Query suggestion: JOIN with OrderItem table
-     *                   GROUP BY product_id
-     *                   ORDER BY SUM(quantity) DESC
-     *                   LIMIT to top 5-10 products
-     */
     private List<Product> getBestSellerProducts() {
-        // Placeholder - User will implement the actual query
-        return List.of(); // TODO: Need to aggregate from OrderItem
+        return orderRepository.findTopBestSellingProductsForGemini(5);
     }
 
-    // ========== Response Builder Methods ==========
 
     private String buildProductResponse(List<Product> products, String type) {
-        if (products.isEmpty()) {
-            return "Không tìm thấy sản phẩm nào phù hợp.";
-        }
-
         StringBuilder response = new StringBuilder();
-
-        if (products.size() == 1) {
-            response.append("Đây là sản phẩm ").append(type).append(" của chúng tôi: ");
-        } else {
-            response.append("Đây là các sản phẩm ").append(type).append(" của chúng tôi: ");
+        
+        switch (type.toLowerCase()) {
+            case "giá rẻ nhất" -> response.append("Các món giá rẻ nhất:");
+            case "giá cao nhất" -> response.append("Các món cao cấp:");
+            case "khuyến mãi" -> response.append("Các món đang khuyến mãi:");
+            case "combo" -> response.append("Combo:");
+            case "bán chạy" -> response.append("Món bán chạy nhất:");
         }
 
         for (int i = 0; i < Math.min(products.size(), 5); i++) {
@@ -309,11 +298,6 @@ public class GeminiChatService {
             if (product.getDescription() != null && !product.getDescription().isEmpty()) {
                 response.append("\n   ").append(product.getDescription());
             }
-        }
-
-        if (products.size() > 5) {
-            response.append("\n\n... và còn ").append(products.size() - 5)
-                    .append(" sản phẩm ").append(type).append(" khác!");
         }
 
         return response.toString();

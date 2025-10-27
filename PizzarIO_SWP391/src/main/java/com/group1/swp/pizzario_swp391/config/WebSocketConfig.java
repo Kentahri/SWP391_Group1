@@ -46,18 +46,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*")
-                .setHandshakeHandler(new DefaultHandshakeHandler(){
-                    @Override
-                    protected Principal determineUser(ServerHttpRequest request, WebSocketHandler wsHandler, Map<String, Object> attributes){
-                        // Tạo unique ID cho mỗi WebSocket connection
-                        // Không phụ thuộc HTTP Session để tránh bị logout ảnh hưởng
-                        String uniqueId = UUID.randomUUID().toString();
-                        return new WebSocketPrincipal(uniqueId);
-                    }
-                })
-                .withSockJS()
-                // Disable HTTP session cho SockJS
-                .setSessionCookieNeeded(false);
+                .withSockJS();
     }
 
     /**

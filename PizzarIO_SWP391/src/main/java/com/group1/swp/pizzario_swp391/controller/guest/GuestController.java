@@ -1,10 +1,7 @@
 package com.group1.swp.pizzario_swp391.controller.guest;
 
-import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
-import com.group1.swp.pizzario_swp391.entity.Session;
-import com.group1.swp.pizzario_swp391.repository.SessionRepository;
-import com.group1.swp.pizzario_swp391.service.*;
-import jakarta.servlet.http.HttpSession;
+import java.util.Optional;
+
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -12,10 +9,24 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.Optional;
+import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
+import com.group1.swp.pizzario_swp391.entity.Session;
+import com.group1.swp.pizzario_swp391.repository.SessionRepository;
+import com.group1.swp.pizzario_swp391.service.CartService;
+import com.group1.swp.pizzario_swp391.service.CategoryService;
+import com.group1.swp.pizzario_swp391.service.GuestService;
+import com.group1.swp.pizzario_swp391.service.OrderService;
+import com.group1.swp.pizzario_swp391.service.ProductService;
+import com.group1.swp.pizzario_swp391.service.TableService;
+
+import jakarta.servlet.http.HttpSession;
 
 @Slf4j
 @Controller
