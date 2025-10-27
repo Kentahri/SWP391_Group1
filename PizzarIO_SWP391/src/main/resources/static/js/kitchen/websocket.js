@@ -9,7 +9,8 @@
 let stompClient = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
-const BASE_URL = window.APP_CTX || "/pizzario";
+const BASE_URL = window.APP_CTX || '/pizzario';
+let isReloading = false; // Flag để tránh hiển thị notification khi đang reload
 
 // ==================== INITIALIZATION ====================
 window.addEventListener("DOMContentLoaded", function () {
@@ -96,37 +97,42 @@ function subscribeToTopics() {
  * Xử lý order mới từ guest
  */
 function handleNewOrder(message) {
-  try {
-    console.log("[Kitchen] Raw message received:", message);
-    console.log("[Kitchen] Message body:", message.body);
+    try {
+        console.log('[Kitchen] Raw message received:', message);
+        console.log('[Kitchen] Message body:', message.body);
+        
+        const orderData = JSON.parse(message.body);
+        console.log('[Kitchen] Parsed order data:', orderData);
 
-    const orderData = JSON.parse(message.body);
-    console.log("[Kitchen] Parsed order data:", orderData);
+        // Kiểm tra nếu đang ở trang chi tiết order
+        const isOnDetailPage = window.location.pathname.includes('/kitchen/order/') && 
+                               window.location.pathname !== '/kitchen/order-list';
 
-    // Xử lý theo loại message
-    if (orderData.type === "ORDER_UPDATED") {
-      console.log("[Kitchen] Order updated:", orderData);
-      upsertOrderCard(orderData);
-      showNotification(`Order ${orderData.code} đã được cập nhật`, "info");
-    } else if (orderData.type === "NEW_ORDER") {
-      console.log("[Kitchen] New order:", orderData);
-      upsertOrderCard(orderData);
-      showNotification(
-        `Có order mới: ${orderData.code} - ${
-          orderData.tableName || "Take away"
-        }`,
-        "info"
-      );
-      playNotificationSound();
-    } else {
-      // Fallback cho message không có type
-      upsertOrderCard(orderData);
-      showNotification(
-        `Có order mới: ${orderData.code} - ${
-          orderData.tableName || "Take away"
-        }`,
-        "info"
-      );
+        // Nếu đang reload hoặc đang ở trang detail với message ORDER_UPDATED, không hiển thị notification
+        if (isReloading || (isOnDetailPage && (orderData.type === 'ORDER_UPDATED' || orderData.type === 'ITEM_STATUS_CHANGED'))) {
+            console.log('[Kitchen] Suppressing notification during reload or on detail page');
+            return;
+        }
+
+        // Xử lý theo loại message
+        if (orderData.type === 'ORDER_UPDATED' || orderData.type === 'ITEM_STATUS_CHANGED') {
+            console.log('[Kitchen] Order updated:', orderData);
+            upsertOrderCard(orderData);
+            showNotification(`Order ${orderData.code} đã được cập nhật`, 'info');
+        } else if (orderData.type === 'NEW_ORDER') {
+            console.log('[Kitchen] New order:', orderData);
+            upsertOrderCard(orderData);
+            showNotification(`Có order mới: ${orderData.code} - ${orderData.tableName || 'Take away'}`, 'info');
+            playNotificationSound();
+        } else {
+            // Fallback cho message không có type
+            upsertOrderCard(orderData);
+            showNotification(`Có order mới: ${orderData.code} - ${orderData.tableName || 'Take away'}`, 'info');
+        }
+
+    } catch (error) {
+        console.error('Error parsing new order message:', error);
+        console.error('Message body:', message.body);
     }
   } catch (error) {
     console.error("Error parsing new order message:", error);
@@ -609,19 +615,35 @@ window.updateItemStatus = function (itemId, status, note = "") {
     return;
   }
 
-  const update = {
-    items: [
-      {
-        itemId: itemId,
-        status: status,
-        note: note,
-      },
-    ],
-    timestamp: new Date().toISOString(),
-  };
+    // Kiểm tra nếu đang ở trang chi tiết order
+    const isOnDetailPage = window.location.pathname.includes('/kitchen/order/') && 
+                           window.location.pathname !== '/kitchen/order-list';
+    
+    // Đánh dấu reload trước khi gửi message để tránh race condition
+    if (isOnDetailPage) {
+        isReloading = true;
+    }
 
-  stompClient.send("/app/kitchen/update-item", {}, JSON.stringify(update));
-  showNotification(`Đã cập nhật món ${itemId} thành ${status}`, "success");
+    const update = {
+        items: [{
+            itemId: itemId,
+            status: status,
+            note: note
+        }],
+        timestamp: new Date().toISOString()
+    };
+    
+    stompClient.send('/app/kitchen/update-item', {}, JSON.stringify(update));
+    
+    if (isOnDetailPage) {
+        // Reload trang để hiển thị status đã cập nhật
+        console.log('Reloading detail page after status update');
+        setTimeout(() => {
+            window.location.reload();
+        }, 300);
+    } else {
+        showNotification(`Đã cập nhật món ${itemId} thành ${status}`, 'success');
+    }
 };
 
 // ==================== CLEANUP ====================
