@@ -120,4 +120,24 @@ public class VoucherService {
         voucher.setActive(!voucher.isActive());
         voucherRepository.save(voucher);
     }
+
+    public List<Voucher> searchVouchers(String keyword, String status) {
+        List<Voucher> all = voucherRepository.findAllVoucherOrderByValidFromAsc();
+
+        return all.stream()
+                .filter(v -> {
+                    if (keyword == null || keyword.isBlank()) return true;
+                    String lower = keyword.toLowerCase();
+                    return v.getCode().toLowerCase().contains(lower)
+                            || (v.getDescription() != null && v.getDescription().toLowerCase().contains(lower));
+                })
+                .filter(v -> {
+                    if (status == null || status.isBlank()) return true;
+                    if (status.equals("active")) return v.isActive();
+                    if (status.equals("inactive")) return !v.isActive();
+                    return true;
+                })
+                .toList();
+    }
+
 }

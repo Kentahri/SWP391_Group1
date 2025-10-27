@@ -2,7 +2,9 @@ spring:
   application:
     name: PizzarIO
   config:
-    import: optional:classpath:env.properties
+    import:
+        - optional:classpath:env.properties
+        - optional:file:./config/manager-settings.yaml
   jpa:
     show-sql: true
     hibernate:
@@ -20,6 +22,9 @@ spring:
     password: ${DB_PASSWORD}
     url: ${DB_URL}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  sql:
+    init:
+      mode: always
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}
@@ -52,3 +57,6 @@ gemini:
   api:
     key: ${GEMINI_API_KEY}
     model: ${GEMINI_MODEL}
+
+pizzario:
+  settings-file-path: ./config/manager-settings.yaml

@@ -57,7 +57,7 @@ function onConnected(frame) {
     console.log('WebSocket connected:', frame);
     reconnectAttempts = 0;
     subscribeToTopics();
-    showMessage('Kết nối thành công! Bạn có thể chọn bàn.', 'success');
+    showToast('Kết nối thành công! Bạn có thể chọn bàn.', 'success');
 }
 
 /**
@@ -70,14 +70,14 @@ function onError(error) {
         const delay = Math.pow(2, reconnectAttempts) * 1000;
         console.log(`Reconnecting in ${delay}ms... (Attempt ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
 
-        showMessage(`Mất kết nối. Đang thử kết nối lại... (${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`, 'warning');
+        showToast(`Mất kết nối. Đang thử kết nối lại... (${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`, 'warning');
 
         setTimeout(function () {
             reconnectAttempts++;
             connectWebSocket();
         }, delay);
     } else {
-        showMessage('Mất kết nối. Vui lòng tải lại trang.', 'error');
+        showToast('Mất kết nối. Vui lòng tải lại trang.', 'error');
     }
 }
 
@@ -119,7 +119,7 @@ function handlePersonalMessage(message) {
         }
     } catch (error) {
         console.error('Error parsing personal message:', error);
-        showMessage('Có lỗi xảy ra khi xử lý phản hồi từ server', 'error');
+        showToast('Có lỗi xảy ra khi xử lý phản hồi từ server', 'error');
     }
 }
 
@@ -141,7 +141,7 @@ function handleTableBroadcast(message) {
  * Xử lý khi chọn bàn thành công
  */
 function handleTableSelectSuccess(data) {
-    showMessage(data.message || 'Chọn bàn thành công!', 'success');
+    showToast(data.message || 'Chọn bàn thành công!', 'success');
 
     // Redirect đến trang menu
     const params = new URLSearchParams();
@@ -168,7 +168,7 @@ function handleTableSelectConflict(data) {
         fullMessage += ' Gợi ý bàn trống: ' + availableTables.join(', ');
     }
 
-    showMessage(fullMessage, 'error');
+    showToast(fullMessage, 'error');
     highlightSuggestedTables(availableTables);
 }
 
@@ -176,7 +176,7 @@ function handleTableSelectConflict(data) {
  * Xử lý khi có lỗi
  */
 function handleTableSelectError(data) {
-    showMessage(data.message || 'Có lỗi xảy ra', 'error');
+    showToast(data.message || 'Có lỗi xảy ra', 'error');
 }
 
 // ==================== UI UPDATES ====================
@@ -229,28 +229,6 @@ function highlightSuggestedTables(tableIds) {
     });
 }
 
-/**
- * Hiển thị thông báo cho người dùng
- */
-function showMessage(message, type = 'info') {
-    const resultElement = document.getElementById('guest-result');
-    if (!resultElement) {
-        console.log('[Guest Message]', type, ':', message);
-        return;
-    }
-
-    resultElement.textContent = message;
-    resultElement.className = 'guest-result ' + type;
-
-    // Auto hide success messages
-    if (type === 'success') {
-        setTimeout(() => {
-            resultElement.textContent = '';
-            resultElement.className = 'guest-result';
-        }, 3000);
-    }
-}
-
 // ==================== PUBLIC API ====================
 /**
  * Guest chọn bàn
@@ -259,12 +237,12 @@ function showMessage(message, type = 'info') {
  */
 window.selectTable = function (tableId, guestCount = 1) {
     if (!stompClient || !stompClient.connected) {
-        showMessage('Chưa kết nối đến server. Vui lòng đợi...', 'warning');
+        showToast('Chưa kết nối đến server. Vui lòng đợi...', 'warning');
         return;
     }
 
     if (!guestSessionId) {
-        showMessage('Lỗi: Không tìm thấy session ID', 'error');
+        showToast('Lỗi: Không tìm thấy session ID', 'error');
         return;
     }
 
@@ -277,14 +255,13 @@ window.selectTable = function (tableId, guestCount = 1) {
     console.log('Sending table selection request:', request);
 
     try {
-        stompClient.send('/app/guest/select-table', {}, JSON.stringify(request));
-        showMessage('Đang xử lý yêu cầu...', 'info');
+        stompClient.send('/app/guest/table/select', {}, JSON.stringify(request));
+        showToast('Đang xử lý yêu cầu...', 'info');
     } catch (error) {
         console.error('Error sending table selection:', error);
-        showMessage('Không thể gửi yêu cầu. Vui lòng thử lại.', 'error');
+        showToast('Không thể gửi yêu cầu. Vui lòng thử lại.', 'error');
     }
 };
-
 /**
  * Lấy session ID hiện tại
  */
@@ -310,14 +287,3 @@ window.addEventListener('beforeunload', function () {
         });
     }
 });
-
-// ==================== BACKWARD COMPATIBILITY ====================
-// Giữ lại các function cũ để tương thích với code hiện có
-window.initGuestWebSocket = function () {
-    console.warn('initGuestWebSocket() is deprecated. Connection is now automatic.');
-};
-
-window.guestSelectTable = function (tableId, guestCount) {
-    console.warn('guestSelectTable() is deprecated. Use selectTable() instead.');
-    window.selectTable(tableId, guestCount);
-};
