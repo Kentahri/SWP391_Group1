@@ -6,6 +6,22 @@ body {
   padding: 0;
 }
 
+/* Ensure Font Awesome icons are properly displayed */
+.fas,
+.far,
+.fab,
+.fal,
+.fa {
+  font-family: "Font Awesome 6 Free" !important;
+  font-weight: 900 !important;
+  font-style: normal !important;
+  font-variant: normal !important;
+  text-rendering: auto !important;
+  line-height: 1 !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
 .payment-page {
   min-height: 100vh;
   background-color: #e3f2fd;
@@ -23,6 +39,12 @@ body {
   color: #8d6e63;
   font-weight: 600;
   margin-bottom: 1.5rem;
+}
+
+.order-summary-top h3 i {
+  margin-right: 0.5rem;
+  font-size: 1.3rem !important;
+  color: #8d6e63 !important;
 }
 
 .order-items-list {
@@ -109,6 +131,12 @@ body {
   font-size: 1.5rem;
 }
 
+.section-title i {
+  margin-right: 0.5rem;
+  font-size: 1.2rem !important;
+  color: #8d6e63 !important;
+}
+
 /* Voucher Section */
 .voucher-section {
   margin-bottom: 3rem;
@@ -158,6 +186,8 @@ body {
 
 .voucher-icon i {
   margin-right: 0.25rem;
+  font-size: 1rem !important;
+  color: white !important;
 }
 
 .voucher-text {
@@ -194,6 +224,16 @@ body {
   transform: scale(1.05);
 }
 
+.apply-btn i {
+  margin-right: 0.25rem;
+  font-size: 0.8rem !important;
+}
+
+.btn-outline-danger i {
+  margin-right: 0.25rem;
+  font-size: 0.8rem !important;
+}
+
 /* Membership Section */
 .membership-section {
   margin-bottom: 3rem;
@@ -228,8 +268,19 @@ body {
   margin-bottom: 0;
 }
 
+.membership-fixed-info .text-muted i {
+  margin-right: 0.25rem;
+  font-size: 0.9rem !important;
+  color: #6c757d !important;
+}
+
 .membership-info {
   margin-bottom: 1rem;
+}
+
+.membership-info .alert i {
+  margin-right: 0.5rem;
+  font-size: 1rem !important;
 }
 
 .membership-verify {
@@ -283,6 +334,11 @@ body {
   transform: scale(1.05);
 }
 
+.membership-form .btn-outline-primary i {
+  margin-right: 0.25rem;
+  font-size: 0.9rem !important;
+}
+
 .membership-options {
   text-align: center;
   padding-top: 1rem;
@@ -298,6 +354,11 @@ body {
 
 .membership-options .btn-outline-success:hover {
   transform: scale(1.05);
+}
+
+.membership-options .btn-outline-success i {
+  margin-right: 0.25rem;
+  font-size: 0.9rem !important;
 }
 
 /* Payment Method Section */
@@ -338,11 +399,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 2px solid #e9ecef;
 }
 
 .payment-icon i {
-  font-size: 2rem;
-  color: #666;
+  font-size: 2rem !important;
+  color: #666 !important;
 }
 
 .payment-text {
@@ -351,14 +413,57 @@ body {
   font-size: 0.9rem;
 }
 
+/* Unselected state - ensure neutral colors */
+.payment-method-label .payment-icon {
+  background: white;
+  border-color: #e9ecef;
+}
+
+.payment-method-label .payment-icon i {
+  color: #666 !important;
+}
+
+/* Hover effects for payment methods - but not when selected */
+.payment-method-label:hover .payment-icon {
+  border-color: #42a5f5;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(66, 165, 245, 0.2);
+}
+
+.payment-method-label:hover .payment-icon i {
+  color: #42a5f5 !important;
+}
+
+.payment-method-label:hover .payment-text {
+  color: #42a5f5;
+}
+
+/* Override hover effects when selected */
+.payment-radio:checked + .payment-method-label:hover .payment-icon {
+  background: #42a5f5;
+  border-color: #42a5f5;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(66, 165, 245, 0.3);
+}
+
+.payment-radio:checked + .payment-method-label:hover .payment-icon i {
+  color: white !important;
+}
+
+.payment-radio:checked + .payment-method-label:hover .payment-text {
+  color: #42a5f5;
+  font-weight: 600;
+}
+
 .payment-radio:checked + .payment-method-label .payment-icon {
   background: #42a5f5;
+  border-color: #42a5f5;
   transform: translateY(-2px);
   box-shadow: 0 8px 15px rgba(66, 165, 245, 0.3);
 }
 
 .payment-radio:checked + .payment-method-label .payment-icon i {
-  color: white;
+  color: white !important;
 }
 
 .payment-radio:checked + .payment-method-label .payment-text {
@@ -366,13 +471,13 @@ body {
   font-weight: 600;
 }
 
-/* Special styling for QR Banking */
-.qr-banking {
+/* Special styling for QR Banking - only when selected */
+.payment-radio:checked + .payment-method-label .qr-banking {
   background: #42a5f5 !important;
   color: white !important;
 }
 
-.qr-banking i {
+.payment-radio:checked + .payment-method-label .qr-banking i {
   color: white !important;
 }
 
@@ -484,6 +589,12 @@ body {
   padding: 1rem 1.5rem;
 }
 
+.card-header i {
+  margin-right: 0.5rem;
+  font-size: 1.1rem !important;
+  color: white !important;
+}
+
 .card-header h5 {
   margin: 0;
   font-weight: 600;
@@ -523,6 +634,11 @@ body {
   top: 2rem;
 }
 
+.applied-voucher .alert i {
+  margin-right: 0.5rem;
+  font-size: 1rem !important;
+}
+
 /* Payment Method Styles */
 .payment-method-option {
   margin-bottom: 1rem;
@@ -557,6 +673,7 @@ body {
   font-size: 2.5rem;
   margin-bottom: 1rem;
   display: block;
+  color: #666 !important;
 }
 
 .payment-method-card h6 {
@@ -581,6 +698,10 @@ body {
   color: white;
 }
 
+.payment-method-radio:checked + .payment-method-label .payment-method-card i {
+  color: white !important;
+}
+
 /* Payment Button */
 .payment-btn {
   background: linear-gradient(135deg, #42a5f5 0%, #1976d2 100%);
@@ -594,6 +715,12 @@ body {
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(66, 165, 245, 0.3);
   color: white;
+}
+
+.payment-btn i {
+  margin-right: 0.5rem;
+  font-size: 1.1rem !important;
+  color: white !important;
 }
 
 .payment-btn:hover:not(:disabled) {
@@ -622,6 +749,11 @@ body {
   height: 3rem;
 }
 
+.spinner-border i {
+  font-size: 1.5rem !important;
+  color: #007bff !important;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .order-summary-top {
@@ -645,10 +777,11 @@ body {
   .payment-icon {
     height: 60px;
     padding: 1rem;
+    border: 2px solid #e9ecef;
   }
 
   .payment-icon i {
-    font-size: 1.5rem;
+    font-size: 1.5rem !important;
   }
 
   .payment-text {
@@ -686,10 +819,11 @@ body {
   .payment-icon {
     height: 50px;
     padding: 0.75rem;
+    border: 2px solid #e9ecef;
   }
 
   .payment-icon i {
-    font-size: 1.2rem;
+    font-size: 1.2rem !important;
   }
 
   .payment-text {
@@ -776,6 +910,12 @@ body {
   font-size: 16px;
 }
 
+.qr-section i {
+  font-size: 2rem !important;
+  color: #007bff !important;
+  margin-bottom: 10px;
+}
+
 /* Success/Error Messages */
 .alert {
   border-radius: 10px;
@@ -783,14 +923,27 @@ body {
   font-weight: 500;
 }
 
+.alert i {
+  margin-right: 0.5rem;
+  font-size: 1rem !important;
+}
+
 .alert-success {
   background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
   color: #155724;
 }
 
+.alert-success i {
+  color: #155724 !important;
+}
+
 .alert-danger {
   background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
   color: #721c24;
+}
+
+.alert-danger i {
+  color: #721c24 !important;
 }
 
 /* Custom Scrollbar */
@@ -810,4 +963,49 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+/* Additional icon fixes */
+.fa-shopping-cart::before {
+  content: "\f07a" !important;
+}
+
+.fa-exclamation-triangle::before {
+  content: "\f071" !important;
+}
+
+.fa-check-circle::before {
+  content: "\f058" !important;
+}
+
+.fa-percentage::before {
+  content: "\f295" !important;
+}
+
+.fa-times::before {
+  content: "\f00d" !important;
+}
+
+.fa-user-circle::before {
+  content: "\f2bd" !important;
+}
+
+.fa-phone::before {
+  content: "\f095" !important;
+}
+
+.fa-search::before {
+  content: "\f002" !important;
+}
+
+.fa-user-plus::before {
+  content: "\f234" !important;
+}
+
+.fa-mobile-alt::before {
+  content: "\f3cd" !important;
+}
+
+.fa-money-bill-wave::before {
+  content: "\f53a" !important;
 }
