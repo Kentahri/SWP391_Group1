@@ -243,7 +243,7 @@
               <div class="order-header">
                 <span
                   th:class="'order-status ' + ${orderDetail.orderStatus.toString().toLowerCase()}"
-                  th:text="${orderDetail.orderStatus == 'PREPARING' ? 'Đang chuẩn bị' : (orderDetail.orderStatus == 'SERVED' ? 'Đã phục vụ' : (orderDetail.orderStatus == 'COMPLETED' ? 'Hoàn thành' : orderDetail.orderStatus))}"
+                  th:text="${orderDetail.orderStatus == 'PREPARING' ? 'Đang chuẩn bị' : (orderDetail.orderStatus == 'COMPLETED' ? 'Hoàn thành' : orderDetail.orderStatus)}"
                 >
                 </span>
               </div>
@@ -705,7 +705,7 @@
                   </div>
                 </div>
                 <span
-                  th:style="${order.orderStatus == 'PREPARING' ? 'background: #fff3cd; color: #856404;' : (order.orderStatus == 'SERVED' ? 'background: #d1ecf1; color: #0c5460;' : 'background: #d4edda; color: #155724;')}"
+                  th:style="${order.orderStatus == 'PREPARING' ? 'background: #fff3cd; color: #856404;' : 'background: #d4edda; color: #155724;'}"
                   style="
                     padding: 4px 12px;
                     border-radius: 20px;
@@ -715,7 +715,7 @@
                   "
                 >
                   <span
-                    th:text="${order.orderStatus == 'PREPARING' ? 'Đang chuẩn bị' : (order.orderStatus == 'SERVED' ? 'Đã phục vụ' : 'Hoàn thành')}"
+                    th:text="${order.orderStatus == 'PREPARING' ? 'Đang chuẩn bị' : 'Hoàn thành'}"
                     >—</span
                   >
                 </span>
@@ -748,7 +748,9 @@
                   >
                 </div>
                 <div class="reservation-info-row">
-                  <span class="reservation-info-label">💳 Phương thức Thanh Toán:</span>
+                  <span class="reservation-info-label"
+                    >💳 Phương thức Thanh Toán:</span
+                  >
                   <span
                     class="reservation-info-value"
                     th:text="${order.paymentMethod != null ? (order.paymentMethod.toString() == 'CASH' ? 'Tiền mặt' : (order.paymentMethod.toString() == 'QR_BANKING' ? 'QR Code' : (order.paymentMethod.toString() == 'CREDIT_CARD' ? 'Thẻ tín dụng' : order.paymentMethod.toString()))) : 'N/A'}"
@@ -859,7 +861,7 @@
                 <div style="text-align: center; margin-bottom: 15px">
                   <span
                     th:class="'order-status ' + ${order.orderStatus.toString().toLowerCase()}"
-                    th:text="${order.orderStatus == 'PREPARING' ? 'Đang chuẩn bị' : (order.orderStatus == 'SERVED' ? 'Đã phục vụ' : 'Hoàn thành')}"
+                    th:text="${order.orderStatus == 'PREPARING' ? 'Đang chuẩn bị' : 'Hoàn thành'}"
                     style="
                       padding: 4px 12px;
                       border-radius: 20px;

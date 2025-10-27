@@ -87,7 +87,7 @@ public class Order {
     }
 
     public enum OrderStatus {
-        PREPARING, SERVED, COMPLETED, CANCELLED
+        PREPARING, COMPLETED, CANCELLED
     }
 
     public enum PaymentStatus{

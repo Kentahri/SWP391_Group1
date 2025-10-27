@@ -242,6 +242,7 @@ public class PaymentService {
             // Lưu payment method thực tế vào database
             order.setPaymentMethod(paymentMethod);
             order.setPaymentStatus(Order.PaymentStatus.PAID);
+            order.setOrderStatus(Order.OrderStatus.COMPLETED);
             order.setUpdatedAt(LocalDateTime.now());
             
             // Cập nhật số lần sử dụng voucher nếu có (không quan trọng, không làm fail transaction chính)
