@@ -1,5 +1,6 @@
 package com.group1.swp.pizzario_swp391.controller.guest;
 
+import com.group1.swp.pizzario_swp391.dto.websocket.TableReleaseRequest;
 import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
 import com.group1.swp.pizzario_swp391.entity.Session;
 import com.group1.swp.pizzario_swp391.repository.SessionRepository;
