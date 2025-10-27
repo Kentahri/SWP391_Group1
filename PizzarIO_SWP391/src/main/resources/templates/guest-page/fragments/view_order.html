@@ -43,21 +43,11 @@
           </div>
         </th:block>
       </div>
-      <form
-        th:action="@{/guest/payment/session/{sessionId}(sessionId=${sessionId})}"
-        method="get"
-      >
-        <button class="btn btn-secondary" type="submit">Request Payment</button>
-      </form>
-
-      <!-- Debug: Show the actual URL being generated -->
-      <div style="font-size: 12px; color: #666; margin-top: 5px">
-        Debug URL:
-        <span
-          th:text="@{/guest/payment/session/{sessionId}(sessionId=${sessionId})}"
-          >URL</span
-        >
-      </div>
+      <div th:onclick="|releaseTable(${tableId})|">Request Payment</div>
+      <!--    <form th:action="@{/guest/table/release}" method="post">-->
+      <!--        <input type="hidden" name="tableId" th:value="${tableId}"/>-->
+      <!--        <button class="btn btn-secondary" type="submit">Request Payment</button>-->
+      <!--    </form>-->
     </div>
   </body>
 </html>

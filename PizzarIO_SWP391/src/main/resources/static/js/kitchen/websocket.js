@@ -91,11 +91,43 @@ function handleNewOrder(message) {
         const orderData = JSON.parse(message.body);
         console.log('[Kitchen] Parsed order data:', orderData);
 
+        // Kiểm tra nếu đang ở trang order detail
+        const isOrderDetailPage = window.location.pathname.includes('/kitchen/order/');
+        
+        // Nếu đang ở trang order detail - reload để hiển thị trạng thái mới nhất
+        if (isOrderDetailPage) {
+            const currentOrderId = window.location.pathname.split('/kitchen/order/')[1];
+            
+            // Kiểm tra xem update này có liên quan đến order hiện tại không
+            if (orderData.orderId == currentOrderId || orderData.id == currentOrderId) {
+                console.log('[Kitchen] Order update received on detail page - reloading to refresh status');
+                
+                // Reset tracking để tránh reload khi user tự thay đổi (quá 2 giây)
+                const isRecentUpdate = window.lastUpdateByThisUser && 
+                                       Date.now() - window.lastUpdateByThisUser.timestamp < 2000;
+                
+                if (!isRecentUpdate) {
+                    // Reload sau delay nhỏ để tránh reload liên tục
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    console.log('[Kitchen] Recent update by this user - skipping reload');
+                    window.lastUpdateByThisUser = null;
+                }
+            }
+            return; // Không xử lý thêm
+        }
+
         // Xử lý theo loại message
         if (orderData.type === 'ORDER_UPDATED') {
             console.log('[Kitchen] Order updated:', orderData);
-            upsertOrderCard(orderData);
-            showNotification(`Order ${orderData.code} đã được cập nhật`, 'info');
+            
+            // Chỉ hiển thị thông báo nếu không ở trang order detail
+            if (!isOrderDetailPage) {
+                upsertOrderCard(orderData);
+                showNotification(`Order ${orderData.code} đã được cập nhật`, 'info');
+            }
         } else if (orderData.type === 'NEW_ORDER') {
             console.log('[Kitchen] New order:', orderData);
             upsertOrderCard(orderData);

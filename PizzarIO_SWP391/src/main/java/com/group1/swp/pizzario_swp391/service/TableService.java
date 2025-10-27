@@ -6,9 +6,7 @@ import com.group1.swp.pizzario_swp391.dto.table.TableCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.table.TableDTO;
 import com.group1.swp.pizzario_swp391.dto.table.TableForCashierDTO;
 import com.group1.swp.pizzario_swp391.dto.table.TableManagementDTO;
-import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
-import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionResponse;
-import com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage;
+import com.group1.swp.pizzario_swp391.dto.websocket.*;
 import com.group1.swp.pizzario_swp391.entity.DiningTable;
 import com.group1.swp.pizzario_swp391.entity.Order;
 import com.group1.swp.pizzario_swp391.entity.Reservation;
@@ -37,7 +35,7 @@ import java.util.stream.Collectors;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Slf4j
-public class TableService {
+public class TableService{
     TableRepository tableRepository;
     TableMapper tableMapper;
     SessionRepository sessionRepository;
@@ -158,6 +156,7 @@ public class TableService {
 
         simpMessagingTemplate.convertAndSend("/queue/guest-" + sessionId, response);
     }
+
     /**
      * Tạo bàn mới (Manager)
      * Manager chỉ nhập capacity, hệ thống tự set status=AVAILABLE và condition=NEW
@@ -233,7 +232,7 @@ public class TableService {
         DiningTable table = tableRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Table not found"));
         List<Reservation> reservationList = reservationRepository.getAllReservationsForUpdateTable(table.getId(), LocalDateTime.now());
-        if(table.getTableStatus() == DiningTable.TableStatus.AVAILABLE && reservationList.isEmpty()) {
+        if (table.getTableStatus() == DiningTable.TableStatus.AVAILABLE && reservationList.isEmpty()) {
             // Lưu lại condition cũ để kiểm tra có phải retired không
             DiningTable.TableCondition oldCondition = table.getTableCondition();
 
@@ -246,7 +245,7 @@ public class TableService {
                     && oldCondition != DiningTable.TableCondition.RETIRED) {
                 webSocketService.broadcastTableRetired(id, "Manager");
             }
-        }else {
+        } else {
             throw new RuntimeException("Bàn đang không trống hoặc đã được đặt trước!");
         }
 
@@ -299,6 +298,8 @@ public class TableService {
                 .createdByStaffName(order.getStaff() != null ? order.getStaff().getName() : null)
                 .voucherCode(order.getVoucher() != null ? order.getVoucher().getCode() : null)
                 .discountAmount(order.getVoucher() != null ? order.getVoucher().getValue() : null)
+                .customerName(order.getMembership() != null ? order.getMembership().getName() : "Khách vãng lai")
+                .customerPhone(order.getMembership() != null ? order.getMembership().getPhoneNumber() : null)
                 .build();
     }
 
@@ -337,7 +338,67 @@ public class TableService {
                 "Bàn " + tableId + " đã được giải phóng."
         );
 
-        // Xóa giỏ hàng trong http session
-        session.invalidate();
+        // Xóa giỏ hàng trong http session (chỉ khi session không null)
+        if (session != null) {
+            session.invalidate();
+        }
+    }
+
+    @Transactional
+    public void handleTableRelease(TableReleaseRequest request) {
+        try {
+            DiningTable table = tableRepository.findById(request.getTableId())
+                    .orElseThrow(() -> new RuntimeException("Table not found"));
+
+            if (table.getTableStatus() != DiningTable.TableStatus.OCCUPIED) {
+                // Optionally send an error back to the guest if the table is not occupied
+                log.warn("Attempt to request payment for table {} which is not OCCUPIED. Current status: {}",
+                        request.getTableId(), table.getTableStatus());
+                return;
+            }
+
+            DiningTable.TableStatus oldStatus = table.getTableStatus();
+            // Set table to WAITING_PAYMENT status when guest requests payment
+            table.setTableStatus(DiningTable.TableStatus.WAITING_PAYMENT);
+            table.setUpdatedAt(LocalDateTime.now());
+            tableRepository.save(table);
+
+            // Broadcast table status change to all guests
+            webSocketService.broadcastTableStatusToGuests(request.getTableId(), DiningTable.TableStatus.WAITING_PAYMENT);
+
+            // Broadcast to cashier to notify about the payment request
+            webSocketService.broadcastTableStatusToCashier(
+                    com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage.MessageType.TABLE_RELEASED,
+                    request.getTableId(),
+                    oldStatus,
+                    DiningTable.TableStatus.WAITING_PAYMENT,
+                    "Guest",
+                    "Bàn " + request.getTableId() + " đang chờ thanh toán."
+            );
+
+            // Send confirmation back to the guest
+            simpMessagingTemplate.convertAndSend(
+                    "/queue/guest-" + request.getSessionId(),
+                    TableReleaseResponse.builder()
+                            .type(TableReleaseResponse.ResponseType.SUCCESS)
+                            .tableId(request.getTableId())
+                            .message("Yêu cầu thanh toán đã được gửi. Vui lòng đợi thu ngân.")
+                            .build()
+            );
+
+            log.info("Guest {} requested payment for table {}", request.getSessionId(), request.getTableId());
+
+        } catch (Exception e) {
+            log.error("Error handling payment request for table {}", request.getTableId(), e);
+            // Send an error message back to the guest
+            simpMessagingTemplate.convertAndSend(
+                    "/queue/guest-" + request.getSessionId(),
+                    TableReleaseResponse.builder()
+                            .type(TableReleaseResponse.ResponseType.ERROR)
+                            .tableId(request.getTableId())
+                            .message("Lỗi khi gửi yêu cầu thanh toán. Vui lòng thử lại.")
+                            .build()
+            );
+        }
     }
 }

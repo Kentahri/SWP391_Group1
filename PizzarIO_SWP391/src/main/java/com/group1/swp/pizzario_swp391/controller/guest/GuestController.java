@@ -1,7 +1,10 @@
 package com.group1.swp.pizzario_swp391.controller.guest;
 
-import java.util.Optional;
-
+import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
+import com.group1.swp.pizzario_swp391.entity.Session;
+import com.group1.swp.pizzario_swp391.repository.SessionRepository;
+import com.group1.swp.pizzario_swp391.service.*;
+import jakarta.servlet.http.HttpSession;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -9,24 +12,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
-import com.group1.swp.pizzario_swp391.entity.Session;
-import com.group1.swp.pizzario_swp391.repository.SessionRepository;
-import com.group1.swp.pizzario_swp391.service.CartService;
-import com.group1.swp.pizzario_swp391.service.CategoryService;
-import com.group1.swp.pizzario_swp391.service.GuestService;
-import com.group1.swp.pizzario_swp391.service.OrderService;
-import com.group1.swp.pizzario_swp391.service.ProductService;
-import com.group1.swp.pizzario_swp391.service.TableService;
-
-import jakarta.servlet.http.HttpSession;
+import java.util.Optional;
 
 @Slf4j
 @Controller
@@ -44,7 +33,9 @@ public class GuestController{
     private final GuestService guestService;
 
     @GetMapping
-    public String guestPage(Model model) {
+    public String guestPage(Model model, HttpSession session) {
+        // clear gio hang cua khach cu khi co khach moi den
+        session.invalidate();
         model.addAttribute("tables", tableService.getAllTablesForGuest());
         return "guest-page/guest";
     }
@@ -54,7 +45,7 @@ public class GuestController{
      * Guest sends: { tableId, sessionId, guestCount }
      * Response sent to: /queue/guest-{sessionId}
      */
-    @MessageMapping("/guest/select-table")
+    @MessageMapping("/guest/table/select")
     public void selectTable(TableSelectionRequest request) {
         log.info("Guest {} requesting table {}", request.getSessionId(), request.getTableId());
         tableService.handleTableSelection(request);
@@ -158,18 +149,9 @@ public class GuestController{
         return "redirect:/guest/menu";
     }
 
-    @PostMapping("/table/release")
-    public String releaseTable(@RequestParam("tableId") Integer tableId,
-                               HttpSession session,
-                               RedirectAttributes redirectAttributes) {
-        try {
-            tableService.releaseTable(tableId, session);
-            // Optionally, add a success message to be displayed on the guest page
-            redirectAttributes.addFlashAttribute("releaseSuccess", "Bàn " + tableId + " đã được giải phóng. Cảm ơn quý khách!");
-        } catch (Exception e) {
-            // Optionally, handle errors
-            redirectAttributes.addFlashAttribute("releaseError", "Lỗi: không thể giải phóng bàn.");
-        }
-        return "redirect:/guest";
+    @MessageMapping("/guest/table/release")
+    public void releaseTable(TableReleaseRequest request) {
+        log.info("Guest {} requesting to release table {}", request.getSessionId(), request.getTableId());
+        tableService.handleTableRelease(request);
     }
 }

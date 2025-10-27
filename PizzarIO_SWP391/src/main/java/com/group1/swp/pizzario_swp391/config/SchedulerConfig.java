@@ -19,4 +19,16 @@ public class SchedulerConfig {
         return scheduler;
 
     }
+
+    // ✅ THÊM MỚI: TaskScheduler riêng cho Staff Scheduling
+    @Bean(name = "staffTaskScheduler")
+    public TaskScheduler staffTaskScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setPoolSize(10); // ✅ Tăng lên 10 threads cho staff scheduling
+        scheduler.setThreadNamePrefix("staff-scheduler-"); // ✅ Prefix riêng để debug dễ hơn
+        scheduler.setWaitForTasksToCompleteOnShutdown(true);
+        scheduler.setAwaitTerminationSeconds(60);
+        scheduler.initialize();
+        return scheduler;
+    }
 }

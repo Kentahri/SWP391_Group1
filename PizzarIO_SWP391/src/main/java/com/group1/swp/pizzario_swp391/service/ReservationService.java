@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -245,8 +246,29 @@ public class ReservationService {
         reservationSchedulerService.cancelNoShowCheck(reservationId);
         reservationRepository.save(reservation);
         tableRepository.save(table);
-
-        log.info("Đã hủy reservation {} cho bàn {}", reservationId, table.getId());
+    }
+    /**
+     * Khóa bàn tự động nếu đã đến thời gian quy định
+     */
+    @Scheduled(fixedRate = 5000)
+    @Transactional
+    public synchronized void closeTable() {
+        log.info("🔄 Scheduled: closeTable() is running...");
+        List<Reservation> reservationList = reservationRepository.findAllUpcomingReservationInRange(LocalDateTime.now(),
+                LocalDateTime.now().plusMinutes(90));
+        if(!reservationList.isEmpty()){
+            for (Reservation reservation : reservationList) {
+                DiningTable table = reservation.getDiningTable();
+                DiningTable.TableStatus oldStatus = table.getTableStatus();
+                if (oldStatus.equals(DiningTable.TableStatus.AVAILABLE)) {
+                    table.setTableStatus(DiningTable.TableStatus.RESERVED);
+                    webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
+                    webSocketService.broadcastTableStatusToCashier(TableStatusMessage.MessageType.TABLE_RESERVED, table.getId(), oldStatus, table.getTableStatus(), "System", "Bàn tự động khóa cho reservation #" + reservation.getId());
+                    tableRepository.save(table);
+                    reservationRepository.save(reservation);
+                }
+            }
+        }
     }
 
 

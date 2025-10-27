@@ -127,12 +127,11 @@ public class OrderService{
 
     /**
      * Lấy danh sách orders cho kitchen dashboard
-     * Bao gồm các orders đang trong trạng thái PREPARING và SERVED
+     * Bao gồm các orders đang trong trạng thái PREPARING
      */
     public List<KitchenOrderDTO> getKitchenOrders() {
         List<Order> orders = orderRepository.findAll().stream()
-                .filter(order -> order.getOrderStatus() == Order.OrderStatus.PREPARING 
-                        || order.getOrderStatus() == Order.OrderStatus.SERVED)
+                .filter(order -> order.getOrderStatus() == Order.OrderStatus.PREPARING)
                 .sorted((o1, o2) -> {
                     // Sắp xếp theo thời gian tạo, order mới nhất trước
                     if (o1.getCreatedAt() == null && o2.getCreatedAt() == null) return 0;
@@ -163,10 +162,9 @@ public class OrderService{
             Order.OrderType typeEnum = Order.OrderType.valueOf(type);
             orders = orderRepository.findByOrderType(typeEnum);
         } else {
-            // Mặc định: PREPARING và SERVED (như cũ)
+            // Mặc định: PREPARING
             orders = orderRepository.findAll().stream()
-                    .filter(order -> order.getOrderStatus() == Order.OrderStatus.PREPARING 
-                            || order.getOrderStatus() == Order.OrderStatus.SERVED)
+                    .filter(order -> order.getOrderStatus() == Order.OrderStatus.PREPARING)
                     .toList();
         }
         orders = orders.stream()
@@ -183,5 +181,90 @@ public class OrderService{
     public KitchenOrderDTO getKitchenOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId).orElse(null);
         return (order != null) ? KitchenOrderDTO.fromOrder(order) : null;
+    }
+
+    /**
+     * Lấy danh sách lịch sử hóa đơn (các order đã thanh toán)
+     */
+    public List<com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO> getPaymentHistory() {
+        List<Order> orders = orderRepository.findAll().stream()
+                .filter(order -> order.getPaymentStatus() == Order.PaymentStatus.PAID)
+                .sorted((o1, o2) -> {
+                    // Sắp xếp theo thời gian tạo, order mới nhất trước
+                    if (o1.getCreatedAt() == null && o2.getCreatedAt() == null) return 0;
+                    if (o1.getCreatedAt() == null) return 1;
+                    if (o2.getCreatedAt() == null) return -1;
+                    return o2.getCreatedAt().compareTo(o1.getCreatedAt());
+                })
+                .toList();
+        
+        return orders.stream()
+                .map(order -> {
+                    com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO dto = new com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO();
+                    dto.setOrderId(order.getId());
+                    dto.setOrderStatus(order.getOrderStatus());
+                    dto.setOrderType(order.getOrderType());
+                    // Force set payment status to PAID since we only get PAID orders in history
+                    dto.setPaymentStatus(Order.PaymentStatus.PAID);
+                    dto.setPaymentMethod(order.getPaymentMethod());
+                    dto.setTaxRate(order.getTaxRate());
+                    dto.setNote(order.getNote());
+                    dto.setCreatedAt(order.getCreatedAt());
+                    dto.setUpdatedAt(order.getUpdatedAt());
+                    
+                    // Calculate original total from order items
+                    double originalTotal = order.getOrderItems().stream()
+                            .mapToDouble(OrderItem::getTotalPrice)
+                            .sum();
+                    
+                    // Calculate discount from voucher if exists
+                    double discountAmount = 0.0;
+                    if (order.getVoucher() != null) {
+                        dto.setVoucherCode(order.getVoucher().getCode());
+                        // Calculate discount based on voucher type
+                        if (order.getVoucher().getType() == com.group1.swp.pizzario_swp391.entity.Voucher.VoucherType.FIXED_AMOUNT) {
+                            discountAmount = order.getVoucher().getValue();
+                        } else if (order.getVoucher().getType() == com.group1.swp.pizzario_swp391.entity.Voucher.VoucherType.PERCENTAGE) {
+                            discountAmount = originalTotal * order.getVoucher().getValue() / 100;
+                        }
+                        dto.setDiscountAmount(discountAmount);
+                    }
+                    
+                    // Calculate final total with tax (finalTotal = (originalTotal - discount) * 1.1)
+                    double finalTotal = (originalTotal - discountAmount) * 1.1;
+                    dto.setTotalPrice(finalTotal);
+                    
+                    // Set session info
+                    if (order.getSession() != null) {
+                        dto.setSessionId(order.getSession().getId());
+                        if (order.getSession().getTable() != null) {
+                            dto.setTableId(order.getSession().getTable().getId());
+                            dto.setTableName("Bàn " + order.getSession().getTable().getId());
+                        }
+                    }
+                    
+                    // Set staff name
+                    if (order.getStaff() != null) {
+                        dto.setCreatedByStaffName(order.getStaff().getName());
+                    }
+                    
+                    // Set customer info from membership
+                    if (order.getMembership() != null) {
+                        dto.setCustomerName(order.getMembership().getName());
+                        dto.setCustomerPhone(order.getMembership().getPhoneNumber());
+                    } else {
+                        dto.setCustomerName("Khách vãng lai");
+                        dto.setCustomerPhone(null);
+                    }
+                    
+                    // Convert order items (not needed for payment history display)
+                    List<com.group1.swp.pizzario_swp391.dto.order.OrderItemDTO> items = order.getOrderItems().stream()
+                            .map(orderItemMapper::toOrderItemDTO)
+                            .toList();
+                    dto.setItems(items);
+                    
+                    return dto;
+                })
+                .toList();
     }
 }

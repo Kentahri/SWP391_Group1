@@ -8,7 +8,7 @@ spring:
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: none
 
     properties:
       hibernate:
@@ -22,6 +22,9 @@ spring:
     password: ${DB_PASSWORD}
     url: ${DB_URL}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  sql:
+    init:
+      mode: always
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}
@@ -49,6 +52,12 @@ server:
         secure: false
         same-site: lax #Chống CSRF
       timeout: 30m
+
+logging:
+  level:
+    com.group1.swp.pizzario_swp391.service.StaffScheduleService: DEBUG
+    com.group1.swp.pizzario_swp391.service.StaffShiftManagementService: DEBUG
+    org.springframework.context.event: DEBUG
 
 gemini:
   api:
