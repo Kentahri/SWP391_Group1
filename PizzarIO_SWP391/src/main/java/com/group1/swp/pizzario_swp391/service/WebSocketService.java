@@ -2,6 +2,11 @@ package com.group1.swp.pizzario_swp391.service;
 
 import java.time.LocalDateTime;
 
+import com.group1.swp.pizzario_swp391.dto.websocket.ProductStatusMessage;
+import com.group1.swp.pizzario_swp391.dto.product.ProductWebSocketDTO;
+import com.group1.swp.pizzario_swp391.entity.Product;
+import com.group1.swp.pizzario_swp391.mapper.ProductWebSocketMapper;
+import com.group1.swp.pizzario_swp391.repository.ProductRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -20,9 +25,11 @@ import com.group1.swp.pizzario_swp391.entity.DiningTable;
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-public class WebSocketService{
+public class WebSocketService {
 
     SimpMessagingTemplate messagingTemplate;
+    
+    ProductWebSocketMapper productWebSocketMapper;
 
     /**
      * Broadcast table status change to cashier
@@ -33,8 +40,7 @@ public class WebSocketService{
             DiningTable.TableStatus oldStatus,
             DiningTable.TableStatus newStatus,
             String updatedBy,
-            String message
-    ) {
+            String message) {
         TableStatusMessage statusMessage = TableStatusMessage.builder()
                 .type(type)
                 .tableId(tableId)
@@ -63,7 +69,8 @@ public class WebSocketService{
 
     /**
      * Broadcast table retired status to cashier and guests
-     * When manager marks a table as retired, notify all clients to remove it from UI
+     * When manager marks a table as retired, notify all clients to remove it from
+     * UI
      */
     public void broadcastTableRetired(int tableId, String updatedBy) {
         TableStatusMessage retiredMessage = TableStatusMessage.builder()
@@ -76,10 +83,10 @@ public class WebSocketService{
 
         // Send to cashier
         messagingTemplate.convertAndSend("/topic/tables-cashier", retiredMessage);
-        
+
         // Send to guests
         messagingTemplate.convertAndSend("/topic/tables-guest", retiredMessage);
-        
+
         log.info("Broadcasted table {} retired status to all clients", tableId);
     }
 
@@ -92,7 +99,7 @@ public class WebSocketService{
     public void broadcastNewOrderToKitchen(KitchenOrderMessage orderMessage) {
         orderMessage.setType(KitchenOrderMessage.MessageType.NEW_ORDER);
         orderMessage.setTimestamp(LocalDateTime.now());
-        
+
         messagingTemplate.convertAndSend("/topic/kitchen-orders", orderMessage);
         log.info("Broadcasted new order {} to kitchen", orderMessage.getCode());
     }
@@ -109,5 +116,23 @@ public class WebSocketService{
         messagingTemplate.convertAndSend("/queue/kitchen-notifications", notification);
         log.info("Sent kitchen notification: {}", message);
     }
-}
 
+    // ==================== MANAGER WEBSOCKET METHODS ====================
+
+    public void broadcastProductChange(ProductStatusMessage.MessageType type, Product product, String updateBy) {
+
+        ProductWebSocketDTO productDTO = productWebSocketMapper.toWebSocketDTO(product);
+
+        ProductStatusMessage message = ProductStatusMessage.builder()
+                .type(type)
+                .product(productDTO)
+                .updatedBy(updateBy)
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        messagingTemplate.convertAndSend("/topic/products-status", message);
+        log.info("Broadcasted product {} change: {} by {}",
+                product.getId(), type, updateBy);
+    }
+
+}

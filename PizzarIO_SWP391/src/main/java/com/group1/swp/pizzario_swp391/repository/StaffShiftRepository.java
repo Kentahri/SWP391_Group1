@@ -1,7 +1,9 @@
 package com.group1.swp.pizzario_swp391.repository;
 
 import com.group1.swp.pizzario_swp391.entity.StaffShift;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -52,16 +54,18 @@ public interface StaffShiftRepository extends JpaRepository<StaffShift, Integer>
   Integer totalHours();
 
   // Tổng tiền lương
+  // Tổng tiền lương
   @Query(value = """
           SELECT COALESCE(
               SUM(
                   CAST(DATEDIFF(HOUR, ss.check_in, ss.check_out) AS float)
-                  * CAST(ss.hourly_wage AS float)
+                  * CAST(sh.salary_per_shift AS float)
                   * (100 - COALESCE(ss.penalty_percent, 0)) / 100.0
               ),
               0.0
           )
           FROM [Staff_Shift] ss
+          INNER JOIN [Shift] sh ON ss.shift_id = sh.id
           WHERE ss.status IN ('COMPLETED','LEFT_EARLY')
             AND ss.check_in IS NOT NULL
             AND ss.check_out IS NOT NULL
@@ -143,4 +147,31 @@ public interface StaffShiftRepository extends JpaRepository<StaffShift, Integer>
       @Param("today") LocalDate today);
 
   List<StaffShift> findByWorkDateBetween(LocalDate start, LocalDate end);
+
+  // NEW: Đếm số staff theo status cho một ca
+  @Query("""
+        select count(ss) from StaffShift ss
+        where ss.shift.id = :shiftId
+          and ss.workDate = :workDate
+          and ss.status = :status
+      """)
+  long countStaffForShiftByStatus(@Param("shiftId") Integer shiftId,
+      @Param("workDate") LocalDate workDate,
+      @Param("status") StaffShift.Status status);
+
+  @Query("""
+        select ss from StaffShift ss
+        join fetch ss.staff s
+        join fetch ss.shift sh
+        where ss.shift.id = :shiftId
+          and ss.workDate = :workDate
+        order by s.name asc
+      """)
+  List<StaffShift> findAllStaffForShift(@Param("shiftId") Integer shiftId,
+      @Param("workDate") LocalDate workDate);
+
+  // ✅ THÊM MỚI: Query với pessimistic lock để tránh race condition
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  @Query("SELECT ss FROM StaffShift ss WHERE ss.id = :id")
+  Optional<StaffShift> findByIdWithLock(@Param("id") Integer id);
 }
