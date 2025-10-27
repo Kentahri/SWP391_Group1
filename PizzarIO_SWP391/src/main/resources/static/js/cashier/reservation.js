@@ -19,6 +19,9 @@ window.openReservationModal = function(tableId) {
 
     // Show modal
     modal.classList.add('show');
+    
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden';
 };
 
 /**
@@ -27,6 +30,9 @@ window.openReservationModal = function(tableId) {
 window.closeReservationModal = function() {
     const modal = document.getElementById('reservation-modal');
     modal.classList.remove('show');
+    
+    // Restore body scroll when modal is closed
+    document.body.style.overflow = '';
     
     // Xóa tất cả toast trong modal khi đóng
     const modalToastContainer = document.getElementById('modal-toast-container');

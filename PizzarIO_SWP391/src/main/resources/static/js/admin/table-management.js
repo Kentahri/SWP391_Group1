@@ -137,9 +137,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Kiểm tra nếu có lỗi từ server và tự động mở modal update
   const errorTableId = document.body.getAttribute('data-error-table-id');
-  console.log('Error table ID:', errorTableId);
   
   if (errorTableId && errorTableId !== 'null' && errorTableId !== '') {
+    console.log('Found error table ID:', errorTableId);
     console.log('Found error table ID, attempting to open modal...');
     // Tìm và click vào bàn bị lỗi
     const errorTile = document.querySelector(`[data-id="${errorTableId}"]`);
@@ -248,5 +248,35 @@ document.addEventListener("DOMContentLoaded", function () {
         updateModal.setAttribute("aria-hidden", "false");
       }
     });
+  }
+
+  // Table Filter Handler
+  const tableFilter = document.getElementById("tableFilter");
+  
+  if (tableFilter) {
+    console.log("Table filter found:", tableFilter);
+    console.log("Current selected value:", tableFilter.value);
+    
+    tableFilter.addEventListener("change", function() {
+      const selectedCondition = this.value;
+      console.log("Filter changed to:", selectedCondition);
+      
+      const currentUrl = new URL(window.location.href);
+      console.log("Current URL:", currentUrl.toString());
+      
+      // Update URL with filter parameter
+      if (selectedCondition === "ALL") {
+        currentUrl.searchParams.delete("condition");
+      } else {
+        currentUrl.searchParams.set("condition", selectedCondition);
+      }
+      
+      console.log("New URL:", currentUrl.toString());
+      
+      // Redirect to filtered view
+      window.location.href = currentUrl.toString();
+    });
+  } else {
+    console.log("Table filter not found!");
   }
 });

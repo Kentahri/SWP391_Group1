@@ -1,0 +1,35 @@
+@startuml
+title View Table Map - Manager
+
+actor Manager
+participant Browser
+participant TableController
+participant TableService
+participant TableRepository
+participant Database
+
+Manager -> Browser: Access /manager/tables
+Browser -> TableController: GET /manager/tables
+
+TableController -> TableService: getAllTablesForManager()
+TableService -> TableRepository: getAllTablesForManager()
+TableRepository -> Database: SELECT * FROM Dining_Table WHERE table_condition != 'RETIRED'
+Database --> TableRepository: List<DiningTable>
+TableRepository --> TableService: List<DiningTable>
+TableService --> TableController: List<TableDTO>
+
+TableController -> Browser: HTML with table map
+Browser --> Manager: Display grid layout of tables
+
+note right
+Table map displays:
+- Table ID
+- Capacity  
+- Status (color coded)
+- Table condition
+end note
+
+Manager -> Browser: Click on table
+Browser --> Manager: Display table details in panel
+
+@enduml

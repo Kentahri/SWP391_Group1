@@ -87,7 +87,7 @@ public class DiningTable {
     }
 
     public enum TableCondition {
-        NEW, GOOD, WORN, DAMAGED, UNDER_REPAIR, RETIRED
+        NEW, GOOD, WORN, DAMAGED, RETIRED
     }
 
 }

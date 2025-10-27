@@ -1,0 +1,161 @@
+@startuml Table Management Class Diagram - Manager View
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam classBackgroundColor #F8F9FA
+skinparam classBorderColor #343A40
+skinparam arrowColor #007BFF
+
+title Table Management System - Manager View
+
+package "Controller Layer" {
+    class TableController {
+        - TableService tableService
+        + table(Model model) : String
+        + createNewTable(TableCreateDTO, BindingResult, Model) : String
+        + updateTable(int id, TableManagementDTO, BindingResult, Model) : String
+    }
+}
+
+package "Service Layer" {
+    class TableService {
+        - TableRepository tableRepository
+        - TableMapper tableMapper
+        - SessionRepository sessionRepository
+        - WebSocketService webSocketService
+        - ReservationRepository reservationRepository
+        + createNewTable(TableCreateDTO) : void
+        + getAllTablesForManager() : List<TableDTO>
+        + getTableById(Integer id) : TableDTO
+        + updateTable(int id, TableManagementDTO) : void
+        + getOrderDetailByTableId(Integer tableId) : OrderDetailDTO
+        + releaseTable(Integer tableId, HttpSession) : void
+    }
+}
+
+package "Repository Layer" {
+    class TableRepository {
+        + getAllTablesForManager() : List<DiningTable>
+        + getAllTablesForCashier() : List<DiningTable>
+        + getAllTablesForGuest() : List<DiningTable>
+        + findById(Integer id) : Optional<DiningTable>
+        + save(DiningTable) : DiningTable
+    }
+}
+
+package "Entity Layer" {
+    class DiningTable {
+        - Integer id
+        - Integer version
+        - TableStatus tableStatus
+        - TableCondition tableCondition
+        - LocalDateTime createdAt
+        - LocalDateTime updatedAt
+        - int capacity
+        - List<Reservation> reservations
+        - List<Session> sessionList
+        + addReservation(Reservation) : void
+        + addSession(Session) : void
+    }
+    
+    enum TableStatus {
+        AVAILABLE
+        OCCUPIED
+        RESERVED
+        WAITING_PAYMENT
+    }
+    
+    enum TableCondition {
+        NEW
+        GOOD
+        WORN
+        DAMAGED
+        UNDER_REPAIR
+        RETIRED
+    }
+}
+
+package "DTO Layer" {
+    class TableDTO {
+        + int id
+        + TableStatus tableStatus
+        + TableCondition tableCondition
+        + LocalDateTime createdAt
+        + LocalDateTime updatedAt
+        + int capacity
+    }
+    
+    class TableCreateDTO {
+        + int capacity
+    }
+    
+    class TableManagementDTO {
+        + TableCondition tableCondition
+        + int capacity
+    }
+}
+
+package "Mapper Layer" {
+    class TableMapper {
+        + toTableDTO(DiningTable) : TableDTO
+        + toTableDTOs(List<DiningTable>) : List<TableDTO>
+        + toDiningTable(TableCreateDTO) : DiningTable
+        + updateDiningTable(DiningTable, TableManagementDTO) : void
+    }
+}
+
+package "View Layer" {
+    class TableManagementHTML {
+        + table_management.html
+        + Form: Add Table
+        + Form: Update Table
+        + Table Map Grid
+        + Table Details Panel
+    }
+}
+
+' Relationships
+TableController --> TableService : uses
+TableService --> TableRepository : uses
+TableService --> TableMapper : uses
+TableService --> WebSocketService : uses
+TableService --> SessionRepository : uses
+TableService --> ReservationRepository : uses
+
+TableRepository --> DiningTable : manages
+TableMapper --> DiningTable : maps to/from
+TableMapper --> TableDTO : maps to/from
+TableMapper --> TableCreateDTO : maps to/from
+TableMapper --> TableManagementDTO : maps to/from
+
+DiningTable --> TableStatus : has
+DiningTable --> TableCondition : has
+
+TableController --> TableCreateDTO : uses
+TableController --> TableManagementDTO : uses
+TableController --> TableDTO : uses
+
+TableController --> TableManagementHTML : renders
+
+note right of TableController
+  Manager chỉ có thể:
+  - Xem sơ đồ bàn
+  - Xem chi tiết bàn
+  - Tạo bàn mới (chỉ nhập capacity)
+  - Cập nhật bàn (capacity + condition)
+end note
+
+note right of TableService
+  Business Logic:
+  - Tự động set status=AVAILABLE, condition=NEW khi tạo
+  - Chỉ cho phép update bàn trống
+  - Không cho phép update bàn có reservation
+end note
+
+note right of DiningTable
+  Entity chính:
+  - Quản lý trạng thái bàn
+  - Liên kết với Reservation và Session
+  - Optimistic Locking với @Version
+end note
+
+@enduml

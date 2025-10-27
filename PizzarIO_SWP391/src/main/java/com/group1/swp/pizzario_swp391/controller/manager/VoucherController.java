@@ -24,14 +24,23 @@ public class VoucherController {
     VoucherService voucherService;
 
     @GetMapping("/vouchers")
-    public String listVouchers(Model model) {
+    public String listVouchers(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            Model model) {
+
+        // Gọi service filter
         model.addAttribute("voucherTypes", Voucher.VoucherType.values());
         model.addAttribute("voucherForm", new VoucherDTO());
-        model.addAttribute("vouchers", voucherService.getVouchersSort());
+        model.addAttribute("vouchers", voucherService.searchVouchers(keyword, status));
         model.addAttribute("stats", voucherService.getVoucherAnalytics());
+
+        // Giữ lại giá trị tìm kiếm để hiển thị lại trong form
+        model.addAttribute("paramKeyword", keyword);
+        model.addAttribute("paramStatus", status);
+
         return "admin_page/voucher/voucher-list";
     }
-
     @GetMapping("/vouchers/new")
     public String newVoucher(Model model) {
         model.addAttribute("voucherTypes", Voucher.VoucherType.values());

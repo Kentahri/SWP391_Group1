@@ -36,6 +36,8 @@ public class OrderDetailDTO {
     String createdByStaffName;
     String voucherCode;
     Double discountAmount;
+    String customerName; // Tên khách hàng (từ membership hoặc "Khách vãng lai")
+    String customerPhone; // Số điện thoại khách hàng (nếu có membership)
 }
 
 

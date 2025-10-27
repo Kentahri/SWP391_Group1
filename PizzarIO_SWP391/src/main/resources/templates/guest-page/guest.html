@@ -7,9 +7,11 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
     <title>GUEST</title>
+    <link rel="stylesheet" th:href="@{/css/guest_page/guest-toast.css}">
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <script th:src="@{/js/guest/guest-websocket.js}"></script>
+    <script th:src="@{/js/guest/toast-guest.js}" defer></script>
     <style>
         body {
             font-family: Segoe UI, sans-serif;
@@ -55,15 +57,15 @@
     </style>
 </head>
 <body>
+<div id="toast-container" class="toast-container"></div>
 <h2>GUEST</h2>
-<div id="guest-result" class="guest-result">Chọn 1 bàn bất kỳ</div>
 <div class="tables">
     <div th:each="t : ${tables}"
          th:id="${'table-' + t.id}"
          class="t"
          th:classappend="${t.tableStatus.name() == 'AVAILABLE'} ? '' : ' disabled'"
          th:title="${'Sức chứa: ' + t.capacity + ' - Trạng thái: ' + t.tableStatus}"
-         th:onclick="|guestSelectTable(${t.id})|">
+         th:onclick="|selectTable(${t.id})|">
         <span th:text="${'Bàn ' + t.id}">Bàn</span>
         <div class="status" style="font-size:12px; margin-top:4px;"
              th:text="${t.tableStatus}">AVAILABLE

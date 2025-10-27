@@ -623,4 +623,39 @@
   .modal-content {
     width: 95%;
   }
+
+    .search-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #fff;
+        padding: 14px 18px;
+        border-radius: 10px;
+        margin: 20px 0;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .search-bar input[type="text"],
+    .search-bar select {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        outline: none;
+        font-size: 14px;
+        flex: 1;
+    }
+
+    .search-bar button {
+        background: #007bff;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .search-bar button:hover {
+        background: #0056b3;
+    }
 }

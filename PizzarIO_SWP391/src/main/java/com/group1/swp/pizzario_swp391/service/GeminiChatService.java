@@ -10,12 +10,15 @@ import com.google.genai.types.GenerateContentResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class GeminiChatService {
 
     private final Client geminiClient;
+    private final List<String> keyword = List.of();
 
     @Value("${gemini.api.model}")
     private String model;
