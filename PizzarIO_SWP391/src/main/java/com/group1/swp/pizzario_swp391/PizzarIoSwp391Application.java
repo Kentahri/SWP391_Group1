@@ -25,7 +25,9 @@ public class PizzarIoSwp391Application {
         SpringApplication.run(PizzarIoSwp391Application.class, args);
     }
 
-    @Bean
+
+
+//    @Bean
     CommandLineRunner initData(StaffService service, TableService tableService) {
         return (String[] args) -> {
             PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
