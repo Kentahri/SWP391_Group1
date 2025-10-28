@@ -44,13 +44,13 @@
                     <td th:text="${#numbers.formatDecimal(item.unitPrice,0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
                     <td th:text="${#numbers.formatDecimal(item.totalPrice,0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
                     <td>
-                        <select th:id="'status-select-' + ${item.id}" th:data-id="${item.id}" th:value="${item.status}"
+                        <select th:id="'status-select-' + ${item.id}" th:data-id="${item.id}"
                                 th:onchange="updateStatusDropdown(this)" style="padding: 4px 10px; border-radius:5px;"
                                 th:disabled="${order.status == 'COMPLETED'}">
-                            <option th:value="'PENDING'" th:selected="${item.status == 'PENDING'}">Chờ xác nhận</option>
-                            <option th:value="'PREPARING'" th:selected="${item.status == 'PREPARING'}">Đang chế biến</option>
-                            <option th:value="'SERVED'" th:selected="${item.status == 'SERVED'}">Đã phục vụ</option>
-                            <option th:value="'CANCELLED'" th:selected="${item.status == 'CANCELLED'}">Đã hủy</option>
+                            <option value="PENDING" th:selected="${item.status.name() == 'PENDING'}">Chờ xác nhận</option>
+                            <option value="PREPARING" th:selected="${item.status.name() == 'PREPARING'}">Đang chế biến</option>
+                            <option value="SERVED" th:selected="${item.status.name() == 'SERVED'}">Đã phục vụ</option>
+                            <option value="CANCELLED" th:selected="${item.status.name() == 'CANCELLED'}">Đã hủy</option>
                         </select>
                     </td>
                     <td th:text="${item.note}"></td>
