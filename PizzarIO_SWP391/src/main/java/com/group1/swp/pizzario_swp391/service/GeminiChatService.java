@@ -36,7 +36,8 @@ public class GeminiChatService {
     @Value("${gemini.api.model}")
     private String model;
 
-    public enum Intent {CHEAPEST, HIGHEST, PROMOTION, COMBO, BEST_SELLER, OTHER}
+    public enum Intent {CHEAPEST, HIGHEST, PROMOTION, COMBO, BEST_SELLER, PIZZA, OTHER}
+
 
     public interface SynonymProvider {
         Map<Intent, List<String>> getSynonyms();
@@ -50,7 +51,9 @@ public class GeminiChatService {
                     Intent.HIGHEST, List.of("dat nhat", "gia cao nhat", "dat hon", "dat nhat la"),
                     Intent.PROMOTION, List.of("khuyen mai", "uu dai", "giam gia", "deal", "voucher"),
                     Intent.BEST_SELLER, List.of("ban chay", "pho bien", "hot nhat", "nhieu nguoi mua", "yeu thich", "ngon nhat"),
-                    Intent.COMBO, List.of("combo")
+                    Intent.COMBO, List.of("combo"),
+                    Intent.PIZZA, List.of("pizza")
+
             );
         }
     }
@@ -66,6 +69,7 @@ public class GeminiChatService {
             - Khuyến khích, gợi ý, không ép buộc.
             - Dùng emoji hợp lý (1–3 emoji mỗi câu, đừng lạm dụng).
             - Nếu người dùng hỏi chung chung → hỏi lại để làm rõ nhu cầu (ví dụ: ăn mấy người? thích vị gì?).
+            - Không dùng các cái ký hiệu trong markdown như *, -, >, #, v.v.
             
             Khi tư vấn món:
             - Nếu khách hỏi món rẻ nhất → gợi ý các món giá thấp dễ chọn.
@@ -81,9 +85,7 @@ public class GeminiChatService {
             - Không nhắc đến mô hình AI hay cách bạn được tạo ra.
             
             Cuối mỗi câu trả lời:
-            - Gợi ý hành động tiếp theo, ví dụ:
-              “Bạn muốn mình chọn giúp size phù hợp không? 😊”
-              “Muốn mình xem món nào hợp với khẩu vị phô mai không nè? 🧀”
+            - Gợi ý hành động tiếp theo cho khách (ví dụ: hỏi thêm về số người ăn, gợi ý món khác, hỏi về sở thích vị ăn, v.v.).
             
             Ví dụ câu trả lời chuẩn:
             “Bạn muốn tìm món giá dễ thương đúng không nè? 😄 \s
@@ -104,11 +106,11 @@ public class GeminiChatService {
     }
 
     private Intent detect(String input) {
-        log.debug("🔍 Detecting intent for input: {}", input);
+        log.debug("Intent for input: {}", input);
         SynonymProviderImpl provider = new SynonymProviderImpl();
         regexIntentDetector.init(provider);
         String raw = normalize(input);
-        log.debug("📝 Normalized input: {}", raw);
+//        log.debug("📝 Normalized input: {}", raw);
 
         Intent regexIntent = regexIntentDetector.analyzerUserIntent(raw);
         log.debug("🎯 Regex intent: {}", regexIntent);
@@ -127,35 +129,31 @@ public class GeminiChatService {
 
     public String chat(String userMessage) {
         try {
-            log.info("🔍 Starting chat with message: {}", userMessage);
             Intent intent = detect(userMessage);
             log.info("✅ Detected intent: {}", intent);
 
             String requirement;
             switch (intent) {
                 case CHEAPEST -> {
-                    log.info("💰 Handling CHEAPEST intent...");
                     requirement = handleCheapestIntent();
                 }
                 case HIGHEST -> {
-                    log.info("💎 Handling HIGHEST intent...");
                     requirement = handleHighestIntent();
                 }
                 case PROMOTION -> {
-                    log.info("🎉 Handling PROMOTION intent...");
                     requirement = handlePromotionIntent();
                 }
                 case COMBO -> {
-                    log.info("🍕 Handling COMBO intent...");
                     requirement = handleComboIntent();
                 }
                 case BEST_SELLER -> {
-                    log.info("🔥 Handling BEST_SELLER intent...");
                     requirement = handleBestSellerIntent();
                 }
+                case PIZZA -> {
+                    requirement = handlePizzaIntent();
+                }
                 default -> {
-                    log.info("❓ Handling OTHER intent (general chat)...");
-                    requirement = "";
+                    requirement = "Bạn có thể cung cấp thêm thông tin để mình giúp bạn chọn món phù hợp hơn không? 😊";
                 }
             }
 
@@ -177,6 +175,18 @@ public class GeminiChatService {
         }
     }
 
+    private String handlePizzaIntent() {
+        try {
+            List<Product> pizzaProducts = getPizzaProducts();
+            if (pizzaProducts.isEmpty()) {
+                return "Hiện tại không có sản phẩm pizza trong menu. Vui lòng xem các sản phẩm khác nhé! 🍕";
+            }
+
+            return buildProductResponse(pizzaProducts, "others");
+        } catch (Exception _) {
+            return "Không thể tìm sản phẩm pizza. Vui lòng thử lại sau!";
+        }
+    }
 
     private String handleCheapestIntent() {
         try {
@@ -260,6 +270,10 @@ public class GeminiChatService {
         }
     }
 
+    private List<Product> getPizzaProducts() {
+        return productRepository.findByCategoryNameContainingIgnoreCaseAndActiveTrue("Pizza");
+    }
+
 
     private List<Product> getCheapestProducts() {
         Pageable pageable = PageRequest.of(0, 5);
@@ -273,29 +287,13 @@ public class GeminiChatService {
     }
 
     private List<Product> getPromotionProducts() {
-        List<Product> allProducts = productRepository.findAll();
-        LocalDateTime now = LocalDateTime.now();
-
-        return allProducts.stream()
-                .filter(product -> product.getFlashSalePrice() > 0
-                        && product.getFlashSaleStart() != null
-                        && product.getFlashSaleEnd() != null
-                        && !product.getFlashSaleStart().isAfter(now)
-                        && !product.getFlashSaleEnd().isBefore(now)
-                        && product.isActive())
-                .toList();
+        return productRepository.findPromotionProducts();
     }
 
 
     private List<Product> getComboProducts() {
-        List<Product> allProducts = productRepository.findAll();
+        return productRepository.findByCategoryNameContainingIgnoreCaseAndActiveTrue("Combo");
 
-        return allProducts.stream()
-                .filter(product -> product.getCategory() != null
-                        && product.getCategory().getName() != null
-                        && product.getCategory().getName().toLowerCase().contains("combo")
-                        && product.isActive())
-                .toList();
     }
 
     private List<Product> getBestSellerProducts() {
@@ -332,24 +330,6 @@ public class GeminiChatService {
         return String.format("%,.0f VNĐ", price);
     }
 
-    public String chatWithContext(String userMessage, String conversationHistory) {
-        try {
-            String contextualPrompt = """
-                    Lịch sử hội thoại:
-                    %s
-                    
-                    Khách hàng hỏi: %s
-                    
-                    Hãy trả lời dựa trên ngữ cảnh hội thoại trước đó.
-                    """.formatted(conversationHistory, userMessage);
-
-            return chat(contextualPrompt);
-
-        } catch (Exception e) {
-            log.error("Error in contextual chat: ", e);
-            return "Đã có lỗi xảy ra khi xử lý hội thoại.";
-        }
-    }
 
     public void streamChat(String userMessage, StreamCallback callback) {
         try {

@@ -20,4 +20,18 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "where p.active = true " +
             "order by p.basePrice desc")
     List<Product> findHighestPriceProducts(Pageable pageable);
+
+    @Query("select p from Product p " +
+            "where p.active = true " +
+            "and lower(p.category.name) like lower(concat('%', :categoryName, '%'))")
+    List<Product> findByCategoryNameContainingIgnoreCaseAndActiveTrue(String categoryName);
+
+    @Query("select p from Product p " +
+            "where p.active = true " +
+            "and p.flashSalePrice > 0 " +
+            "and p.flashSaleStart <= CURRENT_TIMESTAMP " +
+            "and p.flashSaleEnd >= CURRENT_TIMESTAMP " +
+            "order by (p.basePrice - p.flashSalePrice) desc " +
+            "limit 5")
+    List<Product> findPromotionProducts();
 }
