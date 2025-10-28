@@ -484,7 +484,7 @@
                   </div>
                   <span
                     th:class="'reservation-status ' + ${reservation.status.toString().toLowerCase()}"
-                    th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' : 
+                    th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' :
 						                (reservation.status == 'ARRIVED' ? 'Đã đến' : 
 						                (reservation.status == 'CANCELED' ? 'Đã hủy' : 'Không đến'))}"
                   >
@@ -1228,7 +1228,7 @@
                   </div>
                   <span
                     th:class="'reservation-status ' + ${reservation.status.toString().toLowerCase()}"
-                    th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' : 
+                    th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' :
 							                (reservation.status == 'ARRIVED' ? 'Đã đến' : 
 							                (reservation.status == 'CANCELED' ? 'Đã hủy' : 'Không đến'))}"
                   >
@@ -1830,3 +1830,5 @@
     </script>
   </body>
 </html>
+
+

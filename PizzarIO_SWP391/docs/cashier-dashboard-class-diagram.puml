@@ -1,0 +1,38 @@
+@startuml cashier-login-and-dashboard-sequence
+
+actor "Cashier" as Cashier
+participant "Web Browser" as Browser
+participant "LoginController" as LoginController
+participant "SecurityConfig" as SecurityConfig
+participant "JpaUserDetailsService" as UserDetailsService
+participant "CashierDashboardController" as DashboardController
+participant "TableService" as TableService
+participant "Database" as DB
+
+' Đăng nhập
+Cashier -> Browser: Truy cập trang đăng nhập
+Browser -> LoginController: GET /login
+LoginController --> Browser: Hiển thị form đăng nhập
+Cashier -> Browser: Nhập thông tin đăng nhập (username/password)
+Browser -> SecurityConfig: POST /login (credentials)
+SecurityConfig -> UserDetailsService: loadUserByUsername(username)
+UserDetailsService -> DB: Truy vấn thông tin người dùng
+DB --> UserDetailsService: Trả về thông tin người dùng
+UserDetailsService --> SecurityConfig: Trả về UserDetails
+SecurityConfig -> SecurityConfig: Kiểm tra mật khẩu và vai trò (CASHIER)
+
+alt Đăng nhập thành công
+    SecurityConfig --> Browser: Redirect đến /cashier
+    Browser -> DashboardController: GET /cashier
+    DashboardController -> TableService: getAllTablesForCashier()
+    TableService -> DB: Truy vấn thông tin bàn
+    DB --> TableService: Trả về dữ liệu bàn
+    TableService --> DashboardController: Trả về danh sách TableForCashierDTO
+    DashboardController --> Browser: Hiển thị trang cashier-dashboard
+    Browser --> Cashier: Hiển thị dashboard với danh sách bàn
+else Đăng nhập thất bại
+    SecurityConfig --> Browser: Redirect đến /login?error
+    Browser --> Cashier: Hiển thị thông báo lỗi đăng nhập
+end
+
+@enduml
