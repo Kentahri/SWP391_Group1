@@ -381,25 +381,6 @@
               "
             >
               <!-- Payment Request Button - Only show if order is unpaid -->
-              <a
-                th:if="${orderDetail.paymentStatus.toString() == 'UNPAID' && orderDetail.sessionId != null}"
-                th:href="@{'/guest/payment/session/' + ${orderDetail.sessionId} + '?source=cashier'}"
-                class="btn"
-                style="
-                  padding: 12px 24px;
-                  background-color: #28a745;
-                  color: white;
-                  border: none;
-                  border-radius: 4px;
-                  text-decoration: none;
-                  font-weight: bold;
-                  text-align: center;
-                  cursor: pointer;
-                  display: block;
-                "
-              >
-                💳 Yêu cầu thanh toán
-              </a>
 
               <!-- Payment Status - Show if already paid -->
               <div
