@@ -183,7 +183,7 @@ public class GeminiChatService {
             }
 
             return buildProductResponse(pizzaProducts, "others");
-        } catch (Exception _) {
+        } catch (Exception e) {
             return "Không thể tìm sản phẩm pizza. Vui lòng thử lại sau!";
         }
     }
