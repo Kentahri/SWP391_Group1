@@ -288,7 +288,7 @@
                   <span>Món đã gọi</span>
                   <span
                     class="item-count"
-                    th:text="${#lists.isEmpty(orderDetail.items) ? '0' : #aggregates.sum(orderDetail.items.![quantity])} + ' món'"
+                    th:text="${#lists.isEmpty(orderDetail.items) ? '0 món' : #lists.size(orderDetail.items) + ' món'}"
                     >0 món</span
                   >
                 </div>

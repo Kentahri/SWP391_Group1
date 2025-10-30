@@ -46,7 +46,7 @@ public class GeminiChatController {
             String response = geminiChatService.chat(request.getMessage());
             
             log.info("✅ Service returned response");
-            log.info("📤 Response length: {}", response.length());
+//            log.info("📤 Response length: {}", response.length());
             
             GeminiChatResponse chatResponse = new GeminiChatResponse(response, true, null);
             log.info("📦 Returning: {}", chatResponse);
