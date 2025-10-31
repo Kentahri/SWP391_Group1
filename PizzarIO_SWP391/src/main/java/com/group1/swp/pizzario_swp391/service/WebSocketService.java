@@ -97,11 +97,14 @@ public class WebSocketService {
      * Kitchen chỉ nhận thông tin order mới, không cập nhật order status
      */
     public void broadcastNewOrderToKitchen(KitchenOrderMessage orderMessage) {
-        orderMessage.setType(KitchenOrderMessage.MessageType.NEW_ORDER);
+        // Nếu chưa có type, mặc định là NEW_ORDER
+        if (orderMessage.getType() == null) {
+            orderMessage.setType(KitchenOrderMessage.MessageType.NEW_ORDER);
+        }
         orderMessage.setTimestamp(LocalDateTime.now());
 
         messagingTemplate.convertAndSend("/topic/kitchen-orders", orderMessage);
-        log.info("Broadcasted new order {} to kitchen", orderMessage.getCode());
+        log.info("Broadcasted {} {} to kitchen", orderMessage.getType(), orderMessage.getCode());
     }
 
     /**

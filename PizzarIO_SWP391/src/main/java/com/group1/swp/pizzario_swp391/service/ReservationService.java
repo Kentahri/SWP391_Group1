@@ -247,30 +247,6 @@ public class ReservationService {
         reservationRepository.save(reservation);
         tableRepository.save(table);
     }
-    /**
-     * Khóa bàn tự động nếu đã đến thời gian quy định
-     */
-    @Scheduled(fixedRate = 5000)
-    @Transactional
-    public synchronized void closeTable() {
-        log.info("🔄 Scheduled: closeTable() is running...");
-        List<Reservation> reservationList = reservationRepository.findAllUpcomingReservationInRange(LocalDateTime.now(),
-                LocalDateTime.now().plusMinutes(90));
-        if(!reservationList.isEmpty()){
-            for (Reservation reservation : reservationList) {
-                DiningTable table = reservation.getDiningTable();
-                DiningTable.TableStatus oldStatus = table.getTableStatus();
-                if (oldStatus.equals(DiningTable.TableStatus.AVAILABLE)) {
-                    table.setTableStatus(DiningTable.TableStatus.RESERVED);
-                    webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
-                    webSocketService.broadcastTableStatusToCashier(TableStatusMessage.MessageType.TABLE_RESERVED, table.getId(), oldStatus, table.getTableStatus(), "System", "Bàn tự động khóa cho reservation #" + reservation.getId());
-                    tableRepository.save(table);
-                    reservationRepository.save(reservation);
-                }
-            }
-        }
-    }
-
 
     /**
      * Mở bàn cho khách đã đặt trước
