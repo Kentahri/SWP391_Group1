@@ -1,5 +1,6 @@
 package com.group1.swp.pizzario_swp391.service;
 
+import com.group1.swp.pizzario_swp391.config.Setting;
 import com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO;
 import com.group1.swp.pizzario_swp391.dto.order.OrderItemDTO;
 import com.group1.swp.pizzario_swp391.dto.table.TableCreateDTO;
@@ -42,7 +43,8 @@ public class TableService{
     WebSocketService webSocketService;
     ReservationRepository reservationRepository;
     OrderRepository orderRepository;
-    private final SimpMessagingTemplate simpMessagingTemplate;
+    SimpMessagingTemplate simpMessagingTemplate;
+    Setting setting;
 
     /**
      * Guest selects a table
@@ -215,6 +217,50 @@ public class TableService{
      */
     public List<TableForCashierDTO> getTablesForCashier() {
         return tableMapper.toTableForCashierDTOs(tableRepository.getAllTablesForCashier());
+    }
+
+    public void lockTableForMerge(int tableId) {
+        DiningTable table = tableRepository.findById(tableId)
+                .orElseThrow(() -> new RuntimeException("Table not found"));
+
+        if(table.getTableStatus() != DiningTable.TableStatus.AVAILABLE) {
+            throw new RuntimeException("Chỉ có thể cập nhật trạng thái bàn khi bàn đang trống (AVAILABLE)");
+        }
+
+        DiningTable.TableStatus oldStatus = table.getTableStatus();
+        table.setTableStatus(DiningTable.TableStatus.LOCKED);
+        tableRepository.save(table);
+
+        webSocketService.broadcastTableStatusToCashier(
+                TableStatusMessage.MessageType.TABLE_LOCKED,
+                tableId,
+                oldStatus,
+                DiningTable.TableStatus.LOCKED,
+                "Cashier",
+                "Trạng thái bàn " + tableId + " đã được cập nhật."
+        );
+    }
+
+    public void unlockTableFromMerge(int tableId) {
+        DiningTable table = tableRepository.findById(tableId)
+                .orElseThrow(() -> new RuntimeException("Table not found"));
+
+        if(table.getTableStatus() != DiningTable.TableStatus.LOCKED) {
+            throw new RuntimeException("Chỉ có thể mở khóa bàn khi bàn đang ở trạng thái LOCKED");
+        }
+
+        DiningTable.TableStatus oldStatus = table.getTableStatus();
+        table.setTableStatus(DiningTable.TableStatus.AVAILABLE);
+        tableRepository.save(table);
+
+        webSocketService.broadcastTableStatusToCashier(
+                TableStatusMessage.MessageType.TABLE_RELEASED,
+                tableId,
+                oldStatus,
+                DiningTable.TableStatus.AVAILABLE,
+                "Cashier",
+                "Trạng thái bàn " + tableId + " đã được cập nhật."
+        );
     }
 
 

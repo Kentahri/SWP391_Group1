@@ -80,7 +80,10 @@ public class CashierDashboardController {
             model.addAttribute("selectedTableId", tableId);
             model.addAttribute("orderDetail", orderDetail);
             model.addAttribute("reservationCreateDTO", new ReservationCreateDTO());
-            model.addAttribute("tableCapacity", tableService.getTableById(tableId).getCapacity());
+
+            var tableInfo = tableService.getTableById(tableId);
+            model.addAttribute("tableCapacity", tableInfo.getCapacity());
+            model.addAttribute("tableStatus", tableInfo.getTableStatus());
             return "cashier-page/cashier-dashboard";
         } catch (Exception e) {
             model.addAttribute("error", "Không thể tải thông tin bàn. Vui lòng thử lại.");
@@ -407,6 +410,48 @@ public class CashierDashboardController {
         } catch (Exception e) {
             model.addAttribute("error", "Không thể tải chi tiết đơn hàng. Vui lòng thử lại.");
             return "error-page";
+        }
+    }
+
+    /**
+     * Khóa bàn để gộp bàn
+     * Chuyển trạng thái từ AVAILABLE → LOCKED
+     */
+    @PostMapping("/tables/{tableId}/lock")
+    public String lockTableForMerge(
+            @PathVariable Integer tableId,
+            RedirectAttributes redirectAttributes) {
+        try {
+            tableService.lockTableForMerge(tableId);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã khóa bàn " + tableId + " thành công!");
+            return "redirect:/cashier/tables/" + tableId + "/order";
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/cashier/tables/" + tableId + "/order";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Đã xảy ra lỗi. Vui lòng thử lại.");
+            return "redirect:/cashier/tables/" + tableId + "/order";
+        }
+    }
+
+    /**
+     * Mở khóa bàn đã bị khóa (từ gộp bàn)
+     * Chuyển trạng thái từ LOCKED → AVAILABLE
+     */
+    @PostMapping("/tables/{tableId}/unlock")
+    public String unlockTableFromMerge(
+            @PathVariable Integer tableId,
+            RedirectAttributes redirectAttributes) {
+        try {
+            tableService.unlockTableFromMerge(tableId);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã mở khóa bàn " + tableId + " thành công!");
+            return "redirect:/cashier/tables/" + tableId + "/order";
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/cashier/tables/" + tableId + "/order";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Đã xảy ra lỗi. Vui lòng thử lại.");
+            return "redirect:/cashier/tables/" + tableId + "/order";
         }
     }
 }

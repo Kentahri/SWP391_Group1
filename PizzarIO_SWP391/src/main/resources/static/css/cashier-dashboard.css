@@ -279,6 +279,10 @@ body.resizing * {
     background: #6c757d;
 }
 
+.legend-dot.locked {
+    background: #795548;
+}
+
 /* ==================== Table Grid ==================== */
 .table-grid {
     display: grid;
@@ -389,6 +393,16 @@ body.resizing * {
 
 .table-card.reserved .table-status-text {
     color: #4A4A66;
+}
+
+.table-card.locked {
+    background: #E8DCD4;
+    border-color: #795548;
+    box-shadow: 0 4px 12px rgba(121, 85, 72, 0.3);
+}
+
+.table-card.locked .table-status-text {
+    color: #5D4037;
 }
 
 /* ==================== Right Panel Styles ==================== */
