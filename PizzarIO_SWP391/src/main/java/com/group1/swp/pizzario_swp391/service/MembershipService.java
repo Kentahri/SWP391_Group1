@@ -69,4 +69,9 @@ public class MembershipService {
         Membership saved = membershipRepository.save(entity);
         return Optional.of(membershipMapper.toMembershipDTO(saved));
     }
+
+    @Transactional
+    public void save(Membership membership) {
+        membershipRepository.save(membership);
+    }
 }

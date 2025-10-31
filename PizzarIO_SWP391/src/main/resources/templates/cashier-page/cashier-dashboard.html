@@ -484,7 +484,7 @@
                   </div>
                   <span
                     th:class="'reservation-status ' + ${reservation.status.toString().toLowerCase()}"
-                    th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' : 
+                    th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' :
 						                (reservation.status == 'ARRIVED' ? 'Đã đến' : 
 						                (reservation.status == 'CANCELED' ? 'Đã hủy' : 'Không đến'))}"
                   >
@@ -921,8 +921,9 @@
                 <!-- Items Header -->
                 <div
                   style="
-                    display: flex;
-                    justify-content: space-between;
+                    display: grid;
+                    grid-template-columns: 1fr 70px 1fr;
+                    column-gap: 8px;
                     font-size: 12px;
                     font-weight: bold;
                     margin-bottom: 8px;
@@ -931,23 +932,27 @@
                   "
                 >
                   <div>Tên món</div>
-                  <div>Số lượng</div>
-                  <div>Thành tiền</div>
+                  <div style="text-align: center">Số lượng</div>
+                  <div style="text-align: right">Thành tiền</div>
                 </div>
 
                 <!-- Order Items -->
                 <div
                   th:each="item : ${order.items}"
                   style="
-                    display: flex;
-                    justify-content: space-between;
+                    display: grid;
+                    grid-template-columns: 1fr 70px 1fr;
+                    column-gap: 8px;
                     font-size: 12px;
                     margin-bottom: 4px;
                   "
                 >
                   <div th:text="${item.productName}">Pizza Bò</div>
-                  <div th:text="${item.quantity}">1</div>
+                  <div style="text-align: center" th:text="${item.quantity}">
+                    1
+                  </div>
                   <div
+                    style="text-align: right"
                     th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT')}"
                   >
                     245,000
@@ -958,15 +963,17 @@
                 <div
                   th:if="${order.discountAmount != null && order.discountAmount > 0}"
                   style="
-                    display: flex;
-                    justify-content: space-between;
+                    display: grid;
+                    grid-template-columns: 1fr 70px 1fr;
+                    column-gap: 8px;
                     font-size: 12px;
                     margin-bottom: 4px;
                   "
                 >
                   <div>Giảm giá:</div>
-                  <div>-</div>
+                  <div style="text-align: center">-</div>
                   <div
+                    style="text-align: right"
                     th:text="'-' + ${#numbers.formatDecimal(order.discountAmount, 0, 'COMMA', 0, 'POINT')}"
                   >
                     -0
@@ -976,15 +983,17 @@
                 <!-- Tax Information -->
                 <div
                   style="
-                    display: flex;
-                    justify-content: space-between;
+                    display: grid;
+                    grid-template-columns: 1fr 70px 1fr;
+                    column-gap: 8px;
                     font-size: 12px;
                     margin-bottom: 4px;
                   "
                 >
                   <div>Thuế (10%):</div>
-                  <div>-</div>
+                  <div style="text-align: center">-</div>
                   <div
+                    style="text-align: right"
                     th:text="${#numbers.formatDecimal(order.totalPrice * 0.1 / 1.1, 0, 'COMMA', 0, 'POINT')}"
                   >
                     0
@@ -1228,7 +1237,7 @@
                   </div>
                   <span
                     th:class="'reservation-status ' + ${reservation.status.toString().toLowerCase()}"
-                    th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' : 
+                    th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' :
 							                (reservation.status == 'ARRIVED' ? 'Đã đến' : 
 							                (reservation.status == 'CANCELED' ? 'Đã hủy' : 'Không đến'))}"
                   >
@@ -1830,3 +1839,5 @@
     </script>
   </body>
 </html>
+
+

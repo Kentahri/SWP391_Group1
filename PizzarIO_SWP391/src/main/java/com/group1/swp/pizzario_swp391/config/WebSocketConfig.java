@@ -56,7 +56,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     }
                 })
                 .withSockJS()
-                // Disable HTTP session cho SockJS
                 .setSessionCookieNeeded(false);
     }
 
