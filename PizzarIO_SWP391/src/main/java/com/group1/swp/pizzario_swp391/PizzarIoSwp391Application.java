@@ -27,7 +27,7 @@ public class PizzarIoSwp391Application {
 
 
 
-//    @Bean
+//   @Bean
     CommandLineRunner initData(StaffService service, TableService tableService) {
         return (String[] args) -> {
             PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
@@ -89,9 +89,9 @@ public class PizzarIoSwp391Application {
 
             // Bàn 3 - WAITING_PAYMENT (Chờ thanh toán) - 2 chỗ
             DiningTable table3 = new DiningTable(
-                    DiningTable.TableStatus.WAITING_PAYMENT,
+                    DiningTable.TableStatus.AVAILABLE,
                     DiningTable.TableCondition.GOOD,
-                    now, now, 2, 0
+                    now, now, 6, 0
             );
 
             // Bàn 4 - AVAILABLE (Đã thanh toán xong) - 6 chỗ
@@ -103,7 +103,7 @@ public class PizzarIoSwp391Application {
 
             // Bàn 5 - OCCUPIED (Có khách) - 4 chỗ
             DiningTable table5 = new DiningTable(
-                    DiningTable.TableStatus.OCCUPIED,
+                    DiningTable.TableStatus.AVAILABLE,
                     DiningTable.TableCondition.GOOD,
                     now, now, 4, 0
             );
@@ -131,7 +131,7 @@ public class PizzarIoSwp391Application {
 
             // Bàn 9 - WAITING_PAYMENT (Chờ thanh toán) - 4 chỗ
             DiningTable table9 = new DiningTable(
-                    DiningTable.TableStatus.WAITING_PAYMENT,
+                    DiningTable.TableStatus.AVAILABLE,
                     DiningTable.TableCondition.GOOD,
                     now, now, 4, 0
             );
@@ -143,7 +143,6 @@ public class PizzarIoSwp391Application {
                     now, now, 4, 0
             );
 
-            // Save tables to database
             tableService.add(table1);
             tableService.add(table2);
             tableService.add(table3);

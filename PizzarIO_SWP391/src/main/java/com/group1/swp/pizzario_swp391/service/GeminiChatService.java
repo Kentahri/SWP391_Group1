@@ -47,13 +47,12 @@ public class GeminiChatService {
         @Override
         public Map<Intent, List<String>> getSynonyms() {
             return Map.of(
+                    Intent.PIZZA, List.of("pizza", "banh pizza", "mon pizza", "biza, piza"),
                     Intent.CHEAPEST, List.of("re nhat", "gia thap nhat", "re hon", "muc gia thap", "re nhat la"),
                     Intent.HIGHEST, List.of("dat nhat", "gia cao nhat", "dat hon", "dat nhat la"),
                     Intent.PROMOTION, List.of("khuyen mai", "uu dai", "giam gia", "deal", "voucher"),
                     Intent.BEST_SELLER, List.of("ban chay", "pho bien", "hot nhat", "nhieu nguoi mua", "yeu thich", "ngon nhat"),
-                    Intent.COMBO, List.of("combo"),
-                    Intent.PIZZA, List.of("pizza")
-
+                    Intent.COMBO, List.of("combo")
             );
         }
     }
@@ -330,41 +329,5 @@ public class GeminiChatService {
         return String.format("%,.0f VNĐ", price);
     }
 
-
-    public void streamChat(String userMessage, StreamCallback callback) {
-        try {
-            GenerateContentConfig config = GenerateContentConfig.builder()
-                    .temperature(0.7f)
-                    .build();
-
-            geminiClient.models.generateContentStream(
-                    model,
-                    userMessage,
-                    config
-            ).forEach(chunk -> {
-                if (chunk.text() != null && !chunk.text().isBlank()) {
-                    callback.onChunk(chunk.text());
-                }
-
-            });
-
-            callback.onComplete();
-
-        } catch (Exception e) {
-            log.error("Error in streaming: ", e);
-            callback.onError(e);
-        }
-    }
-
-    @FunctionalInterface
-    public interface StreamCallback {
-        void onChunk(String chunk);
-
-        default void onComplete() {
-        }
-
-        default void onError(Exception e) {
-        }
-    }
 }
 
