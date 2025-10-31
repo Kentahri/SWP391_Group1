@@ -90,7 +90,7 @@ public class TableService{
 
             try {
                 tableRepository.save(table); // This will throw OptimisticLockException if version mismatch
-            } catch (OptimisticLockException _) {
+            } catch (OptimisticLockException e) {
                 // Another guest selected this table at the same time
                 log.warn("Optimistic lock conflict for table {}", request.getTableId());
                 sendTableSelectionError(request.getSessionId(), request.getTableId(),
@@ -357,7 +357,6 @@ public class TableService{
                 return;
             }
 
-            DiningTable.TableStatus oldStatus = table.getTableStatus();
             // Set table to WAITING_PAYMENT status when guest requests payment
             table.setTableStatus(DiningTable.TableStatus.WAITING_PAYMENT);
             table.setUpdatedAt(LocalDateTime.now());
@@ -366,15 +365,7 @@ public class TableService{
             // Broadcast table status change to all guests
             webSocketService.broadcastTableStatusToGuests(request.getTableId(), DiningTable.TableStatus.WAITING_PAYMENT);
 
-            // Broadcast to cashier to notify about the payment request
-            webSocketService.broadcastTableStatusToCashier(
-                    com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage.MessageType.TABLE_RELEASED,
-                    request.getTableId(),
-                    oldStatus,
-                    DiningTable.TableStatus.WAITING_PAYMENT,
-                    "Guest",
-                    "Bàn " + request.getTableId() + " đang chờ thanh toán."
-            );
+            // Note: Payment is now handled directly by guest, no need to notify cashier
 
             // Send confirmation back to the guest
             simpMessagingTemplate.convertAndSend(
@@ -382,7 +373,7 @@ public class TableService{
                     TableReleaseResponse.builder()
                             .type(TableReleaseResponse.ResponseType.SUCCESS)
                             .tableId(request.getTableId())
-                            .message("Yêu cầu thanh toán đã được gửi. Vui lòng đợi thu ngân.")
+                            .message("Bàn đã được chuyển sang trạng thái chờ thanh toán. Bạn có thể thanh toán trực tiếp từ menu.")
                             .build()
             );
 

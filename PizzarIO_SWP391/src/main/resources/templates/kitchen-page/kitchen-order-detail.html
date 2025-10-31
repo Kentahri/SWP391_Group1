@@ -44,12 +44,13 @@
                     <td th:text="${#numbers.formatDecimal(item.unitPrice,0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
                     <td th:text="${#numbers.formatDecimal(item.totalPrice,0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
                     <td>
-                        <select th:id="'status-select-' + ${item.id}" th:data-id="${item.id}" th:value="${item.status}"
-                                th:onchange="updateStatusDropdown(this)" style="padding: 4px 10px; border-radius:5px;">
-                            <option th:value="'PENDING'" th:selected="${item.status?.name() == 'PENDING'}">Chờ xác nhận</option>
-                            <option th:value="'PREPARING'" th:selected="${item.status?.name() == 'PREPARING'}">Đang chế biến</option>
-                            <option th:value="'SERVED'" th:selected="${item.status?.name() == 'SERVED'}">Đã phục vụ</option>
-                            <option th:value="'CANCELLED'" th:selected="${item.status?.name() == 'CANCELLED'}">Đã hủy</option>
+                        <select th:id="'status-select-' + ${item.id}" th:data-id="${item.id}"
+                                th:onchange="updateStatusDropdown(this)" style="padding: 4px 10px; border-radius:5px;"
+                                th:disabled="${order.status == 'COMPLETED'}">
+                            <option value="PENDING" th:selected="${item.status.name() == 'PENDING'}">Chờ xác nhận</option>
+                            <option value="PREPARING" th:selected="${item.status.name() == 'PREPARING'}">Đang chế biến</option>
+                            <option value="SERVED" th:selected="${item.status.name() == 'SERVED'}">Đã phục vụ</option>
+<!--                            <option value="CANCELLED" th:selected="${item.status.name() == 'CANCELLED'}">Đã hủy</option>-->
                         </select>
                     </td>
                     <td th:text="${item.note}"></td>
@@ -62,11 +63,35 @@
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 <script th:src="@{/js/kitchen/websocket.js}"></script>
-<script>
+<script th:inline="javascript">
+// Track the last update made by this user to avoid reload immediately after user's own update
+window.lastUpdateByThisUser = null;
+
+// Expose ORDER_STATUS for client logic; ensure it's a string
+window.ORDER_STATUS = /*[['' + ${order.status}]]*/ 'UNKNOWN';
+console.log('Order status:', window.ORDER_STATUS);
+
+document.addEventListener('DOMContentLoaded', function () {
+    if (window.ORDER_STATUS === 'COMPLETED') {
+        var selects = document.querySelectorAll('select[id^="status-select-"]');
+        selects.forEach(function (sel) { sel.disabled = true; });
+    }
+});
+
 function updateStatusDropdown(selectEl) {
+    if (window.ORDER_STATUS === 'COMPLETED') {
+        alert('Order đã hoàn thành. Không thể cập nhật trạng thái món.');
+        return;
+    }
     const itemId = selectEl.getAttribute('data-id');
     const status = selectEl.value;
     if (window.updateItemStatus && itemId) {
+        // Track this update to avoid immediate reload
+        window.lastUpdateByThisUser = {
+            itemId: Number(itemId),
+            status: status,
+            timestamp: Date.now()
+        };
         window.updateItemStatus(Number(itemId), status);
     } else {
         alert('Không thể cập nhật trạng thái món.');

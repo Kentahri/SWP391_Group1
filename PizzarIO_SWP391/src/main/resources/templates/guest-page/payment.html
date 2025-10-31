@@ -299,6 +299,69 @@
                 </div>
               </div>
 
+              <!-- Points usage form -->
+              <div th:if="${membership != null}" class="mt-3">
+                <div
+                  class="mb-2"
+                  th:if="${pointsUsed != null and pointsUsed > 0}"
+                >
+                  <div class="alert alert-info mb-2">
+                    Đang sử dụng <strong th:text="${pointsUsed}">0</strong> điểm
+                    (giảm
+                    <strong
+                      th:text="${#numbers.formatDecimal(pointsUsed * 10000, 0, 'COMMA', 0, 'POINT')}"
+                      >0</strong
+                    >
+                    VND)
+                    <form
+                      th:action="@{'/guest/payment/session/' + ${sessionId}}"
+                      method="post"
+                      style="display: inline"
+                    >
+                      <input
+                        type="hidden"
+                        name="action"
+                        value="remove-points"
+                      />
+                      <button
+                        type="submit"
+                        class="btn btn-sm btn-outline-danger ms-2"
+                      >
+                        <i class="fas fa-times"></i> Hủy
+                      </button>
+                    </form>
+                  </div>
+                </div>
+                <form
+                  th:action="@{'/guest/payment/session/' + ${sessionId}}"
+                  method="post"
+                  class="mb-2"
+                >
+                  <input type="hidden" name="action" value="apply-points" />
+                  <label class="form-label"
+                    >Sử dụng điểm (1 điểm = 10.000 VND):</label
+                  >
+                  <div class="input-group">
+                    <input
+                      type="text"
+                      name="points"
+                      class="form-control"
+                      inputmode="numeric"
+                      th:placeholder="${'Tối đa ' + maxUsablePoints}"
+                    />
+                    <button type="submit" class="btn btn-outline-primary">
+                      Áp dụng điểm
+                    </button>
+                  </div>
+                  <small
+                    class="text-muted"
+                    th:text="${'Tối đa dùng: ' + maxUsablePoints + ' điểm'}"
+                    >Tối đa dùng: 0 điểm</small
+                  >
+                </form>
+                <!-- If voucher is applied, applying points will overwrite it (handled by backend) -->
+              </div>
+
               <!-- Membership Verification Form -->
               <div th:if="${membership == null}" class="membership-verify">
                 <div class="membership-form">
@@ -323,7 +386,7 @@
                           name="phoneNumber"
                           class="form-control"
                           placeholder="Số điện thoại"
-                          maxlength="10"
+                          maxlength="11"
                         />
                         <button type="submit" class="btn btn-outline-primary">
                           <i class="fas fa-search"></i> Kiểm tra
@@ -434,7 +497,6 @@
         membershipPoints: /*[[${payment.membershipPoints}]]*/ 0,
         appliedVoucherId: /*[[${payment.appliedVoucherId}]]*/ null,
         availableVouchers: /*[[${availableVouchers}]]*/ [],
-        source: /*[[${source}]]*/ null,
       };
 
       // Ensure sessionId is properly converted to number

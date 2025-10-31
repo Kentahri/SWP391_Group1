@@ -63,7 +63,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <scope>annotationProcessor</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -105,6 +105,12 @@
             <groupId>com.google.genai</groupId>
             <artifactId>google-genai</artifactId>
             <version>1.23.0</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.14.0</version>
         </dependency>
 <!--        Huy -->
         <dependency>

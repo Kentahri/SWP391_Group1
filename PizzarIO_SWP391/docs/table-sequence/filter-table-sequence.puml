@@ -1,0 +1,69 @@
+@startuml
+title Filter Table - Manager
+
+actor Manager
+participant Browser
+participant JavaScript
+participant TableController
+participant TableService
+participant TableRepository
+participant Database
+
+== Filter Table ==
+Manager -> Browser: Select filter option from dropdown\n(e.g., "NON_RETIRED", "NEW", "GOOD", etc.)
+
+Browser -> JavaScript: change event triggered
+JavaScript -> JavaScript: Get selected value
+JavaScript -> Browser: Update URL with condition parameter\n(e.g., ?condition=NON_RETIRED)
+Browser -> Browser: Navigate to new URL
+
+Browser -> TableController: GET /manager/tables?condition=<selectedValue>
+TableController -> TableController: Read condition parameter
+
+alt condition == "ALL" or null or empty
+    TableController -> TableService: getAllTablesForManager()
+    TableService -> TableRepository: findAll()
+    TableRepository -> Database: SELECT * FROM Dining_Table
+    Database --> TableRepository: All dining tables
+    note right of TableRepository: Returns all tables\nregardless of condition
+else condition == "NON_RETIRED"
+    TableController -> TableService: findNonRetiredTables()
+    TableService -> TableRepository: getDiningTableByTableConditionExceptRetired()
+    TableRepository -> Database: SELECT * FROM Dining_Table\nWHERE table_condition != 'RETIRED'
+    Database --> TableRepository: Non-retired dining tables
+    note right of TableRepository: Returns tables where\ncondition ≠ RETIRED
+else condition is specific TableCondition
+    TableController -> TableController: Convert condition string\nto TableCondition enum
+    TableController -> TableService: findTableByCondition(condition)
+    TableService -> TableRepository: getDiningTableByTableCondition(condition)
+    TableRepository -> Database: SELECT * FROM Dining_Table\nWHERE table_condition = <condition>
+    Database --> TableRepository: Tables matching condition
+    note right of TableRepository: Returns tables with\nspecific condition
+    opt Invalid condition value
+        TableController -> TableController: Catch IllegalArgumentException
+        TableController -> TableService: getAllTablesForManager()
+        note right of TableController: Fallback to all tables
+    end
+end
+
+TableRepository --> TableService: List<DiningTable>
+TableService -> TableService: Map to TableDTO using TableMapper
+TableService --> TableController: List<TableDTO>
+
+TableController -> TableController: Add filtered tables to model\nSet selectedCondition attribute
+TableController -> Browser: Render table_management.html\nwith filtered tables
+Browser --> Manager: Display filtered table map
+
+note right of Manager
+Filter options:
+- ALL: All tables
+- NON_RETIRED: Active tables  
+- NEW: Tables in new condition
+- GOOD: Tables in good condition
+- WORN: Tables in worn condition
+- DAMAGED: Tables in damaged condition
+- RETIRED: Retired tables (may require auth)
+end note
+
+@enduml
+

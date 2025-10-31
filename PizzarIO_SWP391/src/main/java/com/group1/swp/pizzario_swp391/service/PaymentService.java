@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +26,9 @@ public class PaymentService {
     private final PaymentMapper paymentMapper;
     private final SessionService sessionService;
     private final MembershipService membershipService;
+
+    // Track used points per session (in-memory)
+    private final Map<Long, Integer> pointsUsedBySession = new ConcurrentHashMap<>();
 
     /**
      * Lấy thông tin payment từ session ID
@@ -56,6 +61,9 @@ public class PaymentService {
         
         // Load available vouchers
         paymentDTO.setAvailableVouchers(getAvailableVouchersBySessionId(sessionId));
+        
+        // Set pointsUsed
+        paymentDTO.setPointsUsed(getPointsUsed(sessionId));
         
         return paymentDTO;
     }
@@ -147,6 +155,8 @@ public class PaymentService {
             throw new RuntimeException("Voucher không thể áp dụng");
         }
         
+        // Khi áp dụng voucher, ghi đè trạng thái sử dụng điểm (chỉ 1 phương thức giảm giá)
+        pointsUsedBySession.remove(sessionId);
         // Ghi đè voucher cũ (nếu có) bằng voucher mới
         order.setVoucher(voucher);
         
@@ -242,6 +252,7 @@ public class PaymentService {
             // Lưu payment method thực tế vào database
             order.setPaymentMethod(paymentMethod);
             order.setPaymentStatus(Order.PaymentStatus.PAID);
+            order.setOrderStatus(Order.OrderStatus.COMPLETED);
             order.setUpdatedAt(LocalDateTime.now());
             
             // Cập nhật số lần sử dụng voucher nếu có (không quan trọng, không làm fail transaction chính)
@@ -257,6 +268,15 @@ public class PaymentService {
             // Cập nhật điểm thành viên nếu có (không quan trọng, không làm fail transaction chính)
             if (order.getMembership() != null) {
                 try {
+                    // Deduct used points first
+                    int usedPoints = getPointsUsed(sessionId);
+                    if (usedPoints > 0) {
+                        Membership m = order.getMembership();
+                        int current = m.getPoints() != null ? m.getPoints() : 0;
+                        m.setPoints(Math.max(0, current - usedPoints));
+                        // Persist via membershipService
+                        membershipService.save(m);
+                    }
                     updateMembershipPointsInNewTransaction(order.getMembership(), finalFinalTotal);
                 } catch (Exception e) {
                     System.err.println("Error updating membership points: " + e.getMessage());
@@ -354,8 +374,16 @@ public class PaymentService {
     public double calculateDiscountAmount(Long sessionId) {
         Order order = sessionService.getOrderBySessionId(sessionId);
         
+        // Points discount takes precedence if used (and vouchers are mutually exclusive via validation)
+        int usedPoints = getPointsUsed(sessionId);
+        if (usedPoints > 0) {
+            double originalTotal = calculateOriginalOrderTotal(sessionId);
+            double maxDiscount = originalTotal; // cannot exceed original total
+            double pointsDiscount = usedPoints * 10000.0;
+            return Math.min(pointsDiscount, maxDiscount);
+        }
+        
         if (order.getVoucher() != null) {
-            // Luôn tính dựa trên original total từ order items
             double originalTotal = calculateOriginalOrderTotal(sessionId);
             return calculateDiscountAmount(originalTotal, order.getVoucher());
         }
@@ -390,9 +418,48 @@ public class PaymentService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = Exception.class)
     public void updateMembershipPointsInNewTransaction(Membership membership, double finalTotal) {
-        // Tính điểm tích lũy (ví dụ: 1 điểm cho mỗi 10,000 VND)
-        int earnedPoints = (int) (finalTotal / 10000);
+        // Tính điểm tích lũy (1 điểm cho mỗi 100,000 VND)
+        int earnedPoints = (int) (finalTotal / 100000);
         membership.setPoints(membership.getPoints() + earnedPoints);
         System.out.println("Updated membership points in new transaction: " + membership.getPoints());
+    }
+
+    // ===== Points usage APIs =====
+    public int getPointsUsed(Long sessionId) {
+        return pointsUsedBySession.getOrDefault(sessionId, 0);
+    }
+
+    public int getMaxUsablePoints(Long sessionId) {
+        Order order = sessionService.getOrderBySessionId(sessionId);
+        if (order.getMembership() == null) return 0;
+        int memberPoints = order.getMembership().getPoints() != null ? order.getMembership().getPoints() : 0;
+        double originalTotal = calculateOriginalOrderTotal(sessionId);
+        int byAmountCap = (int) Math.floor(originalTotal / 10000.0);
+        return Math.max(0, Math.min(memberPoints, byAmountCap));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void applyPoints(Long sessionId, int points) {
+        Order order = sessionService.getOrderBySessionId(sessionId);
+        if (order.getMembership() == null) {
+            throw new RuntimeException("Vui lòng xác thực thành viên trước khi sử dụng điểm");
+        }
+        // Nếu đang có voucher, hủy voucher để điểm là phương thức giảm giá duy nhất
+        if (order.getVoucher() != null) {
+            order.setVoucher(null);
+            orderRepository.save(order);
+        }
+        if (points < 0) {
+            throw new RuntimeException("Số điểm không hợp lệ");
+        }
+        int maxUsable = getMaxUsablePoints(sessionId);
+        if (points > maxUsable) {
+            throw new RuntimeException("Số điểm vượt quá mức cho phép: tối đa " + maxUsable);
+        }
+        pointsUsedBySession.put(sessionId, points);
+    }
+
+    public void removePoints(Long sessionId) {
+        pointsUsedBySession.remove(sessionId);
     }
 }

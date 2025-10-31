@@ -65,8 +65,9 @@
         margin-bottom: 10px;
       }
       .items-header {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: 1fr 70px 1fr; /* name, quantity, amount */
+        column-gap: 8px;
         font-size: 12px;
         font-weight: bold;
         margin-bottom: 8px;
@@ -74,10 +75,19 @@
         padding-bottom: 4px;
       }
       .order-item {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: 1fr 70px 1fr; /* keep same as header to align */
+        column-gap: 8px;
         font-size: 12px;
         margin-bottom: 4px;
+      }
+      .order-item > div:nth-child(2),
+      .items-header > div:nth-child(2) {
+        text-align: center; /* center quantity */
+      }
+      .order-item > div:nth-child(3),
+      .items-header > div:nth-child(3) {
+        text-align: right; /* right align amount */
       }
       .total-section {
         margin-top: 15px;
@@ -265,7 +275,7 @@
             <!-- QR Code Image -->
             <div style="text-align: center; margin: 15px 0">
               <img
-                th:src="'https://img.vietqr.io/image/BIDV-0388553383-compact.png?amount=' + ${#strings.replace(#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT'), ',', '')}"
+                th:src="'https://img.vietqr.io/image/BIDV-0388553383-compact.png?amount=' + ${#strings.replace(#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT'), ',', '')} + '&addInfo=Thanh%20toan%20hoa%20don%20so%20' + ${orderId}"
                 alt="QR Code for Payment"
                 style="
                   max-width: 200px;
@@ -324,14 +334,83 @@
       </div>
     </div>
 
+    <!-- WebSocket Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
     <script>
+      // Initialize WebSocket connection for table release
+      let stompClient = null;
+      const BASE_URL = window.APP_CTX || "/pizzario";
+
+      // Connect WebSocket when page loads
+      document.addEventListener("DOMContentLoaded", function () {
+        connectWebSocket();
+      });
+
+      function connectWebSocket() {
+        const socketUrl = BASE_URL.replace(/\/$/, "") + "/ws";
+        const socket = new SockJS(socketUrl);
+        stompClient = Stomp.over(socket);
+        if (window.location.hostname !== "localhost") stompClient.debug = null;
+
+        stompClient.connect(
+          {},
+          function (frame) {
+            console.log("WebSocket connected for table release");
+            window.stompClient = stompClient; // Make it globally available
+          },
+          function (error) {
+            console.error("WebSocket connection failed:", error);
+          }
+        );
+      }
+
       function printReceipt() {
         window.print();
       }
 
       function goHome() {
-        // Always redirect to cashier after payment completion
-        window.location.href = "/pizzario/cashier";
+        // Release table and redirect to guest page
+        const sessionId = /*[[${sessionId}]]*/ null;
+        const tableId = /*[[${tableId}]]*/ null;
+
+        if (sessionId && tableId) {
+          // Call table release function
+          releaseTableAndGoHome(sessionId, tableId);
+        } else {
+          // Fallback: direct redirect to guest page
+          window.location.href = "/pizzario/guest";
+        }
+      }
+
+      function releaseTableAndGoHome(sessionId, tableId) {
+        // Send WebSocket message to release table
+        if (window.stompClient && window.stompClient.connected) {
+          const request = {
+            tableId: tableId,
+            sessionId: sessionId,
+          };
+
+          try {
+            window.stompClient.send(
+              "/app/guest/table/release",
+              {},
+              JSON.stringify(request)
+            );
+            // Redirect after sending the request
+            setTimeout(() => {
+              window.location.href = "/pizzario/guest";
+            }, 1000);
+          } catch (error) {
+            console.error("Error sending table release request:", error);
+            // Fallback: direct redirect
+            window.location.href = "/pizzario/guest";
+          }
+        } else {
+          // Fallback: direct redirect if WebSocket not available
+          window.location.href = "/pizzario/guest";
+        }
       }
     </script>
   </body>

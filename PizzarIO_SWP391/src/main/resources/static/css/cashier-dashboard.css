@@ -7,9 +7,9 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f5f5f5;
+    background: #FFF5E6;
     min-height: 100vh;
-    color: #333;
+    color: #4A3528;
 }
 
 /* ==================== Dashboard Container ==================== */
@@ -22,24 +22,25 @@ body {
 
 /* ==================== Top Bar ==================== */
 .topbar {
-    background: white;
+    background: linear-gradient(135deg, #FFCC99 0%, #FFB366 100%);
     padding: 12px 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 4px 12px rgba(255, 153, 51, 0.3);
+    border-bottom: 3px solid #FF9933;
 }
 
 .brand {
     font-size: 24px;
     font-weight: 700;
-    color: #2c3e50;
+    color: #4A3528;
 }
 
 .staff-info {
     font-size: 14px;
-    color: #666;
+    color: #4A3528;
+    font-weight: 600;
 }
 
 .datetime-info {
@@ -52,12 +53,12 @@ body {
 .clock {
     font-size: 18px;
     font-weight: 600;
-    color: #2c3e50;
+    color: #4A3528;
 }
 
 .date {
     font-size: 12px;
-    color: #666;
+    color: #664C3D;
 }
 
 .actions {
@@ -80,22 +81,26 @@ body {
 }
 
 .btn-primary {
-    background: #ff6b35;
+    background: #FF9933;
     color: white;
+    box-shadow: 0 3px 8px rgba(255, 153, 51, 0.3);
 }
 
 .btn-primary:hover {
-    background: #e55a2b;
+    background: #FF8000;
     transform: translateY(-1px);
+    box-shadow: 0 5px 12px rgba(255, 153, 51, 0.4);
 }
 
 .btn-secondary {
-    background: #e9ecef;
-    color: #495057;
+    background: #FFE5CC;
+    color: #664C3D;
+    box-shadow: 0 2px 6px rgba(255, 204, 153, 0.3);
 }
 
 .btn-secondary:hover {
-    background: #dee2e6;
+    background: #FFDAB3;
+    box-shadow: 0 3px 8px rgba(255, 204, 153, 0.4);
 }
 
 .btn-success {
@@ -127,11 +132,11 @@ body {
 
 /* ==================== Layout ==================== */
 .layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
     flex: 1;
     gap: 0;
     height: calc(100vh - 80px);
+    position: relative;
 }
 
 .panel {
@@ -140,31 +145,107 @@ body {
 }
 
 .left {
-    background: #f8f9fa;
-    border-right: 2px solid #e0e0e0;
+    background: #FFF8F0;
+    box-shadow: 2px 0 10px rgba(255, 153, 51, 0.15);
+    width: 50%;
+    min-width: 300px;
+    max-width: 80%;
 }
 
 .right {
     background: white;
+    box-shadow: -2px 0 10px rgba(255, 153, 51, 0.1);
+    flex: 1;
+    min-width: 300px;
+}
+
+/* Resizable Divider */
+.resize-handle {
+    width: 8px;
+    background: linear-gradient(90deg, #FFCC99 0%, #FFB366 50%, #FFCC99 100%);
+    cursor: col-resize;
+    position: relative;
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+    box-shadow: 0 0 10px rgba(255, 153, 51, 0.2);
+}
+
+.resize-handle:hover {
+    background: linear-gradient(90deg, #FFB366 0%, #FF9933 50%, #FFB366 100%);
+    box-shadow: 0 0 15px rgba(255, 153, 51, 0.4);
+}
+
+.resize-handle:active {
+    background: #FF9933;
+}
+
+.resize-handle::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 1px;
+}
+
+.resize-handle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px;
+    height: 40px;
+    background: rgba(74, 53, 40, 0.3);
+    border-radius: 1px;
+    margin-left: -4px;
+}
+
+.resize-handle.dragging {
+    background: #FF9933;
+    box-shadow: 0 0 20px rgba(255, 153, 51, 0.6);
+}
+
+body.resizing {
+    cursor: col-resize !important;
+    user-select: none;
+}
+
+body.resizing * {
+    cursor: col-resize !important;
+    user-select: none;
 }
 
 /* ==================== Section Titles ==================== */
 .section-title {
     font-size: 20px;
     font-weight: 700;
-    color: #2c3e50;
+    color: #4A3528;
     margin-bottom: 16px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #FFE5CC 0%, #FFDAB3 100%);
+    border-radius: 8px;
+    border-left: 4px solid #FF9933;
+    box-shadow: 0 2px 6px rgba(255, 153, 51, 0.2);
 }
 
 /* ==================== Legend ==================== */
 .legend {
     margin-bottom: 20px;
+    padding: 16px;
+    background: white;
+    border-radius: 10px;
+    border: 2px solid #FFE5CC;
+    box-shadow: 0 3px 10px rgba(255, 153, 51, 0.15);
 }
 
 .legend-items {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    gap: 12px;
 }
 
 .legend-item {
@@ -172,7 +253,8 @@ body {
     align-items: center;
     gap: 8px;
     font-size: 14px;
-    color: #666;
+    color: #664C3D;
+    font-weight: 500;
 }
 
 .legend-dot {
@@ -200,7 +282,7 @@ body {
 /* ==================== Table Grid ==================== */
 .table-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 12px;
 }
 
@@ -210,22 +292,25 @@ body {
     padding: 16px;
     cursor: pointer;
     transition: all 0.2s;
-    border: 2px solid transparent;
+    border: 3px solid #FFE5CC;
     position: relative;
     min-height: 100px;
+    min-width: 140px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    box-shadow: 0 4px 12px rgba(255, 153, 51, 0.2);
 }
 
 .table-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(255, 153, 51, 0.35);
+    border-color: #FFCC99;
 }
 
 .table-card.selected {
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    border-color: #FF9933;
+    box-shadow: 0 0 0 4px rgba(255, 153, 51, 0.3);
 }
 
 .table-icon {
@@ -238,7 +323,7 @@ body {
 .table-number {
     font-size: 18px;
     font-weight: 700;
-    color: #2c3e50;
+    color: #4A3528;
     margin-bottom: 8px;
 }
 
@@ -267,39 +352,43 @@ body {
 
 /* Table Status Colors */
 .table-card.available {
-    background: #d4edda;
-    border-color: #28a745;
+    background: #E6F7E6;
+    border-color: #66BB66;
+    box-shadow: 0 4px 12px rgba(102, 187, 102, 0.3);
 }
 
 .table-card.available .table-status-text {
-    color: #155724;
+    color: #2D5A2D;
 }
 
 .table-card.occupied {
-    background: #f8d7da;
-    border-color: #dc3545;
+    background: #FFE8E8;
+    border-color: #FF6666;
+    box-shadow: 0 4px 12px rgba(255, 102, 102, 0.3);
 }
 
 .table-card.occupied .table-status-text {
-    color: #721c24;
+    color: #8B2626;
 }
 
 .table-card.waiting_payment {
-    background: #fff3cd;
-    border-color: #ffc107;
+    background: #FFF9E6;
+    border-color: #FFD966;
+    box-shadow: 0 4px 12px rgba(255, 217, 102, 0.3);
 }
 
 .table-card.waiting_payment .table-status-text {
-    color: #856404;
+    color: #806600;
 }
 
 .table-card.reserved {
-    background: #e2e3e5;
-    border-color: #6c757d;
+    background: #F0F0F5;
+    border-color: #9999CC;
+    box-shadow: 0 4px 12px rgba(153, 153, 204, 0.3);
 }
 
 .table-card.reserved .table-status-text {
-    color: #495057;
+    color: #4A4A66;
 }
 
 /* ==================== Right Panel Styles ==================== */
@@ -679,11 +768,26 @@ body {
 /* ==================== Responsive Design ==================== */
 @media (max-width: 1200px) {
     .layout {
-        grid-template-columns: 1fr;
+        flex-direction: column;
     }
-    
+
+    .left {
+        width: 100% !important;
+        max-width: 100%;
+        border-right: none;
+        border-bottom: 4px solid #FFCC99;
+    }
+
+    .right {
+        width: 100% !important;
+    }
+
+    .resize-handle {
+        display: none;
+    }
+
     .table-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     }
 }
 
@@ -693,24 +797,24 @@ body {
         gap: 12px;
         padding: 16px;
     }
-    
+
     .actions {
         flex-wrap: wrap;
         justify-content: center;
     }
-    
+
     .table-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     }
-    
+
     .legend-items {
         grid-template-columns: 1fr;
     }
-    
+
     .payment-buttons {
-    flex-direction: column;
+        flex-direction: column;
     }
-    
+
     .action-buttons-bottom {
         flex-direction: column;
     }
@@ -718,9 +822,9 @@ body {
 
 @media (max-width: 480px) {
     .table-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     }
-    
+
     .panel {
         padding: 12px;
     }
@@ -782,7 +886,8 @@ body {
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(255, 153, 51, 0.2);
+    border: 2px solid #FFE5CC;
 }
 
 .detail-row {
@@ -796,7 +901,7 @@ body {
 }
 
 .btn-reserve {
-    background: #667eea;
+    background: linear-gradient(135deg, #FF9933 0%, #FF8000 100%);
     color: white;
     border: none;
     padding: 12px 20px;
@@ -807,18 +912,19 @@ body {
     width: 100%;
     font-size: 14px;
     text-align: center;
+    box-shadow: 0 4px 10px rgba(255, 153, 51, 0.3);
 }
 
 .btn-reserve:hover {
-    background: #5a6fd8;
+    background: linear-gradient(135deg, #FF8000 0%, #FF6600 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 16px rgba(255, 153, 51, 0.5);
 }
 
 .btn-view-reservations {
-    background: #56ab2f;
-    color: white;
-    border: none;
+    background: linear-gradient(135deg, #FFCC99 0%, #FFB366 100%);
+    color: #4A3528;
+    border: 2px solid #FF9933;
     padding: 12px 20px;
     border-radius: 8px;
     font-weight: 600;
@@ -829,13 +935,14 @@ body {
     text-align: center;
     text-decoration: none;
     display: block;
+    box-shadow: 0 3px 8px rgba(255, 153, 51, 0.3);
 }
 
 .btn-view-reservations:hover {
-    background: #4a9a26;
+    background: linear-gradient(135deg, #FFB366 0%, #FF9933 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(86, 171, 47, 0.4);
-    color: white;
+    box-shadow: 0 5px 12px rgba(255, 153, 51, 0.4);
+    color: #4A3528;
     text-decoration: none;
 }
 
@@ -845,7 +952,8 @@ body {
     border-radius: 12px;
     padding: 20px;
     margin-top: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(255, 153, 51, 0.2);
+    border: 2px solid #FFE5CC;
 }
 
 .order-header {
@@ -1224,7 +1332,7 @@ textarea.form-control {
 
 /* ==================== Button Styles ==================== */
 .btn-primary {
-    background: #667eea;
+    background: linear-gradient(135deg, #FF9933 0%, #FF8000 100%);
     color: white;
     border: none;
     padding: 10px 24px;
@@ -1232,12 +1340,13 @@ textarea.form-control {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
+    box-shadow: 0 3px 8px rgba(255, 153, 51, 0.3);
 }
 
 .btn-primary:hover {
-    background: #5a6fd8;
+    background: linear-gradient(135deg, #FF8000 0%, #FF6600 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 5px 12px rgba(255, 153, 51, 0.4);
 }
 
 .btn-primary:active {
@@ -1245,18 +1354,20 @@ textarea.form-control {
 }
 
 .btn-secondary {
-    background: #e0e0e0;
-    color: #333;
+    background: #FFE5CC;
+    color: #664C3D;
     border: none;
     padding: 10px 24px;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
+    box-shadow: 0 2px 6px rgba(255, 204, 153, 0.3);
 }
 
 .btn-secondary:hover {
-    background: #d0d0d0;
+    background: #FFDAB3;
+    box-shadow: 0 3px 8px rgba(255, 204, 153, 0.4);
 }
 
 /* ==================== Animations ==================== */
@@ -1447,8 +1558,8 @@ textarea.form-control {
     border-radius: 12px;
     padding: 40px 20px;
     margin-bottom: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e9ecef;
+    box-shadow: 0 4px 12px rgba(255, 153, 51, 0.2);
+    border: 2px solid #FFE5CC;
     text-align: center;
 }
 
@@ -1474,14 +1585,15 @@ textarea.form-control {
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e9ecef;
+    box-shadow: 0 4px 12px rgba(255, 153, 51, 0.2);
+    border: 2px solid #FFE5CC;
     transition: all 0.3s ease;
 }
 
 .reservation-card:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(255, 153, 51, 0.35);
+    transform: translateY(-3px);
+    border-color: #FFCC99;
 }
 
 .reservation-card-header {
@@ -1571,7 +1683,7 @@ textarea.form-control {
 .btn-open-table {
     width: 100%;
     padding: 12px 20px;
-    background: #2196F3;
+    background: linear-gradient(135deg, #FF9933 0%, #FF8000 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -1579,12 +1691,13 @@ textarea.form-control {
     font-weight: 600;
     font-size: 15px;
     transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(255, 153, 51, 0.3);
 }
 
 .btn-open-table:hover {
-    background: #1976D2;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    background: linear-gradient(135deg, #FF8000 0%, #FF6600 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 153, 51, 0.5);
 }
 
 .reservation-secondary-actions {

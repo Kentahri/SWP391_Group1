@@ -40,7 +40,7 @@ spring:
           ssl:
             trust: smtp.gmail.com
   profiles:
-    active: pro
+    active: prod
 
 server:
   port: ${SERVER_PORT}

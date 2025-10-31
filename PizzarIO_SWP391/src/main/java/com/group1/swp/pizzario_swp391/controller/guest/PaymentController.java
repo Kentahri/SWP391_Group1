@@ -60,7 +60,6 @@ public class PaymentController {
                                          @RequestParam(required = false) String success,
                                          @RequestParam(required = false) String membershipVerified,
                                          @RequestParam(required = false) String membershipRegistered,
-                                         @RequestParam(required = false) String source,
                                          Model model,
                                          HttpServletRequest request) {
         System.out.println("=== PaymentController Debug ===");
@@ -106,11 +105,15 @@ public class PaymentController {
             model.addAttribute("orderItems", orderItems);
             model.addAttribute("membership", membership);
             model.addAttribute("sessionId", sessionId);
+            model.addAttribute("tableId", payment.getTableNumber()); // Add tableId for reference
             model.addAttribute("orderId", payment.getOrderId());
             model.addAttribute("originalTotal", originalTotal);
             model.addAttribute("discountAmount", discountAmount);
             model.addAttribute("finalTotal", finalTotal);
-            model.addAttribute("source", source); // For redirect after payment
+            
+            // Points info for UI
+            model.addAttribute("pointsUsed", payment.getPointsUsed());
+            model.addAttribute("maxUsablePoints", paymentService.getMaxUsablePoints(sessionId));
             
             // Thêm error message nếu có
             if (error != null && !error.isEmpty()) {
@@ -146,7 +149,8 @@ public class PaymentController {
     public String handlePaymentAction(@PathVariable Long sessionId, 
                                     @RequestParam String action,
                                     @RequestParam(required = false) Long voucherId,
-                                    @RequestParam(required = false) String phoneNumber) {
+                                    @RequestParam(required = false) String phoneNumber,
+                                    @RequestParam(required = false) Integer points) {
         try {
             if ("apply-voucher".equals(action) && voucherId != null) {
                 paymentService.applyVoucherBySessionId(sessionId, voucherId);
@@ -167,6 +171,14 @@ public class PaymentController {
                     return "redirect:/guest/payment/session/" + sessionId + "?error=" + 
                            URLEncoder.encode("Không tìm thấy thành viên với số điện thoại này. Vui lòng đăng ký thành viên.", StandardCharsets.UTF_8);
                 }
+            } else if ("apply-points".equals(action) && points != null) {
+                paymentService.applyPoints(sessionId, points);
+                return "redirect:/guest/payment/session/" + sessionId + "?success=" +
+                        URLEncoder.encode("Đã áp dụng điểm thành công!", StandardCharsets.UTF_8);
+            } else if ("remove-points".equals(action)) {
+                paymentService.removePoints(sessionId);
+                return "redirect:/guest/payment/session/" + sessionId + "?success=" +
+                        URLEncoder.encode("Đã hủy sử dụng điểm!", StandardCharsets.UTF_8);
             } else {
                 return "redirect:/guest/payment/session/" + sessionId + "?error=" + 
                        URLEncoder.encode("Hành động không hợp lệ", StandardCharsets.UTF_8);
@@ -184,7 +196,6 @@ public class PaymentController {
     @PostMapping("/session/{sessionId}/confirm")
     public String confirmPaymentBySession(@PathVariable Long sessionId, 
                                         @RequestParam String paymentMethod,
-                                        @RequestParam(required = false) String source,
                                         Model model,
                                         HttpServletRequest request) {
         System.out.println("=== Payment Confirmation Debug ===");
@@ -218,12 +229,8 @@ public class PaymentController {
             // Xác nhận thanh toán (không bắt buộc phải có membership)
             paymentService.confirmPaymentBySessionId(sessionId, method);
             
-            // Redirect đến trang confirmation với source parameter
-            String redirectUrl = "redirect:/guest/payment/session/" + sessionId + "/confirmation";
-            if (source != null && !source.isEmpty()) {
-                redirectUrl += "?source=" + URLEncoder.encode(source, StandardCharsets.UTF_8);
-            }
-            return redirectUrl;
+            // Redirect đến trang confirmation
+            return "redirect:/guest/payment/session/" + sessionId + "/confirmation";
         } catch (Exception e) {
             e.printStackTrace(); // Log error for debugging
             // Redirect back to payment page with error parameter
@@ -238,7 +245,6 @@ public class PaymentController {
      */
     @GetMapping("/session/{sessionId}/confirmation")
     public String showPaymentConfirmationBySession(@PathVariable Long sessionId, 
-                                                   @RequestParam(required = false) String source,
                                                    Model model, HttpServletRequest request) {
         System.out.println("=== Payment Confirmation Page Debug ===");
         System.out.println("Received sessionId: " + sessionId);
@@ -269,11 +275,17 @@ public class PaymentController {
             model.addAttribute("orderItems", orderItems);
             model.addAttribute("membership", membership);
             model.addAttribute("sessionId", sessionId);
+            model.addAttribute("tableId", payment.getTableNumber()); // Add tableId for table release
+            model.addAttribute("orderId", payment.getOrderId());
             model.addAttribute("originalTotal", originalTotal);
             model.addAttribute("discountAmount", discountAmount);
             model.addAttribute("finalTotal", finalTotal);
-            model.addAttribute("source", source);
-            
+
+            // Sau khi hiển thị xác nhận, dọn dẹp trạng thái điểm đã dùng cho session
+            try {
+                paymentService.removePoints(sessionId);
+            } catch (Exception ignored) {}
+
             return "guest-page/payment-confirmation";
         } catch (Exception e) {
             e.printStackTrace();
