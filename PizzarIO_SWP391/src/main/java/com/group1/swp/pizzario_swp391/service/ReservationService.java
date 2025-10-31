@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -245,11 +246,12 @@ public class ReservationService {
         reservationSchedulerService.cancelNoShowCheck(reservationId);
         reservationRepository.save(reservation);
         tableRepository.save(table);
+    }
 
     /**
      * Khóa bàn tự động nếu đã đến thời gian quy định
      */
-    @Scheduled(fixedRate = 5000)
+    //@Scheduled(fixedRate = 5000)
     @Transactional
     public synchronized void closeTable() {
         log.info("🔄 Scheduled: closeTable() is running...");

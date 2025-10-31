@@ -3,8 +3,8 @@ spring:
     name: PizzarIO
   config:
     import:
-        - optional:classpath:env.properties
-        - optional:file:./config/manager-settings.yaml
+      - optional:classpath:env.properties
+      - optional:file:./config/manager-settings.yaml
   jpa:
     show-sql: true
     hibernate:
@@ -40,7 +40,7 @@ spring:
           ssl:
             trust: smtp.gmail.com
   profiles:
-    active: prod
+    active: pro
 
 server:
   port: ${SERVER_PORT}

@@ -59,6 +59,18 @@
                 >
                   28 ngày qua
                 </option>
+                <option
+                  value="90"
+                  th:selected="${selectedDays != null && selectedDays == 90}"
+                >
+                  90 ngày qua
+                </option>
+                <option
+                  value="365"
+                  th:selected="${selectedDays != null && selectedDays == 365}"
+                >
+                  365 ngày qua
+                </option>
                 <option value="custom" th:selected="${isCustomRange}">
                   Tùy chỉnh
                 </option>
@@ -110,16 +122,16 @@
 
             <article class="card">
               <div class="card-title">Đơn hàng</div>
-              <p class="kpi-value" th:text="${analytics.totalOrders()}">0đ</p>
+              <p class="kpi-value" th:text="${analytics.totalOrders}">0</p>
               <p
                 class="kpi-delta"
-                th:classappend="${analytics.totalOrders() >= 0 ? 'positive' : 'negative'}"
+                th:classappend="${analytics.ordersDelta >= 0 ? 'positive' : 'negative'}"
               >
                 <span
-                  th:text="${analytics.ordersDelta() >= 0 ? '↑' : '↓'}"
+                  th:text="${analytics.ordersDelta >= 0 ? '↑' : '↓'}"
                 ></span>
                 <span
-                  th:text="${#numbers.formatDecimal(analytics.ordersDelta(), 1, 2)}"
+                  th:text="${#numbers.formatDecimal(analytics.ordersDelta, 1, 2)}"
                   >0</span
                 >%
                 <span
@@ -132,10 +144,10 @@
 
             <article class="card">
               <div class="card-title">Khách mới</div>
-              <p class="kpi-value" th:text="${analytics.newCustomers()}">0đ</p>
+              <p class="kpi-value" th:text="${analytics.newCustomers}">0</p>
               <p
                 class="kpi-delta"
-                th:classappend="${analytics.newCustomersDelta() >= 0 ? 'positive' : 'negative'}"
+                th:classappend="${analytics.newCustomersDelta >= 0 ? 'positive' : 'negative'}"
               >
                 <span
                   th:text="${analytics.newCustomersDelta >= 0 ? '↑' : '↓'}"
@@ -156,13 +168,13 @@
               <div class="card-title">Giá trị TB</div>
               <p
                 class="kpi-value"
-                th:text="${#numbers.formatDecimal(analytics.aov(), 0, 'COMMA', 0, 'POINT')} + ' đ'"
+                th:text="${#numbers.formatDecimal(analytics.aov, 0, 'COMMA', 0, 'POINT')} + ' đ'"
               >
                 0 đ
               </p>
               <p
                 class="kpi-delta"
-                th:classappend="${analytics.aovDelta() >= 0 ? 'positive' : 'negative'}"
+                th:classappend="${analytics.aovDelta >= 0 ? 'positive' : 'negative'}"
               >
                 <span th:text="${analytics.aovDelta >= 0 ? '↑' : '↓'}"></span>
                 <span
@@ -217,7 +229,7 @@
                     <span class="muted">Khách hàng mới</span
                     ><strong
                       id="todayNewCustomers"
-                      th:text="${analytics.newCustomers()}"
+                      th:text="${analytics.newCustomers}"
                     ></strong>
                   </div>
                   <!-- TODO bind: KH quay lại -->
@@ -225,7 +237,7 @@
                     <span class="muted">Khách hàng quay lại</span
                     ><strong
                       id="todayReturning"
-                      th:text="${analytics.oldCustomers()}"
+                      th:text="${analytics.oldCustomers}"
                     ></strong>
                   </div>
                   <!-- TODO bind: tỷ lệ giữ chân -->
@@ -233,7 +245,7 @@
                     <span class="muted">Tỷ lệ giữ chân</span
                     ><strong
                       id="retentionRate"
-                      th:text="${analytics.retentionRate()}"
+                      th:text="${#numbers.formatDecimal(analytics.retentionRate, 1, 2)} + '%'"
                     ></strong>
                   </div>
                 </div>
@@ -244,43 +256,90 @@
           <div class="grid two bottom-grid">
             <article class="card">
               <div class="card-title">Top sản phẩm bán chạy</div>
-              <table class="table" id="tableTopProducts">
-                <thead>
-                  <tr>
-                    <th>Top</th>
-                    <th>Sản phẩm</th>
-                    <th>Đơn</th>
-                    <th>Số lượng</th>
-                    <th>Doanh thu</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr th:if="${topProducts == null || topProducts.isEmpty()}">
-                    <td colspan="5" style="text-align: center">
-                      Chưa có dữ liệu
-                    </td>
-                  </tr>
 
-                  <tr th:each="product : ${topProducts}">
-                    <td th:text="${product.topId}">1</td>
-                    <td class="product-name" th:text="${product.productName}">
-                      Pizza Margherita
-                    </td>
-                    <td class="text-center" th:text="${product.orderCount}">
-                      0
-                    </td>
-                    <td class="text-center" th:text="${product.quantitySold}">
-                      0
-                    </td>
-                    <td
-                      class="revenue-cell"
-                      th:text="${#numbers.formatDecimal(product.totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'"
-                    >
-                      0 đ
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <!-- Filter Section -->
+              <div class="top-products-filter">
+                <div class="filter-row">
+                  <div class="filter-group">
+                    <label for="dateRangePreset">Thời gian:</label>
+                    <select id="dateRangePreset" class="filter-select">
+                      <option value="7">7 ngày qua</option>
+                      <option value="30">30 ngày qua</option>
+                      <option value="90">90 ngày qua</option>
+                      <option value="all">Tất cả</option>
+                      <option value="custom">Tùy chỉnh...</option>
+                    </select>
+                  </div>
+
+                  <!-- Custom Date Range (hidden by default) -->
+                  <div id="topProductsCustomDateRange" class="filter-group custom-dates" style="display: none;">
+                    <div class="date-input-group">
+                      <label for="customFromDate">Từ:</label>
+                      <input type="date" id="customFromDate" class="filter-input">
+                    </div>
+                    <div class="date-input-group">
+                      <label for="customToDate">Đến:</label>
+                      <input type="date" id="customToDate" class="filter-input">
+                    </div>
+                  </div>
+
+                  <div class="filter-group">
+                    <label for="categoryFilter">Danh mục:</label>
+                    <select id="categoryFilter" class="filter-select">
+                      <option value="">Tất cả</option>
+                      <!-- Loaded dynamically -->
+                    </select>
+                  </div>
+
+                  <button id="applyTopProductsFilter" class="btn-apply">Áp dụng</button>
+                </div>
+              </div>
+
+              <!-- Table with loading overlay -->
+              <div class="table-container" style="position: relative;">
+                <div id="topProductsLoading" class="loading-overlay" style="display: none;">
+                  <div class="spinner"></div>
+                  <p>Đang tải dữ liệu...</p>
+                </div>
+
+                <table class="table" id="tableTopProducts">
+                  <thead>
+                    <tr>
+                      <th>Top</th>
+                      <th>Sản phẩm</th>
+                      <th>Đơn</th>
+                      <th>Số lượng</th>
+                      <th>Doanh thu</th>
+                    </tr>
+                  </thead>
+                  <tbody id="topProductsTableBody">
+                    <tr th:if="${topProducts == null || topProducts.isEmpty()}">
+                      <td colspan="5" style="text-align: center">
+                        Chưa có dữ liệu
+                      </td>
+                    </tr>
+
+                    <tr th:each="product : ${topProducts}">
+                      <td th:text="${product.topId}">1</td>
+                      <td class="product-name" th:text="${product.productName}">
+                        Pizza Margherita
+                      </td>
+                      <td class="text-center" th:text="${product.orderCount}">
+                        0
+                      </td>
+                      <td class="text-center" th:text="${product.quantitySold}">
+                        0
+                      </td>
+                      <td
+                        class="revenue-cell"
+                        th:text="${#numbers.formatDecimal(product.totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'"
+                      >
+                        0 đ
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </article>
 
             <article class="card">
@@ -322,6 +381,358 @@
       };
       /*]]>*/
     </script>
+
+<!-- Toast Notification Container -->
+<div id="toastContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
+
+<!-- Custom Styles for Top Products Filter -->
+<style>
+  /* Filter Section */
+  .top-products-filter {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+
+  .filter-row {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .filter-group label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+  }
+
+  .filter-select, .filter-input {
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    min-width: 150px;
+    background: white;
+  }
+
+  .custom-dates {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+  }
+
+  .date-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .btn-apply {
+    padding: 0.5rem 1.5rem;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    align-self: flex-end;
+  }
+
+  .btn-apply:hover {
+    background: #0056b3;
+  }
+
+  .btn-apply:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+  }
+
+  /* Loading Overlay */
+  .loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    z-index: 10;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Toast Notification */
+  .toast {
+    min-width: 300px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: slideIn 0.3s ease-out;
+    color: white;
+    font-size: 0.875rem;
+  }
+
+  .toast.success {
+    background: #28a745;
+  }
+
+  .toast.error {
+    background: #dc3545;
+  }
+
+  .toast.info {
+    background: #17a2b8;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeOut {
+    to {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+  }
+
+  .toast.fade-out {
+    animation: fadeOut 0.3s ease-out forwards;
+  }
+</style>
+
+<script th:inline="javascript">
+(function() {
+  'use strict';
+
+  // ==================== Toast Notification ====================
+  function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
+    toast.innerHTML = `<span style="font-size: 1.2rem;">${icon}</span><span>${message}</span>`;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('fade-out');
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  // ==================== Elements ====================
+  const presetSelect = document.getElementById('dateRangePreset');
+  const customDateDiv = document.getElementById('topProductsCustomDateRange');
+  const customFromInput = document.getElementById('customFromDate');
+  const customToInput = document.getElementById('customToDate');
+  const categorySelect = document.getElementById('categoryFilter');
+  const applyBtn = document.getElementById('applyTopProductsFilter');
+  const loadingOverlay = document.getElementById('topProductsLoading');
+  const tbody = document.getElementById('topProductsTableBody');
+
+  // API endpoints
+  const API_TOP_PRODUCTS = /*[[@{/manager/analytics/api/top-products}]]*/ '/manager/analytics/api/top-products';
+  const API_CATEGORIES = /*[[@{/manager/analytics/api/categories}]]*/ '/manager/analytics/api/categories';
+
+  // ==================== Load Categories ====================
+  async function loadCategories() {
+    try {
+      const response = await fetch(API_CATEGORIES);
+      if (!response.ok) throw new Error('Failed to load categories');
+
+      const categories = await response.json();
+
+      categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat.id;
+        option.textContent = cat.name;
+        categorySelect.appendChild(option);
+      });
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  }
+
+  // ==================== Toggle Custom Date Range ====================
+  presetSelect.addEventListener('change', function() {
+    if (this.value === 'custom') {
+      customDateDiv.style.display = 'flex';
+      customFromInput.required = true;
+      customToInput.required = true;
+    } else {
+      customDateDiv.style.display = 'none';
+      customFromInput.required = false;
+      customToInput.required = false;
+    }
+  });
+
+  // ==================== Validation ====================
+  function validateFilters() {
+    const dateRange = presetSelect.value;
+
+    if (dateRange === 'custom') {
+      const fromDate = customFromInput.value;
+      const toDate = customToInput.value;
+
+      if (!fromDate || !toDate) {
+        showToast('Vui lòng chọn đủ ngày bắt đầu và kết thúc!', 'error');
+        return false;
+      }
+
+      if (new Date(fromDate) > new Date(toDate)) {
+        showToast('Ngày bắt đầu phải trước hoặc bằng ngày kết thúc!', 'error');
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  // ==================== Fetch Top Products ====================
+  async function fetchTopProducts() {
+    if (!validateFilters()) return;
+
+    const dateRange = presetSelect.value;
+    const categoryId = categorySelect.value;
+
+    let url = `${API_TOP_PRODUCTS}?dateRange=${dateRange}`;
+
+    if (dateRange === 'custom') {
+      url += `&fromDate=${customFromInput.value}&toDate=${customToInput.value}`;
+    }
+
+    if (categoryId) {
+      url += `&categoryId=${categoryId}`;
+    }
+
+    // Show loading
+    loadingOverlay.style.display = 'flex';
+    applyBtn.disabled = true;
+    presetSelect.disabled = true;
+    categorySelect.disabled = true;
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        renderProducts(data.data);
+        showToast(`Tìm thấy ${data.data.length} sản phẩm`, 'success');
+      } else {
+        showToast(data.message || 'Có lỗi xảy ra!', 'error');
+        renderEmptyState();
+      }
+
+    } catch (error) {
+      console.error('Error fetching top products:', error);
+      showToast('Không thể tải dữ liệu! Vui lòng thử lại.', 'error');
+      renderEmptyState();
+    } finally {
+      loadingOverlay.style.display = 'none';
+      applyBtn.disabled = false;
+      presetSelect.disabled = false;
+      categorySelect.disabled = false;
+    }
+  }
+
+  // ==================== Render Products ====================
+  function renderProducts(products) {
+    if (!products || products.length === 0) {
+      renderEmptyState();
+      return;
+    }
+
+    tbody.innerHTML = products.map((product, index) => `
+      <tr>
+        <td>${index + 1}</td>
+        <td class="product-name">${escapeHtml(product.productName)}</td>
+        <td class="text-center">${product.orderCount}</td>
+        <td class="text-center">${product.quantitySold}</td>
+        <td class="revenue-cell">${formatNumber(product.totalRevenue)} đ</td>
+      </tr>
+    `).join('');
+  }
+
+  function renderEmptyState() {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Không tìm thấy sản phẩm</td></tr>';
+  }
+
+  // ==================== Utility Functions ====================
+  function formatNumber(num) {
+    return new Intl.NumberFormat('vi-VN').format(num);
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // ==================== Debounce ====================
+  let debounceTimer;
+  function debounce(func, delay = 300) {
+    return function(...args) {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => func.apply(this, args), delay);
+    };
+  }
+
+  // ==================== Event Listeners ====================
+  applyBtn.addEventListener('click', debounce(fetchTopProducts));
+
+  // ==================== Initialize ====================
+  loadCategories();
+
+})();
+</script>
 
     <script th:src="@{/js/admin/analytics-date-filter.js}"></script>
     <script th:src="@{/js/admin/analytics-charts.js}" defer></script>

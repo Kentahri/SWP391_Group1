@@ -152,9 +152,8 @@ public class ProdSecurityConfig {
                 .sessionManagement(session -> session
                         .sessionFixation().changeSessionId() // Đổi session ID sau khi login
                         .maximumSessions(1) // Cho phép tối đa 10 sessions đồng thời
-                        .maxSessionsPreventsLogin(true)
-                        .expiredSessionStrategy(event -> event.getResponse().sendRedirect("/pizzario/login?expired"))
-                )
+                        .maxSessionsPreventsLogin(false)
+                        .expiredSessionStrategy(event -> event.getResponse().sendRedirect("/pizzario/login?expired")))
                 .formLogin(f -> f
                         .loginPage("/login")
                         .usernameParameter("email") // <input name="email">

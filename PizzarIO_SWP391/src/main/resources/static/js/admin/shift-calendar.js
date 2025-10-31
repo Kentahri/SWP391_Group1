@@ -38,6 +38,50 @@
   }
 
   // =========================
+  // Staff Search
+  // =========================
+  const input = document.getElementById("staffSearchInput");
+  const select = document.getElementById("staffFilter");
+  const API = '/pizzario/manager/staff_shifts/api/staff_search';
+
+  let t;
+  input.addEventListener("input", function(){
+    clearTimeout(t);
+    const q = this.value.trim();
+    t = setTimeout(() => fetchStaff(q), 300);
+  })
+
+
+  async function fetchStaff(q){
+      const params = new URLSearchParams();
+      if(q) params.set("q", q);
+      params.set('limit', '20');
+
+      try {
+        const res = await fetch(`${API}?${params.toString()}`, { headers: { 'Accept': 'application/json' } });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json(); // [{id, name}]
+        renderOptions(data);
+      } catch (e) {
+        console.error('staff search error', e);
+        renderOptions([]);
+      }
+  }
+
+  function renderOptions(items) {
+    const current = select.value;
+    let html = '<option value=\"\">Tất cả nhân viên</option>';
+    html += items.map(s => `<option value=\"${s.id}\">${escapeHtml(s.name)}</option>`).join('');
+    select.innerHTML = html;
+    // giữ lại lựa chọn nếu vẫn tồn tại
+    if ([...select.options].some(o => o.value === current)) {
+      select.value = current;
+    }
+  }
+
+  function escapeHtml(t){ const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
+
+  // =========================
   // Common DOM utils
   // =========================
   function onEscClose(modalEl, closeFn) {
@@ -260,5 +304,7 @@
     injectCsrfIntoAllForms();
     setupShiftTypeModal();
     setupStaffShiftModal();
+
+    if (typeof fetchStaff === 'function') fetchStaff('');
   });
 })();

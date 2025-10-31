@@ -56,7 +56,9 @@ public class LoginService {
         }
 
         StaffShift ss = targetShift.get();
-        LocalDateTime shiftStart = ss.getShift().getStartTime();
+
+        LocalDateTime shiftStart = ss.getWorkDate()
+                .atTime(ss.getShift().getStartTime().toLocalTime());
 
         Long minutesLate = Duration.between(shiftStart, now).toMinutes();
 
@@ -115,13 +117,17 @@ public class LoginService {
         return shifts.stream()
                 .filter(ss -> ss.getCheckIn() == null && ss.getStatus() != StaffShift.Status.ABSENT)
                 .filter(ss -> {
-                    LocalDateTime shiftStart = ss.getShift().getStartTime();
+
+                    LocalDateTime shiftStart = ss.getWorkDate()
+                            .atTime(ss.getShift().getStartTime().toLocalTime());
                     LocalDateTime earliestCheckIn = shiftStart.minusHours(1); // 1 hour before
                     LocalDateTime latestCheckIn = shiftStart.plusHours(1); // 1 hour after
                     return now.isAfter(earliestCheckIn) && now.isBefore(latestCheckIn);
                 })
                 .min(Comparator.comparing(ss -> {
-                    return Math.abs(Duration.between(ss.getShift().getStartTime(), now).toMinutes());
+                    LocalDateTime shiftStart = ss.getWorkDate()
+                            .atTime(ss.getShift().getStartTime().toLocalTime());
+                    return Math.abs(Duration.between(shiftStart, now).toMinutes());
                 }));
     }
 
