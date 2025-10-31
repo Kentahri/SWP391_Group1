@@ -65,8 +65,9 @@
         margin-bottom: 10px;
       }
       .items-header {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: 1fr 70px 1fr; /* name, quantity, amount */
+        column-gap: 8px;
         font-size: 12px;
         font-weight: bold;
         margin-bottom: 8px;
@@ -74,10 +75,19 @@
         padding-bottom: 4px;
       }
       .order-item {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: 1fr 70px 1fr; /* keep same as header to align */
+        column-gap: 8px;
         font-size: 12px;
         margin-bottom: 4px;
+      }
+      .order-item > div:nth-child(2),
+      .items-header > div:nth-child(2) {
+        text-align: center; /* center quantity */
+      }
+      .order-item > div:nth-child(3),
+      .items-header > div:nth-child(3) {
+        text-align: right; /* right align amount */
       }
       .total-section {
         margin-top: 15px;
@@ -265,7 +275,7 @@
             <!-- QR Code Image -->
             <div style="text-align: center; margin: 15px 0">
               <img
-                th:src="'https://img.vietqr.io/image/BIDV-0388553383-compact.png?amount=' + ${#strings.replace(#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT'), ',', '')}"
+                th:src="'https://img.vietqr.io/image/BIDV-0388553383-compact.png?amount=' + ${#strings.replace(#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT'), ',', '')} + '&addInfo=Thanh%20toan%20hoa%20don%20so%20' + ${orderId}"
                 alt="QR Code for Payment"
                 style="
                   max-width: 200px;
