@@ -33,6 +33,15 @@ public class CategoryService {
         categoryRepository.save(category);
     }
 
+    public List<CategoryResponseDTO> getAllActiveCategories() {
+        List<Category> categories = categoryRepository.findAll().stream()
+                .filter(Category::isActive)
+                .collect(Collectors.toList());
+        return categories.stream()
+                .map(categoryMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
     public List<CategoryResponseDTO> getAllCategories() {
         List<Category> categories = categoryRepository.findAll();
         return categories.stream()

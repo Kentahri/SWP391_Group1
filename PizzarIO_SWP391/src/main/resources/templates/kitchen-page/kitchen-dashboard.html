@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitchen Dashboard - PizzarIO</title>
+    <link rel="stylesheet" th:href="@{/css/kitchen.css}" />
+    <link rel="stylesheet" th:href="@{/css/kitchen-dashboard.css}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Connection Status
+    <div id="connectionStatus" class="connection-status disconnected">
+        <i class="fas fa-circle"></i> Đang kết nối...
+    </div> -->
+
+    <!-- Header -->
+    <header class="kitchen-header">
+        <div class="header-container">
+            <!-- Logo Section -->
+            <div class="header-brand">
+                <div class="brand-logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div class="brand-info">
+                        <h1 class="brand-title">Kitchen Manager</h1>
+                        <p class="brand-subtitle">PizzarIO Restaurant</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Section -->
+            <nav class="header-navigation">
+                <div class="nav-items">
+                    <a href="#" class="nav-link active" data-page="dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a th:href="@{/kitchen/order-list}" class="nav-link" data-page="orders">
+                        <i class="fas fa-list"></i>
+                        <span>Orders</span>
+                    </a>
+                    <a th:href="@{/kitchen/outstock}" class="nav-link" data-page="menu">
+                        <i class="fas fa-utensils"></i>
+                        <span>Menu</span>
+                    </a>
+                </div>
+            </nav>
+
+            <!-- User Section -->
+            <div class="header-user">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-details">
+                        <span class="user-name" th:text="${staffName}">Kitchen Staff</span>
+                        <span class="user-role">Kitchen Staff</span>
+                    </div>
+                </div>
+                <form th:action="@{/logout}" method="post" class="logout-form">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button type="submit" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="kitchen-main">
+        <!-- Dashboard Title -->
+        <div class="dashboard-title">
+            <div class="title-left">
+                <h1><i class="fas fa-tachometer-alt"></i> Kitchen Dashboard</h1>
+                <p>Danh sách món ăn được sắp xếp theo loại và thời gian</p>
+            </div>
+            <div class="title-right">
+                <div class="update-time">
+                    <i class="fas fa-clock"></i>
+                    <span>Cập nhật: <span id="lastUpdateTime" th:text="${lastUpdateTime}">--:--:--</span></span>
+                </div>
+                <button class="refresh-btn" onclick="refreshDashboard()">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Làm mới</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-utensils"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" th:text="${totalDishes}">0</div>
+                    <div class="stat-label">Tổng món</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon new">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" th:text="${newDishes}">0</div>
+                    <div class="stat-label">Món mới</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon preparing">
+                    <i class="fas fa-user-chef"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" th:text="${preparingDishes}">0</div>
+                    <div class="stat-label">Đang làm</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon completed">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" th:text="${completedDishes}">0</div>
+                    <div class="stat-label">Hoàn thành</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Filter Bar -->
+        <div class="category-filter-container">
+            <div class="category-filter" id="categoryFilter">
+                <div class="category-item active" data-category="all">
+                    <div class="category-name">Tất cả</div>
+                    <div class="category-count" th:text="${totalDishes}">0</div>
+                </div>
+                <div th:each="category : ${categories}" class="category-item" th:data-category="${category.id}" th:data-category-name="${category.name}">
+                    <div class="category-name" th:text="${category.name}">Category</div>
+                    <div class="category-count" th:text="${groupedItems[category.name] != null ? #lists.size(groupedItems[category.name]) : 0}">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Items Display -->
+        <div class="order-items-container" id="orderItemsContainer">
+            <div th:if="${#maps.isEmpty(groupedItems)}" class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-utensils"></i>
+                </div>
+                <h3>Không có món ăn nào</h3>
+                <p>Hiện tại không có món ăn nào cần chế biến</p>
+            </div>
+            
+            <div th:each="categoryEntry : ${groupedItems}" th:if="${!#lists.isEmpty(categoryEntry.value)}" class="category-section" th:data-category-name="${categoryEntry.key}">
+                <div class="category-header">
+                    <div class="category-header-title" th:text="${categoryEntry.key + ' ' + #lists.size(categoryEntry.value) + ' món'}">Category</div>
+                </div>
+                <div class="order-items-list">
+                    <div th:each="item : ${categoryEntry.value}" 
+                         th:class="${'order-item-card ' + (item.status == 'PENDING' ? 'new' : (item.status == 'PREPARING' ? 'preparing' : 'completed'))}">
+                        <div class="order-item-info">
+                            <h3 class="order-item-name" th:text="${item.productName}">Product Name</h3>
+                            <div class="order-item-meta">
+                                <span class="order-item-quantity" th:text="'x' + ${item.quantity}">x1</span>
+                                <span th:class="${'order-item-status ' + (item.status == 'PENDING' ? 'new' : (item.status == 'PREPARING' ? 'preparing' : 'completed'))}"
+                                      th:text="${item.status == 'PENDING' ? 'Mới' : (item.status == 'PREPARING' ? 'Đang làm' : 'Hoàn thành')}">Status</span>
+                                <span class="order-item-location">
+                                    <i class="fas fa-utensils"></i>
+                                    Tại bàn
+                                </span>
+                            </div>
+                        </div>
+                        <div class="order-item-details">
+                            <div class="order-item-order" th:text="${item.orderInfo.code}">ORD-001</div>
+                            <div class="order-item-table" th:text="${item.orderInfo.tableName}">Bàn 12</div>
+                            <div class="order-item-time">
+                                <i class="fas fa-clock"></i>
+                                <span th:text="${#temporals.format(item.createdAt, 'HH:mm')}">16:30</span>
+                            </div>
+                        </div>
+                        <div class="order-item-action">
+                            <form th:action="@{/kitchen/update-item-status}" method="post" style="display: inline;">
+                                <input type="hidden" th:name="itemId" th:value="${item.id}">
+                                <button th:if="${item.status == 'PENDING'}" 
+                                        type="submit" 
+                                        name="action" 
+                                        value="start"
+                                        class="action-btn start">Bắt đầu làm</button>
+                                <button th:if="${item.status == 'PREPARING'}" 
+                                        type="submit" 
+                                        name="action" 
+                                        value="complete"
+                                        class="action-btn complete">Hoàn thành</button>
+                                <button th:if="${item.status == 'SERVED'}" 
+                                        type="submit" 
+                                        name="action" 
+                                        value="undo"
+                                        class="action-btn undo">Hoàn tác</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script th:src="@{/js/kitchen/websocket.js}"></script>
+    <script>
+        // Simple refresh function
+        function refreshDashboard() {
+            window.location.reload();
+        }
+
+        // Update time every second
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('lastUpdateTime').textContent = timeString;
+        }
+
+        // Update time every second
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Navigation handling
+        document.addEventListener('click', (e) => {
+            // Handle navigation links
+            if (e.target.closest('.nav-link')) {
+                const navLink = e.target.closest('.nav-link');
+                const page = navLink.dataset.page;
+                const href = navLink.getAttribute('href');
+                
+                console.log('Navigation clicked:', page, href);
+                
+                // Update active navigation
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                });
+                navLink.classList.add('active');
+                
+                // Handle dashboard page (current page)
+                if (page === 'dashboard') {
+                    e.preventDefault();
+                    // Already on dashboard, just update active state
+                    return;
+                }
+                
+                // For other pages, let the browser handle navigation
+                // The href attribute will take care of the actual navigation
+                console.log('Navigating to:', href);
+            }
+            
+            // Category filter (client-side only for UI)
+            if (e.target.closest('.category-item')) {
+                e.preventDefault();
+                const categoryItem = e.target.closest('.category-item');
+                const categoryId = categoryItem.dataset.category;
+                const categoryName = categoryItem.dataset.categoryName;
+                
+                // Update active category
+                document.querySelectorAll('.category-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                categoryItem.classList.add('active');
+                
+                // Filter items by category
+                const allSections = document.querySelectorAll('.category-section');
+                if (categoryId === 'all') {
+                    // Show all sections
+                    allSections.forEach(section => {
+                        section.style.display = 'block';
+                    });
+                } else {
+                    // Show only sections matching the selected category name
+                    allSections.forEach(section => {
+                        const sectionCategoryName = section.dataset.categoryName;
+                        if (sectionCategoryName === categoryName) {
+                            section.style.display = 'block';
+                        } else {
+                            section.style.display = 'none';
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -50,7 +50,7 @@
                             <option value="PENDING" th:selected="${item.status.name() == 'PENDING'}">Chờ xác nhận</option>
                             <option value="PREPARING" th:selected="${item.status.name() == 'PREPARING'}">Đang chế biến</option>
                             <option value="SERVED" th:selected="${item.status.name() == 'SERVED'}">Đã phục vụ</option>
-                            <option value="CANCELLED" th:selected="${item.status.name() == 'CANCELLED'}">Đã hủy</option>
+<!--                            <option value="CANCELLED" th:selected="${item.status.name() == 'CANCELLED'}">Đã hủy</option>-->
                         </select>
                     </td>
                     <td th:text="${item.note}"></td>

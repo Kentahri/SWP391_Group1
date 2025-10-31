@@ -1,11 +1,13 @@
 package com.group1.swp.pizzario_swp391.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.group1.swp.pizzario_swp391.dto.kitchen.DashboardOrderItemDTO;
 import com.group1.swp.pizzario_swp391.dto.websocket.KitchenOrderMessage;
 import com.group1.swp.pizzario_swp391.entity.Order;
 import com.group1.swp.pizzario_swp391.entity.OrderItem;
@@ -27,6 +29,78 @@ public class KitchenService {
     
     @Autowired
     private WebSocketService webSocketService;
+
+    /**
+     * Get dashboard order items for kitchen dashboard
+     */
+    public List<DashboardOrderItemDTO> getDashboardOrderItems() {
+        List<OrderItem> orderItems = orderItemRepository.findAll().stream()
+                .filter(item -> item.getOrder() != null && 
+                               item.getOrder().getOrderStatus() != Order.OrderStatus.COMPLETED &&
+                               item.getOrder().getOrderStatus() != Order.OrderStatus.CANCELLED)
+                .collect(Collectors.toList());
+
+        return orderItems.stream()
+                .map(this::convertToDashboardDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Convert OrderItem to DashboardOrderItemDTO
+     */
+    private DashboardOrderItemDTO convertToDashboardDTO(OrderItem item) {
+        return DashboardOrderItemDTO.builder()
+                .id(item.getId())
+                .productName(item.getProduct().getName())
+                .categoryId(item.getProduct().getCategory().getId())
+                .categoryName(item.getProduct().getCategory().getName())
+                .quantity(item.getQuantity())
+                .status(item.getOrderItemStatus().name())
+                .note(item.getNote())
+                .createdAt(item.getOrder().getCreatedAt())
+                .orderInfo(DashboardOrderItemDTO.OrderInfo.builder()
+                        .code(String.format("ORD-%05d", item.getOrder().getId()))
+                        .tableName(item.getOrder().getSession() != null && 
+                                  item.getOrder().getSession().getTable() != null ? 
+                                  "Bàn " + item.getOrder().getSession().getTable().getId() : "Take away")
+                        .orderType(item.getOrder().getOrderType() != null ? 
+                                  item.getOrder().getOrderType().toString() : "DINE_IN")
+                        .build())
+                .productInfo(DashboardOrderItemDTO.ProductInfo.builder()
+                        .id(item.getProduct().getId())
+                        .name(item.getProduct().getName())
+                        .categoryId(item.getProduct().getCategory().getId())
+                        .categoryName(item.getProduct().getCategory().getName())
+                        .build())
+                .build();
+    }
+
+    /**
+     * Update item status with action (start, complete, undo)
+     */
+    @Transactional
+    public void updateItemStatus(Long itemId, String action) {
+        OrderItem item = orderItemRepository.findById(itemId)
+                .orElseThrow(() -> new RuntimeException("Order item not found: " + itemId));
+
+        OrderItem.OrderItemStatus newStatus = switch (action.toLowerCase()) {
+            case "start" -> OrderItem.OrderItemStatus.PREPARING;
+            case "complete" -> OrderItem.OrderItemStatus.SERVED;
+            case "undo" -> OrderItem.OrderItemStatus.PENDING;
+            default -> throw new RuntimeException("Invalid action: " + action);
+        };
+
+        item.setOrderItemStatus(newStatus);
+        orderItemRepository.save(item);
+
+        // Notify update
+        Long orderId = item.getOrder().getId();
+        Order updatedOrder = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
+        
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
+        notifyOrderUpdate(updatedOrder, orderItems);
+    }
 
     /**
      * Cập nhật trạng thái item trong order
