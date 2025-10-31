@@ -5,7 +5,7 @@
     <p><strong>Giá:</strong> <span th:text="${product.currentPriceFormatted}"></span></p>
     <p><strong>Mô tả:</strong> <span th:text="${product.description ?: 'Chưa có mô tả.'}"></span></p>
 
-    <form th:action="@{/guest/cart/add}" method="post" style="margin-top: 15px;">
+    <form class="ajax-form" th:action="@{/guest/cart/add}" method="post" style="margin-top: 15px;">
         <input type="hidden" name="sessionId" th:value="${sessionId}">
         <input type="hidden" name="tableId" th:value="${tableId}">
         <input type="hidden" name="productId" th:value="${product.id}">

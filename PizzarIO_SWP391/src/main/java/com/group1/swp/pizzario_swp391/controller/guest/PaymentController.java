@@ -111,6 +111,10 @@ public class PaymentController {
             model.addAttribute("discountAmount", discountAmount);
             model.addAttribute("finalTotal", finalTotal);
             
+            // Points info for UI
+            model.addAttribute("pointsUsed", payment.getPointsUsed());
+            model.addAttribute("maxUsablePoints", paymentService.getMaxUsablePoints(sessionId));
+            
             // Thêm error message nếu có
             if (error != null && !error.isEmpty()) {
                 model.addAttribute("errorMessage", error);
@@ -145,7 +149,8 @@ public class PaymentController {
     public String handlePaymentAction(@PathVariable Long sessionId, 
                                     @RequestParam String action,
                                     @RequestParam(required = false) Long voucherId,
-                                    @RequestParam(required = false) String phoneNumber) {
+                                    @RequestParam(required = false) String phoneNumber,
+                                    @RequestParam(required = false) Integer points) {
         try {
             if ("apply-voucher".equals(action) && voucherId != null) {
                 paymentService.applyVoucherBySessionId(sessionId, voucherId);
@@ -166,6 +171,14 @@ public class PaymentController {
                     return "redirect:/guest/payment/session/" + sessionId + "?error=" + 
                            URLEncoder.encode("Không tìm thấy thành viên với số điện thoại này. Vui lòng đăng ký thành viên.", StandardCharsets.UTF_8);
                 }
+            } else if ("apply-points".equals(action) && points != null) {
+                paymentService.applyPoints(sessionId, points);
+                return "redirect:/guest/payment/session/" + sessionId + "?success=" +
+                        URLEncoder.encode("Đã áp dụng điểm thành công!", StandardCharsets.UTF_8);
+            } else if ("remove-points".equals(action)) {
+                paymentService.removePoints(sessionId);
+                return "redirect:/guest/payment/session/" + sessionId + "?success=" +
+                        URLEncoder.encode("Đã hủy sử dụng điểm!", StandardCharsets.UTF_8);
             } else {
                 return "redirect:/guest/payment/session/" + sessionId + "?error=" + 
                        URLEncoder.encode("Hành động không hợp lệ", StandardCharsets.UTF_8);
@@ -263,10 +276,16 @@ public class PaymentController {
             model.addAttribute("membership", membership);
             model.addAttribute("sessionId", sessionId);
             model.addAttribute("tableId", payment.getTableNumber()); // Add tableId for table release
+            model.addAttribute("orderId", payment.getOrderId());
             model.addAttribute("originalTotal", originalTotal);
             model.addAttribute("discountAmount", discountAmount);
             model.addAttribute("finalTotal", finalTotal);
-            
+
+            // Sau khi hiển thị xác nhận, dọn dẹp trạng thái điểm đã dùng cho session
+            try {
+                paymentService.removePoints(sessionId);
+            } catch (Exception ignored) {}
+
             return "guest-page/payment-confirmation";
         } catch (Exception e) {
             e.printStackTrace();
