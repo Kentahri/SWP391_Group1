@@ -56,7 +56,7 @@ public class CashierDashboardController {
             model.addAttribute("tables", tables);
             model.addAttribute("reservationCreateDTO", new ReservationCreateDTO());
             return "cashier-page/cashier-dashboard";
-        } catch (Exception _) {
+        } catch (Exception e) {
             model.addAttribute("error", "Không thể tải dữ liệu. Vui lòng thử lại.");
             return "error-page";
         }
@@ -82,7 +82,7 @@ public class CashierDashboardController {
             model.addAttribute("reservationCreateDTO", new ReservationCreateDTO());
             model.addAttribute("tableCapacity", tableService.getTableById(tableId).getCapacity());
             return "cashier-page/cashier-dashboard";
-        } catch (Exception _) {
+        } catch (Exception e) {
             model.addAttribute("error", "Không thể tải thông tin bàn. Vui lòng thử lại.");
             return "error-page";
         }
@@ -165,7 +165,7 @@ public class CashierDashboardController {
             model.addAttribute("upcomingReservations", upcomingReservations);
             model.addAttribute("reservationCreateDTO", new ReservationCreateDTO());
             return "cashier-page/cashier-dashboard";
-        } catch (Exception _) {
+        } catch (Exception e) {
             model.addAttribute("error", "Không thể tải danh sách đặt bàn. Vui lòng thử lại.");
             return "error-page";
         }
@@ -189,7 +189,7 @@ public class CashierDashboardController {
             model.addAttribute("tableReservations", tableReservations);
             model.addAttribute("reservationCreateDTO", new ReservationCreateDTO());
             return "cashier-page/cashier-dashboard";
-        } catch (Exception _) {
+        } catch (Exception e) {
             model.addAttribute("error", "Không thể tải danh sách đặt bàn. Vui lòng thử lại.");
             return "error-page";
         }
@@ -224,7 +224,7 @@ public class CashierDashboardController {
             model.addAttribute("reservationCreateDTO", new ReservationCreateDTO());
 
             return "cashier-page/cashier-dashboard";
-        } catch (Exception _) {
+        } catch (Exception e) {
             model.addAttribute("error", "Không thể tải thông tin đặt bàn. Vui lòng thử lại.");
             return "error-page";
         }
@@ -322,7 +322,7 @@ public class CashierDashboardController {
         } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/cashier";
-        } catch (Exception _) {
+        } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Đã xảy ra lỗi. Vui lòng thử lại.");
             return "redirect:/cashier";
         }
@@ -350,7 +350,7 @@ public class CashierDashboardController {
                 return "redirect:" + returnUrl;
             }
             return "redirect:/cashier";
-        } catch (Exception _) {
+        } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Đã xảy ra lỗi. Vui lòng thử lại.");
             return "redirect:/cashier";
         }

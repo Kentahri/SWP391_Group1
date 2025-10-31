@@ -90,7 +90,7 @@ public class TableService{
 
             try {
                 tableRepository.save(table); // This will throw OptimisticLockException if version mismatch
-            } catch (OptimisticLockException _) {
+            } catch (OptimisticLockException e) {
                 // Another guest selected this table at the same time
                 log.warn("Optimistic lock conflict for table {}", request.getTableId());
                 sendTableSelectionError(request.getSessionId(), request.getTableId(),

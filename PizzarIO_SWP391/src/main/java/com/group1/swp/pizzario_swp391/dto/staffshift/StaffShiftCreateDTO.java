@@ -1,4 +1,4 @@
-package com.group1.swp.pizzario_swp391.dto.staff;
+package com.group1.swp.pizzario_swp391.dto.staffshift;
 
 import com.group1.swp.pizzario_swp391.entity.Shift;
 import com.group1.swp.pizzario_swp391.entity.Staff;
