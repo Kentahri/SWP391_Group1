@@ -129,17 +129,9 @@
                       200.000 VND
                     </div>
                   </div>
-                  <div
-                    style="
-                      border: 1px solid #eef2f6;
-                      border-radius: 10px;
-                      padding: 12px;
-                    "
-                  >
-                    <div style="font-weight: 700">Ca đêm</div>
-                    <div style="color: #111827; font-weight: 600">
-                      230.000 VND
-                    </div>
+                  <div class="salary-item">
+                    <div class="salary-item-name">Ca đêm</div>
+                    <div class="salary-item-value">230.000 VND</div>
                   </div>
                 </div>
               </aside>
@@ -285,7 +277,6 @@
                     <a
                       th:href="@{'/manager/staff/edit/' + ${staff.id}}"
                       class="primary-btn"
-                      style="padding: 6px 10px"
                       >Chỉnh sửa</a
                     >
                     <button

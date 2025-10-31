@@ -38,7 +38,6 @@ public class StaffScheduleService {
     private final TaskScheduler taskScheduler;
 
     private final ApplicationEventPublisher eventPublisher;
-    private final ShiftCoverageService shiftCoverageService;
 
     private final Map<Integer, ScheduledFuture<?>> absentCheckTasks = new ConcurrentHashMap<>();
     private final Map<Integer, ScheduledFuture<?>> autoCompleteTasks = new ConcurrentHashMap<>();
@@ -58,9 +57,6 @@ public class StaffScheduleService {
         log.info("🎯 EVENT LISTENER: Scheduling auto-complete check for shift ID: {}", staffShift.getId());
         scheduleAutoCompleteCheck(staffShift);
 
-        log.info("🎯 EVENT LISTENER: Scheduling coverage check for shift ID: {}", staffShift.getId());
-        scheduleShiftCoverageCheck(staffShift);
-
         log.info("🎯 EVENT LISTENER: Completed processing StaffShiftCreatedEvent for shift ID: {}", staffShift.getId());
     }
 
@@ -78,10 +74,15 @@ public class StaffScheduleService {
             if (staffShift.getStatus() == StaffShift.Status.SCHEDULED) {
                 scheduleAbsentCheck(staffShift);
                 scheduleAutoCompleteCheck(staffShift);
-                scheduleShiftCoverageCheck(staffShift);
             } else if (staffShift.getStatus() == StaffShift.Status.PRESENT ||
                     staffShift.getStatus() == StaffShift.Status.LATE) {
+                // ✅ CHỈ SCHEDULE auto-complete khi đã check-in
+                log.info("✅ Check-in detected - scheduling auto-complete only for shift {}", staffShift.getId());
                 scheduleAutoCompleteCheck(staffShift);
+            } else if (staffShift.getStatus() == StaffShift.Status.COMPLETED ||
+                    staffShift.getStatus() == StaffShift.Status.LEFT_EARLY) {
+                // ✅ ĐÃ CHECK-OUT - không cần schedule gì nữa
+                log.info("✅ Check-out detected - no need to schedule tasks for shift {}", staffShift.getId());
             }
         }
     }
@@ -98,7 +99,7 @@ public class StaffScheduleService {
 
         LocalDateTime shiftStart = staffShift.getWorkDate()
                 .atTime(staffShift.getShift().getStartTime().toLocalTime());
-        LocalDateTime checkTime = shiftStart.plusMinutes(2);
+        LocalDateTime checkTime = shiftStart.plusMinutes(1);
 
         if (checkTime.isBefore(LocalDateTime.now())) {
             log.warn("Skip scheduling absent check for shift {} - deadline already passed: {}",
@@ -123,43 +124,42 @@ public class StaffScheduleService {
     }
 
     public void scheduleAutoCompleteCheck(StaffShift staffShift) {
+
+        log.info("🔍 scheduleAutoCompleteCheck called for shift ID: {}, status: {}",
+                staffShift.getId(), staffShift.getStatus());
+
+        // ✅ SỬA: Thêm LATE status
         if (staffShift.getStatus() != StaffShift.Status.SCHEDULED &&
-                staffShift.getStatus() != StaffShift.Status.PRESENT) {
+                staffShift.getStatus() != StaffShift.Status.PRESENT &&
+                staffShift.getStatus() != StaffShift.Status.LATE) {
+            log.warn("❌ Skip scheduling auto-complete check for shift {} - invalid status: {}",
+                    staffShift.getId(), staffShift.getStatus());
             return;
         }
 
-        LocalDate nextDay = staffShift.getWorkDate().plusDays(1);
-        LocalDateTime autoCompleteTime = nextDay.atTime(0, 30);
-        Instant scheduledInstant = autoCompleteTime.atZone(ZoneId.systemDefault()).toInstant();
+        // ✅ NEW: Schedule NOT_CHECKOUT check 2 minutes after shift end time (for testing, should be 45 minutes in production)
+        ZoneId zoneId = ZoneId.of("Asia/Ho_Chi_Minh");
+        LocalDateTime now = LocalDateTime.now(zoneId);
+
+        LocalDateTime shiftEnd = staffShift.getWorkDate()
+                .atTime(staffShift.getShift().getEndTime().toLocalTime());
+        LocalDateTime autoCompleteTime = shiftEnd.plusMinutes(1);
+
+        if (autoCompleteTime.isBefore(now)) {
+            log.warn("⚠️ Skip scheduling auto-complete check for shift {} - time already passed. ShiftEnd: {}, Scheduled: {}, Now: {}",
+                    staffShift.getId(), shiftEnd, autoCompleteTime, now);
+            return;
+        }
+
+        Instant scheduledInstant = autoCompleteTime.atZone(zoneId).toInstant();
 
         ScheduledFuture<?> task = taskScheduler.schedule(
                 () -> handleAutoComplete(staffShift.getId()),
                 scheduledInstant);
 
         autoCompleteTasks.put(staffShift.getId(), task);
-        log.info("Scheduled auto-complete check for staff shift {} at {}",
-                staffShift.getId(), autoCompleteTime);
-    }
-
-    public void scheduleShiftCoverageCheck(StaffShift staffShift) {
-        LocalDateTime shiftStart = staffShift.getWorkDate()
-                .atTime(staffShift.getShift().getStartTime().toLocalTime());
-        LocalDateTime coverageCheckTime = shiftStart.plusMinutes(10);
-
-        if (coverageCheckTime.isBefore(LocalDateTime.now())) {
-            log.debug("Skip scheduling coverage check for shift {} - time already passed: {}",
-                    staffShift.getId(), coverageCheckTime);
-            return;
-        }
-
-        Instant scheduledInstant = coverageCheckTime.atZone(ZoneId.systemDefault()).toInstant();
-
-        taskScheduler.schedule(
-                () -> handleShiftCoverageCheck(staffShift.getShift().getId(), staffShift.getWorkDate()),
-                scheduledInstant);
-
-        log.info("Scheduled coverage check for shift {} on {} at {}",
-                staffShift.getShift().getShiftName().name(), staffShift.getWorkDate(), coverageCheckTime);
+        log.info("✅ Scheduled NOT_CHECKOUT check for staff shift {} at {} (Now: {}, Instant: {})",
+                staffShift.getId(), autoCompleteTime, now, scheduledInstant);
     }
 
     /**
@@ -179,49 +179,39 @@ public class StaffScheduleService {
 
     private void handleAutoComplete(Integer staffShiftId) {
         try {
-            log.info("Executing auto-complete check for staff shift {}", staffShiftId);
+            log.info("🚀🚀🚀 EXECUTING NOT_CHECKOUT CHECK FOR STAFF SHIFT {} 🚀🚀🚀", staffShiftId);
 
             Optional<StaffShift> shiftOpt = staffShiftRepository.findById(staffShiftId);
-            if (shiftOpt.isPresent()) {
-                StaffShift ss = shiftOpt.get();
+            if (shiftOpt.isEmpty()) {
+                log.error("❌ StaffShift not found for ID: {}", staffShiftId);
+                return;
+            }
 
-                if (ss.getCheckIn() != null && ss.getCheckOut() == null) {
-                    ss.setCheckOut(ss.getShift().getEndTime());
-                    ss.setStatus(StaffShift.Status.COMPLETED);
-                    String noteDetail = "AUTO-COMPLETED - Quên checkout\n";
-                    ss.setNote((ss.getNote() != null ? ss.getNote() : "") + noteDetail);
-                    staffShiftRepository.save(ss);
+            StaffShift ss = shiftOpt.get();
+            log.info("📋 Current shift status: {}, checkIn: {}, checkOut: {}",
+                    ss.getStatus(), ss.getCheckIn(), ss.getCheckOut());
 
-                    log.warn("Auto-completed shift for staff {} - forgot to logout",
-                            ss.getStaff().getName());
-                }
+            // ✅ NEW: Mark as NOT_CHECKOUT instead of COMPLETED if staff didn't checkout
+            if (ss.getCheckIn() != null && ss.getCheckOut() == null) {
+                log.info("✅ Conditions met - marking as NOT_CHECKOUT");
+                ss.setStatus(StaffShift.Status.NOT_CHECKOUT);
+                ss.setPenaltyPercent(0); // No penalty, but requires explanation later
+                String noteDetail = "NOT_CHECKOUT - Quên checkout sau 2 phút (Test mode)\n";
+                ss.setNote((ss.getNote() != null ? ss.getNote() : "") + noteDetail);
+                staffShiftRepository.save(ss);
+
+                log.warn("✅✅✅ Successfully marked NOT_CHECKOUT for staff {} - shift ID: {} ✅✅✅",
+                        ss.getStaff().getName(), staffShiftId);
+            } else {
+                log.info("⏭️ Skipping NOT_CHECKOUT - checkIn: {}, checkOut: {}",
+                        ss.getCheckIn(), ss.getCheckOut());
             }
 
             autoCompleteTasks.remove(staffShiftId);
         } catch (Exception e) {
-            log.error("Error executing auto-complete for shift {}: {}", staffShiftId, e.getMessage(), e);
-        }
-    }
-
-    private void handleShiftCoverageCheck(Integer shiftId, LocalDate workDate) {
-        try {
-            log.info("🔍 Checking coverage for shift ID {} on {}", shiftId, workDate);
-
-            List<StaffShift> allStaffShifts = shiftCoverageService.getAllStaffForShift(shiftId, workDate);
-
-            if (allStaffShifts.isEmpty()) {
-                log.warn("No staff found for shift {} on {}", shiftId, workDate);
-                return;
-            }
-
-            ShiftCoverageService.CoverageMetrics metrics = shiftCoverageService
-                    .calculateCoverageMetrics(allStaffShifts);
-            shiftCoverageService.evaluateCoverage(metrics, workDate);
-            shiftCoverageService.publishCoverageEvent(shiftId, workDate, allStaffShifts);
-
-        } catch (Exception e) {
-            log.error("Error checking shift coverage for shift {} on {}: {}",
-                    shiftId, workDate, e.getMessage(), e);
+            log.error("❌❌❌ Error executing NOT_CHECKOUT check for shift {}: {}",
+                    staffShiftId, e.getMessage(), e);
+            e.printStackTrace();
         }
     }
 
@@ -292,26 +282,14 @@ public class StaffScheduleService {
         cancelAutoCompleteCheck(staffShiftId);
     }
 
-    @Scheduled(cron = "0 20 8 * * *", zone = "Asia/Bangkok")
+    @Scheduled(cron = "0 10 9 * * *", zone = "Asia/Bangkok")
     @Transactional
     public void dailyCleanup() {
-        log.info("🔄 Daily cleanup: Checking for missed shifts and coverage...");
+        log.info("🔄 Daily cleanup: Checking for missed shifts...");
         LocalDate yesterday = LocalDate.now().minusDays(1);
         LocalDateTime now = LocalDateTime.now();
 
         var yesterdayShifts = staffShiftRepository.findByWorkDateBetween(yesterday, yesterday);
-
-        Map<String, List<StaffShift>> shiftsByKey = yesterdayShifts.stream()
-                .collect(Collectors.groupingBy(ss -> ss.getShift().getId() + "_" + ss.getWorkDate()));
-
-        for (Map.Entry<String, List<StaffShift>> entry : shiftsByKey.entrySet()) {
-            List<StaffShift> shiftStaff = entry.getValue();
-            String shiftName = shiftStaff.get(0).getShift().getShiftName().name();
-            LocalDate workDate = shiftStaff.get(0).getWorkDate();
-
-            ShiftCoverageService.CoverageMetrics metrics = shiftCoverageService.calculateCoverageMetrics(shiftStaff);
-            shiftCoverageService.evaluateCoverage(metrics, workDate);
-        }
 
         int processedCount = 0;
         for (StaffShift ss : yesterdayShifts) {
@@ -330,15 +308,17 @@ public class StaffScheduleService {
                         ss.getWorkDate());
             }
 
-            if (ss.getCheckIn() != null && ss.getCheckOut() == null) {
-                ss.setCheckOut(ss.getShift().getEndTime());
-                ss.setStatus(StaffShift.Status.COMPLETED);
-                String noteDetail = "AUTO-COMPLETED - Daily cleanup\n";
+            // ✅ NEW: Mark as NOT_CHECKOUT in daily cleanup instead of auto-completing
+            if (ss.getCheckIn() != null && ss.getCheckOut() == null &&
+                    ss.getStatus() != StaffShift.Status.NOT_CHECKOUT) {
+                ss.setStatus(StaffShift.Status.NOT_CHECKOUT);
+                ss.setPenaltyPercent(0);
+                String noteDetail = "NOT_CHECKOUT - Daily cleanup\n";
                 ss.setNote((ss.getNote() != null ? ss.getNote() : "") + noteDetail);
                 staffShiftRepository.save(ss);
                 processedCount++;
 
-                log.warn("Daily cleanup: Auto-completed shift for staff {} - forgot to logout",
+                log.warn("Daily cleanup: Marked NOT_CHECKOUT for staff {} - forgot to checkout",
                         ss.getStaff().getName());
             }
         }
