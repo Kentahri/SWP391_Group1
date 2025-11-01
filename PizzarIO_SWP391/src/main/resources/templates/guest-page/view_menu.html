@@ -468,14 +468,14 @@
                 </div>
                 <div class="name" th:text="${p.name}">Product Name</div>
                 <div class="price">
-  <span th:if="${p.onFlashSale}">
-      <span style="color:#e53935;font-weight:bold;" th:text="${p.currentPriceFormatted}">90.000₫</span>
-    <span style="text-decoration:line-through; color:#888; margin-left:8px;"
-          th:text="${p.basePriceFormatted}">110.000₫</span>
-  </span>
+                  <span th:if="${p.onFlashSale}">
+                      <span style="color:#e53935;font-weight:bold;" th:text="${p.currentPriceFormatted}">90.000₫</span>
+                    <span style="text-decoration:line-through; color:#888; margin-left:8px;"
+                          th:text="${p.basePriceFormatted}">110.000₫</span>
+                  </span>
                     <span th:unless="${p.onFlashSale}" th:text="${p.currentPriceFormatted}">
-    100.000₫
-  </span>
+                    100.000₫
+                  </span>
                 </div>
                 <!-- NÚT THÊM VÀO GIỎ! -->
 
@@ -543,95 +543,46 @@
         const categoryBar = document.getElementById("categoryBar");
         const searchBox = document.getElementById("searchBox");
 
-        // --- Product Filtering Logic ---
         function filterProducts() {
-            const productCards = Array.from(
-                productGrid.querySelectorAll(".product-card")
-            );
-            const activeChip = categoryBar.querySelector(".cat-chip.active");
-            const activeCategoryId = parseInt(
-                activeChip.getAttribute("data-category-id")
-            );
             const keyword = searchBox.value.toLowerCase().trim();
+            const activeCategory = categoryBar.querySelector(".cat-chip.active");
+            const activeCategoryId = activeCategory ? activeCategory.getAttribute("data-category-id") : "0";
 
-            productCards.forEach((card) => {
-                const cardCategoryId = parseInt(
-                    card.getAttribute("data-category-id")
-                );
-                const cardName = card
-                    .querySelector(".name")
-                    .textContent.toLowerCase();
+            const productCards = productGrid.querySelectorAll(".product-card");
 
-                const categoryMatch =
-                    activeCategoryId === 0 || cardCategoryId === activeCategoryId;
-                const keywordMatch = !keyword || cardName.includes(keyword);
+            productCards.forEach(card => {
+                const cardCategoryId = card.getAttribute("data-category-id");
+                const nameElement = card.querySelector(".name");
+                const cardName = nameElement ? nameElement.textContent.toLowerCase() : "";
 
-                card.style.display =
-                    categoryMatch && keywordMatch ? "flex" : "none";
+                // So khớp category (nếu =0 thì là All)
+                const categoryMatch = activeCategoryId === "0" || cardCategoryId === activeCategoryId;
+
+                // So khớp keyword (nếu không nhập gì thì true)
+                const keywordMatch = keyword === "" || cardName.includes(keyword);
+
+                // Hiển thị nếu thỏa cả 2 điều kiện
+                card.style.display = categoryMatch && keywordMatch ? "flex" : "none";
             });
         }
 
+        // Khi click chọn category
         categoryBar.addEventListener("click", (e) => {
             if (e.target.classList.contains("cat-chip")) {
-                categoryBar
-                    .querySelector(".cat-chip.active")
-                    .classList.remove("active");
+                const active = categoryBar.querySelector(".cat-chip.active");
+                if (active) active.classList.remove("active");
                 e.target.classList.add("active");
                 filterProducts();
             }
         });
 
+        // Khi nhập ô tìm kiếm
         searchBox.addEventListener("input", filterProducts);
 
-        // --- AJAX Form Submission Logic ---
-        // This makes the cart interactions smooth without page reloads.
-        document.body.addEventListener("submit", async (e) => {
-            // We only handle forms with the 'ajax-form' class
-            if (!e.target.classList.contains("ajax-form")) {
-                return;
-            }
-
-            e.preventDefault();
-            const form = e.target;
-            const url = form.action;
-            const formData = new FormData(form);
-
-            try {
-                const response = await fetch(url, {
-                    method: "POST",
-                    body: formData,
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                // The server redirects, and fetch follows, returning the final HTML.
-                // We parse this new HTML to update only the sidebar.
-                const html = await response.text();
-                const parser = new DOMParser();
-                const newDoc = parser.parseFromString(html, "text/html");
-
-                const newSidebar = newDoc.getElementById("sidebar");
-                const currentSidebar = document.getElementById("sidebar");
-
-                if (newSidebar && currentSidebar) {
-                    // Replace the old sidebar with the updated one from the server response
-                    currentSidebar.innerHTML = newSidebar.innerHTML;
-                } else {
-                    // Fallback to full reload if something goes wrong
-                    window.location.reload();
-                }
-            } catch (error) {
-                console.error("Form submission failed:", error);
-                // Optionally show an error message to the user
-                alert("An error occurred. Please try again.");
-            }
-        });
-
-        // Initial filter call
+        // Gọi 1 lần đầu để hiển thị đúng khi load trang
         filterProducts();
     });
+
 </script>
 </body>
 </html>
