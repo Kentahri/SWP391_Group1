@@ -1,0 +1,148 @@
+@startuml
+title Settings Management - Sequence Diagram
+
+actor Manager
+participant Browser
+participant SettingController
+participant Setting
+participant YamlService
+participant "manager-settings.yaml" as YAMLFile
+participant "ReservationService" as ReservationService
+participant "ReservationSchedulerService" as SchedulerService
+
+== View Settings ==
+Manager -> Browser: Access /manager/settings
+Browser -> SettingController: GET /manager/settings
+activate SettingController
+
+SettingController -> Setting: get settings
+activate Setting
+Setting --> SettingController: conflictReservationMinutes\nautoLockReservationMinutes\nnoShowWaitMinutes
+deactivate Setting
+
+SettingController -> Browser: Render settings.html\nwith current settings
+deactivate SettingController
+
+Browser --> Manager: Display settings page
+
+note right of Browser
+Left panel: Current settings display
+Right panel: Settings form
+end note
+
+== Update Settings ==
+Manager -> Browser: Fill form and click "Lưu cài đặt"
+Browser -> SettingController: POST /manager/settings\nwith settingForm data
+activate SettingController
+
+SettingController -> Setting: setConflictReservationMinutes(value)
+activate Setting
+Setting -> Setting: update conflictReservationMinutes
+deactivate Setting
+
+SettingController -> Setting: setAutoLockReservationMinutes(value)
+activate Setting
+Setting -> Setting: update autoLockReservationMinutes
+deactivate Setting
+
+SettingController -> Setting: setNoShowWaitMinutes(value)
+activate Setting
+Setting -> Setting: update noShowWaitMinutes
+deactivate Setting
+
+SettingController -> YamlService: persit()
+activate YamlService
+
+YamlService -> Setting: getConflictReservationMinutes()
+YamlService -> Setting: getAutoLockReservationMinutes()
+YamlService -> Setting: getNoShowWaitMinutes()
+
+YamlService -> YamlService: loadDataFromYaml()
+note right of YamlService
+Create Map with:
+- conflict-reservation-minutes
+- auto-lock-reservation-minutes
+- no-show-wait-minutes
+end note
+
+YamlService -> YAMLFile: Write settings to YAML
+activate YAMLFile
+YAMLFile -> YAMLFile: Update file
+YAMLFile --> YamlService: Success
+deactivate YAMLFile
+
+YamlService --> SettingController: Success
+deactivate YamlService
+
+SettingController -> SettingController: Add success message to flash attributes
+
+alt Success
+    SettingController --> Browser: Redirect to /manager/settings\nwith successMessage
+else Error (IOException)
+    SettingController --> Browser: Redirect to /manager/settings\nwith errorMessage
+end
+
+deactivate SettingController
+
+Browser --> Manager: Display updated page with message
+
+== Settings Applied to System ==
+
+note over ReservationService, SchedulerService
+Settings are used by Reservation System
+end note
+
+Manager -> Browser: New reservation created
+Browser -> ReservationService: createReservation()
+activate ReservationService
+
+ReservationService -> Setting: getAutoLockReservationMinutes()
+activate Setting
+Setting --> ReservationService: auto-lock time (minutes)
+deactivate Setting
+
+ReservationService -> ReservationService: Check if reservation time\nis within auto-lock window
+
+alt Within auto-lock window
+    ReservationService -> ReservationService: Lock table immediately
+else Future reservation
+    ReservationService -> SchedulerService: scheduleAutoLockTable(reservationId, startTime)
+    activate SchedulerService
+    
+    SchedulerService -> Setting: getAutoLockReservationMinutes()
+    activate Setting
+    Setting --> SchedulerService: auto-lock time
+    deactivate Setting
+    
+    SchedulerService -> SchedulerService: Calculate execution time\n(startTime - autoLockMinutes)
+    
+    SchedulerService -> SchedulerService: Schedule task to lock table
+    note right of SchedulerService
+    Task executes at:
+    startTime - autoLockMinutes
+    end note
+    
+    deactivate SchedulerService
+end
+
+ReservationService -> SchedulerService: scheduleNoShowCheck(reservationId, startTime)
+activate SchedulerService
+
+SchedulerService -> Setting: getNoShowWaitMinutes()
+activate Setting
+Setting --> SchedulerService: no-show wait time (minutes)
+deactivate Setting
+
+SchedulerService -> SchedulerService: Calculate execution time\n(startTime + noShowWaitMinutes)
+
+SchedulerService -> SchedulerService: Schedule NO_SHOW check
+note right of SchedulerService
+Task executes at:
+startTime + noShowWaitMinutes
+end note
+
+deactivate SchedulerService
+deactivate ReservationService
+
+@enduml
+

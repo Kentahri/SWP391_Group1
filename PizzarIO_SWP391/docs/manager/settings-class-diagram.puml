@@ -1,0 +1,77 @@
+@startuml
+title Settings Management - Class Diagram
+
+package "com.group1.swp.pizzario_swp391.controller.manager" {
+    class SettingController {
+        - YamlService yamlService
+        - Setting setting
+        + showSettings(Model model) : String
+        + updateSettings(Setting settingForm, RedirectAttributes redirectAttributes) : String
+    }
+}
+
+package "com.group1.swp.pizzario_swp391.config" {
+    class Setting {
+        - int conflictReservationMinutes
+        - int autoLockReservationMinutes
+        - int noShowWaitMinutes
+        + getConflictReservationMinutes() : int
+        + setConflictReservationMinutes(int conflictReservationMinutes) : void
+        + getAutoLockReservationMinutes() : int
+        + setAutoLockReservationMinutes(int autoLockReservationMinutes) : void
+        + getNoShowWaitMinutes() : int
+        + setNoShowWaitMinutes(int noShowWaitMinutes) : void
+    }
+}
+
+package "com.group1.swp.pizzario_swp391.service" {
+    class YamlService {
+        - final Setting setting
+        - String filePath
+        - loadDataFromYaml() : Map<String, Object>
+        + persit() : void
+    }
+}
+
+package "com.group1.swp.pizzario_swp391.service" {
+    class ReservationService {
+        - Setting setting
+        + createReservation(ReservationCreateDTO dto) : ReservationDTO
+        + checkConflictReservationForCreate(int tableId, LocalDateTime startTime) : boolean
+        + processNoShowReservation(Long reservationId) : void
+    }
+    
+    class ReservationSchedulerService {
+        - TaskScheduler taskScheduler
+        - ApplicationEventPublisher eventPublisher
+        - Setting setting
+        - Map<Long, ScheduledFuture<?>> scheduledTasks
+        + scheduleAutoLockTable(Long reservationId, LocalDateTime startTime) : void
+        + cancelAutoLockTable(Long reservationId) : void
+        + updateAutoLockTable(Long reservationId, LocalDateTime startTime) : void
+        + scheduleNoShowCheck(Long reservationId, LocalDateTime startTime) : void
+        + cancelNoShowCheck(Long reservationId) : void
+        + updateNoShowCheck(Long reservationId, LocalDateTime startTime) : void
+    }
+}
+
+SettingController --> Setting : uses
+SettingController --> YamlService : uses
+
+YamlService --> Setting : uses
+
+ReservationService --> Setting : uses
+ReservationSchedulerService --> Setting : uses
+
+note right of Setting
+Configuration Properties loaded from:
+pizzario.settings.*
+end note
+
+note right of YamlService
+Persists settings to YAML file:
+./config/manager-settings.yaml
+end note
+
+@enduml
+

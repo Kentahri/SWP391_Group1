@@ -1,136 +1,333 @@
 package com.group1.swp.pizzario_swp391.service;
 
+import java.text.Normalizer;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentConfig;
-import com.google.genai.types.GenerateContentResponse;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
+import com.group1.swp.pizzario_swp391.entity.Product;
+import com.group1.swp.pizzario_swp391.repository.OrderRepository;
+import com.group1.swp.pizzario_swp391.repository.ProductRepository;
+import com.group1.swp.pizzario_swp391.utils.FuzzyIntentDetector;
+import com.group1.swp.pizzario_swp391.utils.RegexIntentDetector;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
+@Slf4j
 public class GeminiChatService {
 
+
     private final Client geminiClient;
-    private final List<String> keyword = List.of();
+    private final FuzzyIntentDetector fuzzyIntentDetector;
+    private final RegexIntentDetector regexIntentDetector;
+    private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
 
     @Value("${gemini.api.model}")
     private String model;
-//
-//    @Value("${gemini.api.key}")
-//    private String apiKey;
+
+    public enum Intent {CHEAPEST, HIGHEST, PROMOTION, COMBO, BEST_SELLER, PIZZA, OTHER}
+
+
+    public interface SynonymProvider {
+        Map<Intent, List<String>> getSynonyms();
+    }
+
+    private static final class SynonymProviderImpl implements SynonymProvider {
+        @Override
+        public Map<Intent, List<String>> getSynonyms() {
+            return Map.of(
+                    Intent.PIZZA, List.of("pizza", "banh pizza", "mon pizza", "biza, piza"),
+                    Intent.CHEAPEST, List.of("re nhat", "gia thap nhat", "re hon", "muc gia thap", "re nhat la"),
+                    Intent.HIGHEST, List.of("dat nhat", "gia cao nhat", "dat hon", "dat nhat la"),
+                    Intent.PROMOTION, List.of("khuyen mai", "uu dai", "giam gia", "deal", "voucher"),
+                    Intent.BEST_SELLER, List.of("ban chay", "pho bien", "hot nhat", "nhieu nguoi mua", "yeu thich", "ngon nhat"),
+                    Intent.COMBO, List.of("combo")
+            );
+        }
+    }
+
+
+    private static final String SYSTEM_PROMPT = """
+            Bạn là chatbot tư vấn món ăn của nhà hàng PizzarIO 🍕✨
+            Nhiệm vụ của bạn là giúp khách chọn món một cách dễ dàng, nhanh chóng và vui vẻ.
+            
+            Phong cách trả lời:
+            - Dễ thương, nhiệt tình, thân thiện 😄
+            - Câu trả lời ngắn gọn, rõ ràng, dễ đọc (không dùng câu dài).
+            - Khuyến khích, gợi ý, không ép buộc.
+            - Dùng emoji hợp lý (1–3 emoji mỗi câu, đừng lạm dụng).
+            - Nếu người dùng hỏi chung chung → hỏi lại để làm rõ nhu cầu (ví dụ: ăn mấy người? thích vị gì?).
+            - Không dùng các cái ký hiệu trong markdown như *, -, >, #, v.v.
+            
+            Khi tư vấn món:
+            - Nếu khách hỏi món rẻ nhất → gợi ý các món giá thấp dễ chọn.
+            - Nếu khách hỏi món đắt / cao cấp → gợi ý món .
+            - Nếu khách hỏi khuyến mãi → ưu tiên món đang flash sale hoặc voucher.
+            - Nếu khách hỏi combo → gợi ý combo kèm nước/khai vị cho tiện.
+            - Nếu khách hỏi bán chạy → giới thiệu các món bán được nhiều.
+            --> Tất cả sẽ dựa trên dữ liệu về món sẽ được đính kèm ở bên dưới, chứ không tự bịa ra.
+            
+            Không làm:
+            - Không trả lời như robot.
+            - Không nói lan man dài dòng.
+            - Không nhắc đến mô hình AI hay cách bạn được tạo ra.
+            
+            Cuối mỗi câu trả lời:
+            - Gợi ý hành động tiếp theo cho khách (ví dụ: hỏi thêm về số người ăn, gợi ý món khác, hỏi về sở thích vị ăn, v.v.).
+            
+            Ví dụ câu trả lời chuẩn:
+            “Bạn muốn tìm món giá dễ thương đúng không nè? 😄 \s
+            Mình đề xuất thử Pizza Hải Sản Mini và Pizza Bò Phô Mai size S, vừa ngon vừa tiết kiệm 💛 \s
+            Bạn ăn mấy người để mình gợi ý chuẩn hơn nha? 😋”
+            
+            Dưới đây là dữ liệu món ăn được cung cấp dựa trên câu hỏi của người dùng:
+            """;
+
+    private String normalize(String input) {
+        if (input == null || input.isBlank()) return "";
+        String normalized = Normalizer.normalize(input.toLowerCase(), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
+        if (normalized.contains("đ")) {
+            normalized = normalized.replace("đ", "d");
+        }
+        return normalized.replaceAll("[^a-z0-9\\s%]", " ").replaceAll("\\s+", " ").trim();
+    }
+
+    private Intent detect(String input) {
+        log.debug("Intent for input: {}", input);
+        SynonymProviderImpl provider = new SynonymProviderImpl();
+        regexIntentDetector.init(provider);
+        String raw = normalize(input);
+//        log.debug("📝 Normalized input: {}", raw);
+
+        Intent regexIntent = regexIntentDetector.analyzerUserIntent(raw);
+        log.debug("🎯 Regex intent: {}", regexIntent);
+
+        if (regexIntent != Intent.OTHER) {
+            log.info("✅ Intent detected by regex: {}", regexIntent);
+            return regexIntent;
+        }
+
+        fuzzyIntentDetector.init(provider);
+        Intent fuzzyIntent = fuzzyIntentDetector.detect(raw);
+        log.info("✅ Intent detected by fuzzy: {}", fuzzyIntent);
+        return fuzzyIntent;
+    }
+
 
     public String chat(String userMessage) {
         try {
-            String fullPrompt = """
-                    Bạn là trợ lý ảo thông minh của nhà hàng pizza PizzarIO.
-                    
-                    Nhiệm vụ của bạn:
-                    - Trả lời các câu hỏi về menu pizza, giá cả, khuyến mãi
-                    - Tư vấn món ăn phù hợp
-                    - Giải đáp thắc mắc về giờ mở cửa, địa chỉ, dịch vụ
-                    
-                    
-                    
-                    Phong cách: Thân thiện, ngắn gọn, dễ hiểu, sử dụng emoji phù hợp.
-                    
-                    Khách hàng hỏi: %s
-                    """.formatted(userMessage);
+            Intent intent = detect(userMessage);
+            log.info("✅ Detected intent: {}", intent);
 
-            GenerateContentConfig config = GenerateContentConfig.builder()
-                    .temperature(0.7f) // Độ sáng tạo, ngẫu nhiên của câu trả lời
-                    .topK(40f) // Giới hạn số lựa chọn token
-                    .topP(0.95f)  // Xác suất tích lũy
-                    .maxOutputTokens(900)
-                    .build();
-
-            log.info("🚀 Calling Gemini API...");
-
-            GenerateContentResponse response = geminiClient.models.generateContent(
-                    model,
-                    fullPrompt,
-                    config
-            );
-
-            log.info("✅ Gemini API responded successfully!");
-            log.info("📦 Response object: {}", response != null ? "NOT NULL" : "NULL");
-            
-            if (response != null) {
-                String responseText = response.text();
-
-                if (responseText != null && !responseText.isBlank()) {
-                    return responseText;
-                } else {
-                    log.warn("⚠️ Response text is null or blank");
+            String requirement;
+            switch (intent) {
+                case CHEAPEST -> {
+                    requirement = handleCheapestIntent();
                 }
-            } else {
-                log.error("❌ Response object is null!");
+                case HIGHEST -> {
+                    requirement = handleHighestIntent();
+                }
+                case PROMOTION -> {
+                    requirement = handlePromotionIntent();
+                }
+                case COMBO -> {
+                    requirement = handleComboIntent();
+                }
+                case BEST_SELLER -> {
+                    requirement = handleBestSellerIntent();
+                }
+                case PIZZA -> {
+                    requirement = handlePizzaIntent();
+                }
+                default -> {
+                    requirement = "Bạn có thể cung cấp thêm thông tin để mình giúp bạn chọn món phù hợp hơn không? 😊";
+                }
             }
 
-            return "Xin lỗi, tôi không thể xử lý yêu cầu của bạn lúc này.";
-            
-        } catch (Exception e) {
-            return "Đã có lỗi xảy ra. Vui lòng thử lại sau. Error: " + e.getMessage();
-        }
-    }
+            requirement = requirement + "\n\nKhách hàng hỏi: " + userMessage;
+            String fullPrompt = SYSTEM_PROMPT + "\n" + requirement;
+            log.info("🤖 Calling Gemini API with model: {}", model);
 
-    public String chatWithContext(String userMessage, String conversationHistory) {
-        try {
-            String contextualPrompt = """
-                Lịch sử hội thoại:
-                %s
-                
-                Khách hàng hỏi: %s
-                
-                Hãy trả lời dựa trên ngữ cảnh hội thoại trước đó.
-                """.formatted(conversationHistory, userMessage);
-
-            return chat(contextualPrompt);
-
-        } catch (Exception e) {
-            log.error("Error in contextual chat: ", e);
-            return "Đã có lỗi xảy ra khi xử lý hội thoại.";
-        }
-    }
-
-    public void streamChat(String userMessage, StreamCallback callback) {
-        try {
             GenerateContentConfig config = GenerateContentConfig.builder()
                     .temperature(0.7f)
+                    .topK(50f)
+                    .topP(0.85f)
+                    .maxOutputTokens(1024)
                     .build();
 
-            geminiClient.models.generateContentStream(
-                    model,
-                    userMessage,
-                    config
-            ).forEach(chunk -> {
-                if (chunk.text() != null && !chunk.text().isBlank()) {
-                    callback.onChunk(chunk.text());
-                }
-
-            });
-
-            callback.onComplete();
-
+            return geminiClient.models.generateContent(model, fullPrompt, config).text();
         } catch (Exception e) {
-            log.error("Error in streaming: ", e);
-            callback.onError(e);
+            log.error("❌ Error in chat method: ", e);
+            return "Xin lỗi, tôi đang gặp lỗi. Vui lòng thử lại sau! 😔";
         }
     }
 
-    @FunctionalInterface
-    public interface StreamCallback {
-        void onChunk(String chunk);
+    private String handlePizzaIntent() {
+        try {
+            List<Product> pizzaProducts = getPizzaProducts();
+            if (pizzaProducts.isEmpty()) {
+                return "Hiện tại không có sản phẩm pizza trong menu. Vui lòng xem các sản phẩm khác nhé! 🍕";
+            }
 
-        default void onComplete() {}
-        default void onError(Exception e) {}
+            return buildProductResponse(pizzaProducts, "others");
+        } catch (Exception e) {
+            return "Không thể tìm sản phẩm pizza. Vui lòng thử lại sau!";
+        }
+    }
+
+    private String handleCheapestIntent() {
+        try {
+            log.info("🔍 Fetching cheapest products...");
+            List<Product> cheapestProducts = getCheapestProducts();
+            if (cheapestProducts.isEmpty()) {
+                return "Hiện tại không có sản phẩm giá thấp trong menu. Vui lòng xem các sản phẩm khác nhé! 💎";
+            }
+            String response = buildProductResponse(cheapestProducts, "giá rẻ nhất");
+            log.info("📝 Built response for cheapest products");
+            return response;
+        } catch (Exception e) {
+            log.error("❌ Error handling cheapest intent: ", e);
+            return "Không thể tìm sản phẩm giá rẻ nhất. Vui lòng thử lại sau!";
+        }
+    }
+
+    private String handleHighestIntent() {
+        try {
+            List<Product> highestProducts = getHighestPriceProducts();
+            if (highestProducts.isEmpty()) {
+                return "Hiện tại không có sản phẩm cao cấp trong menu. Vui lòng xem các sản phẩm khác nhé! 💎";
+            }
+            String response = buildProductResponse(highestProducts, "giá cao nhất");
+            log.info("Highest products found: {}", highestProducts.size());
+            return response;
+
+        } catch (Exception e) {
+            log.error("Error handling highest intent: ", e);
+            return "Không thể tìm sản phẩm giá cao nhất. Vui lòng thử lại sau!";
+        }
+    }
+
+    private String handlePromotionIntent() {
+        try {
+            List<Product> promotionProducts = getPromotionProducts();
+            if (promotionProducts.isEmpty()) {
+                return "Hiện tại không có sản phẩm đang khuyến mãi. Vui lòng quay lại sau để không bỏ lỡ ưu đãi! 🎉";
+            }
+
+            String response = buildProductResponse(promotionProducts, "khuyến mãi");
+            log.info("Promotion products found: {}", promotionProducts.size());
+            return response;
+
+        } catch (Exception e) {
+            log.error("Error handling promotion intent: ", e);
+            return "Không thể tìm sản phẩm khuyến mãi. Vui lòng thử lại sau!";
+        }
+    }
+
+    private String handleComboIntent() {
+        try {
+            List<Product> comboProducts = getComboProducts();
+            if (comboProducts.isEmpty()) {
+                return "Hiện tại không có combo nào trong menu. Vui lòng xem các sản phẩm khác nhé! 🍕";
+            }
+
+            String response = buildProductResponse(comboProducts, "combo");
+            log.info("Combo products found: {}", comboProducts.size());
+            return response;
+
+        } catch (Exception e) {
+            log.error("Error handling combo intent: ", e);
+            return "Không thể tìm combo. Vui lòng thử lại sau!";
+        }
+    }
+
+    private String handleBestSellerIntent() {
+        try {
+            List<Product> bestSellerProducts = getBestSellerProducts();
+            if (bestSellerProducts.isEmpty()) {
+                return "Hiện tại chưa có sản phẩm bán chạy. Vui lòng xem các sản phẩm trong menu nhé! 🔥";
+            }
+            String response = buildProductResponse(bestSellerProducts, "bán chạy");
+            log.info("Best seller products found: {}", bestSellerProducts.size());
+            return response;
+
+        } catch (Exception e) {
+            log.error("Error handling best seller intent: ", e);
+            return "Không thể tìm sản phẩm bán chạy. Vui lòng thử lại sau!";
+        }
+    }
+
+    private List<Product> getPizzaProducts() {
+        return productRepository.findByCategoryNameContainingIgnoreCaseAndActiveTrue("Pizza");
     }
 
 
+    private List<Product> getCheapestProducts() {
+        Pageable pageable = PageRequest.of(0, 5);
+        return productRepository.findCheapestProducts(pageable);
+    }
+
+
+    private List<Product> getHighestPriceProducts() {
+        Pageable pageable = PageRequest.of(0, 5);
+        return productRepository.findHighestPriceProducts(pageable);
+    }
+
+    private List<Product> getPromotionProducts() {
+        return productRepository.findPromotionProducts();
+    }
+
+
+    private List<Product> getComboProducts() {
+        return productRepository.findByCategoryNameContainingIgnoreCaseAndActiveTrue("Combo");
+
+    }
+
+    private List<Product> getBestSellerProducts() {
+        return orderRepository.findTopBestSellingProductsForGemini(5);
+    }
+
+
+    private String buildProductResponse(List<Product> products, String type) {
+        StringBuilder response = new StringBuilder();
+
+        switch (type.toLowerCase()) {
+            case "giá rẻ nhất" -> response.append("Các món giá rẻ nhất:");
+            case "giá cao nhất" -> response.append("Các món cao cấp:");
+            case "khuyến mãi" -> response.append("Các món đang khuyến mãi:");
+            case "combo" -> response.append("Combo:");
+            case "bán chạy" -> response.append("Món bán chạy nhất:");
+        }
+
+        for (int i = 0; i < Math.min(products.size(), 5); i++) {
+            Product product = products.get(i);
+            response.append(product.getName());
+
+            response.append(" - ").append(formatPrice(product.getBasePrice()));
+
+            if (product.getDescription() != null && !product.getDescription().isEmpty()) {
+                response.append("\n   ").append(product.getDescription());
+            }
+        }
+
+        return response.toString();
+    }
+
+    private String formatPrice(double price) {
+        return String.format("%,.0f VNĐ", price);
+    }
+
 }
+

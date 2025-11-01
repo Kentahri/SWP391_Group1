@@ -26,9 +26,6 @@ public class GeminiChatController {
 
     private final GeminiChatService geminiChatService;
 
-    /**
-     * Endpoint chat thông thường
-     */
     @PostMapping(value = "/chat", produces = "application/json")
     public ResponseEntity<GeminiChatResponse> chat(@RequestBody GeminiChatRequest request) {
         log.info("========== CHAT ENDPOINT CALLED ==========");
@@ -46,8 +43,6 @@ public class GeminiChatController {
             String response = geminiChatService.chat(request.getMessage());
             
             log.info("✅ Service returned response");
-            log.info("📤 Response length: {}", response.length());
-            
             GeminiChatResponse chatResponse = new GeminiChatResponse(response, true, null);
             log.info("📦 Returning: {}", chatResponse);
             
@@ -61,36 +56,5 @@ public class GeminiChatController {
         }
     }
 
-    /**
-     * Endpoint streaming - cho realtime response
-     */
-    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter streamChat(@RequestParam String message) {
-        SseEmitter emitter = new SseEmitter(60000L);
-        geminiChatService.streamChat(message, new GeminiChatService.StreamCallback() {
-            @Override
-            public void onChunk(String chunk) {
-                try {
-                    emitter.send(SseEmitter.event()
-                            .name("message")
-                            .data(chunk));
-                } catch (IOException e) {
-                    emitter.completeWithError(e);
-                }
-            }
-
-            @Override
-            public void onComplete() {
-                emitter.complete();
-            }
-
-            @Override
-            public void onError(Exception e) {
-                emitter.completeWithError(e);
-            }
-        });
-
-        return emitter;
-    }
 }
 

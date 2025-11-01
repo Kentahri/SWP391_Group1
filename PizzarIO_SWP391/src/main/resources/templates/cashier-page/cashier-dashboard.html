@@ -74,7 +74,7 @@
 
       <div class="layout">
         <!-- Left: Table Management -->
-        <section class="panel left">
+        <section class="panel left" id="left-panel">
           <div class="section-title">Quản lý bàn</div>
 
           <!-- Legend -->
@@ -167,8 +167,11 @@
           </div>
         </section>
 
+        <!-- Resizable Divider -->
+        <div class="resize-handle" id="resize-handle"></div>
+
         <!-- Right: Table details -->
-        <section class="panel right">
+        <section class="panel right" id="right-panel">
           <div
             class="section-title"
             id="right-panel-title"
@@ -288,7 +291,7 @@
                   <span>Món đã gọi</span>
                   <span
                     class="item-count"
-                    th:text="${#lists.isEmpty(orderDetail.items) ? '0' : #aggregates.sum(orderDetail.items.![quantity])} + ' món'"
+                    th:text="${#lists.isEmpty(orderDetail.items) ? '0 món' : #lists.size(orderDetail.items) + ' món'}"
                     >0 món</span
                   >
                 </div>
@@ -397,6 +400,12 @@
                 ✅ Đã thanh toán
               </div>
 
+              <button
+                class="btn-reserve"
+                th:onclick="'openReservationModal(' + ${selectedTableId} + ')'"
+              >
+                📅 Đặt trước bàn này
+              </button>
               <a
                 th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}"
                 class="btn-view-reservations"
@@ -484,7 +493,7 @@
                   </div>
                   <span
                     th:class="'reservation-status ' + ${reservation.status.toString().toLowerCase()}"
-                    th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' : 
+                    th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' :
 						                (reservation.status == 'ARRIVED' ? 'Đã đến' : 
 						                (reservation.status == 'CANCELED' ? 'Đã hủy' : 'Không đến'))}"
                   >
@@ -921,8 +930,9 @@
                 <!-- Items Header -->
                 <div
                   style="
-                    display: flex;
-                    justify-content: space-between;
+                    display: grid;
+                    grid-template-columns: 1fr 70px 1fr;
+                    column-gap: 8px;
                     font-size: 12px;
                     font-weight: bold;
                     margin-bottom: 8px;
@@ -931,23 +941,27 @@
                   "
                 >
                   <div>Tên món</div>
-                  <div>Số lượng</div>
-                  <div>Thành tiền</div>
+                  <div style="text-align: center">Số lượng</div>
+                  <div style="text-align: right">Thành tiền</div>
                 </div>
 
                 <!-- Order Items -->
                 <div
                   th:each="item : ${order.items}"
                   style="
-                    display: flex;
-                    justify-content: space-between;
+                    display: grid;
+                    grid-template-columns: 1fr 70px 1fr;
+                    column-gap: 8px;
                     font-size: 12px;
                     margin-bottom: 4px;
                   "
                 >
                   <div th:text="${item.productName}">Pizza Bò</div>
-                  <div th:text="${item.quantity}">1</div>
+                  <div style="text-align: center" th:text="${item.quantity}">
+                    1
+                  </div>
                   <div
+                    style="text-align: right"
                     th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT')}"
                   >
                     245,000
@@ -958,15 +972,17 @@
                 <div
                   th:if="${order.discountAmount != null && order.discountAmount > 0}"
                   style="
-                    display: flex;
-                    justify-content: space-between;
+                    display: grid;
+                    grid-template-columns: 1fr 70px 1fr;
+                    column-gap: 8px;
                     font-size: 12px;
                     margin-bottom: 4px;
                   "
                 >
                   <div>Giảm giá:</div>
-                  <div>-</div>
+                  <div style="text-align: center">-</div>
                   <div
+                    style="text-align: right"
                     th:text="'-' + ${#numbers.formatDecimal(order.discountAmount, 0, 'COMMA', 0, 'POINT')}"
                   >
                     -0
@@ -976,15 +992,17 @@
                 <!-- Tax Information -->
                 <div
                   style="
-                    display: flex;
-                    justify-content: space-between;
+                    display: grid;
+                    grid-template-columns: 1fr 70px 1fr;
+                    column-gap: 8px;
                     font-size: 12px;
                     margin-bottom: 4px;
                   "
                 >
                   <div>Thuế (10%):</div>
-                  <div>-</div>
+                  <div style="text-align: center">-</div>
                   <div
+                    style="text-align: right"
                     th:text="${#numbers.formatDecimal(order.totalPrice * 0.1 / 1.1, 0, 'COMMA', 0, 'POINT')}"
                   >
                     0
@@ -1228,7 +1246,7 @@
                   </div>
                   <span
                     th:class="'reservation-status ' + ${reservation.status.toString().toLowerCase()}"
-                    th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' : 
+                    th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' :
 							                (reservation.status == 'ARRIVED' ? 'Đã đến' : 
 							                (reservation.status == 'CANCELED' ? 'Đã hủy' : 'Không đến'))}"
                   >
@@ -1364,15 +1382,6 @@
 
     <!-- Modal Toast Container cho errors trong modal -->
     <div class="modal-toast-container" id="modal-toast-container"></div>
-
-    <!-- Server Status Indicator - Góc trái dưới -->
-    <div class="server-status-container">
-      <div id="server-status">
-        <button class="btn btn-server-check" onclick="checkServerConnection()">
-          🔗 Kiểm tra kết nối với server
-        </button>
-      </div>
-    </div>
 
     <!-- Modal đặt bàn -->
     <div id="reservation-modal" class="modal">
@@ -1764,6 +1773,71 @@
     <script th:src="@{/js/cashier/table.js}"></script>
     <script th:src="@{/js/cashier/reservation.js}"></script>
 
+    <!-- Resizable Panel Script -->
+    <script>
+      (function() {
+        const resizeHandle = document.getElementById('resize-handle');
+        const leftPanel = document.getElementById('left-panel');
+        const rightPanel = document.getElementById('right-panel');
+        const layout = document.querySelector('.layout');
+
+        let isResizing = false;
+        let startX = 0;
+        let startWidth = 0;
+
+        if (resizeHandle && leftPanel && rightPanel) {
+          resizeHandle.addEventListener('mousedown', function(e) {
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = leftPanel.offsetWidth;
+
+            document.body.classList.add('resizing');
+            resizeHandle.classList.add('dragging');
+
+            e.preventDefault();
+          });
+
+          document.addEventListener('mousemove', function(e) {
+            if (!isResizing) return;
+
+            const deltaX = e.clientX - startX;
+            const newWidth = startWidth + deltaX;
+            const layoutWidth = layout.offsetWidth;
+
+            // Calculate min and max widths
+            const minWidth = 300;
+            const maxWidth = layoutWidth - minWidth - 8; // 8px for divider
+
+            // Apply constraints
+            if (newWidth >= minWidth && newWidth <= maxWidth) {
+              const widthPercent = (newWidth / layoutWidth) * 100;
+              leftPanel.style.width = widthPercent + '%';
+            }
+
+            e.preventDefault();
+          });
+
+          document.addEventListener('mouseup', function() {
+            if (isResizing) {
+              isResizing = false;
+              document.body.classList.remove('resizing');
+              resizeHandle.classList.remove('dragging');
+
+              // Save the panel width to localStorage
+              const widthPercent = (leftPanel.offsetWidth / layout.offsetWidth) * 100;
+              localStorage.setItem('cashier-left-panel-width', widthPercent);
+            }
+          });
+
+          // Restore saved width on page load
+          const savedWidth = localStorage.getItem('cashier-left-panel-width');
+          if (savedWidth) {
+            leftPanel.style.width = savedWidth + '%';
+          }
+        }
+      })();
+    </script>
+
     <script th:inline="javascript">
       window.addEventListener("DOMContentLoaded", function () {
         var showModal = /*[[${showReservationModal}]]*/ false;
@@ -1830,3 +1904,5 @@
     </script>
   </body>
 </html>
+
+

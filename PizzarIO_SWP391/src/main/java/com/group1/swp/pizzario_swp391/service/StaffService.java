@@ -151,4 +151,11 @@ public class StaffService {
         staff.setActive(!staff.isActive());
         staffRepository.save(staff);
     }
+
+    public List<Staff> searchByName(String keyword, int limit) {
+        if (keyword == null || keyword.isBlank()) {
+            return staffRepository.findTopNOrderByNameAsc(limit); // fallback khi chưa gõ, lấy một ít đầu danh sách
+        }
+        return staffRepository.searchTopByName(keyword, limit);
+    }
 }

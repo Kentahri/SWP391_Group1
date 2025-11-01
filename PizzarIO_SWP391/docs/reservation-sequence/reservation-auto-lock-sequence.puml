@@ -1,62 +1,145 @@
-@startuml Auto Lock Table Before 90 Minutes Sequence Diagram
+@startuml
+title Auto Lock Table Sequence - Event-Driven Architecture
 
-participant "Spring Scheduler" as SpringScheduler
-participant "ReservationService" as Service
-participant "ReservationRepository" as Repo
-participant "TableRepository" as TableRepo
-participant "SimpMessagingTemplate" as WebSocket
-participant "Reservation" as Entity
+participant "ReservationService" as ReservationService
+participant "ReservationSchedulerService" as SchedulerService
+participant "Setting" as Setting
+participant "TaskScheduler" as TaskScheduler
+participant "ScheduledFuture" as ScheduledFuture
+participant "ApplicationEventPublisher" as EventPublisher
+participant "AutoLockTableEvent" as Event
+participant "ReservationRepository" as ReservationRepo
 participant "DiningTable" as Table
+participant "TableRepository" as TableRepo
+participant "WebSocketService" as WebSocket
 
+== Schedule Auto Lock Task ==
 
-group Scheduled Auto Lock Process
-    SpringScheduler -> Service: closeTable() [@Scheduled fixedRate=5000ms]
-    activate Service
+note over ReservationService
+When creating a reservation,
+the system schedules an auto-lock task
+end note
+
+ReservationService -> SchedulerService: scheduleAutoLockTable(reservationId, startTime)
+activate SchedulerService
+
+SchedulerService -> Setting: getAutoLockReservationMinutes()
+activate Setting
+Setting --> SchedulerService: autoLockMinutes (e.g., 5)
+deactivate Setting
+
+SchedulerService -> SchedulerService: executionTime = startTime - autoLockMinutes
+note right of SchedulerService
+Example: If startTime is 18:00 and
+autoLockMinutes is 5, then
+executionTime = 17:55
+end note
+
+SchedulerService -> SchedulerService: Check if executionTime is before now
+
+alt executionTime is in the future
+    SchedulerService -> SchedulerService: Instant scheduledInstant = executionTime.atZone(...)
     
-    Service -> Service: synchronized method execution
-    Service -> Repo: findAllUpcomingReservationInRange(now, now+90min)
-    activate Repo
-    Repo --> Service: List<Reservation> (reservations in next 90 minutes)
-    deactivate Repo
+    SchedulerService -> TaskScheduler: schedule(() -> handleAutoLockTable(reservationId), scheduledInstant)
+    activate TaskScheduler
+    TaskScheduler -> ScheduledFuture: Create scheduled task
+    TaskScheduler --> SchedulerService: ScheduledFuture
     
-    alt If reservations found
-        loop For each reservation in range
-            Service -> Entity: getDiningTable()
-            Entity --> Service: DiningTable
-            
-            Service -> Table: getTableStatus()
-            Table --> Service: TableStatus
-            
-            alt If table status is AVAILABLE
-                Service -> Table: setTableStatus(RESERVED)
-                Service -> TableRepo: save(table)
-                activate TableRepo
-                TableRepo --> Service: Updated DiningTable
-                deactivate TableRepo
-                
-                Service -> Repo: save(reservation)
-                activate Repo
-                Repo --> Service: Updated Reservation
-                deactivate Repo
-                
-                Service -> WebSocket: broadcastTableStatusToGuests(tableId, RESERVED)
-                Service -> WebSocket: broadcastTableStatusToCashier(TABLE_RESERVED, ...)
-                
-                note right of Service: Table automatically locked for upcoming reservation
-            else If table already RESERVED/OCCUPIED
-                note right of Service: No action needed - table already locked
-            end
-        end
-    else If no reservations in range
-        note right of Service: No action needed - no upcoming reservations
-    end
+    SchedulerService -> SchedulerService: scheduledTasks.put(reservationId, task)
+    note right of SchedulerService
+    Store task in Map for
+    potential cancellation/update
+    end note
     
-    Service --> SpringScheduler: Scheduled task completed
-    deactivate Service
+    SchedulerService --> ReservationService: Task scheduled successfully
+else executionTime has passed
+    SchedulerService --> ReservationService: Skip scheduling (too late)
 end
 
-note over SpringScheduler: This process runs every 5 seconds to ensure tables are locked 90 minutes before reservation time
+deactivate TaskScheduler
+deactivate SchedulerService
+
+== Task Execution (Event-Driven) ==
+
+note over TaskScheduler
+When execution time arrives,
+the scheduled task executes
+end note
+
+TaskScheduler -> SchedulerService: Execute scheduled task\nhandleAutoLockTable(reservationId)
+activate SchedulerService
+
+SchedulerService -> Event: Create AutoLockTableEvent(reservationId)
+activate Event
+Event -> Event: Set reservationId\nSet triggeredAt (now)
+deactivate Event
+
+SchedulerService -> EventPublisher: publishEvent(AutoLockTableEvent)
+activate EventPublisher
+
+SchedulerService -> SchedulerService: Remove task from scheduledTasks Map
+note right of SchedulerService
+Clean up completed task
+end note
+
+EventPublisher --> ReservationService: Dispatch event to listeners
+
+== Event Listener Processing ==
+
+note over ReservationService
+@EventListener onAutoLockTableEvent()
+received and processes the event
+end note
+
+ReservationService -> ReservationService: onAutoLockTableEvent(event)
+activate ReservationService
+
+ReservationService -> ReservationService: closeTable(reservationId)
+note right of ReservationService
+Synchronized method to ensure
+thread safety
+end note
+
+ReservationService -> ReservationRepo: findById(reservationId)
+activate ReservationRepo
+ReservationRepo --> ReservationService: Reservation
+deactivate ReservationRepo
+
+ReservationService -> ReservationService: reservation.getDiningTable()
+ReservationService --> Table: DiningTable
+
+ReservationService -> Table: getTableStatus()
+Table --> ReservationService: tableStatus
+
+alt If tableStatus == AVAILABLE
+    ReservationService -> Table: setTableStatus(RESERVED)
+    
+    ReservationService -> TableRepo: save(table)
+    activate TableRepo
+    TableRepo --> ReservationService: Updated DiningTable
+    deactivate TableRepo
+    
+    ReservationService -> WebSocket: broadcastTableStatusToGuests(tableId, RESERVED)
+    activate WebSocket
+    WebSocket -> WebSocket: Send to all guest tablets
+    deactivate WebSocket
+    
+    ReservationService -> WebSocket: broadcastTableStatusToCashier(\nTABLE_RESERVED, tableId,\noldStatus, newStatus, "SYSTEM", message)
+    activate WebSocket
+    WebSocket -> WebSocket: Notify cashier system
+    deactivate WebSocket
+    
+    note right of ReservationService
+    Table is now RESERVED
+    and not available for walk-in customers
+    end note
+else If tableStatus != AVAILABLE
+    note right of ReservationService
+    No action needed
+    end note
+end
+
+deactivate ReservationService
+deactivate EventPublisher
 
 @enduml
-
-

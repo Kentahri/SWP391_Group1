@@ -137,37 +137,51 @@ body {
   display: flex;
   gap: 12px;
   align-items: center;
+  background: #f8fafc;
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) inset;
 }
 
 .filter-group {
   display: flex;
   gap: 8px;
   align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
 }
 
 .filter-label {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--muted);
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #eef2f7;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .filter-select {
-  padding: 8px 32px 8px 12px;
-  border: 1px solid var(--border);
+  padding: 6px 28px 6px 8px;
+  border: 0;
   border-radius: 8px;
   font-size: 14px;
-  background: white;
+  background: transparent;
   cursor: pointer;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 10px center;
+  background-position: right 6px center;
 }
 
 .add-btn {
   background: var(--accent);
   color: white;
   border: none;
-  padding: 10px 20px;
+  padding: 8px 15px;
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
@@ -340,6 +354,26 @@ body {
 .shift-status.scheduled {
   background: #dbeafe;
   color: #1e40af;
+}
+
+.shift-status.not_checkout {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.shift-status.present {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.shift-status.late {
+  background: #fed7aa;
+  color: #c2410c;
+}
+
+.shift-status.left_early {
+  background: #fce7f3;
+  color: #9f1239;
 }
 
 .shift-wage {

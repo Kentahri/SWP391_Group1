@@ -1,27 +1,46 @@
 package com.group1.swp.pizzario_swp391.controller;
 
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
+import com.group1.swp.pizzario_swp391.dto.category.CategoryResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.data_analytics.AnalyticsDTO;
 import com.group1.swp.pizzario_swp391.dto.data_analytics.ProductStatsDTO;
 import com.group1.swp.pizzario_swp391.dto.data_analytics.SalesDTO;
+import com.group1.swp.pizzario_swp391.service.CategoryService;
 import com.group1.swp.pizzario_swp391.service.DataAnalyticsReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.*;
 
+import java.beans.PropertyEditorSupport;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
+import java.util.*;
 
 @ManagerUrl
 @RequiredArgsConstructor
 public class DashBoardController {
 
     private final DataAnalyticsReportService dataAnalyticsReportService;
+    private final CategoryService categoryService;
+
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(LocalDate.class, new PropertyEditorSupport() {
+            @Override
+            public void setAsText(String text) throws IllegalArgumentException {
+                try {
+                    setValue(LocalDate.parse(text, DateTimeFormatter.ISO_LOCAL_DATE));
+                } catch (DateTimeParseException e) {
+                    setValue(null);
+                }
+            }
+        });
+    }
 
     @GetMapping("/analytics")
     public String getFormAnalytics(Model model) {
@@ -109,6 +128,93 @@ public class DashBoardController {
         }
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         return start.format(fmt) + " - " + end.format(fmt);
+    }
+
+    // ==================== NEW API ENDPOINTS ====================
+
+    /**
+     * API endpoint: Get top products với filters (AJAX)
+     *
+     * @param dateRange  Preset: "7", "30", "90", "all", "custom"
+     * @param fromDate   Custom start date (optional, required if dateRange="custom")
+     * @param toDate     Custom end date (optional, required if dateRange="custom")
+     * @param categoryId Category filter (optional)
+     * @param limit      Number of products to return (default: 5)
+     * @return JSON response với success, data, message
+     */
+    @GetMapping("/analytics/api/top-products")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getTopProductsAPI(
+            @RequestParam(defaultValue = "7") String dateRange,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(defaultValue = "5") int limit) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Validate limit
+            if (limit < 1 || limit > 50) {
+                response.put("success", false);
+                response.put("message", "Limit phải từ 1 đến 50");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Call service
+            List<ProductStatsDTO> products = dataAnalyticsReportService.getTopProductsWithFilters(
+                    dateRange, fromDate, toDate, categoryId, limit);
+
+            response.put("success", true);
+            response.put("data", products);
+            response.put("total", products.size());
+            response.put("message", "Lấy dữ liệu thành công");
+
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            response.put("data", new ArrayList<>());
+            return ResponseEntity.badRequest().body(response);
+
+        } catch (Exception e) {
+            System.err.println("Error in getTopProductsAPI: " + e.getMessage());
+            e.printStackTrace();
+
+            response.put("success", false);
+            response.put("message", "Có lỗi xảy ra khi xử lý yêu cầu");
+            response.put("data", new ArrayList<>());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    /**
+     * API endpoint: Get all categories (AJAX)
+     *
+     * @return JSON array of categories
+     */
+    @GetMapping("/analytics/api/categories")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getCategoriesAPI() {
+        try {
+            List<CategoryResponseDTO> categories = categoryService.getAllCategories();
+
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (CategoryResponseDTO cat : categories) {
+                Map<String, Object> item = new HashMap<>();
+                item.put("id", cat.getId());
+                item.put("name", cat.getName());
+                result.add(item);
+            }
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("Error in getCategoriesAPI: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(new ArrayList<>());
+        }
     }
 
 }

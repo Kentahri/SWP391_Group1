@@ -1,3 +1,6 @@
+/* Import reusable admin components */
+@import url('admin-components.css');
+
 :root {
   /* ----- Light theme palette ----- */
   --bg: #ffffff; /* nền trang */
