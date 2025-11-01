@@ -1,5 +1,6 @@
 package com.group1.swp.pizzario_swp391.service;
 
+import com.group1.swp.pizzario_swp391.config.Setting;
 import com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO;
 import com.group1.swp.pizzario_swp391.dto.order.OrderItemDTO;
 import com.group1.swp.pizzario_swp391.dto.table.TableCreateDTO;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -42,7 +44,10 @@ public class TableService{
     WebSocketService webSocketService;
     ReservationRepository reservationRepository;
     OrderRepository orderRepository;
-    private final SimpMessagingTemplate simpMessagingTemplate;
+    SimpMessagingTemplate simpMessagingTemplate;
+    Setting setting;
+    PendingReservationTracker pendingReservationTracker;
+    ReservationService reservationService;
 
     /**
      * Guest selects a table
@@ -60,8 +65,15 @@ public class TableService{
                     .orElseThrow(() -> new RuntimeException("Table not found"));
 
             if (table.getTableStatus() != DiningTable.TableStatus.AVAILABLE) {
+                String errorMessage = switch (table.getTableStatus()) {
+                    case LOCKED -> "Bàn đang bị khóa, không thể chọn";
+                    case OCCUPIED -> "Bàn đã có khách";
+                    case RESERVED -> "Bàn đã được đặt trước";
+                    case WAITING_PAYMENT -> "Bàn đang chờ thanh toán";
+                    default -> "Bàn không còn trống";
+                };
                 sendTableSelectionError(request.getSessionId(), request.getTableId(),
-                        "Bàn không còn trống", TableSelectionResponse.ResponseType.CONFLICT);
+                        errorMessage, TableSelectionResponse.ResponseType.CONFLICT);
                 return;
             }
 
@@ -217,6 +229,50 @@ public class TableService{
         return tableMapper.toTableForCashierDTOs(tableRepository.getAllTablesForCashier());
     }
 
+    public void lockTableForMerge(int tableId) {
+        DiningTable table = tableRepository.findById(tableId)
+                .orElseThrow(() -> new RuntimeException("Table not found"));
+
+        if(table.getTableStatus() != DiningTable.TableStatus.AVAILABLE) {
+            throw new RuntimeException("Chỉ có thể cập nhật trạng thái bàn khi bàn đang trống (AVAILABLE)");
+        }
+
+        DiningTable.TableStatus oldStatus = table.getTableStatus();
+        table.setTableStatus(DiningTable.TableStatus.LOCKED);
+        tableRepository.save(table);
+
+        webSocketService.broadcastTableStatusToCashier(
+                TableStatusMessage.MessageType.TABLE_LOCKED,
+                tableId,
+                oldStatus,
+                DiningTable.TableStatus.LOCKED,
+                "Cashier",
+                "Trạng thái bàn " + tableId + " đã được cập nhật."
+        );
+    }
+
+    public void unlockTableFromMerge(int tableId) {
+        DiningTable table = tableRepository.findById(tableId)
+                .orElseThrow(() -> new RuntimeException("Table not found"));
+
+        if(table.getTableStatus() != DiningTable.TableStatus.LOCKED) {
+            throw new RuntimeException("Chỉ có thể mở khóa bàn khi bàn đang ở trạng thái LOCKED");
+        }
+
+        DiningTable.TableStatus oldStatus = table.getTableStatus();
+        table.setTableStatus(DiningTable.TableStatus.AVAILABLE);
+        tableRepository.save(table);
+
+        webSocketService.broadcastTableStatusToCashier(
+                TableStatusMessage.MessageType.TABLE_RELEASED,
+                tableId,
+                oldStatus,
+                DiningTable.TableStatus.AVAILABLE,
+                "Cashier",
+                "Trạng thái bàn " + tableId + " đã được cập nhật."
+        );
+    }
+
 
     public DiningTable add(DiningTable table) {
         return tableRepository.save(table);
@@ -327,7 +383,30 @@ public class TableService{
         table.setUpdatedAt(LocalDateTime.now());
         tableRepository.save(table);
 
-        // Gửi broadcast cho tất cả client
+        if (pendingReservationTracker.hasPendingReservation(tableId)) {
+            Long pendingReservationId = pendingReservationTracker.getPendingReservation(tableId);
+
+            log.info("🎯 Bàn {} vừa trống, có reservation {} đang chờ", tableId, pendingReservationId);
+
+            if (isReservationActive(pendingReservationId)) {
+                log.info("🔒 Ngay lập tức khóa bàn {} cho reservation {}", tableId, pendingReservationId);
+
+                reservationService.lockTableForReservation(table, pendingReservationId);
+                pendingReservationTracker.removePendingReservation(tableId, pendingReservationId);
+
+                // Xóa giỏ hàng trong http session (chỉ khi session không null)
+                if (session != null) {
+                    session.invalidate();
+                }
+                return;
+            } else {
+                // Reservation không còn CONFIRMED (đã NO_SHOW/CANCELED) → Cleanup
+                log.warn("⚠️ Reservation {} không còn CONFIRMED, cleanup và để bàn {} AVAILABLE",
+                        pendingReservationId, tableId);
+                pendingReservationTracker.removePendingReservation(tableId, pendingReservationId);
+            }
+        }
+
         webSocketService.broadcastTableStatusToGuests(tableId, DiningTable.TableStatus.AVAILABLE);
         webSocketService.broadcastTableStatusToCashier(
                 com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage.MessageType.TABLE_RELEASED,
@@ -342,6 +421,16 @@ public class TableService{
         if (session != null) {
             session.invalidate();
         }
+    }
+
+    /**
+     * Kiểm tra xem reservation có status = CONFIRMED không
+     * CHỈ những reservation CONFIRMED mới được khóa bàn (bỏ qua NO_SHOW, CANCELED, ARRIVED)
+     */
+    private boolean isReservationActive(Long reservationId) {
+        return reservationRepository.findById(reservationId)
+                .map(r -> r.getStatus() == com.group1.swp.pizzario_swp391.entity.Reservation.Status.CONFIRMED)
+                .orElse(false);
     }
 
     @Transactional
