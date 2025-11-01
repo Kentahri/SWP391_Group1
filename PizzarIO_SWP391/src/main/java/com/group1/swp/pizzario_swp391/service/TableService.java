@@ -65,8 +65,15 @@ public class TableService{
                     .orElseThrow(() -> new RuntimeException("Table not found"));
 
             if (table.getTableStatus() != DiningTable.TableStatus.AVAILABLE) {
+                String errorMessage = switch (table.getTableStatus()) {
+                    case LOCKED -> "Bàn đang bị khóa, không thể chọn";
+                    case OCCUPIED -> "Bàn đã có khách";
+                    case RESERVED -> "Bàn đã được đặt trước";
+                    case WAITING_PAYMENT -> "Bàn đang chờ thanh toán";
+                    default -> "Bàn không còn trống";
+                };
                 sendTableSelectionError(request.getSessionId(), request.getTableId(),
-                        "Bàn không còn trống", TableSelectionResponse.ResponseType.CONFLICT);
+                        errorMessage, TableSelectionResponse.ResponseType.CONFLICT);
                 return;
             }
 

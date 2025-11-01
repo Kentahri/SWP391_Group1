@@ -102,6 +102,11 @@ public class ReservationService {
             throw new RuntimeException("Thời gian đặt trước phải cách nhau ít nhất " + setting.getConflictReservationMinutes() + " phút.");
         }
 
+        // Kiểm tra nếu bàn đang bị khóa (LOCKED) - không cho đặt trước
+        if (table.getTableStatus().equals(DiningTable.TableStatus.LOCKED)) {
+            throw new RuntimeException("Bàn đang bị khóa tạm thời, không thể đặt trước");
+        }
+
         if ((table.getTableStatus().equals(DiningTable.TableStatus.OCCUPIED) || table.getTableStatus().equals(DiningTable.TableStatus.WAITING_PAYMENT))
                 && dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(setting.getConflictReservationMinutes()))) {
             throw new RuntimeException("Bàn hiện đang có người ngồi, hãy đặt bàn cách thời điểm này ít nhất " + setting.getConflictReservationMinutes() + " phút");
@@ -127,7 +132,6 @@ public class ReservationService {
 
         // Nếu thay đổi thời gian, kiểm tra conflict
         if (!dto.getStartTime().equals(reservation.getStartTime())) {
-            // Check duplicate
             Reservation duplicateReservation = reservationRepository.findDuplicateReservation(table.getId(), dto.getStartTime());
             if (duplicateReservation != null && !duplicateReservation.getId().equals(reservationId)) {
                 throw new RuntimeException("Bàn đã được đặt trong thời gian này");
@@ -136,6 +140,11 @@ public class ReservationService {
             boolean conflictReservations = checkConflictReservationForUpdate(reservationId, table.getId(), dto.getStartTime());
             if (conflictReservations) {
                 throw new RuntimeException("Thời gian đặt trước phải cách nhau ít nhất " + setting.getConflictReservationMinutes() + " phút.");
+            }
+
+            // Kiểm tra nếu bàn đang bị khóa (LOCKED) - không cho cập nhật
+            if (table.getTableStatus().equals(DiningTable.TableStatus.LOCKED)) {
+                throw new RuntimeException("Bàn đang bị khóa tạm thời, không thể cập nhật đặt trước");
             }
 
             if ((table.getTableStatus().equals(DiningTable.TableStatus.OCCUPIED) ||
@@ -268,6 +277,12 @@ public class ReservationService {
         if (oldStatus.equals(DiningTable.TableStatus.OCCUPIED) || oldStatus.equals(DiningTable.TableStatus.WAITING_PAYMENT)) {
             throw new RuntimeException("Bàn đang có khách, không thể mở!");
         }
+
+        // Bàn LOCKED cũng không thể mở cho khách đã đặt trước (vì đang bị khóa để merge)
+        if (oldStatus.equals(DiningTable.TableStatus.LOCKED)) {
+            throw new RuntimeException("Bàn đang bị khóa tạm thời, không thể mở!");
+        }
+
         table.setTableStatus(DiningTable.TableStatus.AVAILABLE);
 
         tableRepository.save(table);
@@ -327,6 +342,22 @@ public class ReservationService {
                     table.getTableStatus(),
                     "SYSTEM",
                     String.format("⚠️ Bàn %d có reservation #%d đang chờ (Khách đặt: %s - %s). Vui lòng xử lý sớm!",
+                            table.getId(), reservationId, reservation.getName(), reservation.getPhone())
+            );
+        } else if (table.getTableStatus() == DiningTable.TableStatus.LOCKED) {
+            // Bàn LOCKED cũng vào hàng chờ, vì đang bị khóa tạm thời để merge
+            pendingReservationTracker.addPendingReservation(table.getId(), reservationId);
+
+            log.warn("⏳ Bàn {} đang LOCKED - Thêm reservation {} vào hàng chờ",
+                    table.getId(), reservationId);
+
+            webSocketService.broadcastTableStatusToCashier(
+                    TableStatusMessage.MessageType.TABLE_RESERVED,
+                    table.getId(),
+                    table.getTableStatus(),
+                    table.getTableStatus(),
+                    "SYSTEM",
+                    String.format("⚠️ Bàn %d đang bị khóa, reservation #%d đang chờ (Khách đặt: %s - %s).",
                             table.getId(), reservationId, reservation.getName(), reservation.getPhone())
             );
         } else {
