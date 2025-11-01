@@ -18,6 +18,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ public class    OrderService{
     CartService cartService;
     OrderItemMapper orderItemMapper;
     WebSocketService webSocketService;
+    private final SessionService sessionService;
 
     public List<OrderItemDTO> getOrderedItemsForView(Long sessionId) {
         List<OrderItemDTO> orderedItems = new ArrayList<>();
@@ -55,16 +57,27 @@ public class    OrderService{
 
         Order order = getOrderForSession(sessionId);
         if (order == null) {
-            throw new IllegalStateException("Order not found for this session.");
+            order = new Order();
+//          Tạo mới 1 order và lưu vào DB
+            order.setSession(sessionService.getSessionById(sessionId));
+            order.setCreatedAt(LocalDateTime.now());
+            order.setOrderStatus(Order.OrderStatus.PREPARING);
+            order.setOrderType(Order.OrderType.DINE_IN);
+            order.setPaymentStatus(Order.PaymentStatus.UNPAID);
+            order.setNote("");
+            order.setTotalPrice(0.0);
+            order.setTaxRate(0.1); // 10% tax
+            orderRepository.save(order);
         }
+        Order finalOrder = order;
         cart.values().forEach(item -> {
             OrderItem orderItem = orderItemMapper.toOrderItem(item);
             orderItem.setProduct(productRepository.findById(item.getProductId()).orElse(null));
             orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
             orderItem.setOrderItemType(OrderItem.OrderItemType.DINE_IN);
-            order.setTotalPrice(order.getTotalPrice() + item.getTotalPrice());
+            finalOrder.setTotalPrice(finalOrder.getTotalPrice() + item.getTotalPrice());
             orderItemRepository.save(orderItem);
-            order.addOrderItem(orderItem);
+            finalOrder.addOrderItem(orderItem);
         });
         orderRepository.save(order);
         cartService.clearCart(session);

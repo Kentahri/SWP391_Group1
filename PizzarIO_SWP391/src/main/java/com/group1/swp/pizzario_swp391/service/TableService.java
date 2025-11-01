@@ -73,16 +73,16 @@ public class TableService{
             Session savedSession = sessionRepository.save(session);
 
             // Tạo mới 1 order và lưu vào DB
-            Order newOrder = new Order();
-            newOrder.setSession(savedSession);
-            newOrder.setCreatedAt(LocalDateTime.now());
-            newOrder.setOrderStatus(Order.OrderStatus.PREPARING);
-            newOrder.setOrderType(Order.OrderType.DINE_IN);
-            newOrder.setPaymentStatus(Order.PaymentStatus.UNPAID);
-            newOrder.setNote("");
-            newOrder.setTotalPrice(0.0);
-            newOrder.setTaxRate(0.1); // 10% tax
-            orderRepository.save(newOrder);
+//            Order newOrder = new Order();
+//            newOrder.setSession(savedSession);
+//            newOrder.setCreatedAt(LocalDateTime.now());
+//            newOrder.setOrderStatus(Order.OrderStatus.PREPARING);
+//            newOrder.setOrderType(Order.OrderType.DINE_IN);
+//            newOrder.setPaymentStatus(Order.PaymentStatus.UNPAID);
+//            newOrder.setNote("");
+//            newOrder.setTotalPrice(0.0);
+//            newOrder.setTaxRate(0.1); // 10% tax
+//            orderRepository.save(newOrder);
 
             // Update table status with optimistic locking
             DiningTable.TableStatus oldStatus = table.getTableStatus();
