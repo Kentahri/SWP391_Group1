@@ -39,6 +39,7 @@ public class ReservationService {
     ReservationSchedulerService reservationSchedulerService;
     WebSocketService webSocketService;
     Setting setting;
+    PendingReservationTracker pendingReservationTracker;
 
     /**
      * Tạo reservation mới cho bàn
@@ -244,6 +245,10 @@ public class ReservationService {
 
         reservationSchedulerService.cancelAutoLockTable(reservationId);
         reservationSchedulerService.cancelNoShowCheck(reservationId);
+
+        // Cleanup: Remove khỏi pending list nếu đang chờ
+        pendingReservationTracker.removePendingReservation(table.getId(), reservationId);
+
         reservationRepository.save(reservation);
         tableRepository.save(table);
     }
@@ -268,6 +273,9 @@ public class ReservationService {
         tableRepository.save(table);
         reservationRepository.save(reservation);
         reservationSchedulerService.cancelNoShowCheck(reservationId);
+
+        // Cleanup: Remove khỏi pending list nếu đang chờ
+        pendingReservationTracker.removePendingReservation(table.getId(), reservationId);
 
         // Broadcast WebSocket
         webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
@@ -295,29 +303,57 @@ public class ReservationService {
      */
     private synchronized void closeTable(Long reservationId) {
         log.info("🔄 Scheduled: closeTable() is running...");
-        DiningTable table = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy reservation"))
-                .getDiningTable();
-        if (table.getTableStatus() == DiningTable.TableStatus.AVAILABLE) {
-            DiningTable.TableStatus oldStatus = table.getTableStatus();
-            table.setTableStatus(DiningTable.TableStatus.RESERVED);
-            tableRepository.save(table);
 
-            webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy reservation"));
+
+        DiningTable table = reservation.getDiningTable();
+
+        if (table.getTableStatus() == DiningTable.TableStatus.AVAILABLE) {
+            lockTableForReservation(table, reservationId);
+            log.info("✅ Đã tự động khóa bàn {} trước {} phút khi đến giờ đặt (Reservation #{})",
+                    table.getId(), setting.getAutoLockReservationMinutes(), reservationId);
+        } else if (table.getTableStatus() == DiningTable.TableStatus.OCCUPIED
+                || table.getTableStatus() == DiningTable.TableStatus.WAITING_PAYMENT) {
+            pendingReservationTracker.addPendingReservation(table.getId(), reservationId);
+
+            log.warn("⏳ Bàn {} đang {} - Thêm reservation {} vào hàng chờ",
+                    table.getId(), table.getTableStatus(), reservationId);
+
             webSocketService.broadcastTableStatusToCashier(
                     TableStatusMessage.MessageType.TABLE_RESERVED,
                     table.getId(),
-                    oldStatus,
+                    table.getTableStatus(),
                     table.getTableStatus(),
                     "SYSTEM",
-                    "Tự động khóa bàn trước " + setting.getNoShowWaitMinutes() + " phút khi đến giờ đặt (Reservation #" + reservationId + ")"
+                    String.format("⚠️ Bàn %d có reservation #%d đang chờ (Khách đặt: %s - %s). Vui lòng xử lý sớm!",
+                            table.getId(), reservationId, reservation.getName(), reservation.getPhone())
             );
-            log.info("Đã tự động khóa bàn {} trước " + setting.getAutoLockReservationMinutes() + " khi đến giờ đặt (Reservation #{})", table.getId(), reservationId);
         } else {
-            log.info("Bàn {} không ở trạng thái AVAILABLE, không thực hiện khóa tự động (Reservation #{})", table.getId(), reservationId);
+            log.info("Bàn {} ở trạng thái {}, không thực hiện khóa tự động (Reservation #{})",
+                    table.getId(), table.getTableStatus(), reservationId);
         }
+    }
 
+    /**
+     * Khóa bàn cho reservation (tái sử dụng được)
+     */
+    public void lockTableForReservation(DiningTable table, Long reservationId) {
+        DiningTable.TableStatus oldStatus = table.getTableStatus();
+        table.setTableStatus(DiningTable.TableStatus.RESERVED);
+        tableRepository.save(table);
 
+        webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
+        webSocketService.broadcastTableStatusToCashier(
+                TableStatusMessage.MessageType.TABLE_RESERVED,
+                table.getId(),
+                oldStatus,
+                table.getTableStatus(),
+                "SYSTEM",
+                String.format("Tự động khóa bàn %d cho Reservation #%d", table.getId(), reservationId)
+        );
+
+        log.info("🔒 Đã khóa bàn {} cho reservation {}", table.getId(), reservationId);
     }
 
     /**
@@ -335,9 +371,22 @@ public class ReservationService {
      */
     private synchronized void processNoShowReservation(Long reservationId) {
         Reservation reservation = reservationRepository.findByIdWithLock(reservationId);
-
-        if (reservation == null) {
-            log.warn("Không tìm thấy reservation {}", reservationId);
+        DiningTable table = reservation.getDiningTable();
+        DiningTable.TableStatus oldStatus = table.getTableStatus();
+        // Nếu bàn đang OCCUPIED hoặc WAITING_PAYMENT, không xử lý mở lại bàn, đánh đấu reservation thành đã hủy
+        if(oldStatus == DiningTable.TableStatus.OCCUPIED || oldStatus == DiningTable.TableStatus.WAITING_PAYMENT){
+            log.info("Bàn {} ở trạng thái OCCUPIED hoặc WAITING_PAYMENT, không xử lý mở lại bàn (Reservation #{})",
+                    table.getId(), reservationId);
+            reservation.setStatus(Reservation.Status.CANCELED);
+            reservationRepository.save(reservation);
+            webSocketService.broadcastTableStatusToCashier(
+                    TableStatusMessage.MessageType.TABLE_OCCUPIED,
+                    table.getId(),
+                    oldStatus,
+                    oldStatus,
+                    "SYSTEM",
+                    "Bàn đang có khách, không thể thực thi tự động mở bàn (Reservation #" + reservationId + ")"
+            );
             return;
         }
 
@@ -354,9 +403,6 @@ public class ReservationService {
 
         log.info("Đã đánh dấu NO_SHOW cho reservation {}", reservationId);
 
-        // Xử lý bàn
-        DiningTable table = reservation.getDiningTable();
-        DiningTable.TableStatus oldStatus = table.getTableStatus();
 
         // Kiểm tra xem trong 90p tới còn reservation CONFIRMED nào khác không
         List<Reservation> otherActiveReservations = reservationRepository.findConflictReservation(table.getId(), LocalDateTime.now(), LocalDateTime.now().plusMinutes(setting.getConflictReservationMinutes()));

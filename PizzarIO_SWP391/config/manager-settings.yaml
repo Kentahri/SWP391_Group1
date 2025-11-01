@@ -1,5 +1,5 @@
 pizzario:
   settings:
     conflict-reservation-minutes: 15
-    auto-lock-reservation-minutes: 5
+    auto-lock-reservation-minutes: 1
     no-show-wait-minutes: 1

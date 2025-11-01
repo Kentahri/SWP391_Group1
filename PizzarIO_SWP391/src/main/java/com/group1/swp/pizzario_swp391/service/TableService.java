@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -45,6 +46,8 @@ public class TableService{
     OrderRepository orderRepository;
     SimpMessagingTemplate simpMessagingTemplate;
     Setting setting;
+    PendingReservationTracker pendingReservationTracker;
+    ReservationService reservationService;
 
     /**
      * Guest selects a table
@@ -373,7 +376,30 @@ public class TableService{
         table.setUpdatedAt(LocalDateTime.now());
         tableRepository.save(table);
 
-        // Gửi broadcast cho tất cả client
+        if (pendingReservationTracker.hasPendingReservation(tableId)) {
+            Long pendingReservationId = pendingReservationTracker.getPendingReservation(tableId);
+
+            log.info("🎯 Bàn {} vừa trống, có reservation {} đang chờ", tableId, pendingReservationId);
+
+            if (isReservationActive(pendingReservationId)) {
+                log.info("🔒 Ngay lập tức khóa bàn {} cho reservation {}", tableId, pendingReservationId);
+
+                reservationService.lockTableForReservation(table, pendingReservationId);
+                pendingReservationTracker.removePendingReservation(tableId, pendingReservationId);
+
+                // Xóa giỏ hàng trong http session (chỉ khi session không null)
+                if (session != null) {
+                    session.invalidate();
+                }
+                return;
+            } else {
+                // Reservation không còn CONFIRMED (đã NO_SHOW/CANCELED) → Cleanup
+                log.warn("⚠️ Reservation {} không còn CONFIRMED, cleanup và để bàn {} AVAILABLE",
+                        pendingReservationId, tableId);
+                pendingReservationTracker.removePendingReservation(tableId, pendingReservationId);
+            }
+        }
+
         webSocketService.broadcastTableStatusToGuests(tableId, DiningTable.TableStatus.AVAILABLE);
         webSocketService.broadcastTableStatusToCashier(
                 com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage.MessageType.TABLE_RELEASED,
@@ -388,6 +414,16 @@ public class TableService{
         if (session != null) {
             session.invalidate();
         }
+    }
+
+    /**
+     * Kiểm tra xem reservation có status = CONFIRMED không
+     * CHỈ những reservation CONFIRMED mới được khóa bàn (bỏ qua NO_SHOW, CANCELED, ARRIVED)
+     */
+    private boolean isReservationActive(Long reservationId) {
+        return reservationRepository.findById(reservationId)
+                .map(r -> r.getStatus() == com.group1.swp.pizzario_swp391.entity.Reservation.Status.CONFIRMED)
+                .orElse(false);
     }
 
     @Transactional

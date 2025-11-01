@@ -783,6 +783,8 @@ body.resizing * {
 @media (max-width: 1200px) {
     .layout {
         flex-direction: column;
+        height: auto;
+        min-height: calc(100vh - 80px);
     }
 
     .left {
@@ -790,10 +792,15 @@ body.resizing * {
         max-width: 100%;
         border-right: none;
         border-bottom: 4px solid #FFCC99;
+        max-height: 50vh;
+        min-height: 300px;
+        overflow-y: auto;
     }
 
     .right {
         width: 100% !important;
+        flex: none;
+        min-height: 50vh;
     }
 
     .resize-handle {
