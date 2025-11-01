@@ -104,19 +104,12 @@ public class CashierDashboardController {
 
         try {
             reservationService.validateReservationBusinessLogicForCreate(dto);
+        } catch (com.group1.swp.pizzario_swp391.exception.ValidationException e) {
+            e.getFieldErrors().forEach((field, message) -> {
+                bindingResult.rejectValue(field, "error." + field, message);
+            });
         } catch (RuntimeException e) {
-            String errorMessage = e.getMessage();
-            if (errorMessage.contains("Vượt quá số người tối đa") || errorMessage.contains("số người")) {
-                bindingResult.rejectValue("capacityExpected", "error.capacityExpected", errorMessage);
-            } else if (errorMessage.contains("Bàn đã được đặt") || errorMessage.contains("thời gian này")) {
-                bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
-            } else if (errorMessage.contains("cách nhau ít nhất")) {
-                bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
-            } else if (errorMessage.contains("Bàn hiện đang có người ngồi")) {
-                bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
-            } else if(errorMessage.contains("Không tìm thấy bàn")) {
-                bindingResult.rejectValue("tableId", "error.reservation", errorMessage);
-            }
+            bindingResult.reject("error.reservation", e.getMessage());
         }
 
         if (bindingResult.hasErrors()) {
@@ -252,7 +245,7 @@ public class CashierDashboardController {
         if (canValidateBusinessLogic) {
             try {
                 reservationService.validateReservationBusinessLogicForUpdate(id, dto);
-                
+
                 // Nếu validation thành công, thực hiện update
                 ReservationDTO updated = reservationService.updateReservation(id, dto);
 
@@ -265,17 +258,12 @@ public class CashierDashboardController {
                     }
                     return "redirect:/cashier/reservations/upcoming";
                 }
+            } catch (com.group1.swp.pizzario_swp391.exception.ValidationException e) {
+                e.getFieldErrors().forEach((field, message) -> {
+                    bindingResult.rejectValue(field, "error." + field, message);
+                });
             } catch (RuntimeException e) {
-                String errorMessage = e.getMessage();
-                if (errorMessage.contains("Vượt quá số người tối đa") || errorMessage.contains("số người")) {
-                    bindingResult.rejectValue("capacityExpected", "error.capacityExpected", errorMessage);
-                } else if (errorMessage.contains("Bàn đã được đặt") || errorMessage.contains("thời gian này")) {
-                    bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
-                } else if (errorMessage.contains("90 phút") || errorMessage.contains("cách nhau")) {
-                    bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
-                } else if (errorMessage.contains("đã đang có người ngồi")) {
-                    bindingResult.reject("error.reservation", errorMessage);
-                }
+                bindingResult.reject("error.reservation", e.getMessage());
             }
         }
 
