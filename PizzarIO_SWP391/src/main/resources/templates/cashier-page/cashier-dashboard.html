@@ -211,18 +211,18 @@
             th:if="${selectedTableId != null && orderDetail == null && upcomingReservations == null && tableReservations == null && (showHistory == null || !showHistory)}"
             class="table-detail"
           >
-            <div class="detail-card">
-              <div class="detail-row">
-                <strong>Bàn số:</strong>
-                <span th:text="${selectedTableId}">—</span>
-              </div>
-
+            <div class="detail-card" style="position: relative;">
+              <!-- Nút actions ở góc phải trên -->
               <div
                 style="
-                  margin-top: 12px;
+                  position: absolute;
+                  top: 12px;
+                  right: 12px;
                   display: flex;
-                  flex-direction: column;
+                  flex-direction: row;
                   gap: 8px;
+                  flex-wrap: wrap;
+                  justify-content: flex-end;
                 "
               >
                 <!-- Nút mở khóa bàn (chỉ hiển thị khi bàn LOCKED) -->
@@ -241,15 +241,14 @@
                     type="submit"
                     class="btn-open-table"
                     style="
-                      width: 100%;
-                      padding: 12px;
+                      padding: 8px 14px;
                       background-color: #ff9800;
                       color: white;
                       border: none;
                       border-radius: 4px;
                       cursor: pointer;
-                      font-weight: bold;
-                      font-size: 15px;
+                      font-weight: 500;
+                      font-size: 13px;
                     "
                   >
                     🔓 Mở khóa bàn
@@ -259,7 +258,7 @@
                 <!-- Các nút khác (chỉ hiển thị khi bàn KHÔNG LOCKED) -->
                 <div
                   th:if="${tableStatus == null || tableStatus.toString() != 'LOCKED'}"
-                  style="display: flex; flex-direction: column; gap: 8px"
+                  style="display: flex; flex-direction: row; gap: 8px; flex-wrap: wrap;"
                 >
                   <button
                     class="btn-reserve"
@@ -289,21 +288,45 @@
                       type="submit"
                       class="btn-lock-table"
                       style="
-                        width: 100%;
-                        padding: 10px;
+                        padding: 8px 14px;
                         background-color: #795548;
                         color: white;
                         border: none;
                         border-radius: 4px;
                         cursor: pointer;
                         font-weight: 500;
-                        font-size: 14px;
+                        font-size: 13px;
                       "
                     >
                       🔒 Khóa bàn
                     </button>
                   </form>
                 </div>
+              </div>
+
+              <!-- Thông tin bàn -->
+              <div class="detail-row">
+                <strong>Bàn số:</strong>
+                <span th:text="${selectedTableId}">—</span>
+              </div>
+              <div class="detail-row">
+                <strong>Sức chứa:</strong>
+                <span><span th:text="${tableCapacity}">—</span> người</span>
+              </div>
+              <div class="detail-row">
+                <strong>Trạng thái:</strong>
+                <span
+                  th:text="${tableStatus.toString() == 'AVAILABLE' ? 'Bàn đang trống' :
+                            (tableStatus.toString() == 'OCCUPIED' ? 'Bàn có khách' :
+                            (tableStatus.toString() == 'RESERVED' ? 'Đã đặt trước' :
+                            (tableStatus.toString() == 'WAITING_PAYMENT' ? 'Chờ thanh toán' :
+                            (tableStatus.toString() == 'LOCKED' ? 'Đang khóa' : '—'))))}"
+                  th:style="${tableStatus.toString() == 'AVAILABLE' ? 'color: #28a745; font-weight: 600;' :
+                             (tableStatus.toString() == 'OCCUPIED' ? 'color: #dc3545; font-weight: 600;' :
+                             (tableStatus.toString() == 'RESERVED' ? 'color: #ffc107; font-weight: 600;' :
+                             (tableStatus.toString() == 'WAITING_PAYMENT' ? 'color: #17a2b8; font-weight: 600;' :
+                             (tableStatus.toString() == 'LOCKED' ? 'color: #795548; font-weight: 600;' : ''))))}"
+                >—</span>
               </div>
             </div>
           </div>
@@ -313,14 +336,72 @@
             th:if="${orderDetail != null && (showHistory == null || !showHistory)}"
             class="table-detail"
           >
-            <div class="detail-card">
+            <div class="detail-card" style="position: relative;">
+              <!-- Nút actions ở góc phải trên -->
+              <div
+                style="
+                  position: absolute;
+                  top: 12px;
+                  right: 12px;
+                  display: flex;
+                  flex-direction: row;
+                  gap: 8px;
+                  flex-wrap: wrap;
+                  justify-content: flex-end;
+                "
+              >
+                <!-- Paid Status Badge -->
+                <div
+                  th:if="${orderDetail.paymentStatus.toString() == 'PAID'}"
+                  style="
+                    padding: 6px 12px;
+                    background-color: #d4edda;
+                    color: #155724;
+                    border-radius: 4px;
+                    font-weight: 600;
+                    font-size: 13px;
+                  "
+                >
+                  ✅ Đã thanh toán
+                </div>
+
+                <button
+                  class="btn-reserve"
+                  th:onclick="'openReservationModal(' + ${selectedTableId} + ')'"
+                >
+                  📅 Đặt trước
+                </button>
+                <a
+                  th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}"
+                  class="btn-view-reservations"
+                >
+                  📋 Xem đơn đặt trước
+                </a>
+              </div>
+
+              <!-- Thông tin bàn -->
               <div class="detail-row">
                 <strong>Bàn số:</strong>
                 <span th:text="${selectedTableId}">—</span>
               </div>
               <div class="detail-row">
-                <strong>Số người tối đa:</strong>
-                <span th:text="${tableCapacity}">—</span>
+                <strong>Sức chứa:</strong>
+                <span><span th:text="${tableCapacity}">—</span> người</span>
+              </div>
+              <div class="detail-row">
+                <strong>Trạng thái:</strong>
+                <span
+                  th:text="${tableStatus.toString() == 'AVAILABLE' ? 'Bàn đang trống' :
+                            (tableStatus.toString() == 'OCCUPIED' ? 'Bàn có khách' :
+                            (tableStatus.toString() == 'RESERVED' ? 'Đã đặt trước' :
+                            (tableStatus.toString() == 'WAITING_PAYMENT' ? 'Chờ thanh toán' :
+                            (tableStatus.toString() == 'LOCKED' ? 'Đang khóa' : '—'))))}"
+                  th:style="${tableStatus.toString() == 'AVAILABLE' ? 'color: #28a745; font-weight: 600;' :
+                             (tableStatus.toString() == 'OCCUPIED' ? 'color: #dc3545; font-weight: 600;' :
+                             (tableStatus.toString() == 'RESERVED' ? 'color: #ffc107; font-weight: 600;' :
+                             (tableStatus.toString() == 'WAITING_PAYMENT' ? 'color: #17a2b8; font-weight: 600;' :
+                             (tableStatus.toString() == 'LOCKED' ? 'color: #795548; font-weight: 600;' : ''))))}"
+                >—</span>
               </div>
             </div>
             <div class="order-detail-card">
@@ -456,44 +537,6 @@
               </div>
             </div>
 
-            <div
-              style="
-                margin-top: 12px;
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-              "
-            >
-              <!-- Payment Request Button - Only show if order is unpaid -->
-
-              <!-- Payment Status - Show if already paid -->
-              <div
-                th:if="${orderDetail.paymentStatus.toString() == 'PAID'}"
-                style="
-                  padding: 12px 24px;
-                  background-color: #d4edda;
-                  color: #155724;
-                  border-radius: 4px;
-                  text-align: center;
-                  font-weight: bold;
-                "
-              >
-                ✅ Đã thanh toán
-              </div>
-
-              <button
-                class="btn-reserve"
-                th:onclick="'openReservationModal(' + ${selectedTableId} + ')'"
-              >
-                📅 Đặt trước bàn này
-              </button>
-              <a
-                th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}"
-                class="btn-view-reservations"
-              >
-                📋 Xem đơn đặt trước
-              </a>
-            </div>
           </div>
 
           <!-- Upcoming Reservations View -->
