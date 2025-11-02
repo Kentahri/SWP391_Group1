@@ -237,9 +237,9 @@ public class OrderService{
     /**
      * Lấy order theo ID
      */
-    public Order getOrderById(Long orderId) {
-        return orderRepository.findById(orderId).orElse(null);
-    }
+//    public Order getOrderById(Long orderId) {
+//        return orderRepository.findById(orderId).orElse(null);
+//    }
 
     /**
      * Lưu order
