@@ -32,7 +32,7 @@ public class OrderFlowInterceptor implements HandlerInterceptor{
         if (activeSessionId == null || activeTableId == null) return true;
 
         // Nếu đang cố quay lại /guest khi còn order chưa thanh toán
-        if (path.startsWith("/guest") && !path.contains("/menu")) {
+        if (path.startsWith("/guest") && !path.contains("/menu") && !path.contains("/payment")) {
             Order order = orderService.getOrderForSession(activeSessionId);
             // nếu chưa có order thì cho phép quay về chọn bàn
             if (order == null) {
