@@ -159,11 +159,13 @@ body {
 .om-filter-bar {
     display: flex;
     align-items: center;
-    background: #f2f3f5;
+    background: linear-gradient(135deg, #FFE5CC 0%, #FFDAB3 100%);
     padding: 8px 12px 8px 12px;
     border-radius: 22px;
     margin-bottom: 30px;
     gap: 30px;
+    border: 2px solid #FFCC99;
+    box-shadow: 0 2px 8px rgba(255, 153, 51, 0.2);
 }
 .om-tab {
     background: none;
@@ -173,20 +175,29 @@ body {
     height: 44px;
     border-radius: 20px;
     font-size: 18px;
-    color: #222;
+    color: #4A3528;
     display: flex;
     align-items: center;
     gap: 8px;
-    font-weight: 500;
-    transition: background 0.2s, color 0.2s;
+    font-weight: 600;
+    transition: all 0.3s ease;
     cursor: pointer;
+    text-decoration: none;
 }
+
+.om-tab:hover {
+    background: rgba(255, 255, 255, 0.5);
+    color: #2c2418;
+    transform: translateY(-1px);
+}
+
 .om-tab.active {
     background: #fff;
-    color: #111;
-    box-shadow: 0 0 0 4px rgba(255, 204, 153, 0.3);
-    font-weight: 600;
-    border: 2px solid #FFCC99;
+    color: #4A3528;
+    box-shadow: 0 0 0 4px rgba(255, 153, 51, 0.3), 0 2px 6px rgba(255, 153, 51, 0.2);
+    font-weight: 700;
+    border: 2px solid #FF9933;
+    transform: translateY(-1px);
 }
 .om-icon {
     font-size: 20px;
