@@ -1,24 +1,22 @@
 package com.group1.swp.pizzario_swp391.service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import com.group1.swp.pizzario_swp391.dto.websocket.ProductStatusMessage;
-import lombok.AccessLevel;
-import org.springframework.stereotype.Service;
-
 import com.group1.swp.pizzario_swp391.dto.product.ProductCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.product.ProductResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.product.ProductUpdateDTO;
+import com.group1.swp.pizzario_swp391.dto.websocket.ProductStatusMessage;
 import com.group1.swp.pizzario_swp391.entity.Category;
 import com.group1.swp.pizzario_swp391.entity.Product;
 import com.group1.swp.pizzario_swp391.mapper.ProductResponseMapper;
 import com.group1.swp.pizzario_swp391.repository.CategoryRepository;
 import com.group1.swp.pizzario_swp391.repository.ProductRepository;
-
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -53,10 +51,10 @@ public class ProductService {
                 .name(product.getName())
                 .description(product.getDescription())
                 .imageURL(product.getImageURL())
-                .basePrice(product.getBasePrice())
-                .flashSalePrice(product.getFlashSalePrice())
-                .flashSaleStart(product.getFlashSaleStart())
-                .flashSaleEnd(product.getFlashSaleEnd())
+//                .basePrice(product.getBasePrice())
+//                .flashSalePrice(product.getFlashSalePrice())
+//                .flashSaleStart(product.getFlashSaleStart())
+//                .flashSaleEnd(product.getFlashSaleEnd())
                 .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
                 .active(product.isActive())
                 .build();
