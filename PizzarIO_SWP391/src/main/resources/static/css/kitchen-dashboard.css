@@ -2,7 +2,7 @@
 
 /* Header Styles - Redesigned */
 .kitchen-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #FFCC99 0%, #FFB366 100%);
     color: white;
     padding: 0;
     height: 80px;
@@ -282,7 +282,7 @@
 }
 
 .title-left h1 i {
-    color: #ff6b35;
+    color: #FFCC99;
 }
 
 .title-left p {
@@ -317,11 +317,14 @@
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
+    text-decoration: none;
 }
 
 .refresh-btn:hover {
-    background: #f8f9fa;
-    border-color: #adb5bd;
+    background: #FFCC99;
+    border-color: #FFB366;
+    color: #fff;
+    transform: translateY(-1px);
 }
 
 .refresh-btn i {
@@ -439,8 +442,8 @@
 
 .category-item.active {
     background: #f8f9fa;
-    border-color: #6f42c1;
-    box-shadow: 0 0 0 2px rgba(111, 66, 193, 0.1);
+    border-color: #FFCC99;
+    box-shadow: 0 0 0 2px rgba(255, 204, 153, 0.3);
 }
 
 .category-icon {
@@ -456,7 +459,7 @@
 }
 
 .category-item.active .category-icon {
-    background: #6f42c1;
+    background: #FFCC99;
     color: white;
 }
 
@@ -477,7 +480,7 @@
 }
 
 .category-item.active .category-count {
-    background: #6f42c1;
+    background: #FFCC99;
     color: white;
 }
 
@@ -509,7 +512,7 @@
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    background: #6f42c1;
+    background: #FFCC99;
     color: white;
     display: flex;
     align-items: center;
@@ -663,12 +666,12 @@
 }
 
 .action-btn.start {
-    background: #ff6b35;
+    background: #FFCC99;
     color: white;
 }
 
 .action-btn.start:hover {
-    background: #e55a2b;
+    background: #FFB366;
 }
 
 .action-btn.undo {
