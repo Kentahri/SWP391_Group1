@@ -63,4 +63,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
         List<Order> findByOrderStatusAndOrderType(com.group1.swp.pizzario_swp391.entity.Order.OrderStatus status,
                         com.group1.swp.pizzario_swp391.entity.Order.OrderType type);
+
+        @Query("SELECT o FROM Order o WHERE o.session.id = :sessionId")
+        Order findBySessionId(@Param("sessionId") Long sessionId);
 }
