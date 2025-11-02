@@ -1,9 +1,7 @@
 package com.group1.swp.pizzario_swp391.entity;
 
 import jakarta.persistence.*;
-import jakarta.persistence.Table;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
@@ -41,7 +39,10 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(columnDefinition = "NVARCHAR(255)")
     private String name;
+
+    @Column(columnDefinition = "NVARCHAR(500)")
     private String description;
 
     @Column(name = "img_url")
