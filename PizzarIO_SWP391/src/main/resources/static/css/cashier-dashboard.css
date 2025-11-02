@@ -279,6 +279,10 @@ body.resizing * {
     background: #6c757d;
 }
 
+.legend-dot.locked {
+    background: #795548;
+}
+
 /* ==================== Table Grid ==================== */
 .table-grid {
     display: grid;
@@ -389,6 +393,16 @@ body.resizing * {
 
 .table-card.reserved .table-status-text {
     color: #4A4A66;
+}
+
+.table-card.locked {
+    background: #E8DCD4;
+    border-color: #795548;
+    box-shadow: 0 4px 12px rgba(121, 85, 72, 0.3);
+}
+
+.table-card.locked .table-status-text {
+    color: #5D4037;
 }
 
 /* ==================== Right Panel Styles ==================== */
@@ -769,6 +783,8 @@ body.resizing * {
 @media (max-width: 1200px) {
     .layout {
         flex-direction: column;
+        height: auto;
+        min-height: calc(100vh - 80px);
     }
 
     .left {
@@ -776,10 +792,15 @@ body.resizing * {
         max-width: 100%;
         border-right: none;
         border-bottom: 4px solid #FFCC99;
+        max-height: 50vh;
+        min-height: 300px;
+        overflow-y: auto;
     }
 
     .right {
         width: 100% !important;
+        flex: none;
+        min-height: 50vh;
     }
 
     .resize-handle {
@@ -904,44 +925,44 @@ body.resizing * {
     background: linear-gradient(135deg, #FF9933 0%, #FF8000 100%);
     color: white;
     border: none;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.3s;
-    width: 100%;
-    font-size: 14px;
+    font-size: 13px;
     text-align: center;
-    box-shadow: 0 4px 10px rgba(255, 153, 51, 0.3);
+    box-shadow: 0 2px 6px rgba(255, 153, 51, 0.3);
+    white-space: nowrap;
 }
 
 .btn-reserve:hover {
     background: linear-gradient(135deg, #FF8000 0%, #FF6600 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(255, 153, 51, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(255, 153, 51, 0.4);
 }
 
 .btn-view-reservations {
     background: linear-gradient(135deg, #FFCC99 0%, #FFB366 100%);
     color: #4A3528;
-    border: 2px solid #FF9933;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-weight: 600;
+    border: 1px solid #FF9933;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.3s;
-    width: 100%;
-    font-size: 14px;
+    font-size: 13px;
     text-align: center;
     text-decoration: none;
-    display: block;
-    box-shadow: 0 3px 8px rgba(255, 153, 51, 0.3);
+    display: inline-block;
+    box-shadow: 0 2px 6px rgba(255, 153, 51, 0.2);
+    white-space: nowrap;
 }
 
 .btn-view-reservations:hover {
     background: linear-gradient(135deg, #FFB366 0%, #FF9933 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 12px rgba(255, 153, 51, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(255, 153, 51, 0.3);
     color: #4A3528;
     text-decoration: none;
 }

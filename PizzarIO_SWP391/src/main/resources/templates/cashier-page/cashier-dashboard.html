@@ -26,6 +26,14 @@
         background: #f8d7da;
         color: #721c24;
       }
+      .payment-status.pending {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .order-status.cancelled {
+        background: #f8d7da;
+        color: #721c24;
+      }
     </style>
   </head>
   <body>
@@ -48,7 +56,13 @@
               >📅 Bàn đã đặt trước</a
             >
           </button>
-          <button class="btn btn-primary" type="button">➕ Tạo đơn hàng</button>
+          <a
+            class="btn btn-primary"
+            th:href="@{/cashier/takeaway}"
+            style="text-decoration: none; display: inline-block"
+            target="_blank"
+          >➕ Tạo đơn hàng</a
+          >
           <button class="btn btn-secondary" type="button">
             <a th:href="@{/cashier/history}" style="text-decoration: none"
               >📋 Lịch sử</a
@@ -96,6 +110,10 @@
                 <span class="legend-dot reserved"></span>
                 <span>Bàn đã được đặt trước</span>
               </div>
+              <div class="legend-item">
+                <span class="legend-dot locked"></span>
+                <span>Bàn bị khóa (gộp bàn)</span>
+              </div>
             </div>
           </div>
 
@@ -118,6 +136,7 @@
                   >✅</span
                 >
                 <span th:if="${table.tableStatus == 'RESERVED'}">🕐</span>
+                <span th:if="${table.tableStatus == 'LOCKED'}">🔒</span>
               </div>
               <div class="table-number">Bàn [[${table.id}]]</div>
               <div class="table-info">
@@ -147,6 +166,9 @@
                   <span th:if="${table.tableStatus == 'RESERVED'}"
                     >Reserved</span
                   >
+                  <span th:if="${table.tableStatus == 'LOCKED'}"
+                    >Locked</span
+                  >
                 </div>
 
                 <!-- Hiển thị thông tin bổ sung -->
@@ -161,6 +183,12 @@
                   th:if="${table.tableStatus == 'RESERVED'}"
                 >
                   <span>Reserved</span>
+                </div>
+                <div
+                  class="table-extra-info"
+                  th:if="${table.tableStatus == 'LOCKED'}"
+                >
+                  <span>Merged</span>
                 </div>
               </div>
             </a>
@@ -197,32 +225,122 @@
             th:if="${selectedTableId != null && orderDetail == null && upcomingReservations == null && tableReservations == null && (showHistory == null || !showHistory)}"
             class="table-detail"
           >
-            <div class="detail-card">
+            <div class="detail-card" style="position: relative;">
+              <!-- Nút actions ở góc phải trên -->
+              <div
+                style="
+                  position: absolute;
+                  top: 12px;
+                  right: 12px;
+                  display: flex;
+                  flex-direction: row;
+                  gap: 8px;
+                  flex-wrap: wrap;
+                  justify-content: flex-end;
+                "
+              >
+                <!-- Nút mở khóa bàn (chỉ hiển thị khi bàn LOCKED) -->
+                <form
+                  th:if="${tableStatus != null && tableStatus.toString() == 'LOCKED'}"
+                  th:action="@{/cashier/tables/{tableId}/unlock(tableId=${selectedTableId})}"
+                  method="post"
+                  onsubmit="return confirm('Xác nhận mở khóa bàn này?');"
+                >
+                  <input
+                    type="hidden"
+                    th:name="${_csrf.parameterName}"
+                    th:value="${_csrf.token}"
+                  />
+                  <button
+                    type="submit"
+                    class="btn-open-table"
+                    style="
+                      padding: 8px 14px;
+                      background-color: #ff9800;
+                      color: white;
+                      border: none;
+                      border-radius: 4px;
+                      cursor: pointer;
+                      font-weight: 500;
+                      font-size: 13px;
+                    "
+                  >
+                    🔓 Mở khóa bàn
+                  </button>
+                </form>
+
+                <!-- Các nút khác (chỉ hiển thị khi bàn KHÔNG LOCKED) -->
+                <div
+                  th:if="${tableStatus == null || tableStatus.toString() != 'LOCKED'}"
+                  style="display: flex; flex-direction: row; gap: 8px; flex-wrap: wrap;"
+                >
+                  <button
+                    class="btn-reserve"
+                    th:onclick="'openReservationModal(' + ${selectedTableId} + ')'"
+                  >
+                    📅 Đặt trước bàn này
+                  </button>
+                  <a
+                    th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}"
+                    class="btn-view-reservations"
+                  >
+                    📋 Xem đơn đặt trước
+                  </a>
+
+                  <form
+                    th:if="${tableStatus != null && tableStatus.toString() == 'AVAILABLE'}"
+                    th:action="@{/cashier/tables/{tableId}/lock(tableId=${selectedTableId})}"
+                    method="post"
+                    onsubmit="return confirm('Xác nhận khóa bàn này để gộp bàn?');"
+                  >
+                    <input
+                      type="hidden"
+                      th:name="${_csrf.parameterName}"
+                      th:value="${_csrf.token}"
+                    />
+                    <button
+                      type="submit"
+                      class="btn-lock-table"
+                      style="
+                        padding: 8px 14px;
+                        background-color: #795548;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-weight: 500;
+                        font-size: 13px;
+                      "
+                    >
+                      🔒 Khóa bàn
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Thông tin bàn -->
               <div class="detail-row">
                 <strong>Bàn số:</strong>
                 <span th:text="${selectedTableId}">—</span>
               </div>
-
-              <div
-                style="
-                  margin-top: 12px;
-                  display: flex;
-                  flex-direction: column;
-                  gap: 8px;
-                "
-              >
-                <button
-                  class="btn-reserve"
-                  th:onclick="'openReservationModal(' + ${selectedTableId} + ')'"
-                >
-                  📅 Đặt trước bàn này
-                </button>
-                <a
-                  th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}"
-                  class="btn-view-reservations"
-                >
-                  📋 Xem đơn đặt trước
-                </a>
+              <div class="detail-row">
+                <strong>Sức chứa:</strong>
+                <span><span th:text="${tableCapacity}">—</span> người</span>
+              </div>
+              <div class="detail-row">
+                <strong>Trạng thái:</strong>
+                <span
+                  th:text="${tableStatus.toString() == 'AVAILABLE' ? 'Bàn đang trống' :
+                            (tableStatus.toString() == 'OCCUPIED' ? 'Bàn có khách' :
+                            (tableStatus.toString() == 'RESERVED' ? 'Đã đặt trước' :
+                            (tableStatus.toString() == 'WAITING_PAYMENT' ? 'Chờ thanh toán' :
+                            (tableStatus.toString() == 'LOCKED' ? 'Đang khóa' : '—'))))}"
+                  th:style="${tableStatus.toString() == 'AVAILABLE' ? 'color: #28a745; font-weight: 600;' :
+                             (tableStatus.toString() == 'OCCUPIED' ? 'color: #dc3545; font-weight: 600;' :
+                             (tableStatus.toString() == 'RESERVED' ? 'color: #ffc107; font-weight: 600;' :
+                             (tableStatus.toString() == 'WAITING_PAYMENT' ? 'color: #17a2b8; font-weight: 600;' :
+                             (tableStatus.toString() == 'LOCKED' ? 'color: #795548; font-weight: 600;' : ''))))}"
+                >—</span>
               </div>
             </div>
           </div>
@@ -232,14 +350,72 @@
             th:if="${orderDetail != null && (showHistory == null || !showHistory)}"
             class="table-detail"
           >
-            <div class="detail-card">
+            <div class="detail-card" style="position: relative;">
+              <!-- Nút actions ở góc phải trên -->
+              <div
+                style="
+                  position: absolute;
+                  top: 12px;
+                  right: 12px;
+                  display: flex;
+                  flex-direction: row;
+                  gap: 8px;
+                  flex-wrap: wrap;
+                  justify-content: flex-end;
+                "
+              >
+                <!-- Paid Status Badge -->
+                <div
+                  th:if="${orderDetail.paymentStatus.toString() == 'PAID'}"
+                  style="
+                    padding: 6px 12px;
+                    background-color: #d4edda;
+                    color: #155724;
+                    border-radius: 4px;
+                    font-weight: 600;
+                    font-size: 13px;
+                  "
+                >
+                  ✅ Đã thanh toán
+                </div>
+
+                <button
+                  class="btn-reserve"
+                  th:onclick="'openReservationModal(' + ${selectedTableId} + ')'"
+                >
+                  📅 Đặt trước
+                </button>
+                <a
+                  th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}"
+                  class="btn-view-reservations"
+                >
+                  📋 Xem đơn đặt trước
+                </a>
+              </div>
+
+              <!-- Thông tin bàn -->
               <div class="detail-row">
                 <strong>Bàn số:</strong>
                 <span th:text="${selectedTableId}">—</span>
               </div>
               <div class="detail-row">
-                <strong>Số người tối đa:</strong>
-                <span th:text="${tableCapacity}">—</span>
+                <strong>Sức chứa:</strong>
+                <span><span th:text="${tableCapacity}">—</span> người</span>
+              </div>
+              <div class="detail-row">
+                <strong>Trạng thái:</strong>
+                <span
+                  th:text="${tableStatus.toString() == 'AVAILABLE' ? 'Bàn đang trống' :
+                            (tableStatus.toString() == 'OCCUPIED' ? 'Bàn có khách' :
+                            (tableStatus.toString() == 'RESERVED' ? 'Đã đặt trước' :
+                            (tableStatus.toString() == 'WAITING_PAYMENT' ? 'Chờ thanh toán' :
+                            (tableStatus.toString() == 'LOCKED' ? 'Đang khóa' : '—'))))}"
+                  th:style="${tableStatus.toString() == 'AVAILABLE' ? 'color: #28a745; font-weight: 600;' :
+                             (tableStatus.toString() == 'OCCUPIED' ? 'color: #dc3545; font-weight: 600;' :
+                             (tableStatus.toString() == 'RESERVED' ? 'color: #ffc107; font-weight: 600;' :
+                             (tableStatus.toString() == 'WAITING_PAYMENT' ? 'color: #17a2b8; font-weight: 600;' :
+                             (tableStatus.toString() == 'LOCKED' ? 'color: #795548; font-weight: 600;' : ''))))}"
+                >—</span>
               </div>
             </div>
             <div class="order-detail-card">
@@ -375,44 +551,6 @@
               </div>
             </div>
 
-            <div
-              style="
-                margin-top: 12px;
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-              "
-            >
-              <!-- Payment Request Button - Only show if order is unpaid -->
-
-              <!-- Payment Status - Show if already paid -->
-              <div
-                th:if="${orderDetail.paymentStatus.toString() == 'PAID'}"
-                style="
-                  padding: 12px 24px;
-                  background-color: #d4edda;
-                  color: #155724;
-                  border-radius: 4px;
-                  text-align: center;
-                  font-weight: bold;
-                "
-              >
-                ✅ Đã thanh toán
-              </div>
-
-              <button
-                class="btn-reserve"
-                th:onclick="'openReservationModal(' + ${selectedTableId} + ')'"
-              >
-                📅 Đặt trước bàn này
-              </button>
-              <a
-                th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}"
-                class="btn-view-reservations"
-              >
-                📋 Xem đơn đặt trước
-              </a>
-            </div>
           </div>
 
           <!-- Upcoming Reservations View -->
@@ -695,7 +833,7 @@
                   </div>
                 </div>
                 <span
-                  th:style="${order.orderStatus == 'PREPARING' ? 'background: #fff3cd; color: #856404;' : 'background: #d4edda; color: #155724;'}"
+                  th:style="${order.orderStatus != null && order.orderStatus.toString() == 'PREPARING' ? 'background: #fff3cd; color: #856404;' : (order.orderStatus != null && order.orderStatus.toString() == 'COMPLETED' ? 'background: #d4edda; color: #155724;' : (order.orderStatus != null && order.orderStatus.toString() == 'CANCELLED' ? 'background: #f8d7da; color: #721c24;' : 'background: #d1ecf1; color: #0c5460;'))}"
                   style="
                     padding: 4px 12px;
                     border-radius: 20px;
@@ -705,7 +843,24 @@
                   "
                 >
                   <span
-                    th:text="${order.orderStatus == 'PREPARING' ? 'Đang chuẩn bị' : 'Hoàn thành'}"
+                    th:text="${order.orderStatus != null && order.orderStatus.toString() == 'PREPARING' ? 'Đang chuẩn bị' : (order.orderStatus != null && order.orderStatus.toString() == 'COMPLETED' ? 'Hoàn thành' : (order.orderStatus != null && order.orderStatus.toString() == 'CANCELLED' ? 'Đã hủy' : 'Đang xử lý'))}"
+                    >—</span
+                  >
+                </span>
+                <span
+                  th:if="${order.paymentStatus != null}"
+                  th:style="${order.paymentStatus.toString() == 'PAID' ? 'background: #d4edda; color: #155724;' : (order.paymentStatus.toString() == 'PENDING' ? 'background: #fff3cd; color: #856404;' : 'background: #f8d7da; color: #721c24;')}"
+                  style="
+                    padding: 4px 12px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    margin-left: 8px;
+                  "
+                >
+                  <span
+                    th:text="${order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : (order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý' : 'Chưa thanh toán')}"
                     >—</span
                   >
                 </span>
@@ -743,7 +898,18 @@
                   >
                   <span
                     class="reservation-info-value"
-                    th:text="${order.paymentMethod != null ? (order.paymentMethod.toString() == 'CASH' ? 'Tiền mặt' : (order.paymentMethod.toString() == 'QR_BANKING' ? 'QR Code' : (order.paymentMethod.toString() == 'CREDIT_CARD' ? 'Thẻ tín dụng' : order.paymentMethod.toString()))) : 'N/A'}"
+                    th:text="${order.paymentMethod != null ? (order.paymentMethod.toString() == 'CASH' ? 'Tiền mặt' : (order.paymentMethod.toString() == 'QR_BANKING' ? 'QR Code' : (order.paymentMethod.toString() == 'CREDIT_CARD' ? 'Thẻ tín dụng' : order.paymentMethod.toString()))) : 'Chưa chọn'}"
+                    >—</span
+                  >
+                </div>
+                <div class="reservation-info-row">
+                  <span class="reservation-info-label"
+                    >💰 Trạng thái Thanh Toán:</span
+                  >
+                  <span
+                    class="reservation-info-value"
+                    th:class="${order.paymentStatus != null && order.paymentStatus.toString() == 'PAID' ? 'payment-status paid' : (order.paymentStatus != null && order.paymentStatus.toString() == 'PENDING' ? 'payment-status pending' : 'payment-status unpaid')}"
+                    th:text="${order.paymentStatus != null ? (order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : (order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý' : 'Chưa thanh toán')) : 'Chưa thanh toán'}"
                     >—</span
                   >
                 </div>
@@ -850,8 +1016,8 @@
                 <!-- Order Status -->
                 <div style="text-align: center; margin-bottom: 15px">
                   <span
-                    th:class="'order-status ' + ${order.orderStatus.toString().toLowerCase()}"
-                    th:text="${order.orderStatus == 'PREPARING' ? 'Đang chuẩn bị' : 'Hoàn thành'}"
+                    th:class="'order-status ' + ${order.orderStatus != null ? order.orderStatus.toString().toLowerCase() : ''}"
+                    th:text="${order.orderStatus != null && order.orderStatus.toString() == 'PREPARING' ? 'Đang chuẩn bị' : (order.orderStatus != null && order.orderStatus.toString() == 'COMPLETED' ? 'Hoàn thành' : (order.orderStatus != null && order.orderStatus.toString() == 'CANCELLED' ? 'Đã hủy' : 'Đang xử lý'))}"
                     style="
                       padding: 4px 12px;
                       border-radius: 20px;
@@ -864,7 +1030,7 @@
                   </span>
                   <span
                     th:class="'payment-status ' + ${order.paymentStatus.toString().toLowerCase()}"
-                    th:text="${order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'}"
+                    th:text="${order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : (order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý' : 'Chưa thanh toán')}"
                     style="
                       padding: 4px 12px;
                       border-radius: 20px;
@@ -1111,7 +1277,9 @@
                       "
                     >
                       <strong>Thanh toán bằng QR Banking</strong><br />
-                      <span style="font-size: 12px"
+                      <span
+                        style="font-size: 12px"
+                        th:text="${order.paymentStatus != null && order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán thành công' : (order.paymentStatus != null && order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý thanh toán' : 'Chưa thanh toán')}"
                         >Đã thanh toán thành công</span
                       >
                     </div>
@@ -1127,7 +1295,9 @@
                       "
                     >
                       <strong>Thanh toán bằng tiền mặt</strong><br />
-                      <span style="font-size: 12px"
+                      <span
+                        style="font-size: 12px"
+                        th:text="${order.paymentStatus != null && order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán thành công' : (order.paymentStatus != null && order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý thanh toán' : 'Chưa thanh toán')}"
                         >Đã thanh toán thành công</span
                       >
                     </div>
@@ -1143,7 +1313,9 @@
                       "
                     >
                       <strong>Thanh toán bằng thẻ tín dụng</strong><br />
-                      <span style="font-size: 12px"
+                      <span
+                        style="font-size: 12px"
+                        th:text="${order.paymentStatus != null && order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán thành công' : (order.paymentStatus != null && order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý thanh toán' : 'Chưa thanh toán')}"
                         >Đã thanh toán thành công</span
                       >
                     </div>
@@ -1156,10 +1328,11 @@
                         margin-bottom: 10px;
                       "
                     >
-                      <strong>Phương thức thanh toán không xác định</strong
-                      ><br />
-                      <span style="font-size: 12px"
-                        >Đã thanh toán thành công</span
+                      <strong>Chưa chọn phương thức thanh toán</strong><br />
+                      <span
+                        style="font-size: 12px"
+                        th:text="${order.paymentStatus != null && order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : (order.paymentStatus != null && order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý thanh toán' : 'Chưa thanh toán')}"
+                        >Chưa thanh toán</span
                       >
                     </div>
                   </div>
@@ -1775,29 +1948,29 @@
 
     <!-- Resizable Panel Script -->
     <script>
-      (function() {
-        const resizeHandle = document.getElementById('resize-handle');
-        const leftPanel = document.getElementById('left-panel');
-        const rightPanel = document.getElementById('right-panel');
-        const layout = document.querySelector('.layout');
+      (function () {
+        const resizeHandle = document.getElementById("resize-handle");
+        const leftPanel = document.getElementById("left-panel");
+        const rightPanel = document.getElementById("right-panel");
+        const layout = document.querySelector(".layout");
 
         let isResizing = false;
         let startX = 0;
         let startWidth = 0;
 
         if (resizeHandle && leftPanel && rightPanel) {
-          resizeHandle.addEventListener('mousedown', function(e) {
+          resizeHandle.addEventListener("mousedown", function (e) {
             isResizing = true;
             startX = e.clientX;
             startWidth = leftPanel.offsetWidth;
 
-            document.body.classList.add('resizing');
-            resizeHandle.classList.add('dragging');
+            document.body.classList.add("resizing");
+            resizeHandle.classList.add("dragging");
 
             e.preventDefault();
           });
 
-          document.addEventListener('mousemove', function(e) {
+          document.addEventListener("mousemove", function (e) {
             if (!isResizing) return;
 
             const deltaX = e.clientX - startX;
@@ -1811,28 +1984,29 @@
             // Apply constraints
             if (newWidth >= minWidth && newWidth <= maxWidth) {
               const widthPercent = (newWidth / layoutWidth) * 100;
-              leftPanel.style.width = widthPercent + '%';
+              leftPanel.style.width = widthPercent + "%";
             }
 
             e.preventDefault();
           });
 
-          document.addEventListener('mouseup', function() {
+          document.addEventListener("mouseup", function () {
             if (isResizing) {
               isResizing = false;
-              document.body.classList.remove('resizing');
-              resizeHandle.classList.remove('dragging');
+              document.body.classList.remove("resizing");
+              resizeHandle.classList.remove("dragging");
 
               // Save the panel width to localStorage
-              const widthPercent = (leftPanel.offsetWidth / layout.offsetWidth) * 100;
-              localStorage.setItem('cashier-left-panel-width', widthPercent);
+              const widthPercent =
+                (leftPanel.offsetWidth / layout.offsetWidth) * 100;
+              localStorage.setItem("cashier-left-panel-width", widthPercent);
             }
           });
 
           // Restore saved width on page load
-          const savedWidth = localStorage.getItem('cashier-left-panel-width');
+          const savedWidth = localStorage.getItem("cashier-left-panel-width");
           if (savedWidth) {
-            leftPanel.style.width = savedWidth + '%';
+            leftPanel.style.width = savedWidth + "%";
           }
         }
       })();
@@ -1904,5 +2078,3 @@
     </script>
   </body>
 </html>
-
-

@@ -1,7 +1,9 @@
 package com.group1.swp.pizzario_swp391.service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.context.event.EventListener;
@@ -39,6 +41,7 @@ public class ReservationService {
     ReservationSchedulerService reservationSchedulerService;
     WebSocketService webSocketService;
     Setting setting;
+    PendingReservationTracker pendingReservationTracker;
 
     /**
      * Tạo reservation mới cho bàn
@@ -81,36 +84,55 @@ public class ReservationService {
     }
 
     /**
-     * Throw exception nếu có lỗi business logic cho create
+     * Thu thập tất cả lỗi business logic cho create và throw một lần duy nhất
      */
     public void validateReservationBusinessLogicForCreate(ReservationCreateDTO dto) {
+        Map<String, String> errors = new HashMap<>();
+
         DiningTable table = tableRepository.findById(dto.getTableId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bàn với ID: " + dto.getTableId()));
 
         if (dto.getCapacityExpected() > table.getCapacity()) {
-            throw new RuntimeException("Vượt quá số người tối đa tại bàn, vui lòng chọn bàn phù hợp");
+            errors.put("capacityExpected", "Vượt quá số người tối đa tại bàn, vui lòng chọn bàn phù hợp");
         }
 
         Reservation duplicateReservation = reservationRepository.findDuplicateReservation(dto.getTableId(), dto.getStartTime());
         if (duplicateReservation != null) {
-            throw new RuntimeException("Bàn đã được đặt trong thời gian này");
+            errors.put("startTime", "Bàn đã được đặt trong thời gian này");
         }
 
-        boolean checkConflictReservation = checkConflictReservationForCreate(dto.getTableId(), dto.getStartTime());
-        if (checkConflictReservation) {
-            throw new RuntimeException("Thời gian đặt trước phải cách nhau ít nhất " + setting.getConflictReservationMinutes() + " phút.");
+        if (!errors.containsKey("startTime")) {
+            boolean checkConflictReservation = checkConflictReservationForCreate(dto.getTableId(), dto.getStartTime());
+            if (checkConflictReservation) {
+                errors.put("startTime", "Thời gian đặt trước phải cách nhau ít nhất " + setting.getConflictReservationMinutes() + " phút.");
+            }
         }
 
-        if ((table.getTableStatus().equals(DiningTable.TableStatus.OCCUPIED) || table.getTableStatus().equals(DiningTable.TableStatus.WAITING_PAYMENT))
-                && dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(setting.getConflictReservationMinutes()))) {
-            throw new RuntimeException("Bàn hiện đang có người ngồi, hãy đặt bàn cách thời điểm này ít nhất " + setting.getConflictReservationMinutes() + " phút");
+        // Kiểm tra nếu bàn đang bị khóa (LOCKED)
+        if (table.getTableStatus().equals(DiningTable.TableStatus.LOCKED)) {
+            errors.put("tableId", "Bàn đang bị khóa tạm thời, không thể đặt trước");
+        }
+
+        // Check bàn đang có người ngồi (không kiểm tra nếu đã có lỗi startTime hoặc tableId)
+        if (!errors.containsKey("startTime") && !errors.containsKey("tableId")) {
+            if ((table.getTableStatus().equals(DiningTable.TableStatus.OCCUPIED) || table.getTableStatus().equals(DiningTable.TableStatus.WAITING_PAYMENT))
+                    && dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(setting.getConflictReservationMinutes()))) {
+                errors.put("startTime", "Bàn hiện đang có người ngồi, hãy đặt bàn cách thời điểm này ít nhất " + setting.getConflictReservationMinutes() + " phút");
+            }
+        }
+
+        // Throw nếu có lỗi
+        if (!errors.isEmpty()) {
+            throw new com.group1.swp.pizzario_swp391.exception.ValidationException(errors);
         }
     }
 
     /**
-     * Throw exception nếu có lỗi business logic cho update
+     * Thu thập tất cả lỗi business logic cho update và throw một lần duy nhất
      */
     public void validateReservationBusinessLogicForUpdate(Long reservationId, ReservationUpdateDTO dto) {
+        Map<String, String> errors = new HashMap<>();
+
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy reservation"));
 
@@ -121,7 +143,7 @@ public class ReservationService {
 
         // Validate capacity
         if (dto.getCapacityExpected() > table.getCapacity()) {
-            throw new RuntimeException("Vượt quá số người tối đa tại bàn, vui lòng chọn bàn phù hợp");
+            errors.put("capacityExpected", "Vượt quá số người tối đa tại bàn, vui lòng chọn bàn phù hợp");
         }
 
         // Nếu thay đổi thời gian, kiểm tra conflict
@@ -129,19 +151,35 @@ public class ReservationService {
             // Check duplicate
             Reservation duplicateReservation = reservationRepository.findDuplicateReservation(table.getId(), dto.getStartTime());
             if (duplicateReservation != null && !duplicateReservation.getId().equals(reservationId)) {
-                throw new RuntimeException("Bàn đã được đặt trong thời gian này");
+                errors.put("startTime", "Bàn đã được đặt trong thời gian này");
             }
 
-            boolean conflictReservations = checkConflictReservationForUpdate(reservationId, table.getId(), dto.getStartTime());
-            if (conflictReservations) {
-                throw new RuntimeException("Thời gian đặt trước phải cách nhau ít nhất " + setting.getConflictReservationMinutes() + " phút.");
+            // Check conflict reservation (không kiểm tra nếu đã có lỗi duplicate)
+            if (!errors.containsKey("startTime")) {
+                boolean conflictReservations = checkConflictReservationForUpdate(reservationId, table.getId(), dto.getStartTime());
+                if (conflictReservations) {
+                    errors.put("startTime", "Thời gian đặt trước phải cách nhau ít nhất " + setting.getConflictReservationMinutes() + " phút.");
+                }
             }
 
-            if ((table.getTableStatus().equals(DiningTable.TableStatus.OCCUPIED) ||
-                    table.getTableStatus().equals(DiningTable.TableStatus.WAITING_PAYMENT))
-                    && dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(setting.getConflictReservationMinutes()))) {
-                throw new RuntimeException("Bàn hiện đang có người ngồi, hãy đặt bàn cách thời điểm này ít nhất " + setting.getConflictReservationMinutes() + " phút");
+            // Kiểm tra nếu bàn đang bị khóa (LOCKED)
+            if (table.getTableStatus().equals(DiningTable.TableStatus.LOCKED)) {
+                errors.put("tableId", "Bàn đang bị khóa tạm thời, không thể cập nhật đặt trước");
             }
+
+            // Check bàn đang có người ngồi (không kiểm tra nếu đã có lỗi startTime hoặc tableId)
+            if (!errors.containsKey("startTime") && !errors.containsKey("tableId")) {
+                if ((table.getTableStatus().equals(DiningTable.TableStatus.OCCUPIED) ||
+                        table.getTableStatus().equals(DiningTable.TableStatus.WAITING_PAYMENT))
+                        && dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(setting.getConflictReservationMinutes()))) {
+                    errors.put("startTime", "Bàn hiện đang có người ngồi, hãy đặt bàn cách thời điểm này ít nhất " + setting.getConflictReservationMinutes() + " phút");
+                }
+            }
+        }
+
+        // Throw nếu có lỗi
+        if (!errors.isEmpty()) {
+            throw new com.group1.swp.pizzario_swp391.exception.ValidationException(errors);
         }
     }
 
@@ -244,6 +282,10 @@ public class ReservationService {
 
         reservationSchedulerService.cancelAutoLockTable(reservationId);
         reservationSchedulerService.cancelNoShowCheck(reservationId);
+
+        // Cleanup: Remove khỏi pending list nếu đang chờ
+        pendingReservationTracker.removePendingReservation(table.getId(), reservationId);
+
         reservationRepository.save(reservation);
         tableRepository.save(table);
     }
@@ -263,11 +305,20 @@ public class ReservationService {
         if (oldStatus.equals(DiningTable.TableStatus.OCCUPIED) || oldStatus.equals(DiningTable.TableStatus.WAITING_PAYMENT)) {
             throw new RuntimeException("Bàn đang có khách, không thể mở!");
         }
+
+        // Bàn LOCKED cũng không thể mở cho khách đã đặt trước (vì đang bị khóa để merge)
+        if (oldStatus.equals(DiningTable.TableStatus.LOCKED)) {
+            throw new RuntimeException("Bàn đang bị khóa tạm thời, không thể mở!");
+        }
+
         table.setTableStatus(DiningTable.TableStatus.AVAILABLE);
 
         tableRepository.save(table);
         reservationRepository.save(reservation);
         reservationSchedulerService.cancelNoShowCheck(reservationId);
+
+        // Cleanup: Remove khỏi pending list nếu đang chờ
+        pendingReservationTracker.removePendingReservation(table.getId(), reservationId);
 
         // Broadcast WebSocket
         webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
@@ -295,29 +346,73 @@ public class ReservationService {
      */
     private synchronized void closeTable(Long reservationId) {
         log.info("🔄 Scheduled: closeTable() is running...");
-        DiningTable table = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy reservation"))
-                .getDiningTable();
-        if (table.getTableStatus() == DiningTable.TableStatus.AVAILABLE) {
-            DiningTable.TableStatus oldStatus = table.getTableStatus();
-            table.setTableStatus(DiningTable.TableStatus.RESERVED);
-            tableRepository.save(table);
 
-            webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy reservation"));
+
+        DiningTable table = reservation.getDiningTable();
+
+        if (table.getTableStatus() == DiningTable.TableStatus.AVAILABLE) {
+            lockTableForReservation(table, reservationId);
+            log.info("✅ Đã tự động khóa bàn {} trước {} phút khi đến giờ đặt (Reservation #{})",
+                    table.getId(), setting.getAutoLockReservationMinutes(), reservationId);
+        } else if (table.getTableStatus() == DiningTable.TableStatus.OCCUPIED
+                || table.getTableStatus() == DiningTable.TableStatus.WAITING_PAYMENT) {
+            pendingReservationTracker.addPendingReservation(table.getId(), reservationId);
+
+            log.warn("⏳ Bàn {} đang {} - Thêm reservation {} vào hàng chờ",
+                    table.getId(), table.getTableStatus(), reservationId);
+
             webSocketService.broadcastTableStatusToCashier(
                     TableStatusMessage.MessageType.TABLE_RESERVED,
                     table.getId(),
-                    oldStatus,
+                    table.getTableStatus(),
                     table.getTableStatus(),
                     "SYSTEM",
-                    "Tự động khóa bàn trước " + setting.getNoShowWaitMinutes() + " phút khi đến giờ đặt (Reservation #" + reservationId + ")"
+                    String.format("⚠️ Bàn %d có reservation #%d đang chờ (Khách đặt: %s - %s). Vui lòng xử lý sớm!",
+                            table.getId(), reservationId, reservation.getName(), reservation.getPhone())
             );
-            log.info("Đã tự động khóa bàn {} trước " + setting.getAutoLockReservationMinutes() + " khi đến giờ đặt (Reservation #{})", table.getId(), reservationId);
+        } else if (table.getTableStatus() == DiningTable.TableStatus.LOCKED) {
+            // Bàn LOCKED cũng vào hàng chờ, vì đang bị khóa tạm thời để merge
+            pendingReservationTracker.addPendingReservation(table.getId(), reservationId);
+
+            log.warn("⏳ Bàn {} đang LOCKED - Thêm reservation {} vào hàng chờ",
+                    table.getId(), reservationId);
+
+            webSocketService.broadcastTableStatusToCashier(
+                    TableStatusMessage.MessageType.TABLE_RESERVED,
+                    table.getId(),
+                    table.getTableStatus(),
+                    table.getTableStatus(),
+                    "SYSTEM",
+                    String.format("⚠️ Bàn %d đang bị khóa, reservation #%d đang chờ (Khách đặt: %s - %s).",
+                            table.getId(), reservationId, reservation.getName(), reservation.getPhone())
+            );
         } else {
-            log.info("Bàn {} không ở trạng thái AVAILABLE, không thực hiện khóa tự động (Reservation #{})", table.getId(), reservationId);
+            log.info("Bàn {} ở trạng thái {}, không thực hiện khóa tự động (Reservation #{})",
+                    table.getId(), table.getTableStatus(), reservationId);
         }
+    }
 
+    /**
+     * Khóa bàn cho reservation (tái sử dụng được)
+     */
+    public void lockTableForReservation(DiningTable table, Long reservationId) {
+        DiningTable.TableStatus oldStatus = table.getTableStatus();
+        table.setTableStatus(DiningTable.TableStatus.RESERVED);
+        tableRepository.save(table);
 
+        webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
+        webSocketService.broadcastTableStatusToCashier(
+                TableStatusMessage.MessageType.TABLE_RESERVED,
+                table.getId(),
+                oldStatus,
+                table.getTableStatus(),
+                "SYSTEM",
+                String.format("Tự động khóa bàn %d cho Reservation #%d", table.getId(), reservationId)
+        );
+
+        log.info("🔒 Đã khóa bàn {} cho reservation {}", table.getId(), reservationId);
     }
 
     /**
@@ -335,9 +430,22 @@ public class ReservationService {
      */
     private synchronized void processNoShowReservation(Long reservationId) {
         Reservation reservation = reservationRepository.findByIdWithLock(reservationId);
-
-        if (reservation == null) {
-            log.warn("Không tìm thấy reservation {}", reservationId);
+        DiningTable table = reservation.getDiningTable();
+        DiningTable.TableStatus oldStatus = table.getTableStatus();
+        // Nếu bàn đang OCCUPIED hoặc WAITING_PAYMENT, không xử lý mở lại bàn, đánh đấu reservation thành đã hủy
+        if(oldStatus == DiningTable.TableStatus.OCCUPIED || oldStatus == DiningTable.TableStatus.WAITING_PAYMENT){
+            log.info("Bàn {} ở trạng thái OCCUPIED hoặc WAITING_PAYMENT, không xử lý mở lại bàn (Reservation #{})",
+                    table.getId(), reservationId);
+            reservation.setStatus(Reservation.Status.CANCELED);
+            reservationRepository.save(reservation);
+            webSocketService.broadcastTableStatusToCashier(
+                    TableStatusMessage.MessageType.TABLE_OCCUPIED,
+                    table.getId(),
+                    oldStatus,
+                    oldStatus,
+                    "SYSTEM",
+                    "Bàn đang có khách, không thể thực thi tự động mở bàn (Reservation #" + reservationId + ")"
+            );
             return;
         }
 
@@ -354,9 +462,6 @@ public class ReservationService {
 
         log.info("Đã đánh dấu NO_SHOW cho reservation {}", reservationId);
 
-        // Xử lý bàn
-        DiningTable table = reservation.getDiningTable();
-        DiningTable.TableStatus oldStatus = table.getTableStatus();
 
         // Kiểm tra xem trong 90p tới còn reservation CONFIRMED nào khác không
         List<Reservation> otherActiveReservations = reservationRepository.findConflictReservation(table.getId(), LocalDateTime.now(), LocalDateTime.now().plusMinutes(setting.getConflictReservationMinutes()));

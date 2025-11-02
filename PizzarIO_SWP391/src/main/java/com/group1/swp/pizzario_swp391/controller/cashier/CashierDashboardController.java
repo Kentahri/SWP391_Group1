@@ -80,7 +80,10 @@ public class CashierDashboardController {
             model.addAttribute("selectedTableId", tableId);
             model.addAttribute("orderDetail", orderDetail);
             model.addAttribute("reservationCreateDTO", new ReservationCreateDTO());
-            model.addAttribute("tableCapacity", tableService.getTableById(tableId).getCapacity());
+
+            var tableInfo = tableService.getTableById(tableId);
+            model.addAttribute("tableCapacity", tableInfo.getCapacity());
+            model.addAttribute("tableStatus", tableInfo.getTableStatus());
             return "cashier-page/cashier-dashboard";
         } catch (Exception e) {
             model.addAttribute("error", "Không thể tải thông tin bàn. Vui lòng thử lại.");
@@ -101,19 +104,12 @@ public class CashierDashboardController {
 
         try {
             reservationService.validateReservationBusinessLogicForCreate(dto);
+        } catch (com.group1.swp.pizzario_swp391.exception.ValidationException e) {
+            e.getFieldErrors().forEach((field, message) -> {
+                bindingResult.rejectValue(field, "error." + field, message);
+            });
         } catch (RuntimeException e) {
-            String errorMessage = e.getMessage();
-            if (errorMessage.contains("Vượt quá số người tối đa") || errorMessage.contains("số người")) {
-                bindingResult.rejectValue("capacityExpected", "error.capacityExpected", errorMessage);
-            } else if (errorMessage.contains("Bàn đã được đặt") || errorMessage.contains("thời gian này")) {
-                bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
-            } else if (errorMessage.contains("cách nhau ít nhất")) {
-                bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
-            } else if (errorMessage.contains("Bàn hiện đang có người ngồi")) {
-                bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
-            } else if(errorMessage.contains("Không tìm thấy bàn")) {
-                bindingResult.rejectValue("tableId", "error.reservation", errorMessage);
-            }
+            bindingResult.reject("error.reservation", e.getMessage());
         }
 
         if (bindingResult.hasErrors()) {
@@ -249,7 +245,7 @@ public class CashierDashboardController {
         if (canValidateBusinessLogic) {
             try {
                 reservationService.validateReservationBusinessLogicForUpdate(id, dto);
-                
+
                 // Nếu validation thành công, thực hiện update
                 ReservationDTO updated = reservationService.updateReservation(id, dto);
 
@@ -262,17 +258,12 @@ public class CashierDashboardController {
                     }
                     return "redirect:/cashier/reservations/upcoming";
                 }
+            } catch (com.group1.swp.pizzario_swp391.exception.ValidationException e) {
+                e.getFieldErrors().forEach((field, message) -> {
+                    bindingResult.rejectValue(field, "error." + field, message);
+                });
             } catch (RuntimeException e) {
-                String errorMessage = e.getMessage();
-                if (errorMessage.contains("Vượt quá số người tối đa") || errorMessage.contains("số người")) {
-                    bindingResult.rejectValue("capacityExpected", "error.capacityExpected", errorMessage);
-                } else if (errorMessage.contains("Bàn đã được đặt") || errorMessage.contains("thời gian này")) {
-                    bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
-                } else if (errorMessage.contains("90 phút") || errorMessage.contains("cách nhau")) {
-                    bindingResult.rejectValue("startTime", "error.startTime", errorMessage);
-                } else if (errorMessage.contains("đã đang có người ngồi")) {
-                    bindingResult.reject("error.reservation", errorMessage);
-                }
+                bindingResult.reject("error.reservation", e.getMessage());
             }
         }
 
@@ -407,6 +398,48 @@ public class CashierDashboardController {
         } catch (Exception e) {
             model.addAttribute("error", "Không thể tải chi tiết đơn hàng. Vui lòng thử lại.");
             return "error-page";
+        }
+    }
+
+    /**
+     * Khóa bàn để gộp bàn
+     * Chuyển trạng thái từ AVAILABLE → LOCKED
+     */
+    @PostMapping("/tables/{tableId}/lock")
+    public String lockTableForMerge(
+            @PathVariable Integer tableId,
+            RedirectAttributes redirectAttributes) {
+        try {
+            tableService.lockTableForMerge(tableId);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã khóa bàn " + tableId + " thành công!");
+            return "redirect:/cashier/tables/" + tableId + "/order";
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/cashier/tables/" + tableId + "/order";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Đã xảy ra lỗi. Vui lòng thử lại.");
+            return "redirect:/cashier/tables/" + tableId + "/order";
+        }
+    }
+
+    /**
+     * Mở khóa bàn đã bị khóa (từ gộp bàn)
+     * Chuyển trạng thái từ LOCKED → AVAILABLE
+     */
+    @PostMapping("/tables/{tableId}/unlock")
+    public String unlockTableFromMerge(
+            @PathVariable Integer tableId,
+            RedirectAttributes redirectAttributes) {
+        try {
+            tableService.unlockTableFromMerge(tableId);
+            redirectAttributes.addFlashAttribute("successMessage", "Đã mở khóa bàn " + tableId + " thành công!");
+            return "redirect:/cashier/tables/" + tableId + "/order";
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/cashier/tables/" + tableId + "/order";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Đã xảy ra lỗi. Vui lòng thử lại.");
+            return "redirect:/cashier/tables/" + tableId + "/order";
         }
     }
 }

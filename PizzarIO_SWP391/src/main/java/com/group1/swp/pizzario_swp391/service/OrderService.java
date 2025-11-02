@@ -18,6 +18,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +27,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 
-public class    OrderService{
+public class OrderService{
 
     ProductRepository productRepository;
     OrderItemRepository orderItemRepository;
@@ -35,6 +36,11 @@ public class    OrderService{
     CartService cartService;
     OrderItemMapper orderItemMapper;
     WebSocketService webSocketService;
+    SessionService sessionService;
+
+    public Order getOrderById(Long orderId) {
+        return orderRepository.findById(orderId).orElseThrow();
+    }
 
     public List<OrderItemDTO> getOrderedItemsForView(Long sessionId) {
         List<OrderItemDTO> orderedItems = new ArrayList<>();
@@ -55,22 +61,67 @@ public class    OrderService{
 
         Order order = getOrderForSession(sessionId);
         if (order == null) {
-            throw new IllegalStateException("Order not found for this session.");
+            order = new Order();
+//          Tạo mới 1 order và lưu vào DB
+            order.setSession(sessionService.getSessionById(sessionId));
+            order.setCreatedAt(LocalDateTime.now());
+            order.setOrderStatus(Order.OrderStatus.PREPARING);
+            order.setOrderType(Order.OrderType.DINE_IN);
+            order.setPaymentStatus(Order.PaymentStatus.UNPAID);
+            order.setNote("");
+            order.setTotalPrice(0.0);
+            order.setTaxRate(0.1); // 10% tax
+            orderRepository.save(order);
         }
+        Order finalOrder = order;
         cart.values().forEach(item -> {
             OrderItem orderItem = orderItemMapper.toOrderItem(item);
             orderItem.setProduct(productRepository.findById(item.getProductId()).orElse(null));
             orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
             orderItem.setOrderItemType(OrderItem.OrderItemType.DINE_IN);
-            order.setTotalPrice(order.getTotalPrice() + item.getTotalPrice());
+            finalOrder.setTotalPrice(finalOrder.getTotalPrice() + item.getTotalPrice());
             orderItemRepository.save(orderItem);
-            order.addOrderItem(orderItem);
+            finalOrder.addOrderItem(orderItem);
         });
         orderRepository.save(order);
         cartService.clearCart(session);
-        
+
         // Gửi thông báo order mới đến kitchen
         notifyKitchenNewOrder(order);
+    }
+
+    @Transactional
+    public com.group1.swp.pizzario_swp391.entity.Order placeTakeAwayOrder(HttpSession session, com.group1.swp.pizzario_swp391.entity.Staff staff) {
+        Map<Long, CartItemDTO> cart = cartService.getCart(session);
+        if (cart.isEmpty()) {
+            return null;
+        }
+
+        com.group1.swp.pizzario_swp391.entity.Order order = new com.group1.swp.pizzario_swp391.entity.Order();
+        order.setOrderType(com.group1.swp.pizzario_swp391.entity.Order.OrderType.TAKE_AWAY);
+        order.setOrderStatus(com.group1.swp.pizzario_swp391.entity.Order.OrderStatus.PREPARING);
+        order.setPaymentStatus(com.group1.swp.pizzario_swp391.entity.Order.PaymentStatus.UNPAID);
+        order.setTaxRate(0.1);
+        order.setStaff(staff);
+        order.setTotalPrice(0);
+        order.setCreatedAt(LocalDateTime.now());
+        order.setUpdatedAt(LocalDateTime.now());
+        order = orderRepository.save(order);
+
+        for (CartItemDTO item : cart.values()) {
+            OrderItem orderItem = orderItemMapper.toOrderItem(item);
+            orderItem.setProduct(productRepository.findById(item.getProductId()).orElse(null));
+            orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
+            orderItem.setOrderItemType(OrderItem.OrderItemType.TAKE_AWAY);
+            orderItemRepository.save(orderItem);
+            order.addOrderItem(orderItem);
+            order.setTotalPrice(order.getTotalPrice() + item.getTotalPrice());
+        }
+        orderRepository.save(order);
+        cartService.clearCart(session);
+
+        notifyKitchenNewOrder(order);
+        return order;
     }
     
     /**
@@ -81,17 +132,17 @@ public class    OrderService{
             KitchenOrderMessage orderMessage = KitchenOrderMessage.builder()
                     .orderId(order.getId())
                     .code(String.format("ORD-%05d", order.getId())) // Tạo code với padding 0
-                    .tableName(order.getSession() != null && order.getSession().getTable() != null ? 
+                    .tableName(order.getSession() != null && order.getSession().getTable() != null ?
                             "Bàn " + order.getSession().getTable().getId() : "Take away")
                     .orderType(order.getOrderType() != null ? order.getOrderType().toString() : "DINE_IN")
                     .status(order.getOrderStatus() != null ? order.getOrderStatus().toString() : "PREPARING")
                     .priority("NORMAL") // Có thể thêm logic để xác định priority
                     .totalPrice(order.getTotalPrice())
                     .note(order.getNote())
-                    .message("Có order mới từ " + (order.getSession() != null && order.getSession().getTable() != null ? 
+                    .message("Có order mới từ " + (order.getSession() != null && order.getSession().getTable() != null ?
                             "Bàn " + order.getSession().getTable().getId() : "Take away"))
                     .build();
-            
+
             webSocketService.broadcastNewOrderToKitchen(orderMessage);
         } catch (Exception e) {
             // Log error nhưng không làm fail transaction
@@ -99,51 +150,11 @@ public class    OrderService{
         }
     }
 
-    private Order getOrderForSession(Long sessionId) {
+    public Order getOrderForSession(Long sessionId) {
         if (sessionId == null) return null;
         return sessionRepository.findById(sessionId)
                 .map(com.group1.swp.pizzario_swp391.entity.Session::getOrder)
                 .orElse(null);
-    }
-
-    /**
-     * Lấy danh sách orders cho kitchen dashboard
-     * Có thể filter theo trạng thái (PREPARING, SERVED, COMPLETED...)
-     */
-    public List<KitchenOrderDTO> getKitchenOrdersByStatus(String status) {
-        List<Order> orders = orderRepository.findAll().stream()
-            .filter(order -> status == null || order.getOrderStatus().name().equalsIgnoreCase(status))
-            .sorted((o1, o2) -> {
-                if (o1.getCreatedAt() == null && o2.getCreatedAt() == null) return 0;
-                if (o1.getCreatedAt() == null) return 1;
-                if (o2.getCreatedAt() == null) return -1;
-                return o2.getCreatedAt().compareTo(o1.getCreatedAt());
-            })
-            .toList();
-        return orders.stream()
-            .map(KitchenOrderDTO::fromOrder)
-            .toList();
-    }
-
-    /**
-     * Lấy danh sách orders cho kitchen dashboard
-     * Bao gồm các orders đang trong trạng thái PREPARING
-     */
-    public List<KitchenOrderDTO> getKitchenOrders() {
-        List<Order> orders = orderRepository.findAll().stream()
-                .filter(order -> order.getOrderStatus() == Order.OrderStatus.PREPARING)
-                .sorted((o1, o2) -> {
-                    // Sắp xếp theo thời gian tạo, order mới nhất trước
-                    if (o1.getCreatedAt() == null && o2.getCreatedAt() == null) return 0;
-                    if (o1.getCreatedAt() == null) return 1;
-                    if (o2.getCreatedAt() == null) return -1;
-                    return o2.getCreatedAt().compareTo(o1.getCreatedAt());
-                })
-                .toList();
-        
-        return orders.stream()
-                .map(KitchenOrderDTO::fromOrder)
-                .toList();
     }
 
     /**
@@ -184,39 +195,53 @@ public class    OrderService{
     }
 
     /**
-     * Lấy danh sách lịch sử hóa đơn (các order đã thanh toán)
+     * Lấy order theo ID
+     */
+//    public Order getOrderById(Long orderId) {
+//        return orderRepository.findById(orderId).orElse(null);
+//    }
+
+    /**
+     * Lưu order
+     */
+    @Transactional
+    public Order saveOrder(Order order) {
+        return orderRepository.save(order);
+    }
+
+    /**
+     * Lấy danh sách lịch sử hóa đơn (bao gồm cả đơn đã thanh toán và chưa hoàn thành)
      */
     public List<com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO> getPaymentHistory() {
         List<Order> orders = orderRepository.findAll().stream()
-                .filter(order -> order.getPaymentStatus() == Order.PaymentStatus.PAID)
                 .sorted((o1, o2) -> {
-                    // Sắp xếp theo thời gian tạo, order mới nhất trước
-                    if (o1.getCreatedAt() == null && o2.getCreatedAt() == null) return 0;
-                    if (o1.getCreatedAt() == null) return 1;
-                    if (o2.getCreatedAt() == null) return -1;
-                    return o2.getCreatedAt().compareTo(o1.getCreatedAt());
+                    // Sắp xếp theo ID đơn hàng, order ID lớn hơn trước (mới hơn)
+                    if (o1.getId() == null && o2.getId() == null) return 0;
+                    if (o1.getId() == null) return 1;
+                    if (o2.getId() == null) return -1;
+                    return o2.getId().compareTo(o1.getId());
                 })
                 .toList();
-        
+
         return orders.stream()
                 .map(order -> {
                     com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO dto = new com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO();
                     dto.setOrderId(order.getId());
                     dto.setOrderStatus(order.getOrderStatus());
                     dto.setOrderType(order.getOrderType());
-                    // Force set payment status to PAID since we only get PAID orders in history
-                    dto.setPaymentStatus(Order.PaymentStatus.PAID);
+                    // Set payment status thực tế của order (có thể là PAID, UNPAID, hoặc PENDING)
+                    dto.setPaymentStatus(order.getPaymentStatus() != null ? order.getPaymentStatus() : Order.PaymentStatus.UNPAID);
                     dto.setPaymentMethod(order.getPaymentMethod());
                     dto.setTaxRate(order.getTaxRate());
                     dto.setNote(order.getNote());
                     dto.setCreatedAt(order.getCreatedAt());
                     dto.setUpdatedAt(order.getUpdatedAt());
-                    
+
                     // Calculate original total from order items
                     double originalTotal = order.getOrderItems().stream()
                             .mapToDouble(OrderItem::getTotalPrice)
                             .sum();
-                    
+
                     // Calculate discount from voucher if exists
                     double discountAmount = 0.0;
                     if (order.getVoucher() != null) {
@@ -229,11 +254,11 @@ public class    OrderService{
                         }
                         dto.setDiscountAmount(discountAmount);
                     }
-                    
+
                     // Calculate final total with tax (finalTotal = (originalTotal - discount) * 1.1)
                     double finalTotal = (originalTotal - discountAmount) * 1.1;
                     dto.setTotalPrice(finalTotal);
-                    
+
                     // Set session info
                     if (order.getSession() != null) {
                         dto.setSessionId(order.getSession().getId());
@@ -242,12 +267,12 @@ public class    OrderService{
                             dto.setTableName("Bàn " + order.getSession().getTable().getId());
                         }
                     }
-                    
+
                     // Set staff name
                     if (order.getStaff() != null) {
                         dto.setCreatedByStaffName(order.getStaff().getName());
                     }
-                    
+
                     // Set customer info from membership
                     if (order.getMembership() != null) {
                         dto.setCustomerName(order.getMembership().getName());
@@ -256,13 +281,13 @@ public class    OrderService{
                         dto.setCustomerName("Khách vãng lai");
                         dto.setCustomerPhone(null);
                     }
-                    
+
                     // Convert order items (not needed for payment history display)
                     List<com.group1.swp.pizzario_swp391.dto.order.OrderItemDTO> items = order.getOrderItems().stream()
                             .map(orderItemMapper::toOrderItemDTO)
                             .toList();
                     dto.setItems(items);
-                    
+
                     return dto;
                 })
                 .toList();

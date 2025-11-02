@@ -83,11 +83,27 @@ public class SessionService {
      * Lấy order từ session
      */
     public Order getOrderBySessionId(Long sessionId) {
-        Session session = getSessionById(sessionId);
-        if (session.getOrder() == null) {
-            throw new RuntimeException("Session không có order");
+        // Flush để đảm bảo tất cả changes được persist trước khi query
+        orderRepository.flush();
+        
+        // Query Order trực tiếp từ session_id để tránh vấn đề lazy load
+        Order order = orderRepository.findBySessionId(sessionId);
+        if (order == null) {
+            // Debug: Log để kiểm tra
+            System.err.println("DEBUG: Không tìm thấy order với sessionId: " + sessionId);
+            // Thử query tất cả orders để debug
+            var allOrders = orderRepository.findAll();
+            System.err.println("DEBUG: Tổng số orders: " + allOrders.size());
+            for (Order o : allOrders) {
+                if (o.getSession() != null) {
+                    System.err.println("DEBUG: Order #" + o.getId() + " có sessionId: " + o.getSession().getId());
+                } else {
+                    System.err.println("DEBUG: Order #" + o.getId() + " không có session");
+                }
+            }
+            throw new RuntimeException("Session không có order. SessionId: " + sessionId);
         }
-        return session.getOrder();
+        return order;
     }
 
     /**
@@ -153,5 +169,57 @@ public class SessionService {
      */
     public Optional<Session> getOpenSessionByTableId(Long tableId) {
         return sessionRepository.findByTableIdAndIsClosedFalse(tableId.intValue());
+    }
+
+    /**
+     * Tạo session cho take-away order (không có table)
+     * Hoặc trả về session hiện có nếu order đã có session
+     */
+    @Transactional
+    public Session getOrCreateSessionForTakeAwayOrder(Order order) {
+        // Nếu order đã có session, refresh và trả về
+        if (order.getSession() != null && order.getSession().getId() != null) {
+            Session existingSession = sessionRepository.findById(order.getSession().getId())
+                    .orElseThrow(() -> new RuntimeException("Session không tồn tại"));
+            // Reload order để đảm bảo session có order
+            orderRepository.flush(); // Đảm bảo tất cả changes được persist
+            return existingSession;
+        }
+        
+        // Tạo session mới cho take-away order
+        Session session = new Session();
+        session.setClosed(false);
+        session.setCreatedAt(LocalDateTime.now());
+        session.setTable(null); // Take-away không có table
+        
+        // Lưu session trước để có ID
+        session = sessionRepository.save(session);
+        sessionRepository.flush(); // Flush để có ID ngay lập tức
+        
+        // Link order với session (Order là chủ sở hữu với @JoinColumn)
+        order.setSession(session);
+        
+        // Lưu order (vì Order quản lý foreign key)
+        order = orderRepository.save(order);
+        orderRepository.flush(); // Flush để đảm bảo foreign key được lưu
+        
+        // Verify order có session_id trong database
+        Order savedOrder = orderRepository.findById(order.getId())
+                .orElseThrow(() -> new RuntimeException("Không thể reload order"));
+        if (savedOrder.getSession() == null || !savedOrder.getSession().getId().equals(session.getId())) {
+            throw new RuntimeException("Order chưa được link với session");
+        }
+        
+        return session;
+    }
+
+    /**
+     * Lấy session từ order (cho cả take-away và dine-in)
+     */
+    public Session getSessionByOrder(Order order) {
+        if (order.getSession() == null) {
+            throw new RuntimeException("Order không có session");
+        }
+        return order.getSession();
     }
 }

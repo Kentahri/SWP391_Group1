@@ -1,31 +1,82 @@
-<!doctype html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>KITCHEN-DASHBOARD</title>
-    <link rel="stylesheet" th:href="@{/css/kitchen.css}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Out-of-Stock Management - PizzarIO</title>
+    <link rel="stylesheet" th:href="@{/css/kitchen.css}" />
+    <link rel="stylesheet" th:href="@{/css/kitchen-dashboard.css}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-<div class="container">
-    <div class="sidebar">
-        <h2>KITCHEN</h2>
-        <a th:href="@{/kitchen/order-list}" class="tab-link">Order Management</a>
-        <a th:href="@{/kitchen/outstock}" class="tab-link active">Out-of-Stock Management</a>
-        <form th:action="@{/logout}" method="post" class="logout-form">
-            <input type="hidden"
-                   th:if="${_csrf != null}"
-                   th:name="${_csrf.parameterName}"
-                   th:value="${_csrf.token}" />
-            <button type="submit" style="margin-top: 20px; width: 100%;">Logout</button>
-        </form>
-    </div>
-    <div class="main-content">
-        <!-- Main out-of-stock management content -->
-        <h2 class="om-title">Quản lý sản phẩm hết hàng</h2>
-        <div class="product-list-grid">
+    <!-- Header -->
+    <header class="kitchen-header">
+        <div class="header-container">
+            <!-- Logo Section -->
+            <div class="header-brand">
+                <div class="brand-logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <div class="brand-info">
+                        <h1 class="brand-title">Kitchen Manager</h1>
+                        <p class="brand-subtitle">PizzarIO Restaurant</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Section -->
+            <nav class="header-navigation">
+                <div class="nav-items">
+                    <a th:href="@{/kitchen/dashboard}" class="nav-link" data-page="dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a th:href="@{/kitchen/order-list}" class="nav-link" data-page="orders">
+                        <i class="fas fa-list"></i>
+                        <span>Orders</span>
+                    </a>
+                    <a href="#" class="nav-link active" data-page="menu">
+                        <i class="fas fa-utensils"></i>
+                        <span>Menu</span>
+                    </a>
+                </div>
+            </nav>
+
+            <!-- User Section -->
+            <div class="header-user">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-details">
+                        <span class="user-name" th:text="${staffName ?: 'Kitchen Staff'}">Kitchen Staff</span>
+                        <span class="user-role">Kitchen Staff</span>
+                    </div>
+                </div>
+                <form th:action="@{/logout}" method="post" class="logout-form">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button type="submit" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="kitchen-main">
+        <!-- Page Title -->
+        <div class="dashboard-title">
+            <div class="title-left">
+                <h1><i class="fas fa-box-open"></i> Quản lý sản phẩm hết hàng</h1>
+                <p>Quản lý trạng thái sản phẩm và tình trạng tồn kho</p>
+            </div>
+        </div>
+
+        <!-- Product Grid -->
+        <div class="product-list-grid" th:if="${products != null and !#lists.isEmpty(products)}">
             <div class="product-card" th:each="p : ${products}">
                 <div class="card-header">
                     <span class="product-title" th:text="${p.name}">Tên sản phẩm</span>
@@ -46,13 +97,41 @@
                 <div class="product-foot">
                     <span class="product-price" th:text="${#numbers.formatDecimal(p.basePrice,0,'COMMA',0,'POINT')} + ' đ'">Giá</span>
                     <form th:action="@{'/product/active/' + ${p.id}}" method="post" style="display:inline-block">
-                      <label class="switch"><input type="checkbox" name="active" th:checked="${p.isActive}" onchange="this.form.submit()"><span class="slider"></span></label>
+                      <label class="switch">
+                          <input type="checkbox" name="active" th:checked="${p.isActive}" onchange="this.form.submit()">
+                          <span class="slider"></span>
+                      </label>
                       <span class="active-text">Active</span>
                     </form>
                 </div>
             </div>
         </div>
-    </div>
-</div>
+
+        <!-- Empty State -->
+        <div class="empty-state" th:if="${products == null or #lists.isEmpty(products)}">
+            <div class="empty-icon">
+                <i class="fas fa-box-open"></i>
+            </div>
+            <h3>Không có sản phẩm nào</h3>
+            <p>Hiện tại không có sản phẩm nào trong hệ thống</p>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script>
+        // Navigation handling
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.nav-link')) {
+                const navLink = e.target.closest('.nav-link');
+                const href = navLink.getAttribute('href');
+                
+                // Update active navigation
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                });
+                navLink.classList.add('active');
+            }
+        });
+    </script>
 </body>
 </html>

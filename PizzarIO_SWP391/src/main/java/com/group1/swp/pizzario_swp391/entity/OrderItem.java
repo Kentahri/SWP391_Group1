@@ -48,6 +48,10 @@ public class OrderItem {
     @Column(name = "total_price")
     private double totalPrice;
 
+    @ManyToOne
+    @JoinColumn(name = "product_size_id")
+    private ProductSize productSize;
+
     public enum OrderItemStatus {
         PENDING, PREPARING, SERVED, CANCELLED
     }
