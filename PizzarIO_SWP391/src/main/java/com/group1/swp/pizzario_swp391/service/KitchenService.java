@@ -1,12 +1,16 @@
 package com.group1.swp.pizzario_swp391.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.group1.swp.pizzario_swp391.dto.category.CategoryResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.kitchen.DashboardOrderItemDTO;
 import com.group1.swp.pizzario_swp391.dto.websocket.KitchenOrderMessage;
 import com.group1.swp.pizzario_swp391.entity.Order;
@@ -30,6 +34,12 @@ public class KitchenService {
     @Autowired
     private WebSocketService webSocketService;
 
+    @Autowired
+    private OrderService orderService;
+    
+    @Autowired
+    private CategoryService categoryService;
+
     /**
      * Get dashboard order items for kitchen dashboard
      */
@@ -43,6 +53,110 @@ public class KitchenService {
         return orderItems.stream()
                 .map(this::convertToDashboardDTO)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Calculate dashboard statistics
+     */
+    public Map<String, Integer> getDashboardStatistics(List<DashboardOrderItemDTO> orderItems) {
+        Map<String, Integer> stats = new HashMap<>();
+        stats.put("totalDishes", orderItems.size());
+        stats.put("newDishes", (int) orderItems.stream()
+                .filter(item -> "PENDING".equals(item.getStatus()))
+                .count());
+        stats.put("preparingDishes", (int) orderItems.stream()
+                .filter(item -> "PREPARING".equals(item.getStatus()))
+                .count());
+        stats.put("completedDishes", (int) orderItems.stream()
+                .filter(item -> "SERVED".equals(item.getStatus()))
+                .count());
+        return stats;
+    }
+
+    /**
+     * Group and sort items by category
+     */
+    public Map<String, List<DashboardOrderItemDTO>> groupAndSortItemsByCategory(
+            List<DashboardOrderItemDTO> orderItems, 
+            List<CategoryResponseDTO> categories) {
+        Map<String, List<DashboardOrderItemDTO>> groupedItems = new HashMap<>();
+        
+        // Initialize all categories with empty lists
+        categories.forEach(category -> {
+            groupedItems.put(category.getName(), new ArrayList<>());
+        });
+        
+        // Add actual items to their categories
+        orderItems.forEach(item -> {
+            String categoryName = item.getCategoryName();
+            groupedItems.computeIfAbsent(categoryName, _ -> new ArrayList<>()).add(item);
+        });
+        
+        // Sort items within each category
+        groupedItems.forEach((_, items) -> {
+            items.sort((a, b) -> {
+                // First sort by status (PENDING -> PREPARING -> SERVED)
+                Map<String, Integer> statusOrder = Map.of("PENDING", 0, "PREPARING", 1, "SERVED", 2);
+                int statusDiff = statusOrder.getOrDefault(a.getStatus(), 3) - 
+                                statusOrder.getOrDefault(b.getStatus(), 3);
+                if (statusDiff != 0) return statusDiff;
+                
+                // Then sort by creation time (newest first)
+                int timeDiff = b.getCreatedAt().compareTo(a.getCreatedAt());
+                if (timeDiff != 0) return timeDiff;
+                
+                // Finally sort by product name
+                return a.getProductName().compareTo(b.getProductName());
+            });
+        });
+        
+        return groupedItems;
+    }
+
+    /**
+     * Get complete dashboard data
+     */
+    public Map<String, Object> getDashboardData() {
+        Map<String, Object> dashboardData = new HashMap<>();
+        
+        try {
+            List<DashboardOrderItemDTO> orderItems = getDashboardOrderItems();
+            List<CategoryResponseDTO> categories = categoryService.getAllActiveCategories();
+            Map<String, Integer> statistics = getDashboardStatistics(orderItems);
+            Map<String, List<DashboardOrderItemDTO>> groupedItems = 
+                    groupAndSortItemsByCategory(orderItems, categories);
+            
+            dashboardData.put("orderItems", orderItems);
+            dashboardData.put("categories", categories);
+            dashboardData.put("groupedItems", groupedItems);
+            dashboardData.put("totalDishes", statistics.get("totalDishes"));
+            dashboardData.put("newDishes", statistics.get("newDishes"));
+            dashboardData.put("preparingDishes", statistics.get("preparingDishes"));
+            dashboardData.put("completedDishes", statistics.get("completedDishes"));
+        } catch (Exception e) {
+            // Return empty data on error
+            dashboardData.put("orderItems", new ArrayList<>());
+            dashboardData.put("categories", new ArrayList<>());
+            dashboardData.put("groupedItems", new HashMap<>());
+            dashboardData.put("totalDishes", 0);
+            dashboardData.put("newDishes", 0);
+            dashboardData.put("preparingDishes", 0);
+            dashboardData.put("completedDishes", 0);
+        }
+        
+        return dashboardData;
+    }
+
+    /**
+     * Get order counts by filter for order list page
+     */
+    public Map<String, Integer> getOrderCountsByFilter() {
+        Map<String, Integer> counts = new HashMap<>();
+        counts.put("processingCount", orderService.getKitchenOrdersByFilter(null, null).size());
+        counts.put("dineInCount", orderService.getKitchenOrdersByFilter(null, "DINE_IN").size());
+        counts.put("takeAwayCount", orderService.getKitchenOrdersByFilter(null, "TAKE_AWAY").size());
+        counts.put("completedCount", orderService.getKitchenOrdersByFilter("COMPLETED", null).size());
+        return counts;
     }
 
     /**
