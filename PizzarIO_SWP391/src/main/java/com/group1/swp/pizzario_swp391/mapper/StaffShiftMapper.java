@@ -60,6 +60,7 @@ public interface StaffShiftMapper {
     @Mapping(target = "checkOut", source = "checkOut")
     @Mapping(target = "hourlyWage", source = "shift.salaryPerShift")
     @Mapping(target = "note", source = "note")
+    @Mapping(target = "penaltyPercent", source = "penaltyPercent")
     StaffShiftResponseDTO toResponseDTO(StaffShift staffShift);
 
     // NEW: Convert Response DTO to Calendar DTO
@@ -72,6 +73,9 @@ public interface StaffShiftMapper {
     @Mapping(target = "statusClass", source = "shiftStatus", qualifiedByName = "getStatusClass")
     @Mapping(target = "totalWage", source = "source", qualifiedByName = "calculateTotalWage")
     @Mapping(target = "note", source = "note")
+    @Mapping(target = "status", source = "shiftStatus")
+    @Mapping(target = "endTime", source = "endTime", qualifiedByName = "formatEndTime")
+    @Mapping(target = "workDate", source = "workDate")
     StaffShiftCalendarDTO toCalendarDTO(StaffShiftResponseDTO source);
 
     @Named("determineShiftType")
@@ -93,6 +97,14 @@ public interface StaffShiftMapper {
             return "N/A";
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
         return dto.getStartTime().format(formatter) + " - " + dto.getEndTime().format(formatter);
+    }
+
+    @Named("formatEndTime")
+    default String formatEndTime(LocalDateTime endTime) {
+        if (endTime == null)
+            return "N/A";
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+        return endTime.format(formatter);
     }
 
     @Named("getStatusText")
