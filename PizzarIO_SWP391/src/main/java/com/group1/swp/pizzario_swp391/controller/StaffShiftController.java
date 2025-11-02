@@ -8,12 +8,10 @@ import com.group1.swp.pizzario_swp391.dto.staff.StaffResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.staffshift.StaffShiftDTO;
 import com.group1.swp.pizzario_swp391.dto.staffshift.StaffShiftResponseDTO;
 import com.group1.swp.pizzario_swp391.entity.Shift;
+import com.group1.swp.pizzario_swp391.entity.Staff;
 import com.group1.swp.pizzario_swp391.entity.StaffShift;
 import com.group1.swp.pizzario_swp391.repository.StaffShiftRepository;
-import com.group1.swp.pizzario_swp391.service.ShiftService;
-import com.group1.swp.pizzario_swp391.service.StaffService;
-import com.group1.swp.pizzario_swp391.service.StaffShiftManagementService;
-import com.group1.swp.pizzario_swp391.service.StaffShiftService;
+import com.group1.swp.pizzario_swp391.service.*;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +27,7 @@ import java.time.LocalDate;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -314,6 +313,24 @@ public class StaffShiftController {
         }
 
         return redirectUrl.toString();
+    }
+
+    @GetMapping("/staff_shifts/api/staff_search")
+    @ResponseBody
+    public List<Map<String, Object>> searchStaff(
+            @RequestParam(required = false, defaultValue = "") String q,
+            @RequestParam(required = false, defaultValue = "20") int limit) {
+        String term = q == null ? "" : q.trim();
+        int top = Math.max(1, Math.min(limit, 50)); // giới hạn 1..50
+        List<Staff> list = staffService.searchByName(term, top);
+        List<Map<String,Object>> result = new ArrayList<>();
+        for (Staff s : list) {
+            Map<String,Object> m = new HashMap<>();
+            m.put("id", s.getId());
+            m.put("name", s.getName());
+            result.add(m);
+        }
+        return result;
     }
 
 }

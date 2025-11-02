@@ -6,6 +6,7 @@ import com.group1.swp.pizzario_swp391.entity.Order;
 import com.group1.swp.pizzario_swp391.entity.OrderItem;
 import com.group1.swp.pizzario_swp391.entity.Membership;
 import com.group1.swp.pizzario_swp391.service.PaymentService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -259,7 +260,7 @@ public class PaymentController {
         System.out.println("Received sessionId: " + sessionId);
         System.out.println("Request URL: " + request.getRequestURL());
         System.out.println("Request URI: " + request.getRequestURI());
-        
+        HttpSession session = request.getSession();
         try {
             // Lấy thông tin payment từ order đã thanh toán (không cần kiểm tra session mở)
             PaymentDTO payment = paymentService.getPaymentConfirmationBySessionId(sessionId);
@@ -296,6 +297,8 @@ public class PaymentController {
                 paymentService.removePoints(sessionId);
             } catch (Exception ignored) {}
 
+            session.removeAttribute("sessionId");
+            session.removeAttribute("tableId");
             return "guest-page/payment-confirmation";
         } catch (Exception e) {
             e.printStackTrace();

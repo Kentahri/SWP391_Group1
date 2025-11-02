@@ -106,6 +106,7 @@ public interface StaffShiftMapper {
             case "LATE" -> "Đi muộn";
             case "ABSENT" -> "Vắng mặt";
             case "LEFT_EARLY" -> "Về sớm";
+            case "NOT_CHECKOUT" -> "Chưa checkout";
             default -> "Không xác định";
         };
     }
@@ -121,17 +122,22 @@ public interface StaffShiftMapper {
             case "LATE" -> "late";
             case "ABSENT" -> "absent";
             case "LEFT_EARLY" -> "left-early";
+            case "NOT_CHECKOUT" -> "not_checkout";
             default -> "unknown";
         };
     }
 
     @Named("calculateTotalWage")
-    default Double calculateTotalWage(StaffShiftResponseDTO shift) {
-        if (shift.getCheckIn() != null && shift.getCheckOut() != null && shift.getHourlyWage() != null) {
+        default Double calculateTotalWage(StaffShiftResponseDTO shift) {
+    if (shift.getShiftStatus() != null) {
+        if ("COMPLETED".equals(shift.getShiftStatus())) {
+            return shift.getHourlyWage().doubleValue() * Duration.between(shift.getStartTime(), shift.getEndTime()).toHours() * (100 - shift.getPenaltyPercent())/100;
+        } else if ("LEFT_EARLY".equals(shift.getShiftStatus()) 
+                   && shift.getCheckIn() != null && shift.getCheckOut() != null) {
             long hours = Duration.between(shift.getCheckIn(), shift.getCheckOut()).toHours();
-            int penalty = shift.getPenaltyPercent() != null ? shift.getPenaltyPercent() : 0;
-            return hours * shift.getHourlyWage().doubleValue() * (100 - penalty) / 100;
+            return shift.getHourlyWage().doubleValue() * hours * (100 - shift.getPenaltyPercent())/100; // Lương × giờ làm
         }
-        return 0.0;
     }
+    return 0.0;
+}
 }

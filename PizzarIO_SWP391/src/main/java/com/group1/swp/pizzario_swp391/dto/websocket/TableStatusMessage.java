@@ -31,7 +31,8 @@ public class TableStatusMessage {
         TABLE_RELEASED,      // Cashier released table
         TABLE_RESERVED,      // Table reserved
         TABLE_PAYMENT_PENDING, // Waiting for payment
-        TABLE_RETIRED        // Table marked as retired by manager
+        TABLE_RETIRED,        // Table marked as retired by manager
+        TABLE_LOCKED         // Table temporary locked for merge
     }
 }
 

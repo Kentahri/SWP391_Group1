@@ -83,7 +83,7 @@ public class DiningTable {
     private int capacity;
 
     public enum TableStatus{
-        AVAILABLE, OCCUPIED, RESERVED, WAITING_PAYMENT
+        AVAILABLE, OCCUPIED, RESERVED, WAITING_PAYMENT, LOCKED
     }
 
     public enum TableCondition {

@@ -6,6 +6,7 @@ import com.group1.swp.pizzario_swp391.dto.data_analytics.SalesDTO;
 import com.group1.swp.pizzario_swp391.entity.Membership;
 import com.group1.swp.pizzario_swp391.entity.Order;
 import com.group1.swp.pizzario_swp391.repository.OrderRepository;
+import com.group1.swp.pizzario_swp391.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 public class DataAnalyticsReportService {
 
     private final OrderRepository orderRepository;
+    private final ProductRepository productRepository;
 
     public SalesDTO getSalesInRange(LocalDate start, LocalDate end) {
 
@@ -115,8 +117,8 @@ public class DataAnalyticsReportService {
         Double ordersDelta = calculateDelta(totalOrders.doubleValue(), prevOrders.doubleValue());
 
         // KH MỚI
-        Long newCustomers = countNewCustomers(currentOrders, startDate);
-        Long prevNewCustomers = countNewCustomers(previousOrders, prevStartDate);
+        Long newCustomers = countNewCustomers(currentOrders, startDate, endDate);
+        Long prevNewCustomers = countNewCustomers(previousOrders, prevStartDate, prevEndDate);
         Double newCustomersDelta = calculateDelta(newCustomers.doubleValue(), prevNewCustomers.doubleValue());
 
         Double aov = totalOrders > 0 ? (double) totalRevenue / totalOrders : 0.0;
@@ -140,7 +142,7 @@ public class DataAnalyticsReportService {
                 aov, aovDelta, oldCustomers, retentionRate);
     }
 
-    private Long countNewCustomers(List<Order> orders, LocalDate startDate) {
+    private Long countNewCustomers(List<Order> orders, LocalDate startDate, LocalDate endDate) {
         Set<Long> customerIds = orders.stream()
                 .map(Order::getMembership)
                 .filter(Objects::nonNull) // bỏ null nếu có
@@ -149,13 +151,14 @@ public class DataAnalyticsReportService {
 
         long count = 0;
         for (Long membershipId : customerIds) {
-
+            // Lấy đơn hàng đầu tiên của khách hàng này
             Order firstOrder = orderRepository.findFirstByMembership_IdOrderByCreatedAtAsc(membershipId);
-            if (firstOrder != null &&
-                    !firstOrder.getCreatedAt().toLocalDate().isBefore(startDate)) {
 
-                long totalOrdersByMember = orderRepository.countByMembership_Id(membershipId);
-                if (totalOrdersByMember <= 1) {
+            if (firstOrder != null) {
+                LocalDate firstOrderDate = firstOrder.getCreatedAt().toLocalDate();
+                // Kiểm tra xem đơn hàng đầu tiên có nằm trong khoảng [startDate, endDate) không
+                // Khách hàng được coi là "mới" nếu đơn hàng đầu tiên của họ nằm trong khoảng thời gian này
+                if (!firstOrderDate.isBefore(startDate) && firstOrderDate.isBefore(endDate)) {
                     count++;
                 }
             }
@@ -163,4 +166,138 @@ public class DataAnalyticsReportService {
         return count;
     }
 
+    public List<ProductStatsDTO> getTopBestSellingProductsBetweenDates(LocalDate fromDate, LocalDate toDate) {
+        if (fromDate == null || toDate == null) {
+            System.err.println("Error: fromDate or toDate is null in service method");
+            return new ArrayList<>();
+        }
+
+        if (fromDate.isAfter(toDate)) {
+            System.err.println("Error: fromDate is after toDate in service method");
+            return new ArrayList<>();
+        }
+
+        try {
+            Pageable topFive = PageRequest.of(0, 5);
+            List<ProductStatsDTO> products = orderRepository.findTopBestSellingProductsBetweenDates(
+                    fromDate.atStartOfDay(),
+                    toDate.plusDays(1).atStartOfDay(),
+                    topFive);
+
+            if (products == null || products.isEmpty()) {
+                System.out.println("No products found in date range");
+                return new ArrayList<>();
+            }
+
+            List<ProductStatsDTO> result = new ArrayList<>();
+            for (int i = 0; i < products.size(); i++) {
+                ProductStatsDTO product = products.get(i);
+
+                ProductStatsDTO newProduct = new ProductStatsDTO(
+                        (long) (i + 1), // topId: thứ hạng
+                        product.productName(),
+                        product.orderCount(),
+                        product.quantitySold(),
+                        product.totalRevenue());
+                result.add(newProduct);
+            }
+
+            return result;
+        } catch (Exception e) {
+            System.err.println("Error in getTopBestSellingProductsBetweenDates: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Get top products với filter theo date range và category
+     *
+     * @param dateRange Preset: "7", "30", "90", "all", "custom"
+     * @param fromDate  Custom start date (chỉ dùng khi dateRange="custom")
+     * @param toDate    Custom end date (chỉ dùng khi dateRange="custom")
+     * @param categoryId Category filter (nullable)
+     * @param limit     Số lượng products trả về
+     * @return List of ProductStatsDTO
+     */
+    public List<ProductStatsDTO> getTopProductsWithFilters(
+            String dateRange,
+            LocalDate fromDate,
+            LocalDate toDate,
+            Long categoryId,
+            int limit) {
+
+        // Calculate date range
+        LocalDate startDate;
+        LocalDate endDate;
+
+        if ("all".equals(dateRange)) {
+            // All time - lấy từ ngày đầu tiên có order
+            startDate = LocalDate.of(2000, 1, 1);
+            endDate = LocalDate.now();
+        } else if ("custom".equals(dateRange)) {
+            if (fromDate == null || toDate == null) {
+                throw new IllegalArgumentException("fromDate and toDate are required for custom range");
+            }
+            if (fromDate.isAfter(toDate)) {
+                throw new IllegalArgumentException("fromDate must be before or equal to toDate");
+            }
+            startDate = fromDate;
+            endDate = toDate;
+        } else {
+            // Preset: 7, 30, 90 days
+            try {
+                int days = Integer.parseInt(dateRange);
+                endDate = LocalDate.now();
+                startDate = endDate.minusDays(days);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid dateRange value: " + dateRange);
+            }
+        }
+
+        // Fetch products
+        Pageable pageable = PageRequest.of(0, limit);
+        List<ProductStatsDTO> products;
+
+        try {
+            if (categoryId != null && categoryId > 0) {
+                // Filter by category
+                products = orderRepository.findTopBestSellingProductsByDateAndCategory(
+                        startDate.atStartOfDay(),
+                        endDate.plusDays(1).atStartOfDay(),
+                        categoryId,
+                        pageable);
+            } else {
+                // No category filter
+                products = orderRepository.findTopBestSellingProductsBetweenDates(
+                        startDate.atStartOfDay(),
+                        endDate.plusDays(1).atStartOfDay(),
+                        pageable);
+            }
+
+            if (products == null || products.isEmpty()) {
+                return new ArrayList<>();
+            }
+
+            // Add ranking (topId)
+            List<ProductStatsDTO> result = new ArrayList<>();
+            for (int i = 0; i < products.size(); i++) {
+                ProductStatsDTO product = products.get(i);
+                ProductStatsDTO ranked = new ProductStatsDTO(
+                        (long) (i + 1),
+                        product.productName(),
+                        product.orderCount(),
+                        product.quantitySold(),
+                        product.totalRevenue());
+                result.add(ranked);
+            }
+
+            return result;
+
+        } catch (Exception e) {
+            System.err.println("Error in getTopProductsWithFilters: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
 }
