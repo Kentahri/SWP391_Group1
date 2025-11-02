@@ -78,6 +78,8 @@ public class GuestController{
             redirectAttributes.addFlashAttribute("errorMessage", "Phiên làm việc không khớp với bàn này.");
             return "redirect:/guest";
         }
+        session.setAttribute("sessionId", sessionId);
+        session.setAttribute("tableId", tableId);
         model.addAttribute("sessionId", sessionId);
         model.addAttribute("tableId", tableId);
         model.addAttribute("categories", categoryService.getAllCategories());
