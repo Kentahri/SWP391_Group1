@@ -154,46 +154,6 @@ public class OrderService{
     }
 
     /**
-     * Lấy danh sách orders cho kitchen dashboard
-     * Có thể filter theo trạng thái (PREPARING, SERVED, COMPLETED...)
-     */
-    public List<KitchenOrderDTO> getKitchenOrdersByStatus(String status) {
-        List<Order> orders = orderRepository.findAll().stream()
-                .filter(order -> status == null || order.getOrderStatus().name().equalsIgnoreCase(status))
-                .sorted((o1, o2) -> {
-                    if (o1.getCreatedAt() == null && o2.getCreatedAt() == null) return 0;
-                    if (o1.getCreatedAt() == null) return 1;
-                    if (o2.getCreatedAt() == null) return -1;
-                    return o2.getCreatedAt().compareTo(o1.getCreatedAt());
-                })
-                .toList();
-        return orders.stream()
-                .map(KitchenOrderDTO::fromOrder)
-                .toList();
-    }
-
-    /**
-     * Lấy danh sách orders cho kitchen dashboard
-     * Bao gồm các orders đang trong trạng thái PREPARING
-     */
-    public List<KitchenOrderDTO> getKitchenOrders() {
-        List<Order> orders = orderRepository.findAll().stream()
-                .filter(order -> order.getOrderStatus() == Order.OrderStatus.PREPARING)
-                .sorted((o1, o2) -> {
-                    // Sắp xếp theo thời gian tạo, order mới nhất trước
-                    if (o1.getCreatedAt() == null && o2.getCreatedAt() == null) return 0;
-                    if (o1.getCreatedAt() == null) return 1;
-                    if (o2.getCreatedAt() == null) return -1;
-                    return o2.getCreatedAt().compareTo(o1.getCreatedAt());
-                })
-                .toList();
-
-        return orders.stream()
-                .map(KitchenOrderDTO::fromOrder)
-                .toList();
-    }
-
-    /**
      * Backend tối ưu filter order đơn giản (status và/hoặc type)
      */
     public List<KitchenOrderDTO> getKitchenOrdersByFilter(String status, String type) {
