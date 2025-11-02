@@ -22,6 +22,7 @@
                     <input type="hidden" name="tableId" th:value="${tableId}"/>
                     <input type="hidden" name="productId" th:value="${item.productId}"/>
                     <input type="hidden" name="quantity" th:value="${item.quantity - 1}"/>
+                    <input type="hidden" name="productSizeId" th:value="${item.productSize.id}"/>
                     <button type="submit">-</button>
                 </form>
                 <span th:text="${item.quantity}">1</span>
@@ -30,6 +31,7 @@
                     <input type="hidden" name="tableId" th:value="${tableId}"/>
                     <input type="hidden" name="productId" th:value="${item.productId}"/>
                     <input type="hidden" name="quantity" th:value="${item.quantity + 1}"/>
+                    <input type="hidden" name="productSizeId" th:value="${item.productSize.id}"/>
                     <button type="submit">+</button>
                 </form>
             </div>
@@ -37,6 +39,7 @@
                 <input type="hidden" name="sessionId" th:value="${sessionId}"/>
                 <input type="hidden" name="tableId" th:value="${tableId}"/>
                 <input type="hidden" name="productId" th:value="${item.productId}"/>
+                <input type="hidden" name="productSizeId" th:value="${item.productSize.id}"/>
                 <button class="remove-btn" type="submit">✕</button>
             </form>
         </div>

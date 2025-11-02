@@ -1,18 +1,5 @@
 package com.group1.swp.pizzario_swp391.service;
 
-import java.text.Normalizer;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
-
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentConfig;
 import com.group1.swp.pizzario_swp391.entity.Product;
@@ -20,6 +7,16 @@ import com.group1.swp.pizzario_swp391.repository.OrderRepository;
 import com.group1.swp.pizzario_swp391.repository.ProductRepository;
 import com.group1.swp.pizzario_swp391.utils.FuzzyIntentDetector;
 import com.group1.swp.pizzario_swp391.utils.RegexIntentDetector;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.text.Normalizer;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -315,7 +312,7 @@ public class GeminiChatService {
             Product product = products.get(i);
             response.append(product.getName());
 
-            response.append(" - ").append(formatPrice(product.getBasePrice()));
+//            response.append(" - ").append(formatPrice(product.getBasePrice()));
 
             if (product.getDescription() != null && !product.getDescription().isEmpty()) {
                 response.append("\n   ").append(product.getDescription());
