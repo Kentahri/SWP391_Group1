@@ -29,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -84,18 +83,6 @@ public class TableService{
             session.setCreatedAt(LocalDateTime.now());
             Session savedSession = sessionRepository.save(session);
 
-            // Tạo mới 1 order và lưu vào DB
-//            Order newOrder = new Order();
-//            newOrder.setSession(savedSession);
-//            newOrder.setCreatedAt(LocalDateTime.now());
-//            newOrder.setOrderStatus(Order.OrderStatus.PREPARING);
-//            newOrder.setOrderType(Order.OrderType.DINE_IN);
-//            newOrder.setPaymentStatus(Order.PaymentStatus.UNPAID);
-//            newOrder.setNote("");
-//            newOrder.setTotalPrice(0.0);
-//            newOrder.setTaxRate(0.1); // 10% tax
-//            orderRepository.save(newOrder);
-
             // Update table status with optimistic locking
             DiningTable.TableStatus oldStatus = table.getTableStatus();
             table.setTableStatus(DiningTable.TableStatus.OCCUPIED);
@@ -109,6 +96,8 @@ public class TableService{
                         "Bàn đã được chọn bởi khách khác", TableSelectionResponse.ResponseType.CONFLICT);
                 return;
             }
+
+
 
             // Broadcast to cashier
             webSocketService.broadcastTableStatusToCashier(
