@@ -90,6 +90,40 @@ public class OrderService{
         notifyKitchenNewOrder(order);
     }
 
+    @Transactional
+    public com.group1.swp.pizzario_swp391.entity.Order placeTakeAwayOrder(HttpSession session, com.group1.swp.pizzario_swp391.entity.Staff staff) {
+        Map<Long, CartItemDTO> cart = cartService.getCart(session);
+        if (cart.isEmpty()) {
+            return null;
+        }
+
+        com.group1.swp.pizzario_swp391.entity.Order order = new com.group1.swp.pizzario_swp391.entity.Order();
+        order.setOrderType(com.group1.swp.pizzario_swp391.entity.Order.OrderType.TAKE_AWAY);
+        order.setOrderStatus(com.group1.swp.pizzario_swp391.entity.Order.OrderStatus.PREPARING);
+        order.setPaymentStatus(com.group1.swp.pizzario_swp391.entity.Order.PaymentStatus.UNPAID);
+        order.setTaxRate(0.1);
+        order.setStaff(staff);
+        order.setTotalPrice(0);
+        order.setCreatedAt(LocalDateTime.now());
+        order.setUpdatedAt(LocalDateTime.now());
+        order = orderRepository.save(order);
+
+        for (CartItemDTO item : cart.values()) {
+            OrderItem orderItem = orderItemMapper.toOrderItem(item);
+            orderItem.setProduct(productRepository.findById(item.getProductId()).orElse(null));
+            orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
+            orderItem.setOrderItemType(OrderItem.OrderItemType.TAKE_AWAY);
+            orderItemRepository.save(orderItem);
+            order.addOrderItem(orderItem);
+            order.setTotalPrice(order.getTotalPrice() + item.getTotalPrice());
+        }
+        orderRepository.save(order);
+        cartService.clearCart(session);
+
+        notifyKitchenNewOrder(order);
+        return order;
+    }
+    
     /**
      * Gửi thông báo order mới đến kitchen
      */
@@ -201,17 +235,31 @@ public class OrderService{
     }
 
     /**
-     * Lấy danh sách lịch sử hóa đơn (các order đã thanh toán)
+     * Lấy order theo ID
+     */
+    public Order getOrderById(Long orderId) {
+        return orderRepository.findById(orderId).orElse(null);
+    }
+
+    /**
+     * Lưu order
+     */
+    @Transactional
+    public Order saveOrder(Order order) {
+        return orderRepository.save(order);
+    }
+
+    /**
+     * Lấy danh sách lịch sử hóa đơn (bao gồm cả đơn đã thanh toán và chưa hoàn thành)
      */
     public List<com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO> getPaymentHistory() {
         List<Order> orders = orderRepository.findAll().stream()
-                .filter(order -> order.getPaymentStatus() == Order.PaymentStatus.PAID)
                 .sorted((o1, o2) -> {
-                    // Sắp xếp theo thời gian tạo, order mới nhất trước
-                    if (o1.getCreatedAt() == null && o2.getCreatedAt() == null) return 0;
-                    if (o1.getCreatedAt() == null) return 1;
-                    if (o2.getCreatedAt() == null) return -1;
-                    return o2.getCreatedAt().compareTo(o1.getCreatedAt());
+                    // Sắp xếp theo ID đơn hàng, order ID lớn hơn trước (mới hơn)
+                    if (o1.getId() == null && o2.getId() == null) return 0;
+                    if (o1.getId() == null) return 1;
+                    if (o2.getId() == null) return -1;
+                    return o2.getId().compareTo(o1.getId());
                 })
                 .toList();
 
@@ -221,8 +269,8 @@ public class OrderService{
                     dto.setOrderId(order.getId());
                     dto.setOrderStatus(order.getOrderStatus());
                     dto.setOrderType(order.getOrderType());
-                    // Force set payment status to PAID since we only get PAID orders in history
-                    dto.setPaymentStatus(Order.PaymentStatus.PAID);
+                    // Set payment status thực tế của order (có thể là PAID, UNPAID, hoặc PENDING)
+                    dto.setPaymentStatus(order.getPaymentStatus() != null ? order.getPaymentStatus() : Order.PaymentStatus.UNPAID);
                     dto.setPaymentMethod(order.getPaymentMethod());
                     dto.setTaxRate(order.getTaxRate());
                     dto.setNote(order.getNote());

@@ -1,13 +1,42 @@
 // Payment Page JavaScript
 document.addEventListener("DOMContentLoaded", function () {
-  const sessionId = window.paymentData.sessionId;
-  const orderTotal = window.paymentData.orderTotal;
-  const originalTotal = window.paymentData.originalTotal;
-  const discountAmount = window.paymentData.discountAmount;
-  const finalTotal = window.paymentData.finalTotal;
-  const membershipPoints = window.paymentData.membershipPoints;
-  const appliedVoucherId = window.paymentData.appliedVoucherId;
-  const availableVouchers = window.paymentData.availableVouchers;
+  // Wait for window.paymentData to be initialized
+  if (!window.paymentData) {
+    console.error("window.paymentData is not initialized! Waiting...");
+    // Wait a bit and try again
+    setTimeout(function () {
+      if (!window.paymentData) {
+        console.error("window.paymentData still not initialized after wait!");
+        // Initialize with defaults
+        window.paymentData = {
+          sessionId: null,
+          orderTotal: 0,
+          originalTotal: 0,
+          discountAmount: 0,
+          finalTotal: 0,
+          membershipPoints: 0,
+          appliedVoucherId: null,
+          availableVouchers: [],
+          paymentConfirmUrl: null,
+        };
+      }
+      initializePayment();
+    }, 100);
+    return;
+  }
+
+  initializePayment();
+});
+
+function initializePayment() {
+  const sessionId = window.paymentData?.sessionId;
+  const orderTotal = window.paymentData?.orderTotal || 0;
+  const originalTotal = window.paymentData?.originalTotal || 0;
+  const discountAmount = window.paymentData?.discountAmount || 0;
+  const finalTotal = window.paymentData?.finalTotal || 0;
+  const membershipPoints = window.paymentData?.membershipPoints || 0;
+  const appliedVoucherId = window.paymentData?.appliedVoucherId;
+  const availableVouchers = window.paymentData?.availableVouchers || [];
 
   // DOM Elements
   const subtotalElement = document.getElementById("subtotalTop");
@@ -15,9 +44,16 @@ document.addEventListener("DOMContentLoaded", function () {
   const totalAmountElement = document.getElementById("totalAmountTop");
   const discountAmountElement = document.getElementById("discountAmountTop");
   const confirmPaymentBtn = document.getElementById("confirmPaymentBtn");
-  const loadingModal = new bootstrap.Modal(
-    document.getElementById("loadingModal")
-  );
+
+  // Check if confirmPaymentBtn exists
+  if (!confirmPaymentBtn) {
+    console.error("confirmPaymentBtn element not found!");
+  }
+
+  const loadingModalElement = document.getElementById("loadingModal");
+  const loadingModal = loadingModalElement
+    ? new bootstrap.Modal(loadingModalElement)
+    : null;
 
   // State
   let currentTotal = finalTotal;
@@ -57,24 +93,37 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Set default payment method if none selected
-    const defaultRadio = document.querySelector(
-      'input[name="paymentMethod"][value="CASH"]'
+    // First check if any radio is already checked
+    const checkedRadio = document.querySelector(
+      'input[name="paymentMethod"]:checked'
     );
-    if (defaultRadio && !selectedPaymentMethod) {
-      defaultRadio.checked = true;
-      selectedPaymentMethod = "CASH";
-      console.log("Set default payment method to CASH");
+    if (checkedRadio) {
+      selectedPaymentMethod = checkedRadio.value;
+      console.log("Found checked payment method:", selectedPaymentMethod);
       updatePaymentButton();
-    }
-
-    // Force select a payment method if none is selected
-    if (!selectedPaymentMethod) {
-      const firstRadio = document.querySelector('input[name="paymentMethod"]');
-      if (firstRadio) {
-        firstRadio.checked = true;
-        selectedPaymentMethod = firstRadio.value;
-        console.log("Force selected payment method:", selectedPaymentMethod);
+    } else {
+      // If no radio is checked, set default to CASH
+      const defaultRadio = document.querySelector(
+        'input[name="paymentMethod"][value="CASH"]'
+      );
+      if (defaultRadio) {
+        defaultRadio.checked = true;
+        selectedPaymentMethod = "CASH";
+        console.log("Set default payment method to CASH");
         updatePaymentButton();
+      } else {
+        // If CASH not found, select the first available payment method
+        const firstRadio = document.querySelector(
+          'input[name="paymentMethod"]'
+        );
+        if (firstRadio) {
+          firstRadio.checked = true;
+          selectedPaymentMethod = firstRadio.value;
+          console.log("Force selected payment method:", selectedPaymentMethod);
+          updatePaymentButton();
+        } else {
+          console.error("No payment method radios found!");
+        }
       }
     }
   }
@@ -86,11 +135,17 @@ document.addEventListener("DOMContentLoaded", function () {
     );
     console.log("Found payment method radios:", paymentMethodRadios.length);
 
+    if (paymentMethodRadios.length === 0) {
+      console.warn("No payment method radios found!");
+    }
+
     paymentMethodRadios.forEach((radio, index) => {
       console.log(`Radio ${index}:`, radio.value, "checked:", radio.checked);
       if (radio.checked) {
         selectedPaymentMethod = radio.value;
         console.log("Pre-selected payment method:", selectedPaymentMethod);
+        // Update button immediately if a radio is already checked
+        updatePaymentButton();
       }
       radio.addEventListener("change", function () {
         selectedPaymentMethod = this.value;
@@ -100,9 +155,13 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // Confirm payment button
-    confirmPaymentBtn.addEventListener("click", function () {
-      confirmPayment();
-    });
+    if (confirmPaymentBtn) {
+      confirmPaymentBtn.addEventListener("click", function () {
+        confirmPayment();
+      });
+    } else {
+      console.error("confirmPaymentBtn not found, cannot attach click handler");
+    }
   }
 
   // Voucher handling is now done via form submission and page reload
@@ -149,6 +208,11 @@ document.addEventListener("DOMContentLoaded", function () {
   // No need for client-side functions
 
   function updatePaymentButton() {
+    if (!confirmPaymentBtn) {
+      console.error("confirmPaymentBtn is null, cannot update button");
+      return;
+    }
+
     if (selectedPaymentMethod) {
       confirmPaymentBtn.disabled = false;
       confirmPaymentBtn.innerHTML = `
@@ -157,12 +221,14 @@ document.addEventListener("DOMContentLoaded", function () {
                   selectedPaymentMethod
                 )})
             `;
+      console.log("Payment button enabled with method:", selectedPaymentMethod);
     } else {
       confirmPaymentBtn.disabled = true;
       confirmPaymentBtn.innerHTML = `
                 <i class="fas fa-check-circle"></i>
                 Xác nhận thanh toán
             `;
+      console.log("Payment button disabled - no method selected");
     }
   }
 
@@ -180,19 +246,30 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function confirmPayment() {
+    // Always use window.paymentData as the source of truth (it may have been updated)
+    if (!window.paymentData) {
+      console.error("window.paymentData is not available!");
+      showAlert(
+        "Lỗi: Dữ liệu thanh toán không sẵn sàng. Vui lòng tải lại trang.",
+        "danger"
+      );
+      return;
+    }
+
     // Debug logging
     console.log("=== Payment Confirmation Debug ===");
-    console.log(
-      "sessionId from closure:",
-      sessionId,
-      "Type:",
-      typeof sessionId
-    );
+    console.log("window.paymentData:", window.paymentData);
     console.log(
       "sessionId from window.paymentData:",
-      window.paymentData?.sessionId,
+      window.paymentData.sessionId,
       "Type:",
-      typeof window.paymentData?.sessionId
+      typeof window.paymentData.sessionId
+    );
+    console.log(
+      "paymentConfirmUrl from window.paymentData:",
+      window.paymentData.paymentConfirmUrl,
+      "Type:",
+      typeof window.paymentData.paymentConfirmUrl
     );
     console.log(
       "selectedPaymentMethod:",
@@ -200,18 +277,9 @@ document.addEventListener("DOMContentLoaded", function () {
       "Type:",
       typeof selectedPaymentMethod
     );
-    console.log(
-      "selectedPaymentMethod is null:",
-      selectedPaymentMethod === null
-    );
-    console.log(
-      "selectedPaymentMethod is undefined:",
-      selectedPaymentMethod === undefined
-    );
-    console.log("window.paymentData:", window.paymentData);
 
-    // Use sessionId from window.paymentData if closure sessionId is null
-    let actualSessionId = sessionId || window.paymentData?.sessionId;
+    // Always use sessionId from window.paymentData (most up-to-date)
+    let actualSessionId = window.paymentData.sessionId;
 
     // Try to get sessionId from multiple sources
     if (!actualSessionId) {
@@ -259,26 +327,63 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log("Checked radio value:", checkedRadio.value);
     selectedPaymentMethod = checkedRadio.value;
 
-    // Kiểm tra sessionId hợp lệ - chỉ hiển thị alert, không redirect
+    // Kiểm tra paymentConfirmUrl hoặc sessionId
+    let confirmUrl = window.paymentData?.paymentConfirmUrl;
+
+    // Debug: Log paymentConfirmUrl value
+    console.log("=== CONFIRM URL CHECK ===");
+    console.log("Full window.paymentData:", window.paymentData);
+    console.log("paymentConfirmUrl from window.paymentData:", confirmUrl);
+    console.log("paymentConfirmUrl type:", typeof confirmUrl);
+    console.log("paymentConfirmUrl is null:", confirmUrl === null);
+    console.log("paymentConfirmUrl is undefined:", confirmUrl === undefined);
+    console.log("paymentConfirmUrl is empty:", confirmUrl === "");
+    console.log("paymentConfirmUrl length:", confirmUrl?.length);
+
+    // Nếu không có paymentConfirmUrl (null, undefined, hoặc empty string), tạo từ sessionId (guest flow)
     if (
-      !actualSessionId ||
-      actualSessionId === null ||
-      actualSessionId === "null" ||
-      actualSessionId === "" ||
-      isNaN(actualSessionId)
+      !confirmUrl ||
+      confirmUrl === null ||
+      confirmUrl === undefined ||
+      confirmUrl === "" ||
+      confirmUrl === "null"
     ) {
-      console.error(
-        "Invalid sessionId:",
-        actualSessionId,
-        "Type:",
-        typeof actualSessionId
-      );
-      showAlert(
-        "Lỗi: Không tìm thấy thông tin session. Vui lòng kiểm tra console logs để debug.",
-        "danger"
-      );
-      // Không redirect để có thể xem debug logs
-      return;
+      // Kiểm tra sessionId hợp lệ
+      if (
+        !actualSessionId ||
+        actualSessionId === null ||
+        actualSessionId === "null" ||
+        actualSessionId === "" ||
+        isNaN(actualSessionId)
+      ) {
+        console.error(
+          "Invalid sessionId:",
+          actualSessionId,
+          "Type:",
+          typeof actualSessionId
+        );
+        console.error(
+          "paymentConfirmUrl:",
+          window.paymentData?.paymentConfirmUrl
+        );
+        showAlert(
+          "Lỗi: Không tìm thấy thông tin session hoặc URL thanh toán. Vui lòng thử lại.",
+          "danger"
+        );
+        return;
+      }
+      // Tạo URL từ sessionId cho guest flow
+      const BASE_URL = window.APP_CTX || "/pizzario";
+      // Đảm bảo BASE_URL có dấu / ở cuối nếu cần
+      const baseUrlNormalized = BASE_URL.endsWith("/")
+        ? BASE_URL.slice(0, -1)
+        : BASE_URL;
+      confirmUrl = `${baseUrlNormalized}/guest/payment/session/${actualSessionId}/confirm`;
+      console.log("Created confirm URL for guest flow:", confirmUrl);
+    } else {
+      // Nếu có paymentConfirmUrl (cashier flow), không cần sessionId
+      // URL đã có context path từ controller rồi, không cần xử lý thêm
+      console.log("Using paymentConfirmUrl from server:", confirmUrl);
     }
 
     if (!confirm("Bạn có chắc chắn muốn thanh toán?")) {
@@ -287,16 +392,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
     console.log("Confirming payment with method:", selectedPaymentMethod);
     console.log("Session ID:", actualSessionId);
-    console.log(
-      "Form action URL will be:",
-      `/pizzario/guest/payment/session/${actualSessionId}/confirm`
-    );
-    loadingModal.show();
+    console.log("Confirm URL:", confirmUrl);
+
+    // Show loading modal if available
+    if (loadingModal) {
+      loadingModal.show();
+    }
 
     // Sử dụng form submission thay vì AJAX để đảm bảo redirect hoạt động đúng
     const form = document.createElement("form");
     form.method = "POST";
-    form.action = `/pizzario/guest/payment/session/${actualSessionId}/confirm`;
+    form.action = confirmUrl;
 
     const paymentMethodInput = document.createElement("input");
     paymentMethodInput.type = "hidden";
@@ -398,4 +504,4 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   });
-});
+} // End of initializePayment function

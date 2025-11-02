@@ -63,7 +63,14 @@ public class PaymentService {
         paymentDTO.setAvailableVouchers(getAvailableVouchersBySessionId(sessionId));
         
         // Set pointsUsed
-        paymentDTO.setPointsUsed(getPointsUsed(sessionId));
+        int pointsUsed = getPointsUsed(sessionId);
+        System.out.println("=== PaymentService.getPaymentBySessionId Debug ===");
+        System.out.println("sessionId: " + sessionId);
+        System.out.println("pointsUsedBySession map contains key: " + pointsUsedBySession.containsKey(sessionId));
+        System.out.println("pointsUsedBySession.get(sessionId): " + pointsUsedBySession.get(sessionId));
+        System.out.println("getPointsUsed(sessionId) returns: " + pointsUsed);
+        paymentDTO.setPointsUsed(pointsUsed);
+        System.out.println("paymentDTO.getPointsUsed() after set: " + paymentDTO.getPointsUsed());
         
         return paymentDTO;
     }

@@ -112,9 +112,18 @@ public class PaymentController {
             model.addAttribute("discountAmount", discountAmount);
             model.addAttribute("finalTotal", finalTotal);
             
-            // Points info for UI
-            model.addAttribute("pointsUsed", payment.getPointsUsed());
+            // Points info for UI - đảm bảo pointsUsed luôn có giá trị (không null)
+            Integer pointsUsed = payment.getPointsUsed() != null ? payment.getPointsUsed() : 0;
+            System.out.println("=== PaymentController Debug ===");
+            System.out.println("sessionId: " + sessionId);
+            System.out.println("payment.getPointsUsed(): " + payment.getPointsUsed());
+            System.out.println("pointsUsed (after null check): " + pointsUsed);
+            model.addAttribute("pointsUsed", pointsUsed);
             model.addAttribute("maxUsablePoints", paymentService.getMaxUsablePoints(sessionId));
+            
+            // Get context path for template use
+            String contextPath = request.getContextPath();
+            model.addAttribute("contextPath", contextPath);
             
             // Thêm error message nếu có
             if (error != null && !error.isEmpty()) {
@@ -281,6 +290,7 @@ public class PaymentController {
             model.addAttribute("originalTotal", originalTotal);
             model.addAttribute("discountAmount", discountAmount);
             model.addAttribute("finalTotal", finalTotal);
+            model.addAttribute("redirectTarget", "guest"); // Rõ ràng: redirect về guest cho dine-in
 
             // Sau khi hiển thị xác nhận, dọn dẹp trạng thái điểm đã dùng cho session
             try {
