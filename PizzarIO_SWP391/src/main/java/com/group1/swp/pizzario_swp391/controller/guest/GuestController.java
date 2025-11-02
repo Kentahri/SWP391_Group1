@@ -31,7 +31,6 @@ public class GuestController{
     CartService cartService;
     OrderService orderService;
     SessionRepository sessionRepository;
-    private final GuestService guestService;
 
     @GetMapping
     public String guestPage(Model model, HttpSession session) {

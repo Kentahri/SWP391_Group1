@@ -2,20 +2,24 @@ package com.group1.swp.pizzario_swp391.config.interceptor;
 
 import com.group1.swp.pizzario_swp391.entity.Order;
 import com.group1.swp.pizzario_swp391.service.OrderService;
+import com.group1.swp.pizzario_swp391.service.TableService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 @Component
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+
 public class OrderFlowInterceptor implements HandlerInterceptor{
 
-    private final OrderService orderService;
-
-    public OrderFlowInterceptor(OrderService orderService) {
-        this.orderService = orderService;
-    }
+    OrderService orderService;
+    TableService tableService;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -32,12 +36,11 @@ public class OrderFlowInterceptor implements HandlerInterceptor{
         if (activeSessionId == null || activeTableId == null) return true;
 
         // Nếu đang cố quay lại /guest khi còn order chưa thanh toán
-        if (path.startsWith("/guest") && !path.contains("/menu") && !path.contains("/payment")) {
+        if (path.equals("/guest")) {
             Order order = orderService.getOrderForSession(activeSessionId);
             // nếu chưa có order thì cho phép quay về chọn bàn
             if (order == null) {
-                session.removeAttribute("sessionId");
-                session.removeAttribute("tableId");
+                tableService.releaseTable(activeTableId, session);
                 return true;
             }
             double total = order.getTotalPrice();
@@ -47,8 +50,7 @@ public class OrderFlowInterceptor implements HandlerInterceptor{
                 return false;
             } else {
                 // Nếu không còn order => clear session
-                session.removeAttribute("sessionId");
-                session.removeAttribute("tableId");
+                tableService.releaseTable(activeTableId, session);
                 return true;
             }
         }
