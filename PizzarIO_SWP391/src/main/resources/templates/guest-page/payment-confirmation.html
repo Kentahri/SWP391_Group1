@@ -137,6 +137,12 @@
     </style>
   </head>
   <body>
+    <!-- Hidden data attribute để lưu redirectTarget -->
+    <div
+      id="payment-confirmation-data"
+      th:data-redirect-target="${redirectTarget != null ? redirectTarget : 'guest'}"
+      style="display: none"
+    ></div>
     <div class="receipt">
       <!-- Receipt Header -->
       <div class="receipt-header">
@@ -338,7 +344,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 
-    <script>
+    <script th:inline="javascript">
       // Initialize WebSocket connection for table release
       let stompClient = null;
       const BASE_URL = window.APP_CTX || "/pizzario";
@@ -371,17 +377,97 @@
       }
 
       function goHome() {
-        // Release table and redirect to guest page
+        // Lấy redirectTarget từ data attribute hoặc từ Thymeleaf inline
+        const dataElement = document.getElementById(
+          "payment-confirmation-data"
+        );
+        let redirectTarget = dataElement
+          ? dataElement.getAttribute("data-redirect-target")
+          : null;
+
+        // Fallback: thử lấy từ Thymeleaf inline
+        if (!redirectTarget || redirectTarget === "null") {
+          redirectTarget =
+            /*[[${redirectTarget != null ? redirectTarget : 'guest'}]]*/ "guest";
+        }
+
         const sessionId = /*[[${sessionId}]]*/ null;
         const tableId = /*[[${tableId}]]*/ null;
+        const backUrl = /*[[${backUrl}]]*/ null;
 
-        if (sessionId && tableId) {
-          // Call table release function
-          releaseTableAndGoHome(sessionId, tableId);
-        } else {
-          // Fallback: direct redirect to guest page
-          window.location.href = "/pizzario/guest";
+        // Debug: Check values
+        console.log("=== goHome() Debug ===");
+        console.log(
+          "redirectTarget:",
+          redirectTarget,
+          "type:",
+          typeof redirectTarget
+        );
+        console.log("sessionId:", sessionId);
+        console.log("tableId:", tableId);
+        console.log("backUrl:", backUrl);
+
+        // Phân biệt rõ ràng dựa trên redirectTarget
+        // So sánh với cả string và kiểm tra type
+        const isCashier =
+          redirectTarget === "cashier" ||
+          String(redirectTarget) === "cashier" ||
+          (redirectTarget &&
+            redirectTarget.toString().toLowerCase() === "cashier");
+        const isGuest =
+          redirectTarget === "guest" ||
+          String(redirectTarget) === "guest" ||
+          (redirectTarget &&
+            redirectTarget.toString().toLowerCase() === "guest");
+
+        console.log("isCashier:", isCashier);
+        console.log("isGuest:", isGuest);
+
+        if (isCashier) {
+          // Take-away: redirect về cashier dashboard
+          console.log("Take-away: Redirecting to cashier");
+          if (
+            backUrl &&
+            backUrl !== "null" &&
+            backUrl !== null &&
+            String(backUrl).trim() !== ""
+          ) {
+            window.location.href = backUrl;
+          } else {
+            window.location.href = "/pizzario/cashier";
+          }
+          return;
         }
+
+        // Guest/Dine-in: release table và về guest page
+        if (isGuest || !redirectTarget) {
+          console.log("Dine-in: Redirecting to guest");
+          // Nếu có sessionId và tableId thì release table qua WebSocket
+          if (
+            sessionId &&
+            sessionId !== null &&
+            sessionId !== "null" &&
+            tableId &&
+            tableId !== null &&
+            tableId !== "null"
+          ) {
+            console.log("Dine-in: Releasing table via WebSocket");
+            releaseTableAndGoHome(sessionId, tableId);
+          } else {
+            // Không có sessionId/tableId thì redirect trực tiếp
+            console.log("Dine-in: Redirecting directly to guest");
+            window.location.href = "/pizzario/guest";
+          }
+          return;
+        }
+
+        // Fallback: nếu không có redirectTarget hoặc giá trị không hợp lệ
+        console.log(
+          "Fallback: Unknown redirectTarget:",
+          redirectTarget,
+          "redirecting to guest"
+        );
+        window.location.href = "/pizzario/guest";
       }
 
       function releaseTableAndGoHome(sessionId, tableId) {
