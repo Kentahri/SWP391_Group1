@@ -48,9 +48,6 @@ public class ProductSize{
     @Column(name = "flash_sale_end")
     private LocalDateTime flashSaleEnd;
 
-    // Formatted fields for display
-
-
     public String getFlashSaleStartFormatted() {
         return flashSaleStart != null ? flashSaleStart.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "";
     }
