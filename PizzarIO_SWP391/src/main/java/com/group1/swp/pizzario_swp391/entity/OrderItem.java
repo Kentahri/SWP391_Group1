@@ -17,11 +17,12 @@ import lombok.*;
 @Data
 @ToString(exclude = {"order"})
 @NoArgsConstructor
-public class OrderItem {
+@AllArgsConstructor
+public class OrderItem{
 
-    @ManyToOne
-    @JoinColumn(name = "product_id")
-    private Product product;
+//    @ManyToOne
+//    @JoinColumn(name = "product_id")
+//    private Product product;
 
     @ManyToOne
     @JoinColumn(name = "order_id")
@@ -33,7 +34,9 @@ public class OrderItem {
 
     @Column(name = "unit_price")
     private double unitPrice;
+
     private int quantity;
+
     @Column(columnDefinition = "NVARCHAR(256)")
     private String note;
 
@@ -52,20 +55,11 @@ public class OrderItem {
     @JoinColumn(name = "product_size_id")
     private ProductSize productSize;
 
-    public enum OrderItemStatus {
+    public enum OrderItemStatus{
         PENDING, PREPARING, SERVED, CANCELLED
     }
 
-    public enum OrderItemType {
+    public enum OrderItemType{
         DINE_IN, TAKE_AWAY
-    }
-
-    public OrderItem(double unitPrice, int quantity, String note, OrderItemStatus orderItemStatus, OrderItemType orderItemType, double totalPrice) {
-        this.unitPrice = unitPrice;
-        this.quantity = quantity;
-        this.note = note;
-        this.orderItemStatus = orderItemStatus;
-        this.orderItemType = orderItemType;
-        this.totalPrice = totalPrice;
     }
 }

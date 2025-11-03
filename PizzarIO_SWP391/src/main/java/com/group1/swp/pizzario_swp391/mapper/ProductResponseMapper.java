@@ -20,7 +20,6 @@ public interface ProductResponseMapper {
     // Convert Create DTO to Entity
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "category", ignore = true)
-    @Mapping(target = "orderItems", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     Product toEntity(ProductCreateDTO createDTO);
@@ -28,7 +27,6 @@ public interface ProductResponseMapper {
     // Update Entity from Update DTO
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "category", ignore = true)
-    @Mapping(target = "orderItems", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     void updateEntity(@MappingTarget Product product, ProductUpdateDTO updateDTO);
