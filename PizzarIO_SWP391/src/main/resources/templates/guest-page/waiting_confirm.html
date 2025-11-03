@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Đang chờ xác nhận thanh toán</title>
+	<style>
+		:root {
+			--primary: #2e7d32;
+			--accent: #17a2b8;
+			--bg: #f8f9fa;
+			--text: #333;
+		}
+
+		body {
+			margin: 0;
+			font-family: "Segoe UI", Arial, sans-serif;
+			background: var(--bg);
+			color: var(--text);
+		}
+
+		.container {
+			min-height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 24px;
+		}
+
+		.card {
+			background: #fff;
+			border-radius: 16px;
+			box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+			max-width: 520px;
+			width: 100%;
+			padding: 28px;
+			text-align: center;
+		}
+
+		.qr-box { margin-top: 16px; padding: 16px; border: 1px dashed #e0e0e0; border-radius: 12px; }
+		.qr-title { font-weight: 600; margin-bottom: 10px; color: var(--accent); }
+		.amount { font-size: 18px; font-weight: 700; color: #222; margin-top: 6px; }
+		.note { font-size: 13px; color: #666; margin-top: 8px; }
+
+		.spinner {
+			width: 56px;
+			height: 56px;
+			border: 6px solid #e9ecef;
+			border-top-color: var(--accent);
+			border-radius: 50%;
+			margin: 8px auto 20px;
+			animation: spin 1s linear infinite;
+		}
+
+		@keyframes spin {
+			to { transform: rotate(360deg); }
+		}
+
+		.title {
+			font-size: 20px;
+			font-weight: 700;
+			margin: 6px 0 8px;
+			color: var(--primary);
+		}
+
+		.subtitle {
+			font-size: 14px;
+			color: #666;
+			margin-bottom: 16px;
+		}
+
+		.hint {
+			font-size: 13px;
+			color: #888;
+			margin-top: 12px;
+		}
+
+		.badge {
+			display: inline-block;
+			background: #e8f5e9;
+			color: var(--primary);
+			padding: 6px 10px;
+			border-radius: 999px;
+			font-size: 12px;
+			margin-bottom: 6px;
+		}
+	</style>
+
+	<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+</head>
+<body>
+	<div class="container">
+		<div class="card">
+			<div class="badge">Phiên [[${sessionId}]]</div>
+			<div class="spinner"></div>
+			<div class="title">Đang chờ thu ngân xác nhận</div>
+			<div class="subtitle">Vui lòng giữ nguyên màn hình. Chúng tôi sẽ tự động chuyển khi hoàn tất.</div>
+
+			<!-- Hiển thị QR nếu khách chọn QR_BANKING -->
+			<div class="qr-box" th:if="${paymentMethod != null and paymentMethod.toString() == 'QR_BANKING'}">
+				<div class="qr-title">Quét QR để thanh toán</div>
+				<div style="text-align: center; margin: 15px 0">
+                    <img
+                            th:src="|https://img.vietqr.io/image/BIDV-0388553383-compact.png?amount=${#strings.replace(#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT'), ',', '')}&addInfo=${'Thanh toan hoa don so ' + orderId}|"
+							alt="QR Code for Payment"
+							style="
+                  max-width: 200px;
+                  height: auto;
+                  border: 1px solid #ddd;
+                  border-radius: 8px;
+                "
+					/>
+					<br />
+					<span
+							style="
+                  font-size: 10px;
+                  color: #666;
+                  margin-top: 5px;
+                  display: block;
+                "
+					>
+                Quét mã QR bằng ứng dụng ngân hàng
+              </span>
+				</div>
+				<div class="amount">Số tiền: <span th:text="${#numbers.formatCurrency(orderTotal)}">0đ</span></div>
+				<div class="note">Nội dung: <span th:text="${'Thanh toan don #' + orderId}">Thanh toan don</span></div>
+				<div class="hint">Sau khi thanh toán xong, vui lòng chờ thu ngân xác nhận.</div>
+			</div>
+			<div class="hint">Nếu chờ quá lâu, hãy báo nhân viên để hỗ trợ nhanh hơn.</div>
+		</div>
+	</div>
+
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+		(function() {
+			var sessionId = /*[[${sessionId}]]*/ null;
+            var ctx = /*[[@{/}]]*/ '/pizzario/';
+
+			// DEBUG: Kiểm tra sessionId có giá trị không
+			console.log('=== WAITING CONFIRM DEBUG ===');
+			console.log('sessionId from server:', sessionId);
+			console.log('context path:', ctx);
+
+			if (!sessionId) {
+				console.error('sessionId is NULL! WebSocket will NOT connect!');
+				return;
+			}
+
+			console.log('sessionId OK, connecting WebSocket...');
+
+			var socket = new SockJS((ctx || '').replace(/\/$/, '') + '/ws');
+			var client = Stomp.over(socket);
+			if (window.location.hostname !== 'localhost') { client.debug = null; }
+
+			client.connect({}, function() {
+				client.subscribe('/queue/payment-' + sessionId, function(message) {
+					console.log('Received message from queue:', message);
+					try {
+						var data = JSON.parse(message.body);
+						// Nếu cashier xác nhận thành công => thông báo và quay về trang chọn bàn
+						if (data && (data.paymentStatus === 'PAID' || data.type === 'CONFIRMED')) {
+							try { alert('Thanh toán thành công! Vui lòng chọn bàn mới.'); } catch(e) {}
+							// Redirect đến endpoint complete để invalidate session
+							var completeUrl = (ctx || '').replace(/\/$/, '') + '/guest/payment/session/' + sessionId + '/complete';
+							window.location.href = completeUrl;
+						}
+
+					} catch (e) {
+						console.error('Waiting page parse error:', e);
+					}
+				});
+			});
+		})();
+		/*]]>*/
+	</script>
+</body>
+</html>
