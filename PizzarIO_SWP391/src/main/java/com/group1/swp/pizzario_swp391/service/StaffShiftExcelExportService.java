@@ -233,7 +233,10 @@ public class StaffShiftExcelExportService {
             long hours = Duration.between(dto.getCheckIn(), dto.getCheckOut()).toHours();
             return baseWage * hours * multiplier;
         }
-
+        else if ("LATE".equals(dto.getShiftStatus())) {
+            long hours = Duration.between(dto.getStartTime(), dto.getEndTime()).toHours();
+            return baseWage * hours * multiplier;
+        }
         return 0.0;
     }
 
