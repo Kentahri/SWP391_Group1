@@ -72,9 +72,10 @@ public class OrderService{
         Order finalOrder = order;
         cart.values().forEach(item -> {
             OrderItem orderItem = orderItemMapper.toOrderItem(item);
-            orderItem.setProduct(productRepository.findById(item.getProductId()).orElse(null));
+//            orderItem.setProduct(productRepository.findById(item.getProductId()).orElse(null));
             orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
             orderItem.setOrderItemType(OrderItem.OrderItemType.DINE_IN);
+            orderItem.setProductSize(item.getProductSize());
             finalOrder.setTotalPrice(finalOrder.getTotalPrice() + item.getTotalPrice());
             orderItemRepository.save(orderItem);
             finalOrder.addOrderItem(orderItem);
@@ -106,9 +107,10 @@ public class OrderService{
 
         for (CartItemDTO item : cart.values()) {
             OrderItem orderItem = orderItemMapper.toOrderItem(item);
-            orderItem.setProduct(productRepository.findById(item.getProductId()).orElse(null));
+//            orderItem.setProduct(productRepository.findById(item.getProductId()).orElse(null));
             orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
             orderItem.setOrderItemType(OrderItem.OrderItemType.TAKE_AWAY);
+            orderItem.setProductSize(item.getProductSize());
             orderItemRepository.save(orderItem);
             order.addOrderItem(orderItem);
             order.setTotalPrice(order.getTotalPrice() + item.getTotalPrice());
