@@ -1,11 +1,11 @@
 package com.group1.swp.pizzario_swp391.dto.kitchen;
 
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class DashboardOrderItemDTO {
     private Long id;
     private String productName;
+    private String sizeName;
     private Long categoryId;
     private String categoryName;
     private int quantity;
