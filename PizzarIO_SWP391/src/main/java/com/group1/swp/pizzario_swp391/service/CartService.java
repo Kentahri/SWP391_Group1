@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -58,63 +60,98 @@ public class CartService{
         if (cartItem != null) {
             cartItem.setQuantity(cartItem.getQuantity() + quantity);
             cartItem.setTotalPrice(cartItem.getUnitPrice() * cartItem.getQuantity());
+            if (note != null && !note.trim().isEmpty()) {
+                if (cartItem.getNote() == null || cartItem.getNote().trim().isEmpty()) {
+                    cartItem.setNote(note.trim());
+                } else {
+                    cartItem.setNote(cartItem.getNote().trim() + ", " + note.trim());
+                }
+            }
             cart.put(productSizeId, cartItem);
         } else {
             double currentPrice = getCurrentPrice(productSize);
-            cartItem = CartItemDTO.builder()
-                    .productId(productId)
-                    .productName(product.getName())
-                    .productImageUrl(product.getImageURL())
-                    .quantity(quantity)
-                    .unitPrice(currentPrice)
-                    .totalPrice(currentPrice * quantity)
-                    .note(note)
-                    .productSize(productSize)
-                    .build();
+            cartItem = CartItemDTO.builder().productId(productId).productName(product.getName()).productImageUrl(product.getImageURL()).quantity(quantity).unitPrice(currentPrice).totalPrice(currentPrice * quantity).note(note).productSize(productSize).build();
             cart.put(productSizeId, cartItem);
         }
     }
 
     public void updateCartItem(HttpSession session, Long productId, int quantity, String note, Long productSizeId) {
         Map<Long, CartItemDTO> cart = getCart(session);
-
-        // Lấy tất cả các item thuộc cùng productId
-        CartItemDTO oldItem = cart.values().stream()
+        CartItemDTO oldItem = cart.values()
+                .stream()
                 .filter(item -> item.getProductId().equals(productId))
                 .findFirst()
                 .orElse(null);
 
         if (oldItem == null) return;
 
-        // Nếu người dùng chọn size mới
-        if (!oldItem.getProductSize().getId().equals(productSizeId)) {
-            cart.remove(oldItem.getProductSize().getId());
+        Long oldSizeId = oldItem.getProductSize().getId();
+        note = (note != null) ? note.trim() : "";
 
+        // Nếu đổi sang size khác
+        if (!oldSizeId.equals(productSizeId)) {
+            cart.remove(oldSizeId);
+
+            CartItemDTO existingNewSizeItem = cart.get(productSizeId);
             ProductSize newSize = productSizeService.getById(productSizeId);
             double newPrice = getCurrentPrice(newSize);
 
-            CartItemDTO newItem = CartItemDTO.builder()
-                    .productId(productId)
-                    .productName(oldItem.getProductName())
-                    .productImageUrl(oldItem.getProductImageUrl())
-                    .quantity(quantity)
-                    .unitPrice(newPrice)
-                    .totalPrice(newPrice * quantity)
-                    .note(note)
-                    .productSize(newSize)
-                    .build();
+            if (existingNewSizeItem != null) {
+                // Gộp nếu size mới đã có
+                existingNewSizeItem.setQuantity(existingNewSizeItem.getQuantity() + quantity);
+                existingNewSizeItem.setTotalPrice(existingNewSizeItem.getQuantity() * existingNewSizeItem.getUnitPrice());
 
-            cart.put(productSizeId, newItem);
+                // Gộp note giữa item cũ + item mới + note mới
+                String combinedNote = Stream.of(
+                                existingNewSizeItem.getNote(),
+                                oldItem.getNote(),
+                                note
+                        ).filter(n -> n != null && !n.isBlank())
+                        .distinct()
+                        .collect(Collectors.joining(", "));
+
+                existingNewSizeItem.setNote(combinedNote);
+                cart.put(productSizeId, existingNewSizeItem);
+            } else {
+                // Tạo item mới nếu size đó chưa có
+                String mergedNote = Stream.of(oldItem.getNote(), note)
+                        .filter(n -> n != null && !n.isBlank())
+                        .distinct()
+                        .collect(Collectors.joining(", "));
+
+                CartItemDTO newItem = CartItemDTO.builder()
+                        .productId(productId)
+                        .productName(oldItem.getProductName())
+                        .productImageUrl(oldItem.getProductImageUrl())
+                        .quantity(quantity)
+                        .unitPrice(newPrice)
+                        .totalPrice(newPrice * quantity)
+                        .note(mergedNote)
+                        .productSize(newSize)
+                        .build();
+
+                cart.put(productSizeId, newItem);
+            }
+
         } else {
-            // Không đổi size -> chỉ cập nhật số lượng, ghi chú, và giá
+            // Không đổi size
             if (quantity > 0) {
                 oldItem.setQuantity(quantity);
                 oldItem.setTotalPrice(oldItem.getUnitPrice() * quantity);
-                oldItem.setNote(note);
-                cart.put(productSizeId, oldItem);
             } else {
                 cart.remove(productSizeId);
             }
+
+            // Gộp note nếu có note mới
+            if (!note.isEmpty()) {
+                String combinedNote = Stream.of(oldItem.getNote(), note)
+                        .filter(n -> n != null && !n.isBlank())
+                        .distinct()
+                        .collect(Collectors.joining(", "));
+                oldItem.setNote(combinedNote);
+            }
+
+            cart.put(productSizeId, oldItem);
         }
     }
 
@@ -127,20 +164,9 @@ public class CartService{
         List<CartItemDTO> cartItems = new ArrayList<>();
 
         getCart(session).values().forEach(item -> {
-            ProductSize fullPs = productSizeRepository.findById(item.getProductSize().getId())
-                    .orElse(null);
+            ProductSize fullPs = productSizeRepository.findById(item.getProductSize().getId()).orElse(null);
 
-            cartItems.add(CartItemDTO.builder()
-                    .productId(item.getProductId())
-                    .productName(item.getProductName())
-                    .productImageUrl(item.getProductImageUrl())
-                    .quantity(item.getQuantity())
-                    .unitPrice(item.getUnitPrice())
-                    .totalPrice(item.getQuantity() * item.getUnitPrice())
-                    .productSize(fullPs)
-                    .note(item.getNote())
-                    .productSizes(fullPs != null ? fullPs.getProduct().getProductSizes() : List.of())
-                    .build());
+            cartItems.add(CartItemDTO.builder().productId(item.getProductId()).productName(item.getProductName()).productImageUrl(item.getProductImageUrl()).quantity(item.getQuantity()).unitPrice(item.getUnitPrice()).totalPrice(item.getQuantity() * item.getUnitPrice()).productSize(fullPs).note(item.getNote()).productSizes(fullPs != null ? fullPs.getProduct().getProductSizes() : List.of()).build());
         });
         return cartItems;
     }
@@ -150,9 +176,7 @@ public class CartService{
         if (productSize.getFlashSaleStart() != null && productSize.getFlashSaleEnd() != null) {
             LocalDateTime now = LocalDateTime.now();
             if (now.isAfter(productSize.getFlashSaleStart()) && now.isBefore(productSize.getFlashSaleEnd())) {
-                return productSize.getFlashSalePrice() > 0
-                        ? productSize.getFlashSalePrice()
-                        : productSize.getBasePrice();
+                return productSize.getFlashSalePrice() > 0 ? productSize.getFlashSalePrice() : productSize.getBasePrice();
             }
         }
         return productSize.getBasePrice();
