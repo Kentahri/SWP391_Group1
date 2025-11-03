@@ -180,13 +180,28 @@ public interface StaffShiftRepository extends JpaRepository<StaffShift, Integer>
     @Query("SELECT ss FROM StaffShift ss WHERE ss.id = :id")
     Optional<StaffShift> findByIdWithLock(@Param("id") Integer id);
 
-    @Query("""
-        select ss from StaffShift ss 
-        join fetch ss.staff s 
-        join fetch ss.shift sh
-        where ss.workDate between :startDate and :endDate
-        order by s.name asc, ss.workDate asc, sh.startTime asc
-        """)
-    List<StaffShift> findByMonthRange(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
-
+    // Tính tổng lương theo tháng (chỉ tính các ca đã hoàn thành)
+    @Query(value = """
+                SELECT COALESCE(
+                    SUM(
+                        CASE
+                            WHEN ss.status = 'COMPLETED' THEN
+                               CAST(sh.salary_per_shift AS float) * FLOOR(CAST(DATEDIFF(MINUTE, sh.start_time, sh.end_time) AS float) / 60)
+                                * (100 - CAST(COALESCE(ss.penalty_percent, 0) AS FLOAT)) / 100
+                            WHEN ss.status = 'LEFT_EARLY' THEN
+                                CAST(sh.salary_per_shift AS float)
+                                * FLOOR(CAST(DATEDIFF(MINUTE, ss.check_in, ss.check_out) AS float) / 60.0)
+                        END
+                    ),
+                    0.0
+                )
+                FROM [Staff_Shift] ss
+                INNER JOIN [Shift] sh ON ss.shift_id = sh.id
+                WHERE ss.status IN ('COMPLETED','LEFT_EARLY')
+                  AND ss.check_in IS NOT NULL
+                  AND ss.check_out IS NOT NULL
+                  AND YEAR(ss.work_date) = :year
+                  AND MONTH(ss.work_date) = :month
+            """, nativeQuery = true)
+    Double totalMonthlyWage(@Param("year") int year, @Param("month") int month);
 }

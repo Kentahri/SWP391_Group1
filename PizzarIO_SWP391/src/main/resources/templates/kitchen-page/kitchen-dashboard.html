@@ -162,7 +162,12 @@
                     <div th:each="item : ${categoryEntry.value}" 
                          th:class="${'order-item-card ' + (item.status == 'PENDING' ? 'new' : (item.status == 'PREPARING' ? 'preparing' : 'completed'))}">
                         <div class="order-item-info">
-                            <h3 class="order-item-name" th:text="${item.productName}">Product Name</h3>
+                            <h3 class="order-item-name">
+                                <span th:text="${item.productName}">Product Name</span>
+                                <span th:if="${item.sizeName != null and !item.sizeName.isEmpty()}" 
+                                      class="order-item-size" 
+                                      th:text="'(' + ${item.sizeName} + ')'">(Size)</span>
+                            </h3>
                             <div class="order-item-meta">
                                 <span class="order-item-quantity" th:text="'x' + ${item.quantity}">x1</span>
                                 <span th:class="${'order-item-status ' + (item.status == 'PENDING' ? 'new' : (item.status == 'PREPARING' ? 'preparing' : 'completed'))}"

@@ -44,7 +44,7 @@ public class KitchenService {
      * Get dashboard order items for kitchen dashboard
      */
     public List<DashboardOrderItemDTO> getDashboardOrderItems() {
-        List<OrderItem> orderItems = orderItemRepository.findAll().stream()
+        List<OrderItem> orderItems = orderItemRepository.findAllWithRelations().stream()
                 .filter(item -> item.getOrder() != null && 
                                item.getOrder().getOrderStatus() != Order.OrderStatus.COMPLETED &&
                                item.getOrder().getOrderStatus() != Order.OrderStatus.CANCELLED)
@@ -165,9 +165,11 @@ public class KitchenService {
     private DashboardOrderItemDTO convertToDashboardDTO(OrderItem item) {
         return DashboardOrderItemDTO.builder()
                 .id(item.getId())
-                .productName(item.getProduct().getName())
-                .categoryId(item.getProduct().getCategory().getId())
-                .categoryName(item.getProduct().getCategory().getName())
+                .productName(item.getProductSize().getProduct().getName())
+                .sizeName(item.getProductSize() != null && item.getProductSize().getSize() != null ? 
+                         item.getProductSize().getSize().getSizeName() : null)
+                .categoryId(item.getProductSize().getProduct().getCategory().getId())
+                .categoryName(item.getProductSize().getProduct().getCategory().getName())
                 .quantity(item.getQuantity())
                 .status(item.getOrderItemStatus().name())
                 .note(item.getNote())
@@ -181,10 +183,10 @@ public class KitchenService {
                                   item.getOrder().getOrderType().toString() : "DINE_IN")
                         .build())
                 .productInfo(DashboardOrderItemDTO.ProductInfo.builder()
-                        .id(item.getProduct().getId())
-                        .name(item.getProduct().getName())
-                        .categoryId(item.getProduct().getCategory().getId())
-                        .categoryName(item.getProduct().getCategory().getName())
+                        .id(item.getProductSize().getProduct().getId())
+                        .name(item.getProductSize().getProduct().getName())
+                        .categoryId(item.getProductSize().getProduct().getCategory().getId())
+                        .categoryName(item.getProductSize().getProduct().getCategory().getName())
                         .build())
                 .build();
     }

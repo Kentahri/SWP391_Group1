@@ -15,8 +15,9 @@ public interface OrderItemMapper{
     @Mapping(source = "totalPrice", target = "totalPrice")
     OrderItem toOrderItem(CartItemDTO cartItemDTO);
 
-    @Mapping(target = "productName", source = "product.name")
-    @Mapping(target = "productImageUrl", source = "product.imageURL")
+    @Mapping(target = "productName", source = "productSize.product.name")
+    @Mapping(target = "sizeName", source = "productSize.size.sizeName")
+    @Mapping(target = "productImageUrl", source = "productSize.product.imageURL")
     @Mapping(target = "status", source = "orderItemStatus")
 //    @Mapping(target = "type", source = "orderItemType")
     OrderItemDTO toOrderItemDTO(OrderItem orderItem);

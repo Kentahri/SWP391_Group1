@@ -110,6 +110,7 @@
                 <thead style="background: #f8f9fa;">
                     <tr>
                         <th style="padding: 16px 24px; text-align: left; font-weight: 600; color: #24262b; border-bottom: 1px solid #e6e7ea;">Sản phẩm</th>
+                        <th style="padding: 16px 24px; text-align: center; font-weight: 600; color: #24262b; border-bottom: 1px solid #e6e7ea;">Size</th>
                         <th style="padding: 16px 24px; text-align: center; font-weight: 600; color: #24262b; border-bottom: 1px solid #e6e7ea;">Số lượng</th>
                         <th style="padding: 16px 24px; text-align: right; font-weight: 600; color: #24262b; border-bottom: 1px solid #e6e7ea;">Đơn giá</th>
                         <th style="padding: 16px 24px; text-align: right; font-weight: 600; color: #24262b; border-bottom: 1px solid #e6e7ea;">Thành tiền</th>
@@ -120,6 +121,7 @@
                 <tbody>
                     <tr th:each="item : ${items}" style="border-bottom: 1px solid #f1f3f5;">
                         <td style="padding: 16px 24px; color: #24262b; font-weight: 500;" th:text="${item.productName}"></td>
+                        <td style="padding: 16px 24px; text-align: center; color: #495057;" th:text="${item.sizeName ?: '-'}"></td>
                         <td style="padding: 16px 24px; text-align: center; color: #495057;" th:text="${item.quantity}"></td>
                         <td style="padding: 16px 24px; text-align: right; color: #495057;" 
                             th:text="${#numbers.formatDecimal(item.unitPrice,0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
