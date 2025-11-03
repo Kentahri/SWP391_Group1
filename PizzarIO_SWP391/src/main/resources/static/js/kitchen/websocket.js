@@ -127,16 +127,26 @@ function handleNewOrder(message) {
             if (!isOrderDetailPage) {
                 upsertOrderCard(orderData);
                 showNotification(`Order ${orderData.code} đã được cập nhật`, 'info');
+                // Nếu đang ở trang kitchen dashboard thì reload để cập nhật danh sách
+                if (isKitchenDashboardPage()) {
+                    scheduleDashboardReload();
+                }
             }
         } else if (orderData.type === 'NEW_ORDER') {
             console.log('[Kitchen] New order:', orderData);
             upsertOrderCard(orderData);
             showNotification(`Có order mới: ${orderData.code} - ${orderData.tableName || 'Take away'}`, 'info');
             playNotificationSound();
+            if (isKitchenDashboardPage()) {
+                scheduleDashboardReload();
+            }
         } else {
             // Fallback cho message không có type
             upsertOrderCard(orderData);
             showNotification(`Có order mới: ${orderData.code} - ${orderData.tableName || 'Take away'}`, 'info');
+            if (isKitchenDashboardPage()) {
+                scheduleDashboardReload();
+            }
         }
 
     } catch (error) {
@@ -156,6 +166,11 @@ function handleKitchenNotification(message) {
         console.log('[Kitchen] Personal notification:', notification);
 
         showNotification(notification.message || notification, 'info');
+
+        // Nếu đang ở trang kitchen dashboard, làm mới để đồng bộ giao diện
+        if (isKitchenDashboardPage()) {
+            scheduleDashboardReload();
+        }
 
     } catch (error) {
         console.error('Error parsing kitchen notification:', error);
@@ -483,6 +498,52 @@ function showNotification(message, type = 'info') {
             }
         }, 300);
     }, 3000);
+}
+
+/**
+ * Kiểm tra có đang ở trang Kitchen Dashboard không
+ */
+function isKitchenDashboardPage() {
+    try {
+        const path = window.location.pathname || '';
+        // Trang dashboard không phải order-list, outstock hay order detail
+        const isKitchenArea = path.includes('/kitchen');
+        const isOrderList = path.includes('/kitchen/order-list');
+        const isOutstock = path.includes('/kitchen/outstock');
+        const isOrderDetail = path.includes('/kitchen/order/');
+        if (!isKitchenArea || isOrderList || isOutstock || isOrderDetail) return false;
+        // Dựa trên cấu trúc DOM đặc trưng của dashboard
+        const hasDashboardTitle = document.querySelector('.dashboard-title');
+        const hasOrderItems = document.getElementById('orderItemsContainer');
+        const hasCategoryFilter = document.getElementById('categoryFilter');
+        return Boolean(hasDashboardTitle && hasOrderItems && hasCategoryFilter);
+    } catch (e) {
+        return false;
+    }
+}
+
+/**
+ * Lên lịch reload trang (debounce) để tránh reload liên tục khi có nhiều message
+ */
+let dashboardReloadTimer = null;
+function scheduleDashboardReload(delayMs = 800) {
+    try {
+        if (dashboardReloadTimer) {
+            clearTimeout(dashboardReloadTimer);
+        }
+        dashboardReloadTimer = setTimeout(() => {
+            // Tránh reload nếu người dùng đang thao tác submit ngay trước đó
+            const isRecentUpdate = window.lastUpdateByThisUser &&
+                Date.now() - window.lastUpdateByThisUser.timestamp < 1000;
+            if (!isRecentUpdate) {
+                window.location.reload();
+            }
+            dashboardReloadTimer = null;
+        }, delayMs);
+    } catch (e) {
+        // fallback nếu có lỗi
+        window.location.reload();
+    }
 }
 
 /**
