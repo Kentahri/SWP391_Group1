@@ -1,5 +1,6 @@
 package com.group1.swp.pizzario_swp391.dto.cart;
 
+import com.group1.swp.pizzario_swp391.entity.ProductSize;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -15,5 +16,6 @@ public class CartItemDTO {
     int quantity;
     double unitPrice;
     double totalPrice;
+    ProductSize productSize;
     String note;
 }

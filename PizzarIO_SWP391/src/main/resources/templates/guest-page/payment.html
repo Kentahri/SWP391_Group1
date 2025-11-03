@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <meta name="context-path" th:content="${contextPath ?: '/pizzario'}" />
     <title>Thanh toán - PizzarIO</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
@@ -15,9 +16,41 @@
       rel="stylesheet"
     />
     <link th:href="@{/css/payment.css}" rel="stylesheet" />
+    <!-- Initialize window.paymentData early to prevent errors -->
+    <script>
+      // Get context path from meta tag
+      const contextPathMeta = document.querySelector(
+        'meta[name="context-path"]'
+      );
+      window.APP_CTX = contextPathMeta
+        ? contextPathMeta.getAttribute("content")
+        : "/pizzario";
+      console.log("Context path (APP_CTX):", window.APP_CTX);
+
+      // Initialize window.paymentData with default values immediately
+      // This will be overwritten by the script at the bottom of the page with real Thymeleaf values
+      window.paymentData = window.paymentData || {
+        sessionId: null,
+        orderTotal: 0,
+        originalTotal: 0,
+        discountAmount: 0,
+        finalTotal: 0,
+        membershipPoints: 0,
+        appliedVoucherId: null,
+        availableVouchers: [],
+        paymentConfirmUrl: null,
+      };
+      console.log(
+        "Early initialization of window.paymentData:",
+        window.paymentData
+      );
+    </script>
   </head>
   <body>
-    <div class="container-fluid payment-page">
+    <div
+      class="container-fluid payment-page"
+      th:with="ctxPath=${contextPath ?: '/pizzario'}"
+    >
       <!-- Order Summary Section at Top -->
       <div class="order-summary-top">
         <div class="container">
@@ -178,7 +211,7 @@
                       </div>
                     </div>
                     <form
-                      th:action="@{'/guest/payment/session/' + ${sessionId}}"
+                      th:action="${isCashierFlow != null and isCashierFlow == true ? paymentActionUrl : ctxPath + '/guest/payment/session/' + sessionId}"
                       method="post"
                       style="display: inline"
                     >
@@ -216,10 +249,16 @@
                     >VOUCHER_CODE</span
                   >
                   <form
-                    th:action="@{'/guest/payment/session/' + ${sessionId}}"
+                    th:action="${isCashierFlow != null and isCashierFlow == true ? paymentActionUrl : ctxPath + '/guest/payment/session/' + sessionId}"
                     method="post"
                     style="display: inline"
                   >
+                    <input
+                      type="hidden"
+                      th:if="${_csrf != null}"
+                      th:name="${_csrf.parameterName}"
+                      th:value="${_csrf.token}"
+                    />
                     <input type="hidden" name="action" value="remove-voucher" />
                     <button
                       type="submit"
@@ -238,29 +277,6 @@
                 <i class="fas fa-user-circle"></i>
                 Thông tin thành viên
               </h4>
-
-              <!-- Membership Info Display -->
-              <div th:if="${membership != null}" class="membership-info">
-                <div class="alert alert-success">
-                  <i class="fas fa-check-circle"></i>
-                  <strong>Thành viên:</strong>
-                  <span th:text="${membership.name}">Tên thành viên</span>
-                  <span class="text-muted"
-                    >(SĐT:
-                    <span th:text="${membership.phoneNumber}">0123456789</span
-                    >)</span
-                  >
-                  <br />
-                  <small
-                    >Điểm hiện tại:
-                    <strong
-                      th:text="${membership.points != null ? membership.points : 0}"
-                      >0</strong
-                    >
-                    điểm</small
-                  >
-                </div>
-              </div>
 
               <!-- Fixed Membership Info Display (always show if membership exists) -->
               <div th:if="${membership != null}" class="membership-fixed-info">
@@ -301,23 +317,34 @@
 
               <!-- Points usage form -->
               <div th:if="${membership != null}" class="mt-3">
+                <!-- Display applied points with cancel button -->
                 <div
                   class="mb-2"
-                  th:if="${pointsUsed != null and pointsUsed > 0}"
+                  th:if="${pointsUsed != null and pointsUsed != 0 and pointsUsed > 0}"
                 >
-                  <div class="alert alert-info mb-2">
-                    Đang sử dụng <strong th:text="${pointsUsed}">0</strong> điểm
-                    (giảm
-                    <strong
-                      th:text="${#numbers.formatDecimal(pointsUsed * 10000, 0, 'COMMA', 0, 'POINT')}"
-                      >0</strong
-                    >
-                    VND)
+                  <div
+                    class="alert alert-info mb-2 d-flex align-items-center justify-content-between"
+                  >
+                    <span>
+                      Đang sử dụng
+                      <strong th:text="${pointsUsed}">0</strong> điểm (giảm
+                      <strong
+                        th:text="${#numbers.formatDecimal(pointsUsed * 10000, 0, 'COMMA', 0, 'POINT')}"
+                        >0</strong
+                      >
+                      VND)
+                    </span>
                     <form
-                      th:action="@{'/guest/payment/session/' + ${sessionId}}"
+                      th:action="${isCashierFlow != null and isCashierFlow == true ? paymentActionUrl : ctxPath + '/guest/payment/session/' + sessionId}"
                       method="post"
-                      style="display: inline"
+                      style="display: inline; margin-left: 10px"
                     >
+                      <input
+                        type="hidden"
+                        th:if="${_csrf != null}"
+                        th:name="${_csrf.parameterName}"
+                        th:value="${_csrf.token}"
+                      />
                       <input
                         type="hidden"
                         name="action"
@@ -325,7 +352,8 @@
                       />
                       <button
                         type="submit"
-                        class="btn btn-sm btn-outline-danger ms-2"
+                        class="btn btn-sm btn-outline-danger"
+                        style="margin-left: 8px"
                       >
                         <i class="fas fa-times"></i> Hủy
                       </button>
@@ -333,7 +361,7 @@
                   </div>
                 </div>
                 <form
-                  th:action="@{'/guest/payment/session/' + ${sessionId}}"
+                  th:action="${isCashierFlow != null and isCashierFlow == true ? paymentActionUrl : ctxPath + '/guest/payment/session/' + sessionId}"
                   method="post"
                   class="mb-2"
                 >
@@ -366,7 +394,7 @@
               <div th:if="${membership == null}" class="membership-verify">
                 <div class="membership-form">
                   <form
-                    th:action="@{'/guest/payment/session/' + ${sessionId}}"
+                    th:action="${isCashierFlow != null and isCashierFlow == true ? paymentActionUrl : ctxPath + '/guest/payment/session/' + sessionId}"
                     method="post"
                     id="membershipVerifyForm"
                   >
@@ -485,41 +513,103 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script th:src="@{/js/payment.js}"></script>
-    <script>
+    <!-- Initialize paymentData BEFORE loading payment.js -->
+    <script th:inline="javascript">
       // Pass data from server to JavaScript
-      window.paymentData = {
-        sessionId: /*[[${sessionId}]]*/ null,
-        orderTotal: /*[[${payment.orderTotal}]]*/ 0,
-        originalTotal: /*[[${originalTotal}]]*/ 0,
-        discountAmount: /*[[${discountAmount}]]*/ 0,
-        finalTotal: /*[[${finalTotal}]]*/ 0,
-        membershipPoints: /*[[${payment.membershipPoints}]]*/ 0,
-        appliedVoucherId: /*[[${payment.appliedVoucherId}]]*/ null,
-        availableVouchers: /*[[${availableVouchers}]]*/ [],
-      };
+      (function () {
+        // Get raw values from Thymeleaf
+        const rawSessionId = /*[[${sessionId}]]*/ null;
+        const rawOrderTotal = /*[[${payment?.orderTotal}]]*/ 0;
+        const rawOriginalTotal = /*[[${originalTotal}]]*/ 0;
+        const rawDiscountAmount = /*[[${discountAmount}]]*/ 0;
+        const rawFinalTotal = /*[[${finalTotal}]]*/ 0;
+        const rawMembershipPoints = /*[[${payment?.membershipPoints}]]*/ 0;
+        const rawAppliedVoucherId = /*[[${payment?.appliedVoucherId}]]*/ null;
+        const rawAvailableVouchers = /*[[${availableVouchers}]]*/ [];
+        const rawPaymentConfirmUrl = /*[[${paymentConfirmUrl}]]*/ null;
 
-      // Ensure sessionId is properly converted to number
-      if (window.paymentData.sessionId) {
-        window.paymentData.sessionId = parseInt(window.paymentData.sessionId);
-      }
+        // Debug: Log raw values BEFORE processing
+        console.log("=== RAW VALUES FROM THYMELEAF ===");
+        console.log(
+          "rawSessionId:",
+          rawSessionId,
+          "type:",
+          typeof rawSessionId
+        );
+        console.log(
+          "rawPaymentConfirmUrl:",
+          rawPaymentConfirmUrl,
+          "type:",
+          typeof rawPaymentConfirmUrl
+        );
+        console.log(
+          "rawPaymentConfirmUrl === null:",
+          rawPaymentConfirmUrl === null
+        );
+        console.log(
+          "rawPaymentConfirmUrl === undefined:",
+          rawPaymentConfirmUrl === undefined
+        );
 
-      // Debug: Check if sessionId is valid
-      console.log("=== TEMPLATE DEBUG ===");
-      console.log("Raw sessionId from Thymeleaf:", /*[[${sessionId}]]*/ "null");
-      console.log("SessionId from template:", window.paymentData.sessionId);
-      console.log("SessionId type:", typeof window.paymentData.sessionId);
-      console.log("SessionId is null:", window.paymentData.sessionId === null);
-      console.log(
-        "SessionId is undefined:",
-        window.paymentData.sessionId === undefined
-      );
-      console.log("SessionId is NaN:", isNaN(window.paymentData.sessionId));
-      console.log(
-        "SessionId value after parseInt:",
-        parseInt(window.paymentData.sessionId)
-      );
-      console.log("Full window.paymentData:", window.paymentData);
+        // Update window.paymentData with real values from Thymeleaf
+        // Ensure window.paymentData exists (initialized in head)
+        if (!window.paymentData) {
+          window.paymentData = {};
+        }
+
+        // Update with real values
+        window.paymentData.orderTotal = rawOrderTotal || 0;
+        window.paymentData.originalTotal = rawOriginalTotal || 0;
+        window.paymentData.discountAmount = rawDiscountAmount || 0;
+        window.paymentData.finalTotal = rawFinalTotal || 0;
+        window.paymentData.membershipPoints = rawMembershipPoints || 0;
+        window.paymentData.appliedVoucherId = rawAppliedVoucherId;
+        window.paymentData.availableVouchers = rawAvailableVouchers || [];
+
+        // Handle paymentConfirmUrl - preserve even if null/undefined
+        window.paymentData.paymentConfirmUrl =
+          rawPaymentConfirmUrl !== undefined &&
+          rawPaymentConfirmUrl !== null &&
+          rawPaymentConfirmUrl !== ""
+            ? rawPaymentConfirmUrl
+            : null;
+
+        // Ensure sessionId is properly converted to number if it exists
+        if (
+          rawSessionId != null &&
+          rawSessionId !== "null" &&
+          rawSessionId !== ""
+        ) {
+          const parsedSessionId = parseInt(rawSessionId);
+          if (!isNaN(parsedSessionId)) {
+            window.paymentData.sessionId = parsedSessionId;
+          } else {
+            window.paymentData.sessionId = null;
+          }
+        } else {
+          window.paymentData.sessionId = null;
+        }
+
+        // Debug: Check if sessionId is valid
+        console.log("=== TEMPLATE DEBUG ===");
+        console.log("Raw sessionId from Thymeleaf:", rawSessionId);
+        console.log(
+          "Raw paymentConfirmUrl from Thymeleaf:",
+          rawPaymentConfirmUrl
+        );
+        console.log("SessionId from template:", window.paymentData.sessionId);
+        console.log("SessionId type:", typeof window.paymentData.sessionId);
+        console.log(
+          "paymentConfirmUrl from template:",
+          window.paymentData.paymentConfirmUrl
+        );
+        console.log(
+          "paymentConfirmUrl type:",
+          typeof window.paymentData.paymentConfirmUrl
+        );
+        console.log("Full window.paymentData:", window.paymentData);
+      })();
     </script>
+    <script th:src="@{/js/payment.js}"></script>
   </body>
 </html>

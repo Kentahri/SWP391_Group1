@@ -2,6 +2,7 @@ package com.group1.swp.pizzario_swp391.controller.guest;
 
 import com.group1.swp.pizzario_swp391.dto.websocket.TableReleaseRequest;
 import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
+import com.group1.swp.pizzario_swp391.entity.ProductSize;
 import com.group1.swp.pizzario_swp391.entity.Session;
 import com.group1.swp.pizzario_swp391.repository.SessionRepository;
 import com.group1.swp.pizzario_swp391.service.*;
@@ -16,6 +17,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -31,7 +33,7 @@ public class GuestController{
     CartService cartService;
     OrderService orderService;
     SessionRepository sessionRepository;
-    private final GuestService guestService;
+    ProductSizeService productSizeService;
 
     @GetMapping
     public String guestPage(Model model, HttpSession session) {
@@ -78,6 +80,8 @@ public class GuestController{
             redirectAttributes.addFlashAttribute("errorMessage", "Phiên làm việc không khớp với bàn này.");
             return "redirect:/guest";
         }
+        session.setAttribute("sessionId", sessionId);
+        session.setAttribute("tableId", tableId);
         model.addAttribute("sessionId", sessionId);
         model.addAttribute("tableId", tableId);
         model.addAttribute("categories", categoryService.getAllCategories());
@@ -93,9 +97,11 @@ public class GuestController{
                                    @RequestParam("sessionId") Long sessionId,
                                    @RequestParam("tableId") Integer tableId,
                                    Model model) {
+        List<ProductSize> productSizes = productSizeService.findByProductId(productId);
         var product = productService.getProductById(productId);
         model.addAttribute("product", product);
         model.addAttribute("sessionId", sessionId);
+        model.addAttribute("productSizes", productSizes);
         model.addAttribute("tableId", tableId);
         return "guest-page/fragments/product_detail :: detail-content";
     }
@@ -105,10 +111,11 @@ public class GuestController{
                             @RequestParam("tableId") Integer tableId,
                             @RequestParam("productId") Long productId,
                             @RequestParam("quantity") Integer quantity,
+                            @RequestParam(value = "productSizeId", required = false) Long productSizeId,
                             @RequestParam("note") String note,
                             HttpSession session,
                             RedirectAttributes redirectAttributes) {
-        cartService.addToCart(session, productId, quantity, note);
+        cartService.addToCart(session, productId, quantity, note, productSizeId);
         redirectAttributes.addAttribute("sessionId", sessionId);
         redirectAttributes.addAttribute("tableId", tableId);
         return "redirect:/guest/menu";
@@ -119,9 +126,12 @@ public class GuestController{
                                  @RequestParam("tableId") Integer tableId,
                                  @RequestParam("productId") Long productId,
                                  @RequestParam("quantity") int quantity,
+                                 @RequestParam(value = "note", required = false) String note,
+                                 @RequestParam("productSizeId") Long productSizeId,
                                  HttpSession session,
                                  RedirectAttributes redirectAttributes) {
-        cartService.updateCartItem(session, productId, quantity);
+        System.out.println(productSizeId);
+        cartService.updateCartItem(session, productId, quantity, note, productSizeId);
         redirectAttributes.addAttribute("sessionId", sessionId);
         redirectAttributes.addAttribute("tableId", tableId);
         return "redirect:/guest/menu";
@@ -131,9 +141,10 @@ public class GuestController{
     public String removeFromCart(@RequestParam("sessionId") Long sessionId,
                                  @RequestParam("tableId") Integer tableId,
                                  @RequestParam("productId") Long productId,
+                                 @RequestParam("productSizeId") Long productSizeId,
                                  HttpSession session,
                                  RedirectAttributes redirectAttributes) {
-        cartService.removeFromCart(session, productId);
+        cartService.removeFromCart(session, productId, productSizeId);
         redirectAttributes.addAttribute("sessionId", sessionId);
         redirectAttributes.addAttribute("tableId", tableId);
         return "redirect:/guest/menu";

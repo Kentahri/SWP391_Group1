@@ -1,152 +1,198 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
-    />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>KITCHEN-DASHBOARD</title>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management - PizzarIO</title>
     <link rel="stylesheet" th:href="@{/css/kitchen.css}" />
+    <link rel="stylesheet" th:href="@{/css/kitchen-dashboard.css}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <!-- WebSocket Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <script th:src="@{/js/kitchen/websocket.js}"></script>
-  </head>
-  <body>
-    <div class="container">
-      <div class="sidebar">
-        <h2>KITCHEN</h2>
-        <a th:href="@{/kitchen/order-list}" class="tab-link active"
-          >Order Management</a
-        >
-        <a th:href="@{/kitchen/outstock}" class="tab-link"
-          >Out-of-Stock Management</a
-        >
-        <form th:action="@{/logout}" method="post" class="logout-form">
-          <input
-            type="hidden"
-            th:if="${_csrf != null}"
-            th:name="${_csrf.parameterName}"
-            th:value="${_csrf.token}"
-          />
-          <button type="submit" style="margin-top: 20px; width: 100%">
-            Logout
-          </button>
-        </form>
-      </div>
-      <div class="main-content">
-        <!-- Connection Status -->
-        <div id="connection-status" class="connection-status">
-          Đang kết nối...
+</head>
+<body>
+    <!-- Header -->
+    <header class="kitchen-header">
+        <div class="header-container">
+            <!-- Logo Section -->
+            <div class="header-brand">
+                <div class="brand-logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div class="brand-info">
+                        <h1 class="brand-title">Kitchen Manager</h1>
+                        <p class="brand-subtitle">PizzarIO Restaurant</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Section -->
+            <nav class="header-navigation">
+                <div class="nav-items">
+                    <a th:href="@{/kitchen/dashboard}" class="nav-link" data-page="dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#" class="nav-link active" data-page="orders">
+                        <i class="fas fa-list"></i>
+                        <span>Orders</span>
+                    </a>
+                    <a th:href="@{/kitchen/outstock}" class="nav-link" data-page="menu">
+                        <i class="fas fa-utensils"></i>
+                        <span>Menu</span>
+                    </a>
+                </div>
+            </nav>
+
+            <!-- User Section -->
+            <div class="header-user">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-details">
+                        <span class="user-name" th:text="${staffName ?: 'Kitchen Staff'}">Kitchen Staff</span>
+                        <span class="user-role">Kitchen Staff</span>
+                    </div>
+                </div>
+                <form th:action="@{/logout}" method="post" class="logout-form">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button type="submit" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="kitchen-main">
+        <!-- Page Title -->
+        <div class="dashboard-title">
+            <div class="title-left">
+                <h1><i class="fas fa-list"></i> Quản lý Orders</h1>
+                <p>Xem và quản lý các đơn hàng đang xử lý</p>
+            </div>
         </div>
 
-        <!-- Main order management content -->
-        <h2 class="om-title">Quản lý Orders</h2>
+        <!-- Filter Bar -->
         <div class="om-filter-bar">
-          <a
-            th:href="@{/kitchen/order-list}"
-            class="om-tab"
-            th:classappend="${status == null and type == null} ? 'active' : ''"
-            ><span class="om-icon">&#9679;</span> Đang xử lý (<span
-              th:text="${processingCount}"
-              >0</span
-            >)</a
-          >
-          <a
-            th:href="@{/kitchen/order-list(type='DINE_IN')}"
-            class="om-tab"
-            th:classappend="${type == 'DINE_IN'} ? 'active' : ''"
-            ><span class="om-icon">&#x1F374;</span> Tại bàn (<span
-              th:text="${dineInCount}"
-              >0</span
-            >)</a
-          >
-          <a
-            th:href="@{/kitchen/order-list(type='TAKE_AWAY')}"
-            class="om-tab"
-            th:classappend="${type == 'TAKE_AWAY'} ? 'active' : ''"
-            ><span class="om-icon">&#x1F3EA;</span> Take away (<span
-              th:text="${takeAwayCount}"
-              >0</span
-            >)</a
-          >
-          <a
-            th:href="@{/kitchen/order-list(status='COMPLETED')}"
-            class="om-tab"
-            th:classappend="${status == 'COMPLETED'} ? 'active' : ''"
-            ><span class="om-icon">&#x2714;</span> Hoàn thành (<span
-              th:text="${completedCount}"
-              >0</span
-            >)</a
-          >
-        </div>
-        <div class="order-list" id="order-list">
-          <!-- Hiển thị orders ban đầu từ Thymeleaf -->
-          <div
-            class="order-card"
-            th:each="order : ${orders}"
-            th:attr="data-order-id=${order.id},data-status=${order.status},data-type=${order.type}"
-          >
-            <div class="order-header">
-              <span class="order-id" th:text="${order.code}">ORD-XXX</span>
-              <span class="badge yellow" th:if="${order.status eq 'PREPARING'}"
-                >Đang chuẩn bị</span
-              >
-              <span class="badge gray" th:if="${order.status eq 'COMPLETED'}"
-                >Hoàn thành</span
-              >
-              <span class="badge red" th:if="${order.status eq 'CANCELLED'}"
-                >Đã hủy</span
-              >
-            </div>
-            <div class="order-meta">
-              <span class="order-table"
-                ><i class="fa fa-map-marker-alt"></i>
-                <span
-                  th:text="${order.tableName != null ? order.tableName : order.type}"
-                  >Bàn/Take away</span
-                >
-              </span>
-              <span class="order-time"
-                ><i class="fa fa-clock"></i>
-                <span th:text="${order.timeAgo}">5 phút trước</span></span
-              >
-            </div>
-            <div
-              class="order-info"
-              th:if="${order.note != null and !order.note.isEmpty()}"
-            >
-              <span class="order-note"
-                ><i class="fa fa-sticky-note"></i>
-                <span th:text="${order.note}">Ghi chú</span></span
-              >
-            </div>
-            <div class="order-total">
-              <span class="total-price"
-                >Tổng:
-                <span
-                  th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"
-                  >0 VNĐ</span
-                ></span
-              >
-            </div>
             <a
-              th:href="@{|/kitchen/order/${order.id}|}"
-              class="order-detail-btn"
-              >Xem chi tiết</a
+                th:href="@{/kitchen/order-list}"
+                class="om-tab"
+                th:classappend="${status == null and type == null} ? 'active' : ''"
             >
-          </div>
-          <div th:if="${#lists.isEmpty(orders)}" class="no-orders">
-            Không có đơn nào.
-          </div>
+                <span class="om-icon">&#9679;</span> 
+                Đang xử lý (<span th:text="${processingCount}">0</span>)
+            </a>
+            <a
+                th:href="@{/kitchen/order-list(type='DINE_IN')}"
+                class="om-tab"
+                th:classappend="${type == 'DINE_IN'} ? 'active' : ''"
+            >
+                <span class="om-icon">&#x1F374;</span> 
+                Tại bàn (<span th:text="${dineInCount}">0</span>)
+            </a>
+            <a
+                th:href="@{/kitchen/order-list(type='TAKE_AWAY')}"
+                class="om-tab"
+                th:classappend="${type == 'TAKE_AWAY'} ? 'active' : ''"
+            >
+                <span class="om-icon">&#x1F3EA;</span> 
+                Take away (<span th:text="${takeAwayCount}">0</span>)
+            </a>
+            <a
+                th:href="@{/kitchen/order-list(status='COMPLETED')}"
+                class="om-tab"
+                th:classappend="${status == 'COMPLETED'} ? 'active' : ''"
+            >
+                <span class="om-icon">&#x2714;</span> 
+                Hoàn thành (<span th:text="${completedCount}">0</span>)
+            </a>
         </div>
-      </div>
-    </div>
+
+        <!-- Order List -->
+        <div class="order-list" id="order-list">
+            <div
+                class="order-card"
+                th:each="order : ${orders}"
+                th:attr="data-order-id=${order.id},data-status=${order.status},data-type=${order.type}"
+            >
+                <div class="order-header">
+                    <span class="order-id" th:text="${order.code}">ORD-XXX</span>
+                    <span class="badge yellow" th:if="${order.status eq 'PREPARING'}"
+                        >Đang chuẩn bị</span
+                    >
+                    <span class="badge gray" th:if="${order.status eq 'COMPLETED'}"
+                        >Hoàn thành</span
+                    >
+                    <span class="badge red" th:if="${order.status eq 'CANCELLED'}"
+                        >Đã hủy</span
+                    >
+                </div>
+                <div class="order-meta">
+                    <span class="order-table">
+                        <i class="fa fa-map-marker-alt"></i>
+                        <span
+                            th:text="${order.tableName != null ? order.tableName : order.type}"
+                            >Bàn/Take away</span
+                        >
+                    </span>
+                    <span class="order-time">
+                        <i class="fa fa-clock"></i>
+                        <span th:text="${order.timeAgo}">5 phút trước</span>
+                    </span>
+                </div>
+                <div
+                    class="order-info"
+                    th:if="${order.note != null and !order.note.isEmpty()}"
+                >
+                    <span class="order-note">
+                        <i class="fa fa-sticky-note"></i>
+                        <span th:text="${order.note}">Ghi chú</span>
+                    </span>
+                </div>
+                <div class="order-total">
+                    <span class="total-price">
+                        Tổng:
+                        <span
+                            th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"
+                            >0 VNĐ</span
+                        >
+                    </span>
+                </div>
+                <a
+                    th:href="@{|/kitchen/order/${order.id}|}"
+                    class="order-detail-btn"
+                    >Xem chi tiết</a
+                >
+            </div>
+            <div th:if="${#lists.isEmpty(orders)}" class="no-orders">
+                Không có đơn nào.
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
     <script>
-      // Không cần filter client nữa
+        // Navigation handling
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.nav-link')) {
+                const navLink = e.target.closest('.nav-link');
+                const href = navLink.getAttribute('href');
+                
+                // Update active navigation
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                });
+                navLink.classList.add('active');
+            }
+        });
     </script>
-  </body>
+</body>
 </html>

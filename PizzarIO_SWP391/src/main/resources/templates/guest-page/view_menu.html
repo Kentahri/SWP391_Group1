@@ -60,16 +60,16 @@
                     />
                 </div>
                 <div class="name" th:text="${p.name}">Product Name</div>
-                <div class="price">
-                  <span th:if="${p.onFlashSale}">
-                      <span style="color:#e53935;font-weight:bold;" th:text="${p.currentPriceFormatted}">90.000₫</span>
-                    <span style="text-decoration:line-through; color:#888; margin-left:8px;"
-                          th:text="${p.basePriceFormatted}">110.000₫</span>
-                  </span>
-                    <span th:unless="${p.onFlashSale}" th:text="${p.currentPriceFormatted}">
-                    100.000₫
-                  </span>
-                </div>
+<!--                <div class="price">-->
+<!--                  <span th:if="${p.onFlashSale}">-->
+<!--                      <span style="color:#e53935;font-weight:bold;" th:text="${p.currentPriceFormatted}">90.000₫</span>-->
+<!--                    <span style="text-decoration:line-through; color:#888; margin-left:8px;"-->
+<!--                          th:text="${p.basePriceFormatted}">110.000₫</span>-->
+<!--                  </span>-->
+<!--                    <span th:unless="${p.onFlashSale}" th:text="${p.currentPriceFormatted}">-->
+<!--                    100.000₫-->
+<!--                  </span>-->
+<!--                </div>-->
                 <!-- NÚT THÊM VÀO GIỎ! -->
 
                 <form class="ajax-form"
@@ -82,6 +82,7 @@
                     <input type="hidden" name="tableId" th:value="${tableId}">
                     <input type="hidden" name="quantity" value="1"/>
                     <input type="hidden" name="note" value=""/>
+                    <input type="hidden" name="productSizeId" value=""/>
                     <button type="submit"
                             class="product-card add-btn"
                             style="margin-top:0;">
@@ -98,9 +99,7 @@
         <div th:replace="~{guest-page/fragments/view_cart :: cart-view}"></div>
 
         <!-- Ordered Items Section: Replaced with fragment -->
-        <div
-                th:replace="~{guest-page/fragments/view_order :: order-view}"
-        ></div>
+        <div th:replace="~{guest-page/fragments/view_order :: order-view}"></div>
     </aside>
 </div>
 

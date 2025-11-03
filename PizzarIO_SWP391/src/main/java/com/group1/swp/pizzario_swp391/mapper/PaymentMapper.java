@@ -16,7 +16,7 @@ public interface PaymentMapper {
     @Mapping(target = "discountAmount", ignore = true) // Sẽ được tính toán trong service
     @Mapping(target = "membershipId", source = "membership.id")
     @Mapping(target = "membershipPoints", source = "membership.points")
-    @Mapping(target = "pointsUsed", constant = "0") // Có thể tính toán dựa trên logic business
+    @Mapping(target = "pointsUsed", ignore = true) // Sẽ được set trong PaymentService từ pointsUsedBySession map
     @Mapping(target = "appliedVoucherId", source = "voucher.id")
     @Mapping(target = "appliedVoucher", ignore = true) // Sẽ được map riêng nếu cần
     @Mapping(target = "availableVouchers", ignore = true) // Sẽ được set riêng trong service
