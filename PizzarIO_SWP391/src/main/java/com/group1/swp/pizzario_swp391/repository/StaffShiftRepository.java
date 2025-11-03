@@ -179,4 +179,14 @@ public interface StaffShiftRepository extends JpaRepository<StaffShift, Integer>
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT ss FROM StaffShift ss WHERE ss.id = :id")
     Optional<StaffShift> findByIdWithLock(@Param("id") Integer id);
+
+    @Query("""
+        select ss from StaffShift ss 
+        join fetch ss.staff s 
+        join fetch ss.shift sh
+        where ss.workDate between :startDate and :endDate
+        order by s.name asc, ss.workDate asc, sh.startTime asc
+        """)
+    List<StaffShift> findByMonthRange(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
 }
