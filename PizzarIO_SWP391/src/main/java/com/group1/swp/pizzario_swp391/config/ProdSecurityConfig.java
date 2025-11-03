@@ -139,7 +139,7 @@ public class ProdSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/webjars/**", "/css/**", "/images/**", "/static/js/**", "/js/**",
                                 "/guest/**", "/missing_pass/**", "/ws/**", "/app/**", "/topic/**", "/queue/**",
-                                "/api/chatbot/**")
+                                "/api/chatbot/**", "/templates/error.html")
                         .permitAll()
                         .requestMatchers("/manager/**").hasRole("MANAGER")
                         .requestMatchers("/kitchen/**").hasRole("KITCHEN")
