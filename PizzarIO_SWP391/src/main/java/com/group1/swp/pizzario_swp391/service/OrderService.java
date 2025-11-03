@@ -72,7 +72,6 @@ public class OrderService{
         Order finalOrder = order;
         cart.values().forEach(item -> {
             OrderItem orderItem = orderItemMapper.toOrderItem(item);
-//            orderItem.setProduct(productRepository.findById(item.getProductId()).orElse(null));
             orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
             orderItem.setOrderItemType(OrderItem.OrderItemType.DINE_IN);
             orderItem.setProductSize(item.getProductSize());
@@ -121,7 +120,7 @@ public class OrderService{
         notifyKitchenNewOrder(order);
         return order;
     }
-    
+
     /**
      * Gửi thông báo order mới đến kitchen
      */
@@ -289,5 +288,14 @@ public class OrderService{
                     return dto;
                 })
                 .toList();
+    }
+
+    @Transactional
+    public void cancelOrderItem(Long orderItemId) {
+        OrderItem item = orderItemRepository.findById(orderItemId).orElseThrow();
+        if (item.getOrderItemStatus() == OrderItem.OrderItemStatus.PENDING) {
+            item.setOrderItemStatus(OrderItem.OrderItemStatus.CANCELLED);
+            orderItemRepository.save(item);
+        }
     }
 }

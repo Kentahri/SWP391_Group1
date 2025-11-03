@@ -150,6 +150,15 @@ public class GuestController{
         return "redirect:/guest/menu";
     }
 
+    @PostMapping("/order/cancel")
+    public String cancelOrder(@RequestParam Long orderItemId,
+                              @RequestParam Long sessionId,
+                              Model model) {
+        orderService.cancelOrderItem(orderItemId);
+        model.addAttribute("orderedItems", orderService.getOrderedItemsForView(sessionId));
+        return "redirect:/guest/menu";
+    }
+
     @PostMapping("/order/place")
     public String placeOrder(@RequestParam("sessionId") Long sessionId,
                              @RequestParam("tableId") Integer tableId,
