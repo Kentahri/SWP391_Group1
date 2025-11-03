@@ -410,6 +410,13 @@
                       <div class="item-name" th:text="${item.productName}">
                         —
                       </div>
+                      <div
+                        th:if="${item.sizeName != null && !#strings.isEmpty(item.sizeName)}"
+                        class="item-size"
+                        style="color: #6c757d; font-size: 13px; margin-top: 2px;"
+                      >
+                        Size: <span th:text="${item.sizeName}"></span>
+                      </div>
                       <div class="item-detail">
                         <span class="item-quantity"
                           >x<span th:text="${item.quantity}">1</span></span
