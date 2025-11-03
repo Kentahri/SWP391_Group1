@@ -38,10 +38,6 @@ public class OrderService{
     WebSocketService webSocketService;
     SessionService sessionService;
 
-    public Order getOrderById(Long orderId) {
-        return orderRepository.findById(orderId).orElseThrow();
-    }
-
     public List<OrderItemDTO> getOrderedItemsForView(Long sessionId) {
         List<OrderItemDTO> orderedItems = new ArrayList<>();
         Order order = getOrderForSession(sessionId);
@@ -197,9 +193,9 @@ public class OrderService{
     /**
      * Lấy order theo ID
      */
-//    public Order getOrderById(Long orderId) {
-//        return orderRepository.findById(orderId).orElse(null);
-//    }
+    public Order getOrderById(Long orderId) {
+        return orderRepository.findById(orderId).orElse(null);
+    }
 
     /**
      * Lưu order

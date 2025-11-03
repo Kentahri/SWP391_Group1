@@ -1,9 +1,13 @@
 package com.group1.swp.pizzario_swp391.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 @Table(
@@ -15,7 +19,8 @@ import lombok.ToString;
 @Data
 @NoArgsConstructor
 @ToString(exclude = {"product", "size"})
-public class ProductSize {
+@AllArgsConstructor
+public class ProductSize{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,13 +36,44 @@ public class ProductSize {
     @JoinColumn(name = "size_id", nullable = false)
     private Size size;
 
-    // Giá thực tế cho món đó với size này
-    @Column(name = "price_alt", nullable = false)
-    private double priceAlt;
+    @Column(name = "base_price")
+    private double basePrice;
 
-    public ProductSize(Product product, Size size, double priceAlt) {
-        this.product = product;
-        this.size = size;
-        this.priceAlt = priceAlt;
+    @Column(name = "flash_sale_price")
+    private double flashSalePrice;
+
+    @Column(name = "flash_sale_start")
+    private LocalDateTime flashSaleStart;
+
+    @Column(name = "flash_sale_end")
+    private LocalDateTime flashSaleEnd;
+
+    // Formatted fields for display
+
+
+    public String getFlashSaleStartFormatted() {
+        return flashSaleStart != null ? flashSaleStart.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "";
+    }
+
+    public String getFlashSaleEndFormatted() {
+        return flashSaleEnd != null ? flashSaleEnd.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "";
+    }
+
+    public boolean isOnFlashSale() {
+        LocalDateTime now = LocalDateTime.now();
+        return flashSaleStart != null && flashSaleEnd != null
+                && now.isAfter(flashSaleStart) && now.isBefore(flashSaleEnd);
+    }
+
+    public double getCurrentPrice() {
+        return isOnFlashSale() ? flashSalePrice : basePrice;
+    }
+
+    public String getCurrentPriceFormatted() {
+        return String.format("%,.0f VND", getCurrentPrice());
+    }
+
+    public String getBasePriceFormatted() {
+        return String.format("%,.0f VND", basePrice);
     }
 }

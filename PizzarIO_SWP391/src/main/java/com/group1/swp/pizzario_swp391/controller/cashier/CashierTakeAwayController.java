@@ -13,11 +13,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
-import java.time.LocalDateTime;
 
 @Controller
 @CashierUrl
@@ -48,23 +50,27 @@ public class CashierTakeAwayController {
     public String addToCart(@RequestParam("productId") Long productId,
                             @RequestParam(value = "quantity", defaultValue = "1") Integer quantity,
                             @RequestParam(value = "note", defaultValue = "") String note,
+                            @RequestParam("productSizeId") Long productSizeId,
                             HttpSession session) {
-        cartService.addToCart(session, productId, quantity, note);
+        cartService.addToCart(session, productId, quantity, note, productSizeId);
         return "redirect:/cashier/takeaway";
     }
 
     @PostMapping("/takeaway/cart/update")
     public String updateCartItem(@RequestParam("productId") Long productId,
                                  @RequestParam("quantity") int quantity,
+                                 @RequestParam("note") String note,
+                                 @RequestParam("productSizeId") Long productSizeId,
                                  HttpSession session) {
-        cartService.updateCartItem(session, productId, quantity);
+        cartService.updateCartItem(session, productId, quantity, note, productSizeId);
         return "redirect:/cashier/takeaway";
     }
 
     @PostMapping("/takeaway/cart/remove")
     public String removeFromCart(@RequestParam("productId") Long productId,
+                                 @RequestParam("productSizeId") Long productSizeId,
                                  HttpSession session) {
-        cartService.removeFromCart(session, productId);
+        cartService.removeFromCart(session, productId, productSizeId);
         return "redirect:/cashier/takeaway";
     }
 
