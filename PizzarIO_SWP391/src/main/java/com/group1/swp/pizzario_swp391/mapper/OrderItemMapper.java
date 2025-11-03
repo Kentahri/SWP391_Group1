@@ -16,6 +16,7 @@ public interface OrderItemMapper{
     OrderItem toOrderItem(CartItemDTO cartItemDTO);
 
     @Mapping(target = "productName", source = "productSize.product.name")
+    @Mapping(target = "sizeName", source = "productSize.size.sizeName")
     @Mapping(target = "productImageUrl", source = "productSize.product.imageURL")
     @Mapping(target = "status", source = "orderItemStatus")
     @Mapping(target = "productSize", source = "productSize")
