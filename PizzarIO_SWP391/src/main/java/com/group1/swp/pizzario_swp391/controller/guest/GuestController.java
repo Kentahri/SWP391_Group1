@@ -34,6 +34,7 @@ public class GuestController{
     OrderService orderService;
     SessionRepository sessionRepository;
     ProductSizeService productSizeService;
+    private final OrderItemService orderItemService;
 
     @GetMapping
     public String guestPage(Model model, HttpSession session) {
@@ -151,11 +152,15 @@ public class GuestController{
     }
 
     @PostMapping("/order/cancel")
-    public String cancelOrder(@RequestParam Long orderItemId,
-                              @RequestParam Long sessionId,
-                              Model model) {
-        orderService.cancelOrderItem(orderItemId);
+    public String cancelOrder(@RequestParam("orderItemId") Long orderItemId,
+                              @RequestParam("sessionId") Long sessionId,
+                              @RequestParam("tableId") Integer tableId,
+                              Model model,
+                              RedirectAttributes redirectAttributes) {
+        orderItemService.cancelOrderItem(orderItemId);
         model.addAttribute("orderedItems", orderService.getOrderedItemsForView(sessionId));
+        redirectAttributes.addAttribute("sessionId", sessionId);
+        redirectAttributes.addAttribute("tableId", tableId);
         return "redirect:/guest/menu";
     }
 

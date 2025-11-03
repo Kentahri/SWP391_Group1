@@ -1,6 +1,7 @@
 package com.group1.swp.pizzario_swp391.config.interceptor;
 
 import com.group1.swp.pizzario_swp391.entity.Order;
+import com.group1.swp.pizzario_swp391.repository.OrderRepository;
 import com.group1.swp.pizzario_swp391.service.OrderService;
 import com.group1.swp.pizzario_swp391.service.TableService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,6 +13,8 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import java.time.LocalDateTime;
+
 @Component
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -20,7 +23,7 @@ public class OrderFlowInterceptor implements HandlerInterceptor{
 
     OrderService orderService;
     TableService tableService;
-
+    OrderRepository orderRepository;
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         HttpSession session = request.getSession(false);
@@ -50,6 +53,9 @@ public class OrderFlowInterceptor implements HandlerInterceptor{
                 return false;
             } else {
                 // Nếu không còn order => clear session
+                order.setOrderStatus(Order.OrderStatus.CANCELLED);
+                order.setUpdatedAt(LocalDateTime.now());
+                orderRepository.save(order);
                 tableService.releaseTable(activeTableId, session);
                 return true;
             }

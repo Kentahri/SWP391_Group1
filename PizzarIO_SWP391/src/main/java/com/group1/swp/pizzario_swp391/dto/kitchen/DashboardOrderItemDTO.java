@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class DashboardOrderItemDTO {
     private Long id;
     private String productName;
+    private String sizeName;
     private Long categoryId;
     private String categoryName;
     private int quantity;
