@@ -225,7 +225,99 @@
             th:if="${selectedTableId != null && orderDetail == null && upcomingReservations == null && tableReservations == null && (showHistory == null || !showHistory)}"
             class="table-detail"
           >
-            <div class="detail-card">
+            <div class="detail-card" style="position: relative;">
+              <!-- Nút actions ở góc phải trên -->
+              <div
+                style="
+                  position: absolute;
+                  top: 12px;
+                  right: 12px;
+                  display: flex;
+                  flex-direction: row;
+                  gap: 8px;
+                  flex-wrap: wrap;
+                  justify-content: flex-end;
+                "
+              >
+                <!-- Nút mở khóa bàn (chỉ hiển thị khi bàn LOCKED) -->
+                <form
+                  th:if="${tableStatus != null && tableStatus.toString() == 'LOCKED'}"
+                  th:action="@{/cashier/tables/{tableId}/unlock(tableId=${selectedTableId})}"
+                  method="post"
+                  onsubmit="return confirm('Xác nhận mở khóa bàn này?');"
+                >
+                  <input
+                    type="hidden"
+                    th:name="${_csrf.parameterName}"
+                    th:value="${_csrf.token}"
+                  />
+                  <button
+                    type="submit"
+                    class="btn-open-table"
+                    style="
+                      padding: 8px 14px;
+                      background-color: #ff9800;
+                      color: white;
+                      border: none;
+                      border-radius: 4px;
+                      cursor: pointer;
+                      font-weight: 500;
+                      font-size: 13px;
+                    "
+                  >
+                    🔓 Mở khóa bàn
+                  </button>
+                </form>
+
+                <!-- Các nút khác (chỉ hiển thị khi bàn KHÔNG LOCKED) -->
+                <div
+                  th:if="${tableStatus == null || tableStatus.toString() != 'LOCKED'}"
+                  style="display: flex; flex-direction: row; gap: 8px; flex-wrap: wrap;"
+                >
+                  <button
+                    class="btn-reserve"
+                    th:onclick="'openReservationModal(' + ${selectedTableId} + ')'"
+                  >
+                    📅 Đặt trước bàn này
+                  </button>
+                  <a
+                    th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}"
+                    class="btn-view-reservations"
+                  >
+                    📋 Xem đơn đặt trước
+                  </a>
+
+                  <form
+                    th:if="${tableStatus != null && tableStatus.toString() == 'AVAILABLE'}"
+                    th:action="@{/cashier/tables/{tableId}/lock(tableId=${selectedTableId})}"
+                    method="post"
+                    onsubmit="return confirm('Xác nhận khóa bàn này để gộp bàn?');"
+                  >
+                    <input
+                      type="hidden"
+                      th:name="${_csrf.parameterName}"
+                      th:value="${_csrf.token}"
+                    />
+                    <button
+                      type="submit"
+                      class="btn-lock-table"
+                      style="
+                        padding: 8px 14px;
+                        background-color: #795548;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-weight: 500;
+                        font-size: 13px;
+                      "
+                    >
+                      🔒 Khóa bàn
+                    </button>
+                  </form>
+                </div>
+              </div>
+
               <!-- Thông tin bàn -->
               <div class="detail-row">
                 <strong>Bàn số:</strong>
@@ -250,67 +342,6 @@
                              (tableStatus.toString() == 'LOCKED' ? 'color: #795548; font-weight: 600;' : ''))))}"
                 >—</span>
               </div>
-
-              <!-- Nút actions ở dưới -->
-              <div class="table-actions">
-                <!-- Nút mở khóa bàn (chỉ hiển thị khi bàn LOCKED) -->
-                <form
-                  th:if="${tableStatus != null && tableStatus.toString() == 'LOCKED'}"
-                  th:action="@{/cashier/tables/{tableId}/unlock(tableId=${selectedTableId})}"
-                  method="post"
-                  onsubmit="return confirm('Xác nhận mở khóa bàn này?');"
-                >
-                  <input
-                    type="hidden"
-                    th:name="${_csrf.parameterName}"
-                    th:value="${_csrf.token}"
-                  />
-                  <button
-                    type="submit"
-                    class="btn-action btn-unlock"
-                  >
-                    🔓 Mở khóa bàn
-                  </button>
-                </form>
-
-                <!-- Các nút khác (chỉ hiển thị khi bàn KHÔNG LOCKED) -->
-                <div
-                  th:if="${tableStatus == null || tableStatus.toString() != 'LOCKED'}"
-                  class="action-buttons-group"
-                >
-                  <button
-                    class="btn-action btn-reserve"
-                    th:onclick="'openReservationModal(' + ${selectedTableId} + ')'"
-                  >
-                    📅 Đặt trước bàn này
-                  </button>
-                  <a
-                    th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}"
-                    class="btn-action btn-view-reservations"
-                  >
-                    📋 Xem đơn đặt trước
-                  </a>
-
-                  <form
-                    th:if="${tableStatus != null && tableStatus.toString() == 'AVAILABLE'}"
-                    th:action="@{/cashier/tables/{tableId}/lock(tableId=${selectedTableId})}"
-                    method="post"
-                    onsubmit="return confirm('Xác nhận khóa bàn này để gộp bàn?');"
-                  >
-                    <input
-                      type="hidden"
-                      th:name="${_csrf.parameterName}"
-                      th:value="${_csrf.token}"
-                    />
-                    <button
-                      type="submit"
-                      class="btn-action btn-lock"
-                    >
-                      🔒 Khóa bàn
-                    </button>
-                  </form>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -319,7 +350,49 @@
             th:if="${orderDetail != null && (showHistory == null || !showHistory)}"
             class="table-detail"
           >
-            <div class="detail-card">
+            <div class="detail-card" style="position: relative;">
+              <!-- Nút actions ở góc phải trên -->
+              <div
+                style="
+                  position: absolute;
+                  top: 12px;
+                  right: 12px;
+                  display: flex;
+                  flex-direction: row;
+                  gap: 8px;
+                  flex-wrap: wrap;
+                  justify-content: flex-end;
+                "
+              >
+                <!-- Paid Status Badge -->
+                <div
+                  th:if="${orderDetail.paymentStatus.toString() == 'PAID'}"
+                  style="
+                    padding: 6px 12px;
+                    background-color: #d4edda;
+                    color: #155724;
+                    border-radius: 4px;
+                    font-weight: 600;
+                    font-size: 13px;
+                  "
+                >
+                  ✅ Đã thanh toán
+                </div>
+
+                <button
+                  class="btn-reserve"
+                  th:onclick="'openReservationModal(' + ${selectedTableId} + ')'"
+                >
+                  📅 Đặt trước
+                </button>
+                <a
+                  th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}"
+                  class="btn-view-reservations"
+                >
+                  📋 Xem đơn đặt trước
+                </a>
+              </div>
+
               <!-- Thông tin bàn -->
               <div class="detail-row">
                 <strong>Bàn số:</strong>
@@ -410,13 +483,6 @@
                       <div class="item-name" th:text="${item.productName}">
                         —
                       </div>
-                      <div
-                        th:if="${item.sizeName != null && !#strings.isEmpty(item.sizeName)}"
-                        class="item-size"
-                        style="color: #6c757d; font-size: 13px; margin-top: 2px;"
-                      >
-                        Size: <span th:text="${item.sizeName}"></span>
-                      </div>
                       <div class="item-detail">
                         <span class="item-quantity"
                           >x<span th:text="${item.quantity}">1</span></span
@@ -482,32 +548,6 @@
               >
                 <strong>Ghi chú:</strong>
                 <span th:text="${orderDetail.note}"></span>
-              </div>
-            </div>
-
-            <!-- Nút actions cho order -->
-            <div class="table-actions">
-              <!-- Payment Status -->
-              <div
-                th:if="${orderDetail.paymentStatus.toString() == 'PAID'}"
-                class="payment-status-badge"
-              >
-                ✅ Đã thanh toán
-              </div>
-
-              <div class="action-buttons-group">
-                <button
-                  class="btn-action btn-reserve"
-                  th:onclick="'openReservationModal(' + ${selectedTableId} + ')'"
-                >
-                  📅 Đặt trước
-                </button>
-                <a
-                  th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}"
-                  class="btn-action btn-view-reservations"
-                >
-                  📋 Xem đơn đặt trước
-                </a>
               </div>
             </div>
 

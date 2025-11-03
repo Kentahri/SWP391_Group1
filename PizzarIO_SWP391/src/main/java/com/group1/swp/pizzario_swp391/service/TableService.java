@@ -315,7 +315,6 @@ public class TableService{
                 .map(item -> OrderItemDTO.builder()
                         .id(item.getId())
                         .productName(item.getProductSize().getProduct() != null ? item.getProductSize().getProduct().getName() : "Unknown")
-                        .sizeName(item.getProductSize().getSize().getSizeName())
                         .productImageUrl(item.getProductSize().getProduct() != null ? item.getProductSize().getProduct().getImageURL() : null)
                         .quantity(item.getQuantity())
                         .unitPrice(item.getUnitPrice())

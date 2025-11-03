@@ -27,7 +27,8 @@ public class ShiftService {
     private final Map<String, Long> defaultSalaryPerShift = Map.of(
             "SANG", 150_000L,
             "CHIEU", 150_000L,
-            "TOI", 200_000L);
+            "TOI", 200_000L,
+            "DEM", 250_000L);
 
     public List<ShiftDTO> getAllShift() {
         List<ShiftDTO> list = shiftMapper.toShiftDTOs(shiftRepository.findAll());
