@@ -17,7 +17,6 @@ import lombok.*;
 @Data
 @ToString(exclude = {"order"})
 @NoArgsConstructor
-@AllArgsConstructor
 public class OrderItem{
 
 //    @ManyToOne
@@ -61,5 +60,16 @@ public class OrderItem{
 
     public enum OrderItemType{
         DINE_IN, TAKE_AWAY
+    }
+
+    public OrderItem(Order order, double unitPrice, int quantity, String note, OrderItemStatus orderItemStatus, double totalPrice, ProductSize productSize, OrderItemType orderItemType) {
+        this.order = order;
+        this.unitPrice = unitPrice;
+        this.quantity = quantity;
+        this.note = note;
+        this.orderItemStatus = orderItemStatus;
+        this.totalPrice = totalPrice;
+        this.productSize = productSize;
+        this.orderItemType = orderItemType;
     }
 }
