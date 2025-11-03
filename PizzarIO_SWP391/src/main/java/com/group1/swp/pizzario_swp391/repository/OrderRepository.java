@@ -31,7 +31,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>{
                     )
                     FROM Order o
                     JOIN o.orderItems oi
-                    JOIN oi.product p
+                    JOIN oi.productSize.product p
                     WHERE o.orderStatus = 'COMPLETED' AND o.paymentStatus = 'PAID'
                     GROUP BY p.id, p.name
                     ORDER BY SUM(oi.quantity) DESC
@@ -47,7 +47,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>{
                     )
                     FROM Order o
                     JOIN o.orderItems oi
-                    JOIN oi.product p
+                    JOIN oi.productSize.product p
                     WHERE o.orderStatus = 'COMPLETED' AND o.paymentStatus = 'PAID'
                     AND o.createdAt >= :startDate AND o.createdAt < :endDate
                     GROUP BY p.id, p.name
@@ -67,7 +67,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>{
                     )
                     FROM Order o
                     JOIN o.orderItems oi
-                    JOIN oi.product p
+                    JOIN oi.productSize.product p
                     WHERE o.orderStatus = 'COMPLETED' AND o.paymentStatus = 'PAID'
                     AND o.createdAt >= :startDate AND o.createdAt < :endDate
                     AND p.category.id = :categoryId
@@ -84,7 +84,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>{
 //                         SELECT p
 //                         FROM Order o
 //                         JOIN o.orderItems oi
-//                         JOIN oi.product p
+//                         JOIN oi.productSize.product p
 //                         WHERE o.orderStatus = 'COMPLETED' AND o.paymentStatus = 'PAID'
 //                         GROUP BY p.id, p.name, p.description, p.imageURL, p.basePrice,
 //                                  p.flashSalePrice, p.flashSaleStart, p.flashSaleEnd,
@@ -97,7 +97,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>{
             SELECT ps.product
             FROM Order o
             JOIN o.orderItems oi
-            JOIN oi.product p
+            JOIN oi.productSize.product p
             JOIN ProductSize ps ON ps.product = p
             WHERE o.orderStatus = 'COMPLETED'
               AND o.paymentStatus = 'PAID'
