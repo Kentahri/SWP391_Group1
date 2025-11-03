@@ -8,12 +8,12 @@ spring:
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: none
-
+      ddl-auto: create-drop
     properties:
       hibernate:
         jdbc:
           time_zone: Asia/Ho_Chi_Minh
+    defer-datasource-initialization: true
   devtools:
     add-properties: true
 
