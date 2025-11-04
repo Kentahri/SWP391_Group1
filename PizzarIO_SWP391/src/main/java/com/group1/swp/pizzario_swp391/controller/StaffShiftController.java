@@ -5,18 +5,17 @@ import com.group1.swp.pizzario_swp391.dto.ShiftDTO;
 import com.group1.swp.pizzario_swp391.dto.data_analytics.StatsStaffShiftDTO;
 import com.group1.swp.pizzario_swp391.dto.data_analytics.WeekDayDTO;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffResponseDTO;
-import com.group1.swp.pizzario_swp391.dto.staffshift.ManualCompleteShiftRequest;
 import com.group1.swp.pizzario_swp391.dto.staffshift.StaffShiftDTO;
 import com.group1.swp.pizzario_swp391.dto.staffshift.StaffShiftResponseDTO;
 import com.group1.swp.pizzario_swp391.entity.Shift;
 import com.group1.swp.pizzario_swp391.entity.Staff;
 import com.group1.swp.pizzario_swp391.entity.StaffShift;
+import com.group1.swp.pizzario_swp391.repository.StaffShiftRepository;
 import com.group1.swp.pizzario_swp391.service.*;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -28,8 +27,7 @@ import java.time.LocalDate;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.*;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import java.util.stream.Collectors;
 
 @Controller
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -44,7 +42,6 @@ public class StaffShiftController {
     // removed unused mapperResponse
 
     StaffShiftManagementService staffShiftManagementService;
-    private final StaffShiftExcelExportService staffShiftExcelExportService;
 
     @GetMapping("/staff_shifts")
     public String listStaffShifts(
@@ -81,11 +78,6 @@ public class StaffShiftController {
                 .map(Enum::name)
                 .toList();
         model.addAttribute("shiftTypes", shiftTypes);
-
-        List<Integer> years = Arrays.asList(2020, 2021, 2022, 2023, 2024, 2025, 2026);
-        List<Integer> months = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
-        model.addAttribute("exportYears", years);
-        model.addAttribute("exportMonths", months);
 
         if (!model.containsAttribute("staffShiftForm")) {
             StaffShiftDTO newForm = new StaffShiftDTO();
@@ -339,52 +331,6 @@ public class StaffShiftController {
             result.add(m);
         }
         return result;
-    }
-
-    @PostMapping("/staff_shifts/export")
-    public ResponseEntity<byte[]> exportMonthlyExcel(
-            @RequestParam int year,
-            @RequestParam int month) {
-        try {
-            byte[] excelData = staffShiftExcelExportService.generateMonthlyReport(year, month);
-
-            String fileName = String.format("Luong_Thang_%02d_%d.xlsx", month, year);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            headers.setContentDispositionFormData("attachment", fileName);
-
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .body(excelData);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @PostMapping("/staff_shifts/manual-complete/{id}")
-    public String manualCompleteShift(
-            @PathVariable int id,
-            @Valid @ModelAttribute ManualCompleteShiftRequest request,
-            BindingResult bindingResult,
-            RedirectAttributes redirectAttributes) {
-
-        if (bindingResult.hasErrors()) {
-            redirectAttributes.addFlashAttribute("error",
-                    "Invalid input: " + bindingResult.getAllErrors().get(0).getDefaultMessage());
-            return "redirect:/manager/staff_shifts";
-        }
-
-        try {
-            staffShiftService.manuallyCompleteShift(id, request);
-            redirectAttributes.addFlashAttribute("success",
-                    "Shift completed successfully!");
-        } catch (RuntimeException e) {
-            redirectAttributes.addFlashAttribute("error",
-                    "Failed to complete shift: " + e.getMessage());
-        }
-
-        return "redirect:/manager/staff_shifts";
     }
 
 }

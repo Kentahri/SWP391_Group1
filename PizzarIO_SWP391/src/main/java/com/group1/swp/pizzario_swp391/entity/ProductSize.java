@@ -27,12 +27,12 @@ public class ProductSize{
     private Long id;
 
     // Món ăn
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
     // Size tương ứng
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "size_id", nullable = false)
     private Size size;
 
@@ -73,4 +73,5 @@ public class ProductSize{
     public String getBasePriceFormatted() {
         return String.format("%,.0f VND", basePrice);
     }
+
 }
