@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Quản lý Kích thước • PizzarIO</title>
+    <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}"/>
+    <link rel="stylesheet" th:href="@{/css/admin_page/size-list.css}"/>
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}"/>
+    <meta name="_csrf_parameter" th:if="${_csrf != null}" th:content="${_csrf.parameterName}"/>
+</head>
+<body>
+<div class="app">
+    <div th:insert="~{fragments/sidebar :: sidebar('sizes')}"></div>
+
+    <div class="main-content">
+        <div class="page-header">
+            <div class="header-content">
+                <h1>Quản lý Kích thước</h1>
+            </div>
+
+            <div class="size-search-container">
+                <input type="text" id="sizeSearch" class="search-input"
+                       placeholder="Tìm kiếm kích thước..." autocomplete="off"/>
+                <span class="size-search-icon"></span>
+            </div>
+
+            <a th:href="@{/manager/sizes/new}" class="btn-add-size">
+                <span>+</span> Thêm kích thước
+            </a>
+        </div>
+
+        <!-- Modal -->
+        <div id="sizeModal" class="size-modal">
+            <div class="size-modal-content">
+                <div class="size-modal-header">
+                    <h2 id="sizeModalTitle">Thêm kích thước mới</h2>
+                    <span class="size-close" onclick="SizeList.closeModal()">×</span>
+                </div>
+
+                <form id="sizeForm" method="post" th:action="@{/manager/sizes/save}"
+                      th:object="${sizeForm}">
+                    <input type="hidden" th:field="*{id}"/>
+                    <input type="hidden" th:if="${_csrf != null}"
+                           th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                    <div class="size-alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+                    <div class="size-mb-3">
+                        <label>Tên kích thước <span class="size-required">*</span></label>
+                        <input type="text" th:field="*{sizeName}" placeholder="VD: Nhỏ (S)"
+                               th:errorclass="size-error-field"/>
+                        <span class="size-error-message" th:if="${#fields.hasErrors('sizeName')}"
+                              th:errors="*{sizeName}"></span>
+                    </div>
+
+                    <div class="size-modal-footer">
+                        <button type="submit" class="size-btn size-btn-primary">Lưu</button>
+                        <button type="button" class="size-btn size-btn-secondary" onclick="SizeList.closeModal()">Hủy
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Danh sách -->
+        <div class="size-list-container">
+            <div class="size-list">
+                <div th:each="size : ${sizes}"
+                     class="size-item"
+                     th:id="'size-' + ${size.id}">
+
+                    <div class="size-info">
+                        <div class="size-name-line">
+                            <h3 class="size-name" th:text="${size.sizeName}">Nhỏ (S)</h3>
+                        </div>
+                        <p class="size-muted">
+                            Dùng trong <strong th:text="${#lists.size(size.productSizes) ?: 0}">0</strong> món
+                        </p>
+                    </div>
+
+                    <div class="size-actions">
+                        <a th:href="@{/manager/sizes/edit/{id}(id=${size.id})}"
+                           class="size-btn-icon size-btn-edit" title="Sửa">Edit</a>
+
+<!--                        <form th:action="@{/manager/sizes/delete/{id}(id=${size.id})}"-->
+<!--                              method="post" class="size-inline-form"-->
+<!--                              onsubmit="return confirm('Xóa kích thước này?')">-->
+<!--                            <input type="hidden" th:if="${_csrf != null}"-->
+<!--                                   th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>-->
+<!--                            <button type="submit" class="size-btn-icon size-btn-delete" title="Xóa">Delete</button>-->
+<!--                        </form>-->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JS ĐỘC LẬP -->
+<script th:inline="javascript">
+    window.sizeOpenModal = /*[[${openModal}]]*/ false;
+</script>
+<script th:src="@{/js/admin/size-list.js}"></script>
+</body>
+</html>
