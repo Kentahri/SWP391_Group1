@@ -41,7 +41,7 @@ public class Shift {
     }
 
     public enum ShiftType {
-        SÁNG, CHIỀU, TỐI
+        SANG, CHIEU, TOI
     }
 
     public void setShiftName(ShiftType shiftName) {
@@ -51,9 +51,9 @@ public class Shift {
 
     private void setSalaryByShiftType(ShiftType type) {
         switch (type) {
-            case SÁNG -> this.salaryPerShift = 150000;
-            case CHIỀU -> this.salaryPerShift = 150000;
-            case TỐI -> this.salaryPerShift = 200000;
+            case SANG -> this.salaryPerShift = 150000;
+            case CHIEU -> this.salaryPerShift = 150000;
+            case TOI -> this.salaryPerShift = 200000;
             default -> this.salaryPerShift = 0;
         }
     }

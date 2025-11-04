@@ -58,13 +58,19 @@ public class StaffController {
         model.addAttribute("totalStaff", totalStaff);
         model.addAttribute("activeStaff", activeStaff);
 
+        // Calculate monthly salary statistics
+        Double totalMonthlySalary = staffService.getTotalMonthlySalary();
+        Double averageSalaryPerStaff = staffService.getAverageSalaryPerStaff();
+        model.addAttribute("totalSalary", totalMonthlySalary);
+        model.addAttribute("avgSalary", averageSalaryPerStaff);
+
         return "admin_page/staff/list";
     }
 
     @GetMapping("/staff/create")
     public String createForm(Model model) {
         model.addAttribute("staff", new StaffCreateDTO());
-        model.addAttribute("roles", Staff.Role.values());
+        model.addAttribute("roles", staffService.getAvailableRoles(null));
         model.addAttribute("formTitle", "Create Staff");
         return "admin_page/staff/create";
     }
@@ -78,14 +84,14 @@ public class StaffController {
 
         // ❗ Khi có lỗi validate, QUAY LẠI đúng view "staff/create"
         if (bindingResult.hasErrors()) {
-            model.addAttribute("roles", Staff.Role.values());
+            model.addAttribute("roles", staffService.getAvailableRoles(null));
             model.addAttribute("formTitle", "Create Staff");
             return "admin_page/staff/create";
         }
 
           String errorMsg = staffService.createNewStaff(dto);
         if (errorMsg != null) {
-            model.addAttribute("roles", Staff.Role.values());
+            model.addAttribute("roles", staffService.getAvailableRoles(null));
             model.addAttribute("formTitle", "Create Staff");
             model.addAttribute("error", errorMsg);
             return "admin_page/staff/create";
@@ -100,7 +106,7 @@ public class StaffController {
         StaffUpdateDTO staffUpdateDTO = staffService.getStaffForUpdate(id);
         model.addAttribute("staff", staffUpdateDTO);
         model.addAttribute("staffID", id);
-        model.addAttribute("roles", Staff.Role.values());
+        model.addAttribute("roles", staffService.getAvailableRoles(id));
         return "admin_page/staff/edit";
     }
 
@@ -112,7 +118,7 @@ public class StaffController {
                               Model model,
                               RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("roles", Staff.Role.values());
+            model.addAttribute("roles", staffService.getAvailableRoles(id));
             model.addAttribute("staffID", id);
             return "admin_page/staff/edit";
         }
@@ -120,7 +126,7 @@ public class StaffController {
         String errorMsg = staffService.updateStaff(id, staffUpdateDTO);
         if (errorMsg != null) {
             model.addAttribute("staff", staffUpdateDTO);
-            model.addAttribute("roles", Staff.Role.values());
+            model.addAttribute("roles", staffService.getAvailableRoles(id));
             model.addAttribute("staffID", id);
             model.addAttribute("error", errorMsg);
             return "admin_page/staff/edit";
