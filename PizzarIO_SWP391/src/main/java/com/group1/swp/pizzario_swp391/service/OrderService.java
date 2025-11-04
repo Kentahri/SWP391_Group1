@@ -9,7 +9,6 @@ import com.group1.swp.pizzario_swp391.entity.OrderItem;
 import com.group1.swp.pizzario_swp391.mapper.OrderItemMapper;
 import com.group1.swp.pizzario_swp391.repository.OrderItemRepository;
 import com.group1.swp.pizzario_swp391.repository.OrderRepository;
-import com.group1.swp.pizzario_swp391.repository.ProductRepository;
 import com.group1.swp.pizzario_swp391.repository.SessionRepository;
 import jakarta.servlet.http.HttpSession;
 import lombok.AccessLevel;
@@ -29,7 +28,6 @@ import java.util.Map;
 
 public class OrderService{
 
-    ProductRepository productRepository;
     OrderItemRepository orderItemRepository;
     OrderRepository orderRepository;
     SessionRepository sessionRepository;
@@ -72,7 +70,6 @@ public class OrderService{
         Order finalOrder = order;
         cart.values().forEach(item -> {
             OrderItem orderItem = orderItemMapper.toOrderItem(item);
-//            orderItem.setProduct(productRepository.findById(item.getProductId()).orElse(null));
             orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
             orderItem.setOrderItemType(OrderItem.OrderItemType.DINE_IN);
             orderItem.setProductSize(item.getProductSize());
@@ -80,6 +77,7 @@ public class OrderService{
             orderItemRepository.save(orderItem);
             finalOrder.addOrderItem(orderItem);
         });
+        order.setUpdatedAt(LocalDateTime.now());
         orderRepository.save(order);
         cartService.clearCart(session);
 
@@ -107,7 +105,6 @@ public class OrderService{
 
         for (CartItemDTO item : cart.values()) {
             OrderItem orderItem = orderItemMapper.toOrderItem(item);
-//            orderItem.setProduct(productRepository.findById(item.getProductId()).orElse(null));
             orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
             orderItem.setOrderItemType(OrderItem.OrderItemType.TAKE_AWAY);
             orderItem.setProductSize(item.getProductSize());
@@ -121,7 +118,7 @@ public class OrderService{
         notifyKitchenNewOrder(order);
         return order;
     }
-    
+
     /**
      * Gửi thông báo order mới đến kitchen
      */
@@ -290,4 +287,5 @@ public class OrderService{
                 })
                 .toList();
     }
+
 }
