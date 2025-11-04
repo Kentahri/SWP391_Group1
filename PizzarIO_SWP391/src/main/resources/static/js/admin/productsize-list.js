@@ -1,11 +1,11 @@
 // ===== BIẾN TOÀN CỤC =====
-let selectedSizes = [];
+let selectedProductSizes = [];
 
 // ===== KHỞI TẠO =====
 document.addEventListener("DOMContentLoaded", function () {
-    const modal = document.getElementById("sizeModal");
-    const form = document.getElementById("sizeForm");
-    const searchInput = document.getElementById("sizeSearch");
+    const modal = document.getElementById("psModal");
+    const form = document.getElementById("psForm");
+    const searchInput = document.getElementById("psSearch");
 
     setupModal(modal);
     setupSearch(searchInput);
@@ -14,17 +14,17 @@ document.addEventListener("DOMContentLoaded", function () {
 // ===== XỬ LÝ MODAL =====
 function setupModal(modal) {
     // Hiển thị modal nếu cần (bao gồm cả khi có validation errors)
-    if (window.sizeOpenModal && modal) {
+    if (window.psOpenModal && modal) {
         modal.classList.add("show");
-        const title = document.getElementById("sizeModalTitle");
+        const title = document.getElementById("psModalTitle");
         if (title) {
             title.textContent =
-                window.sizeOpenModal === "create" ? "Thêm kích thước mới" : "Sửa kích thước";
+                window.psOpenModal === "create" ? "Thêm giá theo size" : "Sửa giá theo size";
         }
 
         // Scroll to first error nếu có
         setTimeout(() => {
-            const firstError = document.querySelector(".size-error-field");
+            const firstError = document.querySelector(".ps-error-field");
             if (firstError) {
                 firstError.scrollIntoView({ behavior: "smooth", block: "center" });
                 firstError.focus();
@@ -46,33 +46,36 @@ function setupModal(modal) {
 }
 
 function closeModal() {
-    document.getElementById("sizeModal")?.classList.remove("show");
-    window.location.href = "/pizzario/manager/sizes";
+    document.getElementById("psModal")?.classList.remove("show");
+    window.location.href = "/pizzario/manager/product-sizes";
 }
 
-// ===== TÌM KIẾM KÍCH THƯỚC =====
+// ===== TÌM KIẾM GIÁ THEO SIZE =====
 function setupSearch(searchInput) {
     if (!searchInput) return;
 
     searchInput.addEventListener("input", function () {
         const searchTerm = this.value.toLowerCase().trim();
-        filterSizes(searchTerm);
+        filterProductSizes(searchTerm);
     });
 }
 
-function filterSizes(searchTerm) {
-    const sizeItems = document.querySelectorAll(".size-item");
+function filterProductSizes(searchTerm) {
+    const psItems = document.querySelectorAll(".ps-item");
     let visibleCount = 0;
 
-    sizeItems.forEach((item) => {
+    psItems.forEach((item) => {
         const name =
-            item.querySelector(".size-name")?.textContent.toLowerCase() || "";
-        const usage =
-            item.querySelector(".size-muted")?.textContent.toLowerCase() || "";
+            item.querySelector(".ps-name")?.textContent.toLowerCase() || "";
+        const size =
+            item.querySelector(".ps-badge-category")?.textContent.toLowerCase() || "";
+        const price =
+            item.querySelector(".ps-price")?.textContent.toLowerCase() || "";
 
         const matches =
             name.includes(searchTerm) ||
-            usage.includes(searchTerm);
+            size.includes(searchTerm) ||
+            price.includes(searchTerm);
 
         if (matches) {
             item.style.display = "";
@@ -93,14 +96,14 @@ function showNoResults(show, searchTerm) {
         if (!noResultsDiv) {
             noResultsDiv = document.createElement("div");
             noResultsDiv.id = "noResults";
-            noResultsDiv.className = "size-no-results";
+            noResultsDiv.className = "ps-no-results";
             noResultsDiv.innerHTML = `
         <div class="no-results-icon">Search</div>
-        <p>Không tìm thấy kích thước nào với từ khóa "<strong>${escapeHtml(
+        <p>Không tìm thấy giá nào với từ khóa "<strong>${escapeHtml(
                 searchTerm
             )}</strong>"</p>
       `;
-            document.querySelector(".size-list").appendChild(noResultsDiv);
+            document.querySelector(".ps-list").appendChild(noResultsDiv);
         }
     } else {
         if (noResultsDiv) {

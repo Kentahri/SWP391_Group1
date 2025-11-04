@@ -1,0 +1,391 @@
+/* productsize-list.css - GIỐNG HỆT product-list.css */
+:root {
+    --primary: #5b67e5;
+    --blue: #004dcb;
+    --green: #10b981;
+    --gray: #6b7280;
+    --gray-light: #f3f4f6;
+    --border: #e5e7eb;
+    --text: #1a1a1a;
+    --muted: #666;
+    --price: #f43f5e;
+    --orange: #f59e0b;
+}
+
+/* Layout */
+.ps-list-container {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.ps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.main-content {
+    flex: 1;
+    padding: 30px;
+    background: #f5f7fa;
+    min-height: 100vh;
+}
+
+.btn-add-productsize {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn-add-productsize:hover {
+    background: #4854d4;
+}
+
+.btn-add-productsize span {
+    font-size: 20px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.ps-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 20px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.ps-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+/* Info */
+.ps-info {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Flash sale trong danh sách */
+.ps-flashsale {
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: #fef3c7;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.ps-flash-price {
+    margin: 0 0 4px;
+    font-weight: 700;
+    color: #f59e0b;
+    font-size: 15px;
+}
+
+.ps-flashsale small {
+    color: #92400e;
+    font-style: italic;
+}
+
+.ps-name-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.ps-name {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.ps-badge-category {
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--orange);
+    color: white;
+}
+
+.ps-price {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--price);
+}
+
+/* Actions */
+.ps-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.ps-btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: var(--gray-light);
+    color: #374151;
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+
+.ps-btn-icon:hover {
+    opacity: 0.8;
+}
+
+.ps-btn-edit {
+    background: var(--blue);
+    color: white;
+}
+
+.ps-btn-delete {
+    background: var(--gray);
+    color: white;
+}
+
+/* Modal */
+.ps-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.ps-modal.show {
+    display: flex;
+}
+
+.ps-modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.ps-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.ps-modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.ps-close {
+    font-size: 28px;
+    cursor: pointer;
+    color: #999;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+}
+
+.ps-close:hover {
+    color: #333;
+    background: var(--gray-light);
+}
+
+/* Form */
+#psForm {
+    padding: 20px;
+}
+
+.ps-mb-3 {
+    margin-bottom: 16px;
+}
+
+.ps-mb-3 label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text);
+}
+
+.ps-mb-3 select,
+.ps-mb-3 input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border 0.2s;
+}
+
+.ps-mb-3 select:focus,
+.ps-mb-3 input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(91, 103, 229, 0.2);
+}
+
+/* Validation */
+.ps-error-field {
+    border-color: #dc3545 !important;
+    background-color: #fff5f5;
+}
+
+.ps-error-field:focus {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.ps-error-message {
+    color: #dc3545;
+    font-size: 13px;
+    margin-top: 5px;
+    display: block;
+    font-weight: 500;
+}
+
+.ps-alert-danger {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    background-color: #fee;
+    border: 1px solid #fcc;
+    color: #c00;
+}
+
+.ps-alert-danger strong {
+    font-weight: 700;
+}
+
+/* Footer */
+.ps-modal-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 16px 20px 20px;
+    border-top: 1px solid var(--border);
+}
+
+.ps-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.ps-btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.ps-btn-primary:hover {
+    background: #4854d4;
+}
+
+.ps-btn-secondary {
+    background: var(--gray-light);
+    color: #333;
+}
+
+.ps-btn-secondary:hover {
+    background: #e5e7eb;
+}
+
+/* Search */
+.ps-search-container {
+    position: relative;
+    margin-top: 15px;
+    width: 100%;
+    max-width: 400px;
+}
+
+#psSearch {
+    width: 100%;
+    padding: 10px 15px;
+    padding-right: 40px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+#psSearch:focus {
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+    outline: none;
+}
+
+.ps-search-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 16px;
+    }
+
+    .ps-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .ps-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .ps-modal-content {
+        width: 95%;
+    }
+}

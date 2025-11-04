@@ -35,7 +35,7 @@
             <div class="size-modal-content">
                 <div class="size-modal-header">
                     <h2 id="sizeModalTitle">Thêm kích thước mới</h2>
-                    <span class="size-close" onclick="SizeList.closeModal()">×</span>
+                    <span class="size-close" onclick="closeModal()">×</span>
                 </div>
 
                 <form id="sizeForm" method="post" th:action="@{/manager/sizes/save}"
@@ -56,7 +56,7 @@
 
                     <div class="size-modal-footer">
                         <button type="submit" class="size-btn size-btn-primary">Lưu</button>
-                        <button type="button" class="size-btn size-btn-secondary" onclick="SizeList.closeModal()">Hủy
+                        <button type="button" class="size-btn size-btn-secondary" onclick="closeModal()">Hủy
                         </button>
                     </div>
                 </form>
@@ -82,14 +82,6 @@
                     <div class="size-actions">
                         <a th:href="@{/manager/sizes/edit/{id}(id=${size.id})}"
                            class="size-btn-icon size-btn-edit" title="Sửa">Edit</a>
-
-<!--                        <form th:action="@{/manager/sizes/delete/{id}(id=${size.id})}"-->
-<!--                              method="post" class="size-inline-form"-->
-<!--                              onsubmit="return confirm('Xóa kích thước này?')">-->
-<!--                            <input type="hidden" th:if="${_csrf != null}"-->
-<!--                                   th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>-->
-<!--                            <button type="submit" class="size-btn-icon size-btn-delete" title="Xóa">Delete</button>-->
-<!--                        </form>-->
                     </div>
                 </div>
             </div>

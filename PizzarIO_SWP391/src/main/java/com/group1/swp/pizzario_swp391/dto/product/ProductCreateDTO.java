@@ -9,7 +9,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ProductCreateDTO {
+public class ProductCreateDTO{
 
     Long id; // null khi tạo mới, có giá trị khi cập nhật
 
