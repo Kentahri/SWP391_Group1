@@ -15,6 +15,7 @@ import java.util.Optional;
 public interface StaffRepository extends JpaRepository<Staff, Integer> {
     boolean existsByEmail(String email);
     boolean existsByPhone(String phone);
+    boolean existsByRole(Staff.Role role);
 
     boolean existsByEmailAndIdNot(String email, int id);
     boolean existsByPhoneAndIdNot(String phone, int id);

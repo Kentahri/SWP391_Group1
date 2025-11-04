@@ -621,12 +621,10 @@ body {
 }
 
 .order-item-size {
-    padding: 4px 12px;
-    border-radius: 12px;
     font-size: 14px;
-    font-weight: 500;
-    background: #e9ecef;
-    color: #495057;
+    font-weight: 400;
+    color: #6c757d;
+    font-style: italic;
 }
 
 .order-item-meta {

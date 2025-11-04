@@ -1,5 +1,15 @@
 package com.group1.swp.pizzario_swp391.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.group1.swp.pizzario_swp391.dto.category.CategoryResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.kitchen.DashboardOrderItemDTO;
 import com.group1.swp.pizzario_swp391.dto.websocket.KitchenOrderMessage;
@@ -7,15 +17,6 @@ import com.group1.swp.pizzario_swp391.entity.Order;
 import com.group1.swp.pizzario_swp391.entity.OrderItem;
 import com.group1.swp.pizzario_swp391.repository.OrderItemRepository;
 import com.group1.swp.pizzario_swp391.repository.OrderRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Service để xử lý các thao tác của kitchen
@@ -43,7 +44,7 @@ public class KitchenService {
      * Get dashboard order items for kitchen dashboard
      */
     public List<DashboardOrderItemDTO> getDashboardOrderItems() {
-        List<OrderItem> orderItems = orderItemRepository.findAll().stream()
+        List<OrderItem> orderItems = orderItemRepository.findAllWithRelations().stream()
                 .filter(item -> item.getOrder() != null && 
                                item.getOrder().getOrderStatus() != Order.OrderStatus.COMPLETED &&
                                item.getOrder().getOrderStatus() != Order.OrderStatus.CANCELLED)
@@ -165,6 +166,8 @@ public class KitchenService {
         return DashboardOrderItemDTO.builder()
                 .id(item.getId())
                 .productName(item.getProductSize().getProduct().getName())
+                .sizeName(item.getProductSize() != null && item.getProductSize().getSize() != null ? 
+                         item.getProductSize().getSize().getSizeName() : null)
                 .categoryId(item.getProductSize().getProduct().getCategory().getId())
                 .categoryName(item.getProductSize().getProduct().getCategory().getName())
                 .quantity(item.getQuantity())

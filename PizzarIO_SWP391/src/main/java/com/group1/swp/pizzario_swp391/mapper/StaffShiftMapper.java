@@ -60,6 +60,7 @@ public interface StaffShiftMapper {
     @Mapping(target = "checkOut", source = "checkOut")
     @Mapping(target = "hourlyWage", source = "shift.salaryPerShift")
     @Mapping(target = "note", source = "note")
+    @Mapping(target = "penaltyPercent", source = "penaltyPercent")
     StaffShiftResponseDTO toResponseDTO(StaffShift staffShift);
 
     // NEW: Convert Response DTO to Calendar DTO
@@ -72,6 +73,9 @@ public interface StaffShiftMapper {
     @Mapping(target = "statusClass", source = "shiftStatus", qualifiedByName = "getStatusClass")
     @Mapping(target = "totalWage", source = "source", qualifiedByName = "calculateTotalWage")
     @Mapping(target = "note", source = "note")
+    @Mapping(target = "status", source = "shiftStatus")
+    @Mapping(target = "endTime", source = "endTime", qualifiedByName = "formatEndTime")
+    @Mapping(target = "workDate", source = "workDate")
     StaffShiftCalendarDTO toCalendarDTO(StaffShiftResponseDTO source);
 
     @Named("determineShiftType")
@@ -93,6 +97,14 @@ public interface StaffShiftMapper {
             return "N/A";
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
         return dto.getStartTime().format(formatter) + " - " + dto.getEndTime().format(formatter);
+    }
+
+    @Named("formatEndTime")
+    default String formatEndTime(LocalDateTime endTime) {
+        if (endTime == null)
+            return "N/A";
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+        return endTime.format(formatter);
     }
 
     @Named("getStatusText")
@@ -128,16 +140,38 @@ public interface StaffShiftMapper {
     }
 
     @Named("calculateTotalWage")
-        default Double calculateTotalWage(StaffShiftResponseDTO shift) {
-    if (shift.getShiftStatus() != null) {
+    default Double calculateTotalWage(StaffShiftResponseDTO shift) {
+        if (shift.getShiftStatus() == null) return 0.0;
+        
+        // Case 1: COMPLETED - Fixed salary with penalty
         if ("COMPLETED".equals(shift.getShiftStatus())) {
-            return shift.getHourlyWage().doubleValue() * Duration.between(shift.getStartTime(), shift.getEndTime()).toHours() * (100 - shift.getPenaltyPercent())/100;
-        } else if ("LEFT_EARLY".equals(shift.getShiftStatus()) 
-                   && shift.getCheckIn() != null && shift.getCheckOut() != null) {
-            long hours = Duration.between(shift.getCheckIn(), shift.getCheckOut()).toHours();
-            return shift.getHourlyWage().doubleValue() * hours * (100 - shift.getPenaltyPercent())/100; // Lương × giờ làm
+            double fixedSalary = shift.getHourlyWage().doubleValue() * Duration.between(shift.getStartTime(), shift.getEndTime()).toHours();
+            return fixedSalary * (100 - shift.getPenaltyPercent()) / 100;
         }
+        
+        // Case 2: LEFT_EARLY - Hourly rate based on actual hours worked
+        if ("LEFT_EARLY".equals(shift.getShiftStatus()) 
+            && shift.getCheckIn() != null && shift.getCheckOut() != null) {
+            
+            // Calculate total shift hours (for hourly rate calculation)
+            long totalShiftHours = Duration.between(shift.getStartTime(), shift.getEndTime()).toHours();
+            if (totalShiftHours == 0) totalShiftHours = 1; // Prevent division by zero
+            
+            // Calculate hourly rate from fixed salary
+            double hourlyRate = shift.getHourlyWage().doubleValue() / totalShiftHours;
+            
+            // Calculate actual hours worked
+            long actualHours = Duration.between(shift.getCheckIn(), shift.getCheckOut()).toHours();
+            
+            // Total wage = hourly rate × actual hours × penalty adjustment
+            return hourlyRate * actualHours * (100 - shift.getPenaltyPercent()) / 100;
+        }
+
+        if ("LATE".equals(shift.getShiftStatus())) {
+            double fixedSalary = shift.getHourlyWage().doubleValue() * Duration.between(shift.getStartTime(), shift.getEndTime()).toHours();
+            return fixedSalary * (100 - shift.getPenaltyPercent()) / 100;
+        }
+        
+        return 0.0;
     }
-    return 0.0;
-}
 }

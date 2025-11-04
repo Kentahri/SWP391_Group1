@@ -16,6 +16,7 @@ import lombok.experimental.FieldDefaults;
 public class OrderItemDTO {
     Long id;
     String productName;
+    String sizeName;
     String productImageUrl;
     int quantity;
     double unitPrice;
