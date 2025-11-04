@@ -123,7 +123,7 @@
                 Quét mã QR bằng ứng dụng ngân hàng
               </span>
 				</div>
-				<div class="amount">Số tiền: <span th:text="${#numbers.formatCurrency(orderTotal)}">0đ</span></div>
+				<div class="amount">Số tiền: <span th:text="${#numbers.formatCurrency(orderTotal * 1.1)}">0đ</span></div>
 				<div class="note">Nội dung: <span th:text="${'Thanh toan don #' + orderId}">Thanh toan don</span></div>
 				<div class="hint">Sau khi thanh toán xong, vui lòng chờ thu ngân xác nhận.</div>
 			</div>
