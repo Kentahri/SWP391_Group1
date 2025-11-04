@@ -1,25 +1,23 @@
 package com.group1.swp.pizzario_swp391.controller.manager;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
-import lombok.AccessLevel;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
-
 import com.group1.swp.pizzario_swp391.dto.category.CategoryResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.product.ProductCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.product.ProductResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.product.ProductUpdateDTO;
 import com.group1.swp.pizzario_swp391.service.CategoryService;
 import com.group1.swp.pizzario_swp391.service.ProductService;
-
 import jakarta.validation.Valid;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @ManagerUrl
@@ -81,10 +79,10 @@ public class ProductController {
                 .name(productUpdateDTO.getName())
                 .description(productUpdateDTO.getDescription())
                 .imageURL(productUpdateDTO.getImageURL())
-                .basePrice(productUpdateDTO.getBasePrice())
-                .flashSalePrice(productUpdateDTO.getFlashSalePrice())
-                .flashSaleStart(productUpdateDTO.getFlashSaleStart())
-                .flashSaleEnd(productUpdateDTO.getFlashSaleEnd())
+//                .basePrice(productUpdateDTO.getBasePrice())
+//                .flashSalePrice(productUpdateDTO.getFlashSalePrice())
+//                .flashSaleStart(productUpdateDTO.getFlashSaleStart())
+//                .flashSaleEnd(productUpdateDTO.getFlashSaleEnd())
                 .categoryId(productUpdateDTO.getCategoryId())
                 .active(productUpdateDTO.isActive())
                 .build();
@@ -103,12 +101,12 @@ public class ProductController {
             BindingResult bindingResult,
             Model model) {
 
-        if(productForm.getFlashSaleEnd() != null && productForm.getFlashSaleEnd() != null){
-            if(productForm.getFlashSaleEnd().isBefore(productForm.getFlashSaleStart())){
-                bindingResult.rejectValue("flashSaleEnd", "error.flashSaleEnd",
-                        "Ngày kết thúc phải lớn hơn ngày bắt đầu");
-            }
-        }
+//        if(productForm.getFlashSaleEnd() != null && productForm.getFlashSaleEnd() != null){
+//            if(productForm.getFlashSaleEnd().isBefore(productForm.getFlashSaleStart())){
+//                bindingResult.rejectValue("flashSaleEnd", "error.flashSaleEnd",
+//                        "Ngày kết thúc phải lớn hơn ngày bắt đầu");
+//            }
+//        }
 
         // Kiểm tra validation errors
         if (bindingResult.hasErrors()) {
@@ -136,10 +134,10 @@ public class ProductController {
                         .name(productForm.getName())
                         .description(productForm.getDescription())
                         .imageURL(productForm.getImageURL())
-                        .basePrice(productForm.getBasePrice())
-                        .flashSalePrice(productForm.getFlashSalePrice())
-                        .flashSaleStart(productForm.getFlashSaleStart())
-                        .flashSaleEnd(productForm.getFlashSaleEnd())
+//                        .basePrice(productForm.getBasePrice())
+//                        .flashSalePrice(productForm.getFlashSalePrice())
+//                        .flashSaleStart(productForm.getFlashSaleStart())
+//                        .flashSaleEnd(productForm.getFlashSaleEnd())
                         .categoryId(productForm.getCategoryId())
                         .active(productForm.isActive())
                         .build();
