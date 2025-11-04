@@ -39,6 +39,15 @@
             Đã đăng xuất
           </div>
 
+          <!-- Thông báo thay đổi mật khẩu thành công -->
+          <div
+            th:if="${successMessage}"
+            th:text="${successMessage}"
+            class="alert alert-success"
+            role="alert"
+          >
+          </div>
+
           <!-- Spring Security xử lý POST /login -->
           <form method="post" th:action="@{/login}" class="mt-3">
             <div class="mb-3">

@@ -40,6 +40,11 @@
             th:text="${message}"
           ></div>
           <div
+            th:if="${success}"
+            class="alert alert-success"
+            th:text="${success}"
+          ></div>
+          <div
             th:if="${error}"
             class="alert alert-error"
             th:text="${error}"
@@ -151,6 +156,10 @@
 
                   <button class="add-btn" onclick="openStaffShiftModal()">
                     + Thêm ca làm việc
+                  </button>
+
+                  <button class="add-btn" style="margin-left: 10px;" onclick="exportMonthlySalary()">
+                    📊 Xuất Excel
                   </button>
                 </div>
               </div>
@@ -333,6 +342,122 @@
                 </div>
               </div>
 
+              <!-- Export Excel Modal -->
+              <div id="exportModal" class="modal">
+                <div class="modal-content" style="max-width: 500px;">
+                  <div class="modal-header">
+                    <h2>Xuất file Excel</h2>
+                    <span class="close" onclick="closeExportModal()">&times;</span>
+                  </div>
+                  <div class="modal-body">
+                    <form id="exportForm">
+                      <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                      <div class="mb-3">
+                        <label for="exportYear">Năm:</label>
+                        <select id="exportYear" name="year" required>
+                          <option th:each="y : ${exportYears}"
+                                  th:value="${y}"
+                                  th:text="${y}"
+                                  th:selected="${y == T(java.time.Year).now().getValue()}"></option>
+                        </select>
+                      </div>
+
+                      <div class="mb-3">
+                        <label for="exportMonth">Tháng:</label>
+                        <select id="exportMonth" name="month" required>
+                          <option th:each="m : ${exportMonths}"                                  th:value="${m}"
+                                  th:text="${m}"
+                                  th:selected="${m == T(java.time.LocalDate).now().getMonthValue()}"></option>
+                        </select>
+                      </div>
+                    </form>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="confirmExport()">Xuất Excel</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeExportModal()">Hủy</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Complete Shift Modal -->
+              <div id="completeShiftModal" class="modal">
+                <div class="modal-content" style="max-width: 600px;">
+                  <div class="modal-header">
+                    <h2>Hoàn thành ca làm việc</h2>
+                    <span class="close" onclick="closeCompleteShiftModal()">&times;</span>
+                  </div>
+                  <div class="modal-body">
+                    <form id="completeShiftForm" th:action="@{/manager/staff_shifts/manual-complete/{id}(id=${0})}" method="post">
+                      <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                      <!-- Shift Info Display -->
+                      <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+                        <p style="margin: 4px 0;"><strong>Nhân viên:</strong> <span id="completeStaffName"></span></p>
+                        <p style="margin: 4px 0;"><strong>Ca làm việc:</strong> <span id="completeShiftName"></span></p>
+                        <p style="margin: 4px 0;"><strong>Ngày làm việc:</strong> <span id="completeWorkDate"></span></p>
+                      </div>
+
+                      <!-- Checkout Time Input -->
+                      <div class="mb-3">
+                        <label for="completeCheckoutTime">Thời gian checkout: <span style="color: red;">*</span></label>
+                        <input
+                          type="datetime-local"
+                          id="completeCheckoutTime"
+                          name="checkoutTime"
+                          class="form-control"
+                          required
+                        />
+                        <small class="form-text">Mặc định: Thời gian kết thúc ca. Có thể điều chỉnh nếu cần.</small>
+                      </div>
+
+                      <!-- Status Preview -->
+                      <div class="mb-3">
+                        <label>Trạng thái dự kiến:</label>
+                        <div id="statusPreview" style="padding: 8px; border-radius: 4px; font-weight: bold; text-align: center;">
+                          COMPLETED
+                        </div>
+                        <small class="form-text">Nếu checkout sớm hơn giờ kết thúc ca, trạng thái sẽ là LEFT_EARLY</small>
+                      </div>
+
+                      <!-- Penalty Input -->
+                      <div class="mb-3">
+                        <label for="completePenalty">Phạt (%) <span style="color: red;">*</span></label>
+                        <input
+                          type="number"
+                          id="completePenalty"
+                          name="penaltyPercent"
+                          class="form-control"
+                          min="0"
+                          max="100"
+                          value="0"
+                          required
+                        />
+                        <small class="form-text">Mức phạt áp dụng cho ca làm việc (0-100%)</small>
+                      </div>
+
+                      <!-- Note Input -->
+                      <div class="mb-3">
+                        <label for="completeNote">Lý do hoàn thành thủ công: <span style="color: red;">*</span></label>
+                        <textarea
+                          id="completeNote"
+                          name="note"
+                          class="form-control"
+                          rows="3"
+                          required
+                          placeholder="Ví dụ: Nhân viên quên checkout, đã xác nhận với giám sát viên"
+                        ></textarea>
+                        <small class="form-text">Ghi chú này sẽ được lưu vào lịch sử ca làm việc</small>
+                      </div>
+                    </form>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="submitCompleteShift()">Hoàn thành ca</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeCompleteShiftModal()">Hủy</button>
+                  </div>
+                </div>
+              </div>
+
               <!-- Week Navigation -->
               <div class="week-navigation">
                 <button class="week-nav-btn" onclick="navigateWeek(-1)">
@@ -383,8 +508,8 @@
                       class="shift-card"
                       th:each="shift : ${day.shifts}"
                       th:classappend="${shift.shiftType}"
-                      th:onclick="|editShift(${shift.id})|"
-                      style="cursor: pointer"
+                      th:onclick="${shift.status == 'NOT_CHECKOUT'} ? null : |editShift(${shift.id})| "
+                      th:style="${shift.status == 'NOT_CHECKOUT'} ? 'cursor: default;' : 'cursor: pointer;'"
                     >
                       <div class="shift-type">
                         <span class="icon">✏️</span>
@@ -411,6 +536,23 @@
                         class="shift-wage"
                         th:text="${#numbers.formatDecimal(shift.totalWage, 0, 'POINT', 0, 'COMMA') + 'đ'}"
                       ></div>
+
+                      <!-- Complete Shift Button for NOT_CHECKOUT status -->
+                      <div th:if="${shift.status == 'NOT_CHECKOUT'}" style="margin-top: 8px;">
+                        <button
+                          type="button"
+                          class="complete-shift-btn"
+                          th:data-shift-id="${shift.id}"
+                          th:data-staff-name="${shift.staffName}"
+                          th:data-shift-name="${shift.shiftName}"
+                          th:data-end-time="${shift.endTime}"
+                          th:data-work-date="${shift.workDate}"
+                          onclick="event.stopPropagation(); openCompleteShiftModalFromButton(this);"
+                          style="width: 100%; padding: 6px 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px;"
+                        >
+                          ✓ Hoàn thành ca
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -482,25 +624,25 @@
       function confirmExport() {
           const year = document.getElementById('exportYear').value;
           const month = document.getElementById('exportMonth').value;
-          
+
           // Tạo form để submit
           const form = document.createElement('form');
           form.method = 'POST';
-          form.action = '/manager/staff_shifts/export';
-          
+          form.action = '/pizzario/manager/staff_shifts/export';
+
           const yearInput = document.createElement('input');
           yearInput.type = 'hidden';
           yearInput.name = 'year';
           yearInput.value = year;
-          
+
           const monthInput = document.createElement('input');
           monthInput.type = 'hidden';
           monthInput.name = 'month';
           monthInput.value = month;
-          
+
           form.appendChild(yearInput);
           form.appendChild(monthInput);
-          
+
           // Thêm CSRF token
           const csrfToken = document.querySelector('meta[name="_csrf"]').content;
           const csrfInput = document.createElement('input');
@@ -514,6 +656,124 @@
           document.body.removeChild(form);
           
           closeExportModal();
+      }
+
+      // Complete Shift Modal Functions
+      let currentShiftId = null;
+      let currentShiftEndTime = null;
+
+      // Wrapper function to read data from button attributes
+      function openCompleteShiftModalFromButton(button) {
+          const shiftId = button.getAttribute('data-shift-id');
+          const staffName = button.getAttribute('data-staff-name');
+          const shiftName = button.getAttribute('data-shift-name');
+          const endTime = button.getAttribute('data-end-time');
+          const workDate = button.getAttribute('data-work-date');
+
+          openCompleteShiftModal(shiftId, staffName, shiftName, endTime, workDate);
+      }
+
+      function openCompleteShiftModal(shiftId, staffName, shiftName, endTime, workDate) {
+          currentShiftId = shiftId;
+          currentShiftEndTime = endTime;
+
+          // Set shift info
+          document.getElementById('completeStaffName').textContent = staffName;
+          document.getElementById('completeShiftName').textContent = shiftName;
+          document.getElementById('completeWorkDate').textContent = workDate;
+
+          // Set default checkout time to shift end time
+          // Format: workDate + endTime -> datetime-local format (YYYY-MM-DDTHH:MM)
+          const defaultCheckoutTime = workDate + 'T' + endTime;
+          document.getElementById('completeCheckoutTime').value = defaultCheckoutTime;
+
+          // Reset form
+          document.getElementById('completePenalty').value = 0;
+          document.getElementById('completeNote').value = '';
+
+          // Update status preview
+          updateStatusPreview();
+
+          // Add event listener for checkout time change
+          document.getElementById('completeCheckoutTime').addEventListener('input', updateStatusPreview);
+
+          // Show modal
+          document.getElementById('completeShiftModal').style.display = 'block';
+      }
+
+      function closeCompleteShiftModal() {
+          document.getElementById('completeShiftModal').style.display = 'none';
+          currentShiftId = null;
+          currentShiftEndTime = null;
+      }
+
+      function updateStatusPreview() {
+          const checkoutTimeInput = document.getElementById('completeCheckoutTime').value;
+          const statusPreview = document.getElementById('statusPreview');
+
+          if (!checkoutTimeInput || !currentShiftEndTime) {
+              statusPreview.textContent = 'COMPLETED';
+              statusPreview.style.background = '#28a745';
+              statusPreview.style.color = 'white';
+              return;
+          }
+
+          // Extract time from datetime-local input (format: YYYY-MM-DDTHH:MM)
+          const checkoutTime = checkoutTimeInput.split('T')[1]; // Get HH:MM
+
+          // Compare times
+          if (checkoutTime < currentShiftEndTime) {
+              statusPreview.textContent = 'LEFT_EARLY (Về sớm)';
+              statusPreview.style.background = '#ffc107';
+              statusPreview.style.color = '#000';
+          } else {
+              statusPreview.textContent = 'COMPLETED (Hoàn thành)';
+              statusPreview.style.background = '#28a745';
+              statusPreview.style.color = 'white';
+          }
+      }
+
+      function submitCompleteShift() {
+          const form = document.getElementById('completeShiftForm');
+
+          // Validate required fields
+          const checkoutTime = document.getElementById('completeCheckoutTime').value;
+          const note = document.getElementById('completeNote').value;
+          const penalty = document.getElementById('completePenalty').value;
+
+          if (!checkoutTime) {
+              alert('Vui lòng chọn thời gian checkout');
+              return;
+          }
+
+          if (!note.trim()) {
+              alert('Vui lòng nhập lý do hoàn thành ca');
+              return;
+          }
+
+          if (penalty === '' || penalty < 0 || penalty > 100) {
+              alert('Phạt phải từ 0-100%');
+              return;
+          }
+
+          // Update form action with current shift ID
+          form.action = '/pizzario/manager/staff_shifts/manual-complete/' + currentShiftId;
+
+          // Submit form
+          form.submit();
+      }
+
+      // Close modal when clicking outside
+      window.onclick = function(event) {
+          const completeModal = document.getElementById('completeShiftModal');
+          const exportModal = document.getElementById('exportModal');
+
+          if (event.target == completeModal) {
+              closeCompleteShiftModal();
+          }
+          if (event.target == exportModal) {
+              closeExportModal();
+          }
       }
       </script>
 

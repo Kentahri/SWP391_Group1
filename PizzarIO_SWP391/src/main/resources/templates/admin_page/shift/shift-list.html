@@ -76,11 +76,9 @@
                   <label for="shiftType">Loại ca làm việc</label>
                   <select id="shiftType" th:field="*{shiftName}">
                     <option value="" disabled>-- Chọn loại ca --</option>
-                    <option
-                      th:each="st : ${shiftTypes}"
-                      th:value="${st}"
-                      th:text="${st}"
-                    ></option>
+                    <option value="SANG">Sáng</option>
+                    <option value="CHIEU">Chiều</option>
+                    <option value="TOI">Tối</option>
                   </select>
                   <span
                     class="error-message"
@@ -147,7 +145,7 @@
             <tbody>
               <tr th:each="shift : ${shifts}">
                 <td th:text="${shift.id}">1</td>
-                <td th:text="${shift.shiftName}">Ca sáng</td>
+                <td th:text="${shift.shiftName == 'SANG' ? 'Sáng' : (shift.shiftName == 'CHIEU' ? 'Chiều' : (shift.shiftName == 'TOI' ? 'Tối' : shift.shiftName))}">Ca sáng</td>
                 <td
                   th:text="${shift.startTime != null ? #temporals.format(shift.startTime, 'HH:mm') : '-'}"
                 >

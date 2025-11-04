@@ -4,6 +4,7 @@ import com.group1.swp.pizzario_swp391.dto.cart.CartItemDTO;
 import com.group1.swp.pizzario_swp391.entity.Product;
 import com.group1.swp.pizzario_swp391.entity.ProductSize;
 import com.group1.swp.pizzario_swp391.repository.ProductRepository;
+import com.group1.swp.pizzario_swp391.repository.ProductSizeRepository;
 import jakarta.servlet.http.HttpSession;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class CartService{
 
     private static final String SESSION_CART_KEY = "sessionCart";
     private final ProductSizeService productSizeService;
+    private final ProductSizeRepository productSizeRepository;
 
     public void clearCart(HttpSession session) {
         session.removeAttribute(SESSION_CART_KEY);
@@ -75,17 +77,47 @@ public class CartService{
 
     public void updateCartItem(HttpSession session, Long productId, int quantity, String note, Long productSizeId) {
         Map<Long, CartItemDTO> cart = getCart(session);
-        CartItemDTO cartItem = cart.get(productSizeId);
-        if (cartItem != null) {
+
+        // Lấy tất cả các item thuộc cùng productId
+        CartItemDTO oldItem = cart.values().stream()
+                .filter(item -> item.getProductId().equals(productId))
+                .findFirst()
+                .orElse(null);
+
+        if (oldItem == null) return;
+
+        // Nếu người dùng chọn size mới
+        if (!oldItem.getProductSize().getId().equals(productSizeId)) {
+            cart.remove(oldItem.getProductSize().getId());
+
+            ProductSize newSize = productSizeService.getById(productSizeId);
+            double newPrice = getCurrentPrice(newSize);
+
+            CartItemDTO newItem = CartItemDTO.builder()
+                    .productId(productId)
+                    .productName(oldItem.getProductName())
+                    .productImageUrl(oldItem.getProductImageUrl())
+                    .quantity(quantity)
+                    .unitPrice(newPrice)
+                    .totalPrice(newPrice * quantity)
+                    .note(note)
+                    .productSize(newSize)
+                    .build();
+
+            cart.put(productSizeId, newItem);
+        } else {
+            // Không đổi size -> chỉ cập nhật số lượng, ghi chú, và giá
             if (quantity > 0) {
-                cartItem.setQuantity(quantity);
-                cartItem.setTotalPrice(cartItem.getUnitPrice() * cartItem.getQuantity());
-                cart.put(productSizeId, cartItem);
+                oldItem.setQuantity(quantity);
+                oldItem.setTotalPrice(oldItem.getUnitPrice() * quantity);
+                oldItem.setNote(note);
+                cart.put(productSizeId, oldItem);
             } else {
                 cart.remove(productSizeId);
             }
         }
     }
+
 
     public void removeFromCart(HttpSession session, Long productId, Long productSizeId) {
         getCart(session).remove(productSizeId);
@@ -93,18 +125,26 @@ public class CartService{
 
     public List<CartItemDTO> getCartForView(HttpSession session) {
         List<CartItemDTO> cartItems = new ArrayList<>();
-        getCart(session).values().forEach(item -> cartItems.add(CartItemDTO.builder()
-                .productId(item.getProductId())
-                .productName(item.getProductName())
-                .productImageUrl(item.getProductImageUrl())
-                .quantity(item.getQuantity())
-                .unitPrice(item.getUnitPrice())
-                .totalPrice(item.getQuantity() * item.getUnitPrice())
-                .productSize(item.getProductSize())
-                .note(item.getNote())
-                .build()));
+
+        getCart(session).values().forEach(item -> {
+            ProductSize fullPs = productSizeRepository.findById(item.getProductSize().getId())
+                    .orElse(null);
+
+            cartItems.add(CartItemDTO.builder()
+                    .productId(item.getProductId())
+                    .productName(item.getProductName())
+                    .productImageUrl(item.getProductImageUrl())
+                    .quantity(item.getQuantity())
+                    .unitPrice(item.getUnitPrice())
+                    .totalPrice(item.getQuantity() * item.getUnitPrice())
+                    .productSize(fullPs)
+                    .note(item.getNote())
+                    .productSizes(fullPs != null ? fullPs.getProduct().getProductSizes() : List.of())
+                    .build());
+        });
         return cartItems;
     }
+
 
     private double getCurrentPrice(ProductSize productSize) {
         if (productSize.getFlashSaleStart() != null && productSize.getFlashSaleEnd() != null) {
