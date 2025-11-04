@@ -19,10 +19,12 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -280,7 +282,7 @@ public class StaffScheduleService {
         cancelAutoCompleteCheck(staffShiftId);
     }
 
-    @Scheduled(cron = "0 50 4 * * *", zone = "Asia/Bangkok")
+    @Scheduled(cron = "0 10 9 * * *", zone = "Asia/Bangkok")
     @Transactional
     public void dailyCleanup() {
         log.info("🔄 Daily cleanup: Checking for missed shifts...");
