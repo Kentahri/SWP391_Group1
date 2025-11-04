@@ -204,4 +204,13 @@ public interface StaffShiftRepository extends JpaRepository<StaffShift, Integer>
                   AND MONTH(ss.work_date) = :month
             """, nativeQuery = true)
     Double totalMonthlyWage(@Param("year") int year, @Param("month") int month);
+
+    @Query("""
+        select ss from StaffShift ss 
+        join fetch ss.staff s 
+        join fetch ss.shift sh
+        where ss.workDate between :startDate and :endDate
+        order by s.name asc, ss.workDate asc, sh.startTime asc
+        """)
+    List<StaffShift> findByMonthRange(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }
