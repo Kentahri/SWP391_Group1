@@ -61,7 +61,7 @@
           <div class="order-items-list" id="orderItemsTop">
             <div th:each="item : ${orderItems}" class="order-item-row">
               <div class="order-item-info">
-                <span class="item-name" th:text="${item.productSize.getProduct().name}"
+                <span class="item-name" th:text="${item.productSize.product.name}"
                   >Product Name</span
                 >
                 <span class="item-quantity" th:text="'x' + ${item.quantity}"
