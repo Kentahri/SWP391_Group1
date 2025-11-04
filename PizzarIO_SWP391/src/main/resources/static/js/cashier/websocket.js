@@ -32,6 +32,13 @@ function subscribeToTopics() {
         console.log('Table update received:', update);
         handleTableUpdate(update);
     });
+
+    // Subscribe to payment pending notifications
+    stompClient.subscribe('/topic/payment-pending', function(message) {
+        const paymentData = JSON.parse(message.body);
+        console.log('Payment pending received:', paymentData);
+        handlePaymentPending(paymentData);
+    });
 }
 
 /**
@@ -74,21 +81,60 @@ window.addEventListener('beforeunload', function () {
 });
 
 /**
- * Kiểm tra kết nối khi user bấm nút
+ * Handle payment pending notification from guest
  */
-window.checkServerConnection = function() {
-    const statusElement = document.getElementById('server-status');
-    
-    if (stompClient && stompClient.connected) {
-        updateServerStatus('connected');
-        setTimeout(() => {
-            statusElement.innerHTML = '<button class="btn" onclick="checkServerConnection()">Check connect to server</button>';
-        }, 3000);
-    } else {
-        updateServerStatus('disconnected');
-        setTimeout(() => {
-            statusElement.innerHTML = '<button class="btn" onclick="checkServerConnection()">Check connect to server</button>';
-        }, 3000);
+function handlePaymentPending(paymentData) {
+    if (paymentData.type !== 'PAYMENT_PENDING') {
+        return;
     }
-};
+
+    // Update payment notification badge
+    updatePaymentNotificationBadge();
+
+    // Toast thông báo bàn đang chờ thanh toán
+    try {
+        var tableLabel = paymentData.tableName || (paymentData.tableNumber ? ('Bàn ' + paymentData.tableNumber) : 'Bàn');
+        showToast('💰 ' + tableLabel + ' đang chờ thanh toán', 'info');
+    } catch (e) { /* ignore */ }
+
+    // Show payment confirmation modal
+    showPaymentConfirmationModal(paymentData);
+}
+
+/**
+ * Update payment notification badge count
+ */
+function updatePaymentNotificationBadge() {
+    const badge = document.getElementById('payment-notification-badge');
+    if (badge) {
+        const currentCount = parseInt(badge.textContent) || 0;
+        badge.textContent = currentCount + 1;
+        badge.style.display = 'inline-block';
+    }
+}
+
+/**
+ * Show payment confirmation modal with payment details
+ */
+function showPaymentConfirmationModal(paymentData) {
+    const modal = document.getElementById('paymentConfirmationModal');
+    if (!modal) {
+        console.error('Payment confirmation modal not found');
+        return;
+    }
+
+    // Populate modal with payment data
+    document.getElementById('payment-table-number').textContent = paymentData.tableNumber || 'N/A';
+    document.getElementById('payment-customer-name').textContent = paymentData.customerName || 'Khách vãng lai';
+    document.getElementById('payment-total-amount').textContent =
+        new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(paymentData.totalAmount || 0);
+    document.getElementById('payment-method').textContent =
+        paymentData.paymentMethod === 'QR_BANKING' ? 'QR Banking' : 'Tiền mặt';
+    document.getElementById('payment-session-id').value = paymentData.sessionId;
+
+    // Show modal
+    modal.style.display = 'block';
+}
+
+
 

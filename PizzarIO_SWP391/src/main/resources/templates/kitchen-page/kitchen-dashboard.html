@@ -167,8 +167,8 @@
                             </h3>
                             <div class="order-item-meta">
                                 <span class="order-item-quantity" th:text="'x' + ${item.quantity}">x1</span>
-                                <span th:if="${item.sizeName != null and !item.sizeName.isEmpty()}" 
-                                      class="order-item-size" 
+                                <span th:if="${item.sizeName != null and !item.sizeName.isEmpty()}"
+                                      class="order-item-size"
                                       th:text="${item.sizeName}">(Size)</span>
                                 <span th:class="${'order-item-status ' + (item.status == 'PENDING' ? 'new' : (item.status == 'PREPARING' ? 'preparing' : 'completed'))}"
                                       th:text="${item.status == 'PENDING' ? 'Mới' : (item.status == 'PREPARING' ? 'Đang làm' : 'Hoàn thành')}">Status</span>

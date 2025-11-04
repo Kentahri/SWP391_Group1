@@ -19,13 +19,13 @@ import com.group1.swp.pizzario_swp391.service.TableService;
 @SpringBootApplication
 @EnableScheduling
 @EnableConfigurationProperties
-public class PizzarIoSwp391Application {
+public class PizzarIoSwp391Application{
 
     public static void main(String[] args) {
         SpringApplication.run(PizzarIoSwp391Application.class, args);
     }
 
-   @Bean
+    @Bean
     CommandLineRunner initData(StaffService service, TableService tableService) {
         return (String[] args) -> {
             PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();

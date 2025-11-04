@@ -151,7 +151,7 @@ public class ProdSecurityConfig {
                 // Session Management: Cho phép nhiều session độc lập
                 .sessionManagement(session -> session
                         .sessionFixation().changeSessionId() // Đổi session ID sau khi login
-                        .maximumSessions(1) // Cho phép tối đa 10 sessions đồng thời
+                        .maximumSessions(10) // Cho phép tối đa 10 sessions đồng thời
                         .maxSessionsPreventsLogin(false)
                         .expiredSessionStrategy(event -> event.getResponse().sendRedirect("/pizzario/login?expired"))
                 )

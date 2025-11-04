@@ -213,5 +213,4 @@ public interface StaffShiftRepository extends JpaRepository<StaffShift, Integer>
         order by s.name asc, ss.workDate asc, sh.startTime asc
         """)
     List<StaffShift> findByMonthRange(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
-
 }
