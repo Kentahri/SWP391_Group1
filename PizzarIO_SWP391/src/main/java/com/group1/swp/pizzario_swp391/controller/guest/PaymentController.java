@@ -1,21 +1,28 @@
 package com.group1.swp.pizzario_swp391.controller.guest;
 
-import com.group1.swp.pizzario_swp391.dto.payment.PaymentDTO;
-import com.group1.swp.pizzario_swp391.dto.voucher.VoucherDTO;
-import com.group1.swp.pizzario_swp391.entity.Order;
-import com.group1.swp.pizzario_swp391.entity.OrderItem;
-import com.group1.swp.pizzario_swp391.entity.Membership;
-import com.group1.swp.pizzario_swp391.service.PaymentService;
-import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import jakarta.servlet.http.HttpServletRequest;
-
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+
+import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.group1.swp.pizzario_swp391.dto.payment.PaymentDTO;
+import com.group1.swp.pizzario_swp391.dto.voucher.VoucherDTO;
+import com.group1.swp.pizzario_swp391.entity.Membership;
+import com.group1.swp.pizzario_swp391.entity.Order;
+import com.group1.swp.pizzario_swp391.entity.OrderItem;
+import com.group1.swp.pizzario_swp391.service.PaymentService;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequestMapping("/guest/payment")
@@ -200,54 +207,66 @@ public class PaymentController {
         }
     }
 
-    /**
-     * Xác nhận thanh toán theo session và redirect đến trang xác nhận
-     */
+
     @PostMapping("/session/{sessionId}/confirm")
-    public String confirmPaymentBySession(@PathVariable Long sessionId, 
-                                        @RequestParam String paymentMethod,
-                                        Model model,
-                                        HttpServletRequest request) {
-        System.out.println("=== Payment Confirmation Debug ===");
-        System.out.println("Received sessionId: " + sessionId);
-        System.out.println("Payment method: " + paymentMethod);
-        System.out.println("Payment method type: " + (paymentMethod != null ? paymentMethod.getClass().getSimpleName() : "null"));
-        System.out.println("Request URL: " + request.getRequestURL());
-        System.out.println("Request URI: " + request.getRequestURI());
-        
+    public String waitingForCashierConfirmPayment(@PathVariable Long sessionId,
+                                                  @RequestParam String paymentMethod,
+                                                  Model model,
+                                                  HttpServletRequest request){
+
         try {
-            // Validate payment method
             if (paymentMethod == null || paymentMethod.trim().isEmpty()) {
-                return "redirect:/guest/payment/session/" + sessionId + "?error=" + 
-                       URLEncoder.encode("Vui lòng chọn phương thức thanh toán", StandardCharsets.UTF_8);
+                return "redirect:/guest/payment/session/" + sessionId + "?error=" +
+                        URLEncoder.encode("Vui lòng chọn phương thức thanh toán", StandardCharsets.UTF_8);
             }
-            
-            // Convert String to enum
+
             Order.PaymentMethod method;
             try {
-                System.out.println("Converting paymentMethod string: '" + paymentMethod + "' to enum");
                 method = Order.PaymentMethod.valueOf(paymentMethod);
-                System.out.println("Successfully converted to: " + method);
-                System.out.println("Enum name: " + method.name());
-                System.out.println("Enum ordinal: " + method.ordinal());
             } catch (IllegalArgumentException e) {
-                System.out.println("Failed to convert paymentMethod: " + paymentMethod + ", Error: " + e.getMessage());
-                return "redirect:/guest/payment/session/" + sessionId + "?error=" + 
-                       URLEncoder.encode("Phương thức thanh toán không hợp lệ: " + paymentMethod, StandardCharsets.UTF_8);
+                return "redirect:/guest/payment/session/" + sessionId + "?error=" +
+                        URLEncoder.encode("Phương thức thanh toán không hợp lệ: " + paymentMethod, StandardCharsets.UTF_8);
             }
-            
-            // Xác nhận thanh toán (không bắt buộc phải có membership)
-            paymentService.confirmPaymentBySessionId(sessionId, method);
-            
-            // Redirect đến trang confirmation
-            return "redirect:/guest/payment/session/" + sessionId + "/confirmation";
+
+            paymentService.waitingConfirmPayment(sessionId, method);
+
+            // redirect sang trang waiting
+            return "redirect:/guest/payment/session/" + sessionId +"/waiting-confirm";
         } catch (Exception e) {
-            e.printStackTrace(); // Log error for debugging
-            // Redirect back to payment page with error parameter
-            return "redirect:/guest/payment/session/" + sessionId + "?error=" + 
-                   URLEncoder.encode("Thanh toán thất bại: " + e.getMessage(), StandardCharsets.UTF_8);
+            e.printStackTrace();
+            return "redirect:/guest/payment/session/" + sessionId + "?error=" +
+                    URLEncoder.encode("Thanh toán thất bại: " + e.getMessage(), StandardCharsets.UTF_8);
         }
     }
+
+    @GetMapping("/session/{sessionId}/waiting-confirm")
+    public String waitingPage(@PathVariable Long sessionId,
+                              Model model,
+                              HttpSession session) {
+        model.addAttribute("sessionId", sessionId);
+        try {
+            // Lấy thông tin thanh toán hiện tại để hiển thị QR nếu cần
+            PaymentDTO payment = paymentService.getPaymentBySessionId(sessionId);
+            double originalTotal = paymentService.calculateOriginalOrderTotal(sessionId);
+            double discountAmount = paymentService.calculateDiscountAmount(sessionId);
+            double finalTotal = originalTotal - discountAmount;
+            model.addAttribute("paymentMethod", payment.getPaymentMethod());
+            model.addAttribute("orderTotal", payment.getOrderTotal());
+            model.addAttribute("orderId", payment.getOrderId());
+            model.addAttribute("tableNumber", payment.getTableNumber());
+            model.addAttribute("finalTotal", finalTotal);
+        } catch (Exception ignored) {}
+        return "guest-page/waiting_confirm";
+    }
+
+    @GetMapping("/session/{sessionId}/complete")
+    public String completePaymentAndClearSession(@PathVariable Long sessionId,
+                                                 HttpSession session) {
+        session.invalidate();
+        return "redirect:/guest";
+    }
+
+
 
 
     /**

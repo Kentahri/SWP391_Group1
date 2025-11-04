@@ -551,6 +551,50 @@
               </div>
             </div>
 
+            <!-- Nút actions cho order -->
+            <div class="table-actions">
+
+              <form id="payment-confirm-form" th:action="@{/cashier/payment/confirm}" method="post" style="display:none">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <input type="hidden" id="payment-session-id" name="sessionId" th:value="${orderDetail != null ? orderDetail.sessionId : null}" />
+                <input type="hidden" id="payment-method" name="paymentMethod" value="CASH" />
+              </form>
+
+              <div class="action-buttons-group" th:if="${tableStatus.toString() == 'WAITING_PAYMENT' && orderDetail != null && orderDetail.sessionId != null}">
+                <button type="button" class="btn-action btn-primary"
+                        th:if="${orderDetail.paymentMethod != null and orderDetail.paymentMethod.toString() == 'CASH'}"
+                        onclick="(function(){
+                          document.getElementById('payment-method').value='CASH';
+                          document.getElementById('payment-confirm-form').submit();
+                        })()">
+                  ✅ Xác nhận (Tiền mặt)
+                </button>
+                <button type="button" class="btn-action btn-secondary"
+                        th:if="${orderDetail.paymentMethod != null and orderDetail.paymentMethod.toString() == 'QR_BANKING'}"
+                        onclick="(function(){
+                          document.getElementById('payment-method').value='QR_BANKING';
+                          document.getElementById('payment-confirm-form').submit();
+                        })()">
+                  ✅ Xác nhận (QR)
+                </button>
+              </div>
+
+              <div class="action-buttons-group">
+                <button
+                  class="btn-action btn-reserve"
+                  th:onclick="'openReservationModal(' + ${selectedTableId} + ')'"
+                >
+                  📅 Đặt trước
+                </button>
+                <a
+                  th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}"
+                  class="btn-action btn-view-reservations"
+                >
+                  📋 Xem đơn đặt trước
+                </a>
+              </div>
+            </div>
+
           </div>
 
           <!-- Upcoming Reservations View -->

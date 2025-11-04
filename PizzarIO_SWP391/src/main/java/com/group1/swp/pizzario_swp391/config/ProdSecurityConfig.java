@@ -147,11 +147,11 @@ public class ProdSecurityConfig {
                         .anyRequest().authenticated())
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**", "/api/chatbot/**", "/guest/payment/**", "/manager/staff_shifts/export"))
+                        .ignoringRequestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**", "/api/chatbot/**", "/guest/payment/**"))
                 // Session Management: Cho phép nhiều session độc lập
                 .sessionManagement(session -> session
                         .sessionFixation().changeSessionId() // Đổi session ID sau khi login
-                        .maximumSessions(1) // Cho phép tối đa 10 sessions đồng thời
+                        .maximumSessions(10) // Cho phép tối đa 10 sessions đồng thời
                         .maxSessionsPreventsLogin(false)
                         .expiredSessionStrategy(event -> event.getResponse().sendRedirect("/pizzario/login?expired"))
                 )

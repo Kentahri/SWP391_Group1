@@ -3,26 +3,20 @@ package com.group1.swp.pizzario_swp391.service;
 import com.group1.swp.pizzario_swp391.dto.data_analytics.StaffShiftCalendarDTO;
 import com.group1.swp.pizzario_swp391.dto.data_analytics.StatsStaffShiftDTO;
 import com.group1.swp.pizzario_swp391.dto.data_analytics.WeekDayDTO;
-import com.group1.swp.pizzario_swp391.dto.staffshift.ManualCompleteShiftRequest;
 import com.group1.swp.pizzario_swp391.dto.staffshift.StaffShiftDTO;
 import com.group1.swp.pizzario_swp391.dto.staffshift.StaffShiftResponseDTO;
 import com.group1.swp.pizzario_swp391.entity.Shift;
 import com.group1.swp.pizzario_swp391.entity.StaffShift;
-import com.group1.swp.pizzario_swp391.event.staff.StaffShiftUpdatedEvent;
 import com.group1.swp.pizzario_swp391.mapper.StaffShiftMapper;
 import com.group1.swp.pizzario_swp391.repository.ShiftRepository;
 import com.group1.swp.pizzario_swp391.repository.StaffRepository;
 import com.group1.swp.pizzario_swp391.repository.StaffShiftRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +24,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class StaffShiftService {
 
         private final StaffShiftRepository staffShiftRepository;
@@ -39,7 +32,6 @@ public class StaffShiftService {
         private final StaffRepository staffRepository;
         private final ShiftRepository shiftRepository;
         private final StaffShiftManagementService staffShiftManagementService;
-        private final ApplicationEventPublisher eventPublisher;
 
         @Transactional
         public void create(StaffShiftDTO staffShiftDTO) {
@@ -161,75 +153,5 @@ public class StaffShiftService {
 
         public List<StaffShift> findAllShiftsByStaffIdAndDate(Integer staffId, LocalDate workDate) {
                 return staffShiftRepository.findAllShiftsByStaffIdAndDate(staffId, workDate);
-        }
-
-
-        @Transactional
-        public void manuallyCompleteShift(int id, ManualCompleteShiftRequest request) {
-                // Load shift with pessimistic lock to prevent concurrent updates
-                StaffShift staffShift = staffShiftRepository.findByIdWithLock(id)
-                        .orElseThrow(() -> new RuntimeException("Staff shift not found with ID: " + id));
-
-                // Validate shift is in NOT_CHECKOUT status
-                if (staffShift.getStatus() != StaffShift.Status.NOT_CHECKOUT) {
-                        throw new RuntimeException("Can only manually complete shifts with status NOT_CHECKOUT. Current status: " + staffShift.getStatus());
-                }
-
-                // Validate checkout time is not null
-                if (request.getCheckoutTime() == null) {
-                        throw new RuntimeException("Checkout time cannot be null");
-                }
-
-                // Validate checkout time is after check-in time
-                if (staffShift.getCheckIn() != null && request.getCheckoutTime().isBefore(staffShift.getCheckIn())) {
-                        throw new RuntimeException("Checkout time cannot be before check-in time");
-                }
-
-                // Validate checkout time is not in the future
-                if (request.getCheckoutTime().isAfter(LocalDateTime.now())) {
-                        throw new RuntimeException("Checkout time cannot be in the future");
-                }
-
-                // Set checkout time
-                staffShift.setCheckOut(request.getCheckoutTime());
-
-                // Determine status based on checkout time vs shift end time
-                LocalTime checkoutTime = request.getCheckoutTime().toLocalTime();
-                LocalTime shiftEndTime = staffShift.getShift().getEndTime().toLocalTime();
-
-                if (checkoutTime.isBefore(shiftEndTime)) {
-                        // Checked out before shift end -> LEFT_EARLY
-                        staffShift.setStatus(StaffShift.Status.LEFT_EARLY);
-                        log.info("Manual complete: Shift {} marked as LEFT_EARLY (checkout: {}, shift end: {})",
-                                id, checkoutTime, shiftEndTime);
-                } else {
-                        // Checked out at or after shift end -> COMPLETED
-                        staffShift.setStatus(StaffShift.Status.COMPLETED);
-                        log.info("Manual complete: Shift {} marked as COMPLETED (checkout: {}, shift end: {})",
-                                id, checkoutTime, shiftEndTime);
-                }
-
-                // Update penalty percent
-                staffShift.setPenaltyPercent(request.getPenaltyPercent());
-
-                // Append manager's note with timestamp
-                String existingNote = staffShift.getNote() != null ? staffShift.getNote() : "";
-                String manualCompleteNote = String.format(
-                        "[MANUAL COMPLETE by Manager at %s] %s | Penalty: %d%%",
-                        LocalDateTime.now(),
-                        request.getNote(),
-                        request.getPenaltyPercent()
-                );
-                staffShift.setNote(existingNote + " | " + manualCompleteNote);
-
-                // Save the shift
-                staffShiftRepository.save(staffShift);
-
-                // Publish event to cancel any scheduled tasks for this shift
-                eventPublisher.publishEvent(new StaffShiftUpdatedEvent(this, staffShift, true));
-
-                log.info("StaffShiftService: Manually completed shift {} for staff {} - Status: {}, Checkout: {}, Penalty: {}%",
-                        id, staffShift.getStaff().getName(), staffShift.getStatus(),
-                        request.getCheckoutTime(), request.getPenaltyPercent());
         }
 }
