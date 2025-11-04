@@ -126,7 +126,7 @@ public class CashierDashboardController {
 
         try {
             ReservationDTO reservation = reservationService.createReservation(dto);
-            redirectAttributes.addFlashAttribute("successMessage", "Đặt bàn thành công cho khách " + reservation.getCustomerName());
+            redirectAttributes.addFlashAttribute("successMessage", "Đặt bàn thành công cho khách " + reservation.getCustomerName() + " tại bàn " + dto.getTableId());
             return "redirect:/cashier";
         } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());

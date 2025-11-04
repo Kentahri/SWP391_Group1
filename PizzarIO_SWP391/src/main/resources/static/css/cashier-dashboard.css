@@ -1026,6 +1026,20 @@ body.resizing * {
     border-color: #F57C00;
 }
 
+/* Payment Confirmation Buttons - Simple Styling */
+.btn-action.btn-confirm-payment {
+    width: 100%;
+    justify-content: center;
+    background: linear-gradient(135deg, #FFB366 0%, #FF9933 100%);
+    color: white;
+    border-color: #FF9933;
+}
+
+.btn-action.btn-confirm-payment:hover {
+    background: linear-gradient(135deg, #FF9933 0%, #FF8000 100%);
+    border-color: #FF8000;
+}
+
 /* Payment Status Badge - Cute Style */
 .payment-status-badge {
     padding: 10px 16px !important;
@@ -1925,4 +1939,130 @@ textarea.form-control {
     font-size: 14px;
     font-weight: 500;
     line-height: 1.4;
+}
+
+/* ==================== Notification System ==================== */
+/* Notification Bell Button */
+.btn-notification {
+    position: relative;
+    background: #FFE5CC;
+    color: #664C3D;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-notification:hover {
+    background: #FFDAB3;
+    transform: scale(1.05);
+}
+
+.notification-icon {
+    font-size: 18px;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #e74c3c;
+    color: white;
+    border-radius: 12px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 18px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(231, 76, 60, 0.4);
+}
+
+/* Notification List */
+.notification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 16px;
+    border-radius: 8px;
+    border-left: 4px solid #ddd;
+    background: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+}
+
+.notification-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateX(4px);
+}
+
+.notification-item.success {
+    border-left-color: #4CAF50;
+    background: #f1f9f1;
+}
+
+.notification-item.error {
+    border-left-color: #e74c3c;
+    background: #fef5f5;
+}
+
+.notification-item.warning {
+    border-left-color: #FFC107;
+    background: #fffbf0;
+}
+
+.notification-item.info {
+    border-left-color: #2196F3;
+    background: #f5f9ff;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-message {
+    font-size: 14px;
+    color: #2c3e50;
+    margin-bottom: 4px;
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+.notification-meta {
+    font-size: 12px;
+    color: #FF9933;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.notification-time {
+    font-size: 11px;
+    color: #999;
+}
+
+.notification-delete {
+    background: transparent;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
+.notification-delete:hover {
+    background: #f8d7da;
+    color: #e74c3c;
 }

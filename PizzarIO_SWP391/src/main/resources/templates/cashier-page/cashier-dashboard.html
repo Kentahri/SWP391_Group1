@@ -49,6 +49,12 @@
           <div id="date" class="date">--/--/----</div>
         </div>
         <div class="actions">
+          <!-- Notification Bell -->
+          <button class="btn btn-notification" type="button" onclick="openNotificationModal()">
+            <span class="notification-icon">🔔</span>
+            <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+          </button>
+
           <button class="btn btn-secondary">
             <a
               th:href="@{/cashier/reservations/upcoming}"
@@ -384,7 +390,7 @@
                   <span class="meta-label">Phương thức:</span>
                   <span
                     class="meta-value"
-                    th:text="${orderDetail.paymentMethod == 'CASH' ? 'Tiền mặt' : (orderDetail.paymentMethod == 'QR_BANKING' ? 'QR Code' : 'Thẻ tín dụng')}"
+                    th:text="${orderDetail.paymentMethod.toString() == 'CASH' ? 'Tiền mặt' : (orderDetail.paymentMethod.toString() == 'QR_BANKING' ? 'QR Code' : 'Thẻ tín dụng')}"
                   ></span>
                 </div>
               </div>
@@ -448,12 +454,21 @@
                 <div
                   th:if="${orderDetail.voucherCode != null}"
                   class="summary-row"
+                  style="background: #fff3cd; padding: 8px; border-radius: 4px; margin-bottom: 8px;"
                 >
-                  <span>Voucher:</span>
+                  <span style="font-weight: 600;">Voucher:</span>
                   <span
                     class="voucher-code"
                     th:text="${orderDetail.voucherCode}"
+                    style="color: #856404; font-weight: 600;"
                     >—</span
+                  >
+                </div>
+                <div class="summary-row">
+                  <span>Tạm tính:</span>
+                  <span
+                    th:text="${#numbers.formatCurrency(orderDetail.totalPrice)}"
+                    >0đ</span
                   >
                 </div>
                 <div
@@ -466,13 +481,50 @@
                     >-0đ</span
                   >
                 </div>
+                <div class="summary-row">
+                  <span>Thuế (10%):</span>
+                  <span
+                    th:text="'+' + ${#numbers.formatCurrency((orderDetail.totalPrice - (orderDetail.discountAmount != null ? orderDetail.discountAmount : 0)) * 0.1)}"
+                    >0đ</span
+                  >
+                </div>
                 <div class="summary-row total">
                   <span>Tổng cộng:</span>
                   <span
                     class="total-amount"
-                    th:text="${#numbers.formatCurrency(orderDetail.totalPrice)}"
+                    th:text="${#numbers.formatCurrency((orderDetail.totalPrice - (orderDetail.discountAmount != null ? orderDetail.discountAmount : 0)) * 1.1)}"
                     >0đ</span
                   >
+                </div>
+
+                <!-- Nút xác nhận thanh toán ngay dưới Tổng cộng -->
+                <form id="payment-confirm-form" th:action="@{/cashier/payment/confirm}" method="post" style="display:none">
+                  <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                  <input type="hidden" id="payment-session-id" name="sessionId" th:value="${orderDetail != null ? orderDetail.sessionId : null}" />
+                  <input type="hidden" id="payment-method" name="paymentMethod" value="CASH" />
+                </form>
+
+                <div th:if="${tableStatus.toString() == 'WAITING_PAYMENT' && orderDetail != null && orderDetail.sessionId != null}" style="margin-top: 16px;">
+                  <button type="button" class="btn-action btn-confirm-payment btn-confirm-cash"
+                          th:if="${orderDetail.paymentMethod != null and orderDetail.paymentMethod.toString() == 'CASH'}"
+                          onclick="(function(){
+                            if(confirm('Xác nhận khách đã thanh toán bằng tiền mặt?')) {
+                              document.getElementById('payment-method').value='CASH';
+                              document.getElementById('payment-confirm-form').submit();
+                            }
+                          })()">
+                    💵 Xác nhận thanh toán tiền mặt
+                  </button>
+                  <button type="button" class="btn-action btn-confirm-payment btn-confirm-qr"
+                          th:if="${orderDetail.paymentMethod != null and orderDetail.paymentMethod.toString() == 'QR_BANKING'}"
+                          onclick="(function(){
+                            if(confirm('Xác nhận khách đã thanh toán qua QR Banking?')) {
+                              document.getElementById('payment-method').value='QR_BANKING';
+                              document.getElementById('payment-confirm-form').submit();
+                            }
+                          })()">
+                    📱 Xác nhận thanh toán QR Banking
+                  </button>
                 </div>
               </div>
 
@@ -485,34 +537,8 @@
               </div>
             </div>
 
-            <!-- Nút actions cho order -->
+            <!-- Đường phân cách và nút actions cho bàn -->
             <div class="table-actions">
-
-              <form id="payment-confirm-form" th:action="@{/cashier/payment/confirm}" method="post" style="display:none">
-                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                <input type="hidden" id="payment-session-id" name="sessionId" th:value="${orderDetail != null ? orderDetail.sessionId : null}" />
-                <input type="hidden" id="payment-method" name="paymentMethod" value="CASH" />
-              </form>
-
-              <div class="action-buttons-group" th:if="${tableStatus.toString() == 'WAITING_PAYMENT' && orderDetail != null && orderDetail.sessionId != null}">
-                <button type="button" class="btn-action btn-primary"
-                        th:if="${orderDetail.paymentMethod != null and orderDetail.paymentMethod.toString() == 'CASH'}"
-                        onclick="(function(){
-                          document.getElementById('payment-method').value='CASH';
-                          document.getElementById('payment-confirm-form').submit();
-                        })()">
-                  ✅ Xác nhận (Tiền mặt)
-                </button>
-                <button type="button" class="btn-action btn-secondary"
-                        th:if="${orderDetail.paymentMethod != null and orderDetail.paymentMethod.toString() == 'QR_BANKING'}"
-                        onclick="(function(){
-                          document.getElementById('payment-method').value='QR_BANKING';
-                          document.getElementById('payment-confirm-form').submit();
-                        })()">
-                  ✅ Xác nhận (QR)
-                </button>
-              </div>
-
               <div class="action-buttons-group">
                 <button
                   class="btn-action btn-reserve"
@@ -1519,6 +1545,10 @@
         th:if="${successMessage}"
         class="toast success"
         style="display: block"
+        th:attr="data-message=${successMessage},
+                 data-type='success',
+                 data-table-id=${selectedTableId != null ? selectedTableId : ''},
+                 data-reservation-id=${lastReservationId != null ? lastReservationId : ''}"
       >
         <span th:text="${successMessage}"></span>
       </div>
@@ -1526,6 +1556,10 @@
         th:if="${errorMessage != null and (showReservationModal == null or !showReservationModal)}"
         class="toast error"
         style="display: block"
+        th:attr="data-message=${errorMessage},
+                 data-type='error',
+                 data-table-id=${selectedTableId != null ? selectedTableId : ''},
+                 data-reservation-id=${lastReservationId != null ? lastReservationId : ''}"
       >
         <span th:text="${errorMessage}"></span>
       </div>
@@ -1850,6 +1884,26 @@
       </div>
     </div>
 
+    <!-- Notification History Modal -->
+    <div id="notification-modal" class="modal">
+      <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+          <h2>🔔 Lịch sử thông báo</h2>
+          <span class="modal-close" onclick="closeNotificationModal()">&times;</span>
+        </div>
+        <div class="modal-body" style="max-height: 60vh;">
+          <div class="notification-filters" style="margin-bottom: 16px; display: flex; gap: 8px; justify-content: flex-end;">
+            <button class="btn btn-secondary" onclick="clearAllNotifications()" style="font-size: 12px; padding: 6px 12px;">
+              🗑️ Xóa tất cả
+            </button>
+          </div>
+          <div id="notification-list" class="notification-list">
+            <!-- Notifications will be inserted here by JavaScript -->
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <script th:src="@{/js/cashier/utils.js}"></script>
@@ -2051,6 +2105,33 @@
           if (updateModal && updateModal.classList.contains("show")) {
             closeUpdateModal();
           }
+        }
+      });
+
+      // ==================== KHỞI TẠO NOTIFICATION SYSTEM ====================
+      document.addEventListener('DOMContentLoaded', function() {
+        initNotificationSystem();
+
+        // Lưu các server-side flash messages vào notification history với metadata
+        const toastContainer = document.getElementById('toast-container');
+        if (toastContainer) {
+          const serverToasts = toastContainer.querySelectorAll('.toast[data-message]');
+          serverToasts.forEach(function(toast) {
+            const message = toast.getAttribute('data-message');
+            const type = toast.getAttribute('data-type') || 'info';
+
+            // Lấy metadata từ data attributes
+            const metadata = {};
+            const tableId = toast.getAttribute('data-table-id');
+            const reservationId = toast.getAttribute('data-reservation-id');
+
+            if (tableId && tableId !== '') metadata.tableId = tableId;
+            if (reservationId && reservationId !== '') metadata.reservationId = reservationId;
+
+            if (message) {
+              saveNotification(message, type, metadata);
+            }
+          });
         }
       });
     </script>
