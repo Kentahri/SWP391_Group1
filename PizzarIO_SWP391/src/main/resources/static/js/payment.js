@@ -256,28 +256,6 @@ function initializePayment() {
       return;
     }
 
-    // Debug logging
-    console.log("=== Payment Confirmation Debug ===");
-    console.log("window.paymentData:", window.paymentData);
-    console.log(
-      "sessionId from window.paymentData:",
-      window.paymentData.sessionId,
-      "Type:",
-      typeof window.paymentData.sessionId
-    );
-    console.log(
-      "paymentConfirmUrl from window.paymentData:",
-      window.paymentData.paymentConfirmUrl,
-      "Type:",
-      typeof window.paymentData.paymentConfirmUrl
-    );
-    console.log(
-      "selectedPaymentMethod:",
-      selectedPaymentMethod,
-      "Type:",
-      typeof selectedPaymentMethod
-    );
-
     // Always use sessionId from window.paymentData (most up-to-date)
     let actualSessionId = window.paymentData.sessionId;
 

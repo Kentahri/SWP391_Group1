@@ -139,7 +139,7 @@ public class ProdSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/webjars/**", "/css/**", "/images/**", "/static/js/**", "/js/**",
                                 "/guest/**", "/missing_pass/**", "/ws/**", "/app/**", "/topic/**", "/queue/**",
-                                "/api/chatbot/**")
+                                "/api/chatbot/**", "/templates/error.html")
                         .permitAll()
                         .requestMatchers("/manager/**").hasRole("MANAGER")
                         .requestMatchers("/kitchen/**").hasRole("KITCHEN")
@@ -147,7 +147,7 @@ public class ProdSecurityConfig {
                         .anyRequest().authenticated())
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**", "/api/chatbot/**", "/guest/payment/**"))
+                        .ignoringRequestMatchers("/ws/**", "/app/**", "/topic/**", "/queue/**", "/api/chatbot/**", "/guest/payment/**", "/manager/staff_shifts/export"))
                 // Session Management: Cho phép nhiều session độc lập
                 .sessionManagement(session -> session
                         .sessionFixation().changeSessionId() // Đổi session ID sau khi login

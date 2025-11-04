@@ -22,7 +22,7 @@
                     <input type="hidden" name="quantity" th:value="${item.quantity}"/>
                     <input type="hidden" name="note" th:value="${item.note}"/>
 
-                    <!--                    <label for="sizeSelect"><strong>Chọn kích cỡ:</strong></label>-->
+<!--                    <label for="sizeSelect"><strong>Chọn kích cỡ:</strong></label>-->
                     <select id="sizeSelect" name="productSizeId"
                             style="display:block; margin-top:6px; padding:6px; border-radius:4px; width:100%;"
                             onchange="this.form.requestSubmit()">
@@ -33,22 +33,7 @@
                         </option>
                     </select>
                 </form>
-                <div class="note-section">
-                    <form class="ajax-form" th:action="@{/guest/cart/update}" method="post">
-                        <input type="hidden" name="sessionId" th:value="${sessionId}"/>
-                        <input type="hidden" name="tableId" th:value="${tableId}"/>
-                        <input type="hidden" name="productId" th:value="${item.productId}"/>
-                        <input type="hidden" name="quantity" th:value="${item.quantity}"/>
-                        <input type="hidden" name="productSizeId" th:value="${item.productSize.id}"/>
-
-                        <input type="text"
-                               name="note"
-                               th:value="${item.note}"
-                               placeholder="Thêm ghi chú..."
-                               onblur="this.form.requestSubmit()"
-                               style="width:100%;padding:6px;border-radius:4px;border:1px solid #ccc;margin-top:5px;"/>
-                    </form>
-                </div>
+                <div class="note" th:text="${item.note}"></div>
             </div>
             <div class="item-qty">
                 <form class="ajax-form" th:action="@{/guest/cart/update}" method="post">
