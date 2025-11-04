@@ -278,30 +278,6 @@
               ></strong
             >
             <br /><br />
-            <!-- QR Code Image -->
-            <div style="text-align: center; margin: 15px 0">
-              <img
-                th:src="'https://img.vietqr.io/image/BIDV-0388553383-compact.png?amount=' + ${#strings.replace(#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT'), ',', '')} + '&addInfo=Thanh%20toan%20hoa%20don%20so%20' + ${orderId}"
-                alt="QR Code for Payment"
-                style="
-                  max-width: 200px;
-                  height: auto;
-                  border: 1px solid #ddd;
-                  border-radius: 8px;
-                "
-              />
-              <br />
-              <span
-                style="
-                  font-size: 10px;
-                  color: #666;
-                  margin-top: 5px;
-                  display: block;
-                "
-              >
-                Quét mã QR bằng ứng dụng ngân hàng
-              </span>
-            </div>
           </div>
         </div>
         <div

@@ -3,6 +3,7 @@ package com.group1.swp.pizzario_swp391.service;
 import java.time.LocalDateTime;
 
 import com.group1.swp.pizzario_swp391.dto.websocket.ProductStatusMessage;
+import com.group1.swp.pizzario_swp391.dto.payment.PaymentPendingMessage;
 import com.group1.swp.pizzario_swp391.dto.product.ProductWebSocketDTO;
 import com.group1.swp.pizzario_swp391.entity.Product;
 import com.group1.swp.pizzario_swp391.mapper.ProductWebSocketMapper;
@@ -136,6 +137,17 @@ public class WebSocketService {
         messagingTemplate.convertAndSend("/topic/products-status", message);
         log.info("Broadcasted product {} change: {} by {}",
                 product.getId(), type, updateBy);
+    }
+
+
+
+    public void broadcastPaymentPendingToCashier(PaymentPendingMessage message) {
+        messagingTemplate.convertAndSend("/topic/payment-pending", message);
+    }
+
+
+    public void sendPaymentConfirmationToGuest(Long sessionId, PaymentPendingMessage message) {
+        messagingTemplate.convertAndSend("/queue/payment-" + sessionId, message);
     }
 
 }

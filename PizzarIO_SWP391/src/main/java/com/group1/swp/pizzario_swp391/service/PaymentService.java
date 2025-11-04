@@ -1,21 +1,29 @@
 package com.group1.swp.pizzario_swp391.service;
 
-import com.group1.swp.pizzario_swp391.dto.payment.PaymentDTO;
-import com.group1.swp.pizzario_swp391.dto.voucher.VoucherDTO;
-import com.group1.swp.pizzario_swp391.entity.*;
-import com.group1.swp.pizzario_swp391.mapper.PaymentMapper;
-import com.group1.swp.pizzario_swp391.repository.OrderRepository;
-import com.group1.swp.pizzario_swp391.repository.VoucherRepository;
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
+import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.Map;
+import com.group1.swp.pizzario_swp391.dto.payment.PaymentDTO;
+import com.group1.swp.pizzario_swp391.dto.payment.PaymentPendingMessage;
+import com.group1.swp.pizzario_swp391.dto.voucher.VoucherDTO;
+import com.group1.swp.pizzario_swp391.entity.DiningTable;
+import com.group1.swp.pizzario_swp391.entity.Membership;
+import com.group1.swp.pizzario_swp391.entity.Order;
+import com.group1.swp.pizzario_swp391.entity.OrderItem;
+import com.group1.swp.pizzario_swp391.entity.Voucher;
+import com.group1.swp.pizzario_swp391.mapper.PaymentMapper;
+import com.group1.swp.pizzario_swp391.repository.OrderRepository;
+import com.group1.swp.pizzario_swp391.repository.VoucherRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +33,9 @@ public class PaymentService {
     private final VoucherRepository voucherRepository;
     private final PaymentMapper paymentMapper;
     private final SessionService sessionService;
+    private final com.group1.swp.pizzario_swp391.repository.TableRepository tableRepository;
     private final MembershipService membershipService;
+    private final WebSocketService webSocketService;
 
     // Track used points per session (in-memory)
     private final Map<Long, Integer> pointsUsedBySession = new ConcurrentHashMap<>();
@@ -227,33 +237,76 @@ public class PaymentService {
         return paymentDTO;
     }
 
+    @Transactional
+    public void waitingConfirmPayment(Long sessionId, Order.PaymentMethod paymentMethod){
+        Order order = sessionService.getOrderBySessionId(sessionId);
+        DiningTable table = order.getSession().getTable();
+        DiningTable.TableStatus currentTableStatus = table.getTableStatus();
+        double finalOriginalTotal = calculateOriginalOrderTotal(sessionId);
+        double finalDiscountAmount = calculateDiscountAmount(sessionId);
+        double finalFinalTotal = finalOriginalTotal - finalDiscountAmount;
+
+        if (paymentMethod == null) {
+            throw new IllegalArgumentException("PaymentMethod cannot be null");
+        }
+
+        order.setPaymentMethod(paymentMethod);
+        order.setPaymentStatus(Order.PaymentStatus.PENDING);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        orderRepository.save(order);
+
+        // Cập nhật trạng thái bàn sang WAITING_PAYMENT và lưu DB để UI và trang chi tiết đồng bộ
+        try {
+            if (table.getTableStatus() != DiningTable.TableStatus.WAITING_PAYMENT) {
+                table.setTableStatus(DiningTable.TableStatus.WAITING_PAYMENT);
+                tableRepository.save(table);
+            }
+        } catch (Exception ignored) { }
+
+        PaymentPendingMessage message = PaymentPendingMessage.builder()
+                .sessionId(sessionId)
+                .orderId(order.getId())
+                .tableName("Bàn " + order.getSession().getTable().getId())
+                .status(DiningTable.TableStatus.WAITING_PAYMENT)
+                .orderTotal(finalFinalTotal)
+                .paymentMethod(paymentMethod)
+                .customerName(order.getMembership() != null ? order.getMembership().getName() : "Khách vãng lai")
+                .requestTime(LocalDateTime.now())
+                .paymentStatus(Order.PaymentStatus.PENDING)
+                .build();
+
+        webSocketService.broadcastPaymentPendingToCashier(message);
+
+        // Đồng thời bắn tín hiệu cập nhật trạng thái bàn cho cashier để UI đổi ngay
+        try {
+            webSocketService.broadcastTableStatusToCashier(
+                    com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage.MessageType.TABLE_PAYMENT_PENDING,
+                    order.getSession().getTable().getId(),
+                    currentTableStatus,
+                    DiningTable.TableStatus.WAITING_PAYMENT,
+                    "GUEST-" + sessionId,
+                    "💰 Bàn " + order.getSession().getTable().getId() + " đang chờ thanh toán"
+            );
+        } catch (Exception ignored) {}
+    }
+
     /**
-     * Xác nhận thanh toán và đóng session
+     * Xác nhận thanh toán và gửi thông báo đến Cashier(Chờ cashier xác nhận)
      */
     @Transactional(rollbackFor = Exception.class)
-    public PaymentDTO confirmPaymentBySessionId(Long sessionId, Order.PaymentMethod paymentMethod) {
-        System.out.println("=== PaymentService Debug ===");
-        System.out.println("SessionId: " + sessionId);
-        System.out.println("PaymentMethod: " + paymentMethod);
-        System.out.println("PaymentMethod type: " + (paymentMethod != null ? paymentMethod.getClass().getSimpleName() : "null"));
+    public void confirmPaymentBySessionId(Long sessionId, Order.PaymentMethod paymentMethod) {
         
         try {
             Order order = sessionService.getOrderBySessionId(sessionId);
             
-            // Tính các giá trị tài chính trước khi đóng session
             double finalOriginalTotal = calculateOriginalOrderTotal(sessionId);
             double finalDiscountAmount = calculateDiscountAmount(sessionId);
             double finalFinalTotal = finalOriginalTotal - finalDiscountAmount;
             
-            // Validate paymentMethod before setting
             if (paymentMethod == null) {
                 throw new IllegalArgumentException("PaymentMethod cannot be null");
             }
-            
-            // Debug: Log payment method details
-            System.out.println("Setting payment method: " + paymentMethod);
-            System.out.println("Payment method name: " + paymentMethod.name());
-            System.out.println("Payment method ordinal: " + paymentMethod.ordinal());
             
             // Cập nhật trạng thái thanh toán
             // Lưu payment method thực tế vào database
@@ -268,7 +321,6 @@ public class PaymentService {
                     updateVoucherUsage(order.getVoucher());
                 } catch (Exception e) {
                     System.err.println("Error updating voucher usage: " + e.getMessage());
-                    // Không throw exception để không làm gián đoạn quá trình thanh toán
                 }
             }
             
@@ -287,38 +339,31 @@ public class PaymentService {
                     updateMembershipPointsInNewTransaction(order.getMembership(), finalFinalTotal);
                 } catch (Exception e) {
                     System.err.println("Error updating membership points: " + e.getMessage());
-                    // Không throw exception để không làm gián đoạn quá trình thanh toán
                 }
             }
             
             orderRepository.save(order);
-            
+
             // Đóng session sau khi thanh toán thành công (không quan trọng, không làm fail transaction chính)
             try {
                 sessionService.closeSession(sessionId);
             } catch (Exception e) {
                 System.err.println("Error closing session: " + e.getMessage());
-                // Không throw exception để không làm gián đoạn quá trình thanh toán
             }
-            
-            PaymentDTO paymentDTO = paymentMapper.toDTO(order);
-            
-            // Set customer name
-            if (order.getMembership() != null) {
-                paymentDTO.setCustomerName(order.getMembership().getName());
-            } else {
-                paymentDTO.setCustomerName("Khách vãng lai");
-            }
-            
-            // Set các giá trị tài chính đã tính trước đó
-            paymentDTO.setOriginalTotal(finalOriginalTotal);
-            paymentDTO.setDiscountAmount(finalDiscountAmount);
-            paymentDTO.setOrderTotal(finalFinalTotal);
-            
-            // Debug: Log để kiểm tra giá trị
-            System.out.println("PaymentDTO paymentMethod: " + paymentDTO.getPaymentMethod());
-            
-            return paymentDTO;
+
+            var paymentDTO = getPaymentConfirmationBySessionId(sessionId);
+
+            PaymentPendingMessage successMsg = PaymentPendingMessage.builder()
+                    .sessionId(sessionId)
+                    .orderId(paymentDTO.getOrderId())
+                    .tableName("Bàn " + paymentDTO.getTableNumber())
+                    .paymentStatus(Order.PaymentStatus.PAID)
+                    .paymentMethod(paymentMethod)
+                    .customerName(paymentDTO.getCustomerName())
+                    .orderTotal(paymentDTO.getOrderTotal())
+                    .type("CONFIRMED") // Thêm type để frontend biết thanh toán đã được confirm
+                    .build();
+            webSocketService.sendPaymentConfirmationToGuest(sessionId, successMsg);
         } catch (Exception e) {
             System.err.println("Error in confirmPaymentBySessionId: " + e.getMessage());
             e.printStackTrace();
