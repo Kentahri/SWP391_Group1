@@ -75,81 +75,85 @@ public class CartService{
         }
     }
 
-    public void updateCartItem(HttpSession session, Long productId, int quantity, String note, Long productSizeId) {
+    public void updateCartItem(HttpSession session,
+                               Long productId,
+                               int quantity,
+                               String note,
+                               Long newProductSizeId,   // size MỚI muốn đổi sang
+                               Long oldProductSizeId) { // size CŨ đang có
+
         Map<Long, CartItemDTO> cart = getCart(session);
-        CartItemDTO oldItem = cart.values()
-                .stream()
-                .filter(item -> item.getProductId().equals(productId))
-                .findFirst()
-                .orElse(null);
 
-        if (oldItem == null) return;
+        // 1. LẤY ITEM CŨ
+        CartItemDTO oldItem = cart.get(oldProductSizeId);
+        if (oldItem == null) {
+            return; // Không tồn tại
+        }
 
-        System.out.println("TAO LA INFO =================" + note);
+        // 2. XỬ LÝ XÓA NẾU quantity <= 0
+        if (quantity <= 0) {
+            cart.remove(oldProductSizeId);
+            return;
+        }
 
-        Long oldSizeId = oldItem.getProductSize().getId();
+        // 3. Chuẩn hóa note
         note = (note != null) ? note.trim() : "";
 
-        // Nếu đổi sang size khác
-        if (!oldSizeId.equals(productSizeId)) {
-            cart.remove(oldSizeId);
+        // 4. GỘP NOTE: note cũ + note mới
+        String mergedNote = Stream.of(oldItem.getNote(), note)
+                .filter(n -> n != null && !n.isBlank())
+                .distinct()
+                .collect(Collectors.joining(", "));
 
-            CartItemDTO existingNewSizeItem = cart.get(productSizeId);
-            ProductSize newSize = productSizeService.getById(productSizeId);
-            double newPrice = getCurrentPrice(newSize);
+        // 5. XÓA ITEM CŨ NGAY (sẽ thêm lại sau nếu cần)
+        cart.remove(oldProductSizeId);
 
-            if (existingNewSizeItem != null) {
-                // Gộp nếu size mới đã có
-                existingNewSizeItem.setQuantity(existingNewSizeItem.getQuantity() + quantity);
-                existingNewSizeItem.setTotalPrice(existingNewSizeItem.getQuantity() * existingNewSizeItem.getUnitPrice());
+        // === ĐỔI SANG SIZE KHÁC ===
+        if (!oldProductSizeId.equals(newProductSizeId)) {
 
-                // Gộp note giữa item cũ + item mới + note mới
-                String combinedNote = Stream.of(
-                                existingNewSizeItem.getNote(),
-                                oldItem.getNote(),
-                                note
-                        ).filter(n -> n != null && !n.isBlank())
-                        .distinct()
-                        .collect(Collectors.joining(", "));
+            ProductSize newSize = productSizeService.getById(newProductSizeId);
+            if (newSize == null) return;
 
-                existingNewSizeItem.setNote(combinedNote);
-                cart.put(productSizeId, existingNewSizeItem);
-            } else {
-                // Tạo item mới nếu size đó chưa có
-                String mergedNote = Stream.of(oldItem.getNote(), note)
+            double newUnitPrice = getCurrentPrice(newSize);
+            CartItemDTO existingItem = cart.get(newProductSizeId);
+
+            if (existingItem != null) {
+                // GỘP VÀO SIZE MỚI ĐÃ TỒN TẠI
+                int totalQty = existingItem.getQuantity() + quantity;
+                existingItem.setQuantity(totalQty);
+                existingItem.setTotalPrice(totalQty * existingItem.getUnitPrice());
+
+                String finalNote = Stream.of(existingItem.getNote(), mergedNote)
                         .filter(n -> n != null && !n.isBlank())
                         .distinct()
                         .collect(Collectors.joining(", "));
 
+                existingItem.setNote(finalNote);
+                cart.put(newProductSizeId, existingItem);
+
+            } else {
+                // TẠO MỚI CHO SIZE MỚI
                 CartItemDTO newItem = CartItemDTO.builder()
                         .productId(productId)
                         .productName(oldItem.getProductName())
                         .productImageUrl(oldItem.getProductImageUrl())
                         .quantity(quantity)
-                        .unitPrice(newPrice)
-                        .totalPrice(newPrice * quantity)
+                        .unitPrice(newUnitPrice)
+                        .totalPrice(newUnitPrice * quantity)
                         .note(mergedNote)
                         .productSize(newSize)
                         .build();
 
-                cart.put(productSizeId, newItem);
+                cart.put(newProductSizeId, newItem);
             }
 
         } else {
-            // Không đổi size
-            if (quantity > 0) {
-                oldItem.setQuantity(quantity);
-                oldItem.setTotalPrice(oldItem.getUnitPrice() * quantity);
-            } else {
-                cart.remove(productSizeId);
-            }
+            // === KHÔNG ĐỔI SIZE → CẬP NHẬT TRỰC TIẾP ===
+            oldItem.setQuantity(quantity);
+            oldItem.setTotalPrice(oldItem.getUnitPrice() * quantity);
+            oldItem.setNote(mergedNote);
 
-            // Gộp note nếu có note mới
-            oldItem.setNote(note);
-            System.out.println("✅ CartService: Note sau khi update = [" + oldItem.getNote() + "]");
-            System.out.println("✅ CartService: ProductId = " + oldItem.getProductId() + ", ProductSizeId = " + productSizeId);
-
-            cart.put(productSizeId, oldItem);
+            cart.put(oldProductSizeId, oldItem); // key = newProductSizeId = oldProductSizeId
         }
     }
 

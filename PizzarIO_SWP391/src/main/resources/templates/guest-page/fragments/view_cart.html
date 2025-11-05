@@ -21,9 +21,8 @@
                     <input type="hidden" name="productId" th:value="${item.productId}"/>
                     <input type="hidden" name="quantity" th:value="${item.quantity}"/>
                     <input type="hidden" name="note" th:value="${item.note}"/>
-
-                    <!--                    <label for="sizeSelect"><strong>Chọn kích cỡ:</strong></label>-->
-                    <select id="sizeSelect" name="productSizeId"
+                    <input type="hidden" name="oldProductSizeId" th:value="${item.productSize.id}"/>
+                    <select id="sizeSelect" name="newProductSizeId"
                             style="display:block; margin-top:6px; padding:6px; border-radius:4px; width:100%;"
                             onchange="this.form.requestSubmit()">
                         <option th:each="ps : ${item.productSizes}"
@@ -39,7 +38,8 @@
                         <input type="hidden" name="tableId" th:value="${tableId}"/>
                         <input type="hidden" name="productId" th:value="${item.productId}"/>
                         <input type="hidden" name="quantity" th:value="${item.quantity}"/>
-                        <input type="hidden" name="productSizeId" th:value="${item.productSize.id}"/>
+                        <input type="hidden" name="oldProductSizeId" th:value="${item.productSize.id}"/>
+                        <input type="hidden" name="newProductSizeId" th:value="${item.productSize.id}"/>
 
                         <input type="text"
                                name="note"
@@ -56,7 +56,8 @@
                     <input type="hidden" name="tableId" th:value="${tableId}"/>
                     <input type="hidden" name="productId" th:value="${item.productId}"/>
                     <input type="hidden" name="quantity" th:value="${item.quantity - 1}"/>
-                    <input type="hidden" name="productSizeId" th:value="${item.productSize.id}"/>
+                    <input type="hidden" name="oldProductSizeId" th:value="${item.productSize.id}"/>
+                    <input type="hidden" name="newProductSizeId" th:value="${item.productSize.id}"/>
                     <button type="submit">-</button>
                 </form>
                 <span th:text="${item.quantity}">1</span>
@@ -65,7 +66,9 @@
                     <input type="hidden" name="tableId" th:value="${tableId}"/>
                     <input type="hidden" name="productId" th:value="${item.productId}"/>
                     <input type="hidden" name="quantity" th:value="${item.quantity + 1}"/>
-                    <input type="hidden" name="productSizeId" th:value="${item.productSize.id}"/>
+                    <input type="hidden" name="oldProductSizeId" th:value="${item.productSize.id}"/>
+                    <input type="hidden" name="newProductSizeId" th:value="${item.productSize.id}"/>
+
                     <button type="submit">+</button>
                 </form>
             </div>
