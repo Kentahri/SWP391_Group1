@@ -9,59 +9,41 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <!-- Header -->
-    <header class="kitchen-header">
-        <div class="header-container">
-            <!-- Logo Section -->
-            <div class="header-brand">
-                <div class="brand-logo">
-                    <div class="logo-icon">
-                        <i class="fas fa-fire"></i>
-                    </div>
-                    <div class="brand-info">
-                        <h1 class="brand-title">Kitchen Manager</h1>
-                        <p class="brand-subtitle">PizzarIO Restaurant</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Navigation Section -->
-            <nav class="header-navigation">
-                <div class="nav-items">
-                    <a th:href="@{/kitchen/dashboard}" class="nav-link" data-page="dashboard">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span>Dashboard</span>
-                    </a>
-                    <a th:href="@{/kitchen/order-list}" class="nav-link active" data-page="orders">
-                        <i class="fas fa-list"></i>
-                        <span>Orders</span>
-                    </a>
-                    <a th:href="@{/kitchen/outstock}" class="nav-link" data-page="menu">
-                        <i class="fas fa-utensils"></i>
-                        <span>Menu</span>
-                    </a>
-                </div>
-            </nav>
-
-            <!-- User Section -->
-            <div class="header-user">
-                <div class="user-info">
-                    <div class="user-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="user-details">
-                        <span class="user-name">Kitchen Staff</span>
-                        <span class="user-role">Kitchen Staff</span>
-                    </div>
-                </div>
-                <form th:action="@{/logout}" method="post" class="logout-form">
-                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                    <button type="submit" class="logout-btn">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Logout</span>
-                    </button>
-                </form>
-            </div>
+    <!-- Top bar -->
+    <header class="topbar">
+        <div class="brand">🍕 PizzarIO</div>
+        <div class="staff-info">
+            <span>Tên: <strong th:text="${staff.name}">Kitchen Staff</strong></span>
+        </div>
+        <div class="datetime-info">
+            <div id="clock" class="clock">--:--:--</div>
+            <div id="date" class="date">--/--/----</div>
+        </div>
+        <div class="actions">
+            <a th:href="@{/kitchen/dashboard}" class="btn btn-secondary" style="text-decoration: none; display: inline-block">
+                📊 Dashboard
+            </a>
+            <a th:href="@{/kitchen/order-list}" class="btn btn-primary" style="text-decoration: none; display: inline-block">
+                📋 Danh sách đơn hàng
+            </a>
+            <a th:href="@{/kitchen/outstock}" class="btn btn-secondary" style="text-decoration: none; display: inline-block">
+                🍽️ Quản lý Menu
+            </a>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <input
+                    type="hidden"
+                    th:if="${_csrf != null}"
+                    th:name="${_csrf.parameterName}"
+                    th:value="${_csrf.token}"
+                />
+                <button
+                    type="submit"
+                    class="btn-logout"
+                    onclick="return confirm('Bạn có muốn đăng xuất không?')"
+                >
+                    🚪 Đăng xuất
+                </button>
+            </form>
         </div>
     </header>
 
@@ -152,6 +134,29 @@
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <script th:src="@{/js/kitchen/websocket.js}"></script>
+    <script>
+        // Clock and Date Display
+        const $clock = document.getElementById("clock");
+        const $date = document.getElementById("date");
+
+        function renderDateTime() {
+            const now = new Date();
+            if ($clock) {
+                $clock.textContent = now.toLocaleTimeString("vi-VN", { hour12: false });
+            }
+            if ($date) {
+                $date.textContent = now.toLocaleDateString("vi-VN", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                });
+            }
+        }
+
+        renderDateTime();
+        setInterval(renderDateTime, 1000);
+    </script>
     <script th:inline="javascript">
         // Track the last update made by this user to avoid reload immediately after user's own update
         window.lastUpdateByThisUser = null;
@@ -191,18 +196,6 @@
             }
         }
 
-        // Navigation handling
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.nav-link')) {
-                const navLink = e.target.closest('.nav-link');
-                
-                // Update active navigation
-                document.querySelectorAll('.nav-link').forEach(link => {
-                    link.classList.remove('active');
-                });
-                navLink.classList.add('active');
-            }
-        });
     </script>
 </body>
 </html>

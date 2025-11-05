@@ -483,7 +483,7 @@ public class ReservationService {
                     oldStatus,
                     table.getTableStatus(),
                     "SYSTEM",
-                    "Khách không đến sau" + setting.getNoShowWaitMinutes() + "phút, bàn được mở lại (Reservation #" + reservationId + ")"
+                    "Khách không đến sau " + setting.getNoShowWaitMinutes() + " phút, bàn " + table.getId()  + "được mở lại (Reservation #" + reservationId + ")"
             );
         } else {
             webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());

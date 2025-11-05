@@ -94,7 +94,10 @@ function handlePaymentPending(paymentData) {
     // Toast thông báo bàn đang chờ thanh toán
     try {
         var tableLabel = paymentData.tableName || (paymentData.tableNumber ? ('Bàn ' + paymentData.tableNumber) : 'Bàn');
-        showToast('💰 ' + tableLabel + ' đang chờ thanh toán', 'info');
+        var metadata = {};
+        if (paymentData.tableNumber) metadata.tableId = paymentData.tableNumber;
+        if (paymentData.orderId) metadata.orderId = paymentData.orderId;
+        showToast('💰 ' + tableLabel + ' đang chờ thanh toán', 'info', metadata);
     } catch (e) { /* ignore */ }
 
     // Show payment confirmation modal

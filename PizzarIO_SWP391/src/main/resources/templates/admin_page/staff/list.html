@@ -1,320 +1,323 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Staff List</title>
-    <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
-    <link rel="stylesheet" th:href="@{/css/admin_page/staff-list.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}"/>
+    <link rel="stylesheet" th:href="@{/css/admin_page/staff-list.css}"/>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  </head>
-  <body>
-    <div class="app">
-      <!-- SIDEBAR -->
-      <div th:insert="~{fragments/sidebar :: sidebar('staff')}"></div>
+</head>
+<body>
+<div class="app">
+    <!-- SIDEBAR -->
+    <div th:insert="~{fragments/sidebar :: sidebar('staff')}"></div>
 
-      <!-- MAIN -->
-      <main class="main">
+    <!-- MAIN -->
+    <main class="main">
         <header class="page-header">
-          <div>
-            <h1>Quản lý Nhân viên</h1>
-            <p class="muted">Quản lí ca làm việc và tính lương</p>
-          </div>
-          <div class="userbox">
-            <div class="avatar">M</div>
-            <div class="who">
-              <strong>Manager</strong>
-              <span class="muted">Quản lý</span>
+            <div>
+                <h1>Quản lý Nhân viên</h1>
+                <p class="muted">Quản lí ca làm việc và tính lương</p>
             </div>
-          </div>
+            <div class="userbox">
+                <div class="avatar">M</div>
+                <div class="who">
+                    <strong>Manager</strong>
+                    <span class="muted">Quản lý</span>
+                </div>
+            </div>
         </header>
 
         <div class="stats-grid">
-          <div class="stat-card">
-            <p class="label">Tổng nhân viên</p>
-            <h2 th:text="${totalStaff}">7</h2>
-            <p class="note active" th:text="${activeStaff} + ' đang hoạt động'">
-              đang hoạt động
-            </p>
-          </div>
+            <div class="stat-card">
+                <p class="label">Tổng nhân viên</p>
+                <h2 th:text="${totalStaff}">7</h2>
+                <p class="note active" th:text="${activeStaff} + ' đang hoạt động'">
+                    đang hoạt động
+                </p>
+            </div>
 
-          <div class="stat-card">
-            <p class="label">Tổng chi phí lương</p>
-            <h2
-              th:text="${totalSalary != null ? (#numbers.formatDecimal(totalSalary / 1000000, 1, 'POINT', 1, 'POINT') + 'M VNĐ') : '0 VNĐ'}"
-            >
-              26.9M VNĐ
-            </h2>
-            <p class="note">tháng này</p>
-          </div>
+            <div class="stat-card">
+                <p class="label">Tổng chi phí lương</p>
+                <h2
+                        th:text="${totalSalary != null ? (#numbers.formatDecimal(totalSalary / 1000000, 1, 'POINT', 1, 'POINT') + 'M VNĐ') : '0 VNĐ'}"
+                >
+                    26.9M VNĐ
+                </h2>
+                <p class="note">tháng này</p>
+            </div>
 
-          <div class="stat-card">
-            <p class="label">Lương TB/nhân viên</p>
-            <h2
-              th:text="${avgSalary != null ? (#numbers.formatDecimal(avgSalary / 1000, 1, 'POINT', 0, 'POINT') + 'K VNĐ') : '0 VNĐ'}"
-            >
-              3837K VNĐ
-            </h2>
-            <p class="note purple">trung bình</p>
-          </div>
+            <div class="stat-card">
+                <p class="label">Lương TB/nhân viên</p>
+                <h2
+                        th:text="${avgSalary != null ? (#numbers.formatDecimal(avgSalary / 1000, 1, 'POINT', 0, 'POINT') + 'K VNĐ') : '0 VNĐ'}"
+                >
+                    3837K VNĐ
+                </h2>
+                <p class="note purple">trung bình</p>
+            </div>
         </div>
 
         <!-- MAIN LAYOUT: trái = bảng lương theo ca (từ DB), phải = biểu đồ chi trả lương -->
         <div class="container">
-          <div class="card" style="padding: 16px; border-radius: 12px">
-            <div
-              style="
+            <div class="card" style="padding: 16px; border-radius: 12px">
+                <div
+                        style="
                 display: grid;
                 grid-template-columns: 320px 1fr;
                 gap: 20px;
                 align-items: start;
               "
-            >
-              <!-- LEFT: Bảng lương theo ca (dữ liệu lấy từ model 'shifts') -->
-              <aside>
-                <h3 style="margin: 0 0 12px 0">Bảng lương theo ca</h3>
+                >
+                    <!-- LEFT: Bảng lương theo ca (dữ liệu lấy từ model 'shifts') -->
+                    <aside>
+                        <h3 style="margin: 0 0 12px 0">Bảng lương theo ca</h3>
 
-                <div th:if="${shifts != null and !shifts.isEmpty()}">
-                  <div
-                    th:each="s : ${shifts}"
-                    style="
+                        <div th:if="${shifts != null and !shifts.isEmpty()}">
+                            <div
+                                    th:each="s : ${shifts}"
+                                    style="
                       border: 1px solid #eef2f6;
                       border-radius: 10px;
                       padding: 12px;
                       margin-bottom: 12px;
                     "
-                  >
-                    <div
-                      style="font-weight: 700; margin-bottom: 8px"
-                      th:text="${s.shiftName}"
-                    ></div>
+                            >
+                                <div
+                                        style="font-weight: 700; margin-bottom: 8px"
+                                        th:text="${s.shiftName}"
+                                ></div>
 
-                    <div
-                      style="color: #111827; font-weight: 600"
-                      th:text="${s.salaryPerShift != null ? #numbers.formatDecimal(s.salaryPerShift, 1, 'COMMA', 0, 'POINT') + ' VND' : '—'}"
-                    ></div>
-                  </div>
+                                <div
+                                        style="color: #111827; font-weight: 600"
+                                        th:text="${s.salaryPerShift != null ? #numbers.formatDecimal(s.salaryPerShift, 1, 'COMMA', 0, 'POINT') + ' VND' : '—'}"
+                                ></div>
+                            </div>
+                        </div>
+
+                        <div th:if="${shifts == null or shifts.isEmpty()}">
+                            <!-- fallback tĩnh -->
+                            <div
+                                    style="
+                      border: 1px solid #eef2f6;
+                      border-radius: 10px;
+                      padding: 12px;
+                      margin-bottom: 12px;
+                    "
+                            >
+                                <div style="font-weight: 700">Ca sáng</div>
+                                <div style="color: #111827; font-weight: 600">
+                                    150.000 VND
+                                </div>
+                            </div>
+                            <div
+                                    style="
+                      border: 1px solid #eef2f6;
+                      border-radius: 10px;
+                      padding: 12px;
+                      margin-bottom: 12px;
+                    "
+                            >
+                                <div style="font-weight: 700">Ca chiều</div>
+                                <div style="color: #111827; font-weight: 600">
+                                    170.000 VND
+                                </div>
+                            </div>
+                            <div
+                                    style="
+                      border: 1px solid #eef2f6;
+                      border-radius: 10px;
+                      padding: 12px;
+                      margin-bottom: 12px;
+                    "
+                            >
+                                <div style="font-weight: 700">Ca tối</div>
+                                <div style="color: #111827; font-weight: 600">
+                                    200.000 VND
+                                </div>
+                            </div>
+                            <div class="salary-item">
+                                <div class="salary-item-name">Ca đêm</div>
+                                <div class="salary-item-value">230.000 VND</div>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <!-- RIGHT: Biểu đồ chi trả lương hàng ngày (dựa trên StaffShift dữ liệu) -->
+                    <section>
+                        <h3 style="margin: 0 0 12px 0">
+                            Biểu đồ chi trả lương hàng ngày
+                        </h3>
+                        <p class="muted">Tổng chi phí nhân sự trong tuần</p>
+
+                        <canvas id="payrollChart" height="160"></canvas>
+
+                        <!-- inject Thymeleaf data into JS -->
+                        <script th:inline="javascript">
+                            /*<![CDATA[*/
+                            let chartLabels = [[${chartLabels}]]; // ex: ['T2','T3',...]
+                            let chartData = [[${chartData}]];     // ex: [1200000, 1500000, ...]
+                            /*]]>*/
+                        </script>
+
+                        <script>
+                            const ctx = document
+                                .getElementById("payrollChart")
+                                .getContext("2d");
+                            const payrollChart = new Chart(ctx, {
+                                type: "bar",
+                                data: {
+                                    labels: chartLabels,
+                                    datasets: [
+                                        {
+                                            label: "Chi trả (VND)",
+                                            data: chartData,
+                                            backgroundColor: "rgba(59,130,246,0.8)",
+                                            borderRadius: 6,
+                                        },
+                                    ],
+                                },
+                                options: {
+                                    scales: {
+                                        y: {
+                                            ticks: {
+                                                callback: function (value) {
+                                                    // format display: 1.2M / 2.4M etc
+                                                    if (value >= 1000000)
+                                                        return (value / 1000000).toFixed(1) + "M";
+                                                    if (value >= 1000)
+                                                        return (value / 1000).toFixed(0) + "k";
+                                                    return value;
+                                                },
+                                            },
+                                        },
+                                    },
+                                    plugins: {
+                                        legend: {display: false},
+                                    },
+                                },
+                            });
+                        </script>
+                    </section>
                 </div>
-
-                <div th:if="${shifts == null or shifts.isEmpty()}">
-                  <!-- fallback tĩnh -->
-                  <div
-                    style="
-                      border: 1px solid #eef2f6;
-                      border-radius: 10px;
-                      padding: 12px;
-                      margin-bottom: 12px;
-                    "
-                  >
-                    <div style="font-weight: 700">Ca sáng</div>
-                    <div style="color: #111827; font-weight: 600">
-                      150.000 VND
-                    </div>
-                  </div>
-                  <div
-                    style="
-                      border: 1px solid #eef2f6;
-                      border-radius: 10px;
-                      padding: 12px;
-                      margin-bottom: 12px;
-                    "
-                  >
-                    <div style="font-weight: 700">Ca chiều</div>
-                    <div style="color: #111827; font-weight: 600">
-                      170.000 VND
-                    </div>
-                  </div>
-                  <div
-                    style="
-                      border: 1px solid #eef2f6;
-                      border-radius: 10px;
-                      padding: 12px;
-                      margin-bottom: 12px;
-                    "
-                  >
-                    <div style="font-weight: 700">Ca tối</div>
-                    <div style="color: #111827; font-weight: 600">
-                      200.000 VND
-                    </div>
-                  </div>
-                  <div class="salary-item">
-                    <div class="salary-item-name">Ca đêm</div>
-                    <div class="salary-item-value">230.000 VND</div>
-                  </div>
-                </div>
-              </aside>
-
-              <!-- RIGHT: Biểu đồ chi trả lương hàng ngày (dựa trên StaffShift dữ liệu) -->
-              <section>
-                <h3 style="margin: 0 0 12px 0">
-                  Biểu đồ chi trả lương hàng ngày
-                </h3>
-                <p class="muted">Tổng chi phí nhân sự trong tuần</p>
-
-                <canvas id="payrollChart" height="160"></canvas>
-
-                <!-- inject Thymeleaf data into JS -->
-                <script th:inline="javascript">
-                  /*<![CDATA[*/
-                  let chartLabels = [[${chartLabels}]]; // ex: ['T2','T3',...]
-                  let chartData = [[${chartData}]];     // ex: [1200000, 1500000, ...]
-                  /*]]>*/
-                </script>
-
-                <script>
-                  const ctx = document
-                    .getElementById("payrollChart")
-                    .getContext("2d");
-                  const payrollChart = new Chart(ctx, {
-                    type: "bar",
-                    data: {
-                      labels: chartLabels,
-                      datasets: [
-                        {
-                          label: "Chi trả (VND)",
-                          data: chartData,
-                          backgroundColor: "rgba(59,130,246,0.8)",
-                          borderRadius: 6,
-                        },
-                      ],
-                    },
-                    options: {
-                      scales: {
-                        y: {
-                          ticks: {
-                            callback: function (value) {
-                              // format display: 1.2M / 2.4M etc
-                              if (value >= 1000000)
-                                return (value / 1000000).toFixed(1) + "M";
-                              if (value >= 1000)
-                                return (value / 1000).toFixed(0) + "k";
-                              return value;
-                            },
-                          },
-                        },
-                      },
-                      plugins: {
-                        legend: { display: false },
-                      },
-                    },
-                  });
-                </script>
-              </section>
             </div>
-          </div>
         </div>
 
         <div class="container">
-          <div class="card">
-            <h1>Danh sách nhân viên</h1>
+            <div class="card">
+                <h1>Danh sách nhân viên</h1>
 
-            <!-- Success/Error Messages -->
-            <div
-              th:if="${success}"
-              class="alert alert-success"
-              style="
+                <!-- Success/Error Messages -->
+                <div
+                        th:if="${success}"
+                        class="alert alert-success"
+                        style="
                 background-color: #d1fae5;
                 color: #065f46;
                 padding: 12px;
                 border-radius: 8px;
                 margin-bottom: 16px;
               "
-            >
-              <span th:text="${success}"></span>
-            </div>
-            <div
-              th:if="${error}"
-              class="alert alert-error"
-              style="
+                >
+                    <span th:text="${success}"></span>
+                </div>
+                <div
+                        th:if="${error}"
+                        class="alert alert-error"
+                        style="
                 background-color: #fee2e2;
                 color: #991b1b;
                 padding: 12px;
                 border-radius: 8px;
                 margin-bottom: 16px;
               "
-            >
-              <span th:text="${error}"></span>
-            </div>
-
-            <a th:href="@{/manager/staff/create}" class="primary-btn"
-              >➕ Thêm nhân viên</a
-            >
-
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Tên</th>
-                  <th>Ngày sinh</th>
-                  <th>Số điện thoại</th>
-                  <th>Địa chỉ</th>
-                  <th>Email</th>
-                  <th>Vai trò</th>
-                  <th>Hoạt động</th>
-                  <th>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  th:each="staff : ${staffs}"
-                  th:class="${!staff.active} ? 'inactive-staff' : ''"
                 >
-                  <td th:text="${staff.id}"></td>
-                  <td>
-                    <div style="display: flex; align-items: center; gap: 8px">
-                      <span th:text="${staff.name}"></span>
-                      <span th:if="${!staff.active}" class="resigned-badge"
-                        >Đã nghỉ việc</span
-                      >
-                    </div>
-                  </td>
-                  <td th:text="${staff.dateOfBirth}"></td>
-                  <td th:text="${staff.phone}"></td>
-                  <td th:text="${staff.address}"></td>
-                  <td th:text="${staff.email}"></td>
-                  <td th:text="${staff.role}"></td>
-                  <td>
-                    <span th:if="${staff.active}" class="status-active"
-                      >Hoạt động</span
-                    >
-                    <span th:if="${!staff.active}" class="status-inactive"
-                      >Không hoạt động</span
-                    >
-                  </td>
-                  <td class="actions">
-                    <a
-                      th:href="@{'/manager/staff/edit/' + ${staff.id}}"
-                      class="primary-btn"
-                      >Chỉnh sửa</a
-                    >
-                    <button
-                      th:onclick="'toggleActive(' + ${staff.id} + ', ' + ${staff.active} + ')'"
-                      th:class="${staff.active} ? 'toggle-btn deactivate-btn' : 'toggle-btn activate-btn'"
-                      th:text="${staff.active} ? 'Vô hiệu hóa' : 'Kích hoạt'"
-                    ></button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </main>
-    </div>
+                    <span th:text="${error}"></span>
+                </div>
 
-    <script>
-      function toggleActive(staffId, currentActive) {
+                <a th:href="@{/manager/staff/create}" class="primary-btn"
+                >➕ Thêm nhân viên</a
+                >
+
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên</th>
+                        <th>Ngày sinh</th>
+                        <th>Số điện thoại</th>
+                        <th>Địa chỉ</th>
+                        <th>Email</th>
+                        <th>Vai trò</th>
+                        <th>Hoạt động</th>
+                        <th>Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr
+                            th:each="staff : ${staffs}"
+                            th:class="${!staff.active} ? 'inactive-staff' : ''"
+                    >
+                        <td th:text="${staff.id}"></td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px">
+                                <span th:text="${staff.name}"></span>
+                                <span th:if="${!staff.active}" class="resigned-badge"
+                                >Đã nghỉ việc</span
+                                >
+                            </div>
+                        </td>
+                        <td th:text="${staff.dateOfBirth}"></td>
+                        <td th:text="${staff.phone}"></td>
+                        <td th:text="${staff.address}"></td>
+                        <td th:text="${staff.email}"></td>
+                        <td th:text="${staff.role}"></td>
+                        <td>
+                    <span th:if="${staff.active}" class="status-active"
+                    >Hoạt động</span
+                    >
+                            <span th:if="${!staff.active}" class="status-inactive"
+                            >Không hoạt động</span
+                            >
+                        </td>
+                        <td class="actions">
+                            <a
+                                    th:href="@{'/manager/staff/edit/' + ${staff.id}}"
+                                    class="primary-btn"
+                            >Chỉnh sửa</a
+                            >
+                            <button
+                                    th:onclick="'toggleActive(' + ${staff.id} + ', ' + ${staff.active} + ')'"
+                                    th:class="${staff.active} ? 'toggle-btn deactivate-btn' : 'toggle-btn activate-btn'"
+                                    th:text="${staff.active} ? 'Vô hiệu hóa' : 'Kích hoạt'"
+                            ></button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    function toggleActive(staffId, currentActive) {
         if (
-          confirm(
-            currentActive
-              ? "Bạn có chắc chắn muốn vô hiệu hóa nhân viên này?"
-              : "Bạn có chắc chắn muốn kích hoạt nhân viên này?"
-          )
+            confirm(
+                currentActive
+                    ? "Bạn có chắc chắn muốn vô hiệu hóa nhân viên này?"
+                    : "Bạn có chắc chắn muốn kích hoạt nhân viên này?"
+            )
         ) {
-          // Use GET request to avoid CSRF issues
-          window.location.href =
-            "/pizzario/manager/staff/toggle-active/" + staffId;
+            // Use GET request to avoid CSRF issues
+            window.location.href =
+                "/pizzario/manager/staff/toggle-active/" + staffId;
         }
-      }
-    </script>
-  </body>
+    }
+</script>
+<script th:src="@{/js/admin/product-dropdown.js}"></script>
+
+</body>
+
 </html>

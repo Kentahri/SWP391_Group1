@@ -49,6 +49,12 @@
           <div id="date" class="date">--/--/----</div>
         </div>
         <div class="actions">
+          <!-- Notification Bell -->
+          <button class="btn btn-notification" type="button" onclick="openNotificationModal()">
+            <span class="notification-icon">🔔</span>
+            <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+          </button>
+
           <button class="btn btn-secondary">
             <a
               th:href="@{/cashier/reservations/upcoming}"
@@ -352,6 +358,13 @@
                   th:text="${orderDetail.orderStatus == 'PREPARING' ? 'Đang chuẩn bị' : (orderDetail.orderStatus == 'COMPLETED' ? 'Hoàn thành' : orderDetail.orderStatus)}"
                 >
                 </span>
+                <button
+                  th:if="${orderDetail != null && tableStatus.toString() == 'OCCUPIED'}"
+                  class="btn-edit-order"
+                  onclick="openEditOrderPanel()"
+                  type="button">
+                  ✏️ Thêm món
+                </button>
               </div>
 
               <div class="order-meta">
@@ -384,7 +397,7 @@
                   <span class="meta-label">Phương thức:</span>
                   <span
                     class="meta-value"
-                    th:text="${orderDetail.paymentMethod == 'CASH' ? 'Tiền mặt' : (orderDetail.paymentMethod == 'QR_BANKING' ? 'QR Code' : 'Thẻ tín dụng')}"
+                    th:text="${orderDetail.paymentMethod.toString() == 'CASH' ? 'Tiền mặt' : (orderDetail.paymentMethod.toString() == 'QR_BANKING' ? 'QR Code' : 'Thẻ tín dụng')}"
                   ></span>
                 </div>
               </div>
@@ -448,12 +461,21 @@
                 <div
                   th:if="${orderDetail.voucherCode != null}"
                   class="summary-row"
+                  style="background: #fff3cd; padding: 8px; border-radius: 4px; margin-bottom: 8px;"
                 >
-                  <span>Voucher:</span>
+                  <span style="font-weight: 600;">Voucher:</span>
                   <span
                     class="voucher-code"
                     th:text="${orderDetail.voucherCode}"
+                    style="color: #856404; font-weight: 600;"
                     >—</span
+                  >
+                </div>
+                <div class="summary-row">
+                  <span>Tạm tính:</span>
+                  <span
+                    th:text="${#numbers.formatCurrency(orderDetail.totalPrice)}"
+                    >0đ</span
                   >
                 </div>
                 <div
@@ -466,13 +488,50 @@
                     >-0đ</span
                   >
                 </div>
+                <div class="summary-row">
+                  <span>Thuế (10%):</span>
+                  <span
+                    th:text="'+' + ${#numbers.formatCurrency((orderDetail.totalPrice - (orderDetail.discountAmount != null ? orderDetail.discountAmount : 0)) * 0.1)}"
+                    >0đ</span
+                  >
+                </div>
                 <div class="summary-row total">
                   <span>Tổng cộng:</span>
                   <span
                     class="total-amount"
-                    th:text="${#numbers.formatCurrency(orderDetail.totalPrice)}"
+                    th:text="${#numbers.formatCurrency((orderDetail.totalPrice - (orderDetail.discountAmount != null ? orderDetail.discountAmount : 0)) * 1.1)}"
                     >0đ</span
                   >
+                </div>
+
+                <!-- Nút xác nhận thanh toán ngay dưới Tổng cộng -->
+                <form id="payment-confirm-form" th:action="@{/cashier/payment/confirm}" method="post" style="display:none">
+                  <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                  <input type="hidden" id="payment-session-id" name="sessionId" th:value="${orderDetail != null ? orderDetail.sessionId : null}" />
+                  <input type="hidden" id="payment-method" name="paymentMethod" value="CASH" />
+                </form>
+
+                <div th:if="${tableStatus.toString() == 'WAITING_PAYMENT' && orderDetail != null && orderDetail.sessionId != null}" style="margin-top: 16px;">
+                  <button type="button" class="btn-action btn-confirm-payment btn-confirm-cash"
+                          th:if="${orderDetail.paymentMethod != null and orderDetail.paymentMethod.toString() == 'CASH'}"
+                          onclick="(function(){
+                            if(confirm('Xác nhận khách đã thanh toán bằng tiền mặt?')) {
+                              document.getElementById('payment-method').value='CASH';
+                              document.getElementById('payment-confirm-form').submit();
+                            }
+                          })()">
+                    💵 Xác nhận thanh toán tiền mặt
+                  </button>
+                  <button type="button" class="btn-action btn-confirm-payment btn-confirm-qr"
+                          th:if="${orderDetail.paymentMethod != null and orderDetail.paymentMethod.toString() == 'QR_BANKING'}"
+                          onclick="(function(){
+                            if(confirm('Xác nhận khách đã thanh toán qua QR Banking?')) {
+                              document.getElementById('payment-method').value='QR_BANKING';
+                              document.getElementById('payment-confirm-form').submit();
+                            }
+                          })()">
+                    📱 Xác nhận thanh toán QR Banking
+                  </button>
                 </div>
               </div>
 
@@ -485,34 +544,8 @@
               </div>
             </div>
 
-            <!-- Nút actions cho order -->
+            <!-- Đường phân cách và nút actions cho bàn -->
             <div class="table-actions">
-
-              <form id="payment-confirm-form" th:action="@{/cashier/payment/confirm}" method="post" style="display:none">
-                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                <input type="hidden" id="payment-session-id" name="sessionId" th:value="${orderDetail != null ? orderDetail.sessionId : null}" />
-                <input type="hidden" id="payment-method" name="paymentMethod" value="CASH" />
-              </form>
-
-              <div class="action-buttons-group" th:if="${tableStatus.toString() == 'WAITING_PAYMENT' && orderDetail != null && orderDetail.sessionId != null}">
-                <button type="button" class="btn-action btn-primary"
-                        th:if="${orderDetail.paymentMethod != null and orderDetail.paymentMethod.toString() == 'CASH'}"
-                        onclick="(function(){
-                          document.getElementById('payment-method').value='CASH';
-                          document.getElementById('payment-confirm-form').submit();
-                        })()">
-                  ✅ Xác nhận (Tiền mặt)
-                </button>
-                <button type="button" class="btn-action btn-secondary"
-                        th:if="${orderDetail.paymentMethod != null and orderDetail.paymentMethod.toString() == 'QR_BANKING'}"
-                        onclick="(function(){
-                          document.getElementById('payment-method').value='QR_BANKING';
-                          document.getElementById('payment-confirm-form').submit();
-                        })()">
-                  ✅ Xác nhận (QR)
-                </button>
-              </div>
-
               <div class="action-buttons-group">
                 <button
                   class="btn-action btn-reserve"
@@ -1519,6 +1552,10 @@
         th:if="${successMessage}"
         class="toast success"
         style="display: block"
+        th:attr="data-message=${successMessage},
+                 data-type='success',
+                 data-table-id=${selectedTableId != null ? selectedTableId : ''},
+                 data-reservation-id=${lastReservationId != null ? lastReservationId : ''}"
       >
         <span th:text="${successMessage}"></span>
       </div>
@@ -1526,6 +1563,10 @@
         th:if="${errorMessage != null and (showReservationModal == null or !showReservationModal)}"
         class="toast error"
         style="display: block"
+        th:attr="data-message=${errorMessage},
+                 data-type='error',
+                 data-table-id=${selectedTableId != null ? selectedTableId : ''},
+                 data-reservation-id=${lastReservationId != null ? lastReservationId : ''}"
       >
         <span th:text="${errorMessage}"></span>
       </div>
@@ -1850,27 +1891,179 @@
       </div>
     </div>
 
+    <!-- Notification History Modal -->
+    <div id="notification-modal" class="modal">
+      <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+          <h2>🔔 Lịch sử thông báo</h2>
+          <span class="modal-close" onclick="closeNotificationModal()">&times;</span>
+        </div>
+        <div class="modal-body" style="max-height: 60vh;">
+          <div class="notification-filters" style="margin-bottom: 16px; display: flex; gap: 8px; justify-content: flex-end;">
+            <button class="btn btn-secondary" onclick="clearAllNotifications()" style="font-size: 12px; padding: 6px 12px;">
+              🗑️ Xóa tất cả
+            </button>
+          </div>
+          <div id="notification-list" class="notification-list">
+            <!-- Notifications will be inserted here by JavaScript -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Order Sliding Panel -->
+    <div id="edit-order-overlay" class="edit-order-overlay" onclick="closeEditOrderPanel()"></div>
+    <div id="edit-order-panel" class="edit-order-panel">
+      <div class="panel-header">
+        <h2>✏️ Chỉnh sửa order - Bàn <span id="edit-table-number">2</span></h2>
+        <button class="panel-close" onclick="closeEditOrderPanel()" type="button">&times;</button>
+      </div>
+
+      <div class="panel-body">
+        <!-- Menu Section -->
+        <div class="menu-section">
+          <h3>🍕 Menu món ăn</h3>
+          <div class="menu-tabs">
+            <button class="menu-tab active" onclick="filterMenu(0)">Tất cả</button>
+            <th:block th:each="cat : ${categories}">
+              <button class="menu-tab"
+                      th:text="${cat.name}"
+                      th:onclick="'filterMenu(' + ${cat.id} + ')'"
+                      th:attr="data-category-id=${cat.id}">
+              </button>
+            </th:block>
+          </div>
+
+          <div class="menu-items" id="menu-items-list">
+            <!-- Menu items loaded from database -->
+            <div class="menu-item"
+                 th:each="p : ${products}"
+                 th:if="${p.active}"
+                 th:attr="data-category-id=${p.categoryId},
+                          data-product-id=${p.id},
+                          data-product-name=${p.name}">
+              <div class="menu-item-info">
+                <div class="menu-item-name" th:text="${p.name}">Product Name</div>
+              </div>
+              <button class="btn-add-item" onclick="openSizeModal(this)">
+                <span>+</span>
+              </button>
+              <!-- Hidden div to store sizes data as JSON -->
+              <div class="product-sizes-data" style="display: none;">
+                <th:block th:if="${p.sizes != null && !p.sizes.isEmpty()}">
+                  <span th:each="size, iterStat : ${p.sizes}"
+                        th:attr="data-size-id=${size.sizeId},
+                                 data-size-name=${size.sizeName},
+                                 data-size-price=${size.currentPrice}">
+                  </span>
+                </th:block>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Current Order Section -->
+        <div class="current-order-section">
+          <h3>📋 Đơn hiện tại</h3>
+          <div class="current-order-items" id="current-order-items">
+            <!-- Order items will be added here dynamically -->
+            <th:block th:if="${orderDetail != null && orderDetail.items != null && !orderDetail.items.isEmpty()}">
+              <div class="order-edit-item"
+                   th:each="item : ${orderDetail.items}"
+                   th:attr="data-item-id=${item.id},
+                            data-product-id=${item.productSize.product.id},
+                            data-size-id=${item.productSize.size.id},
+                            data-price=${item.unitPrice}">
+                <div class="order-edit-item-info">
+                  <div class="order-edit-item-name" th:text="${item.productName}">Product Name</div>
+                  <div class="order-edit-item-size" th:if="${item.sizeName != null}"
+                       th:text="'Size: ' + ${item.sizeName}">Size</div>
+                </div>
+                <div class="order-edit-item-controls">
+                  <button class="btn-quantity" onclick="updateQuantityInPanel(this, -1)">−</button>
+                  <span class="quantity" th:text="${item.quantity}">1</span>
+                  <button class="btn-quantity" onclick="updateQuantityInPanel(this, 1)">+</button>
+                  <button class="btn-remove-item" onclick="removeItemFromPanel(this)">🗑️</button>
+                </div>
+                <div class="order-edit-item-price"
+                     th:text="${#numbers.formatCurrency(item.unitPrice)}">
+                </div>
+              </div>
+            </th:block>
+            <div th:if="${orderDetail == null || orderDetail.items == null || orderDetail.items.isEmpty()}"
+                 style="text-align: center; padding: 40px; color: #999;">
+              <p>Chưa có món nào trong order</p>
+              <p style="font-size: 14px;">Nhấn nút + để thêm món</p>
+            </div>
+          </div>
+
+          <div class="order-summary-edit">
+            <div class="summary-row-edit total">
+              <span>Tổng cộng:</span>
+              <span id="edit-total"
+                    th:text="${orderDetail != null && orderDetail.totalPrice != null ? #numbers.formatCurrency(orderDetail.totalPrice) : '0đ'}">0đ</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-footer">
+        <button class="btn btn-secondary" onclick="closeEditOrderPanel()" type="button">Hủy</button>
+        <button class="btn btn-primary" onclick="saveOrderChanges()" type="button" th:method="POST">💾 Cập nhật order</button>
+      </div>
+    </div>
+
+    <!-- Size Selection Modal -->
+    <div id="size-modal-overlay" class="size-modal-overlay" onclick="closeSizeModal()"></div>
+    <div id="size-modal" class="size-modal">
+      <div class="size-modal-header">
+        <h3 id="size-modal-product-name">Chọn size</h3>
+        <button class="size-modal-close" onclick="closeSizeModal()" type="button">&times;</button>
+      </div>
+      <div class="size-modal-body" id="size-modal-body">
+        <!-- Size options will be dynamically populated here -->
+      </div>
+      <div class="size-modal-footer">
+        <button class="btn btn-secondary" onclick="closeSizeModal()" type="button">Đóng</button>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <script th:src="@{/js/cashier/utils.js}"></script>
     <script th:src="@{/js/cashier/reservation.js}"></script>
     <script>
-      const $clock = document.getElementById("clock");
-      const $date = document.getElementById("date");
+      // Initialize clock
+      function initializeClock() {
+        const $clock = document.getElementById("clock");
+        const $date = document.getElementById("date");
 
-      function render() {
-        const now = new Date();
-        $clock.textContent = now.toLocaleTimeString("vi-VN", { hour12: false });
-        $date.textContent = now.toLocaleDateString("vi-VN", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
+        if (!$clock || !$date) {
+          console.warn('Clock elements not found');
+          return;
+        }
+
+        function render() {
+          const now = new Date();
+          $clock.textContent = now.toLocaleTimeString("vi-VN", { hour12: false });
+          $date.textContent = now.toLocaleDateString("vi-VN", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          });
+        }
+
+        render();
+        setInterval(render, 1000);
       }
 
-      render();
-      setInterval(render, 1000);
+      // Initialize clock when DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeClock);
+      } else {
+        initializeClock();
+      }
 
       document.addEventListener("DOMContentLoaded", function () {
         const toasts = document.querySelectorAll(".toast-container .toast");
@@ -2050,6 +2243,415 @@
           var updateModal = document.getElementById("update-reservation-modal");
           if (updateModal && updateModal.classList.contains("show")) {
             closeUpdateModal();
+          }
+        }
+      });
+
+      // ==================== KHỞI TẠO NOTIFICATION SYSTEM ====================
+      document.addEventListener('DOMContentLoaded', function() {
+        initNotificationSystem();
+
+        // Lưu các server-side flash messages vào notification history với metadata
+        const toastContainer = document.getElementById('toast-container');
+        if (toastContainer) {
+          const serverToasts = toastContainer.querySelectorAll('.toast[data-message]');
+          serverToasts.forEach(function(toast) {
+            const message = toast.getAttribute('data-message');
+            const type = toast.getAttribute('data-type') || 'info';
+
+            // Lấy metadata từ data attributes
+            const metadata = {};
+            const tableId = toast.getAttribute('data-table-id');
+            const reservationId = toast.getAttribute('data-reservation-id');
+
+            if (tableId && tableId !== '') metadata.tableId = tableId;
+            if (reservationId && reservationId !== '') metadata.reservationId = reservationId;
+
+            if (message) {
+              saveNotification(message, type, metadata);
+            }
+          });
+        }
+      });
+
+      function openEditOrderPanel() {
+        const overlay = document.getElementById('edit-order-overlay');
+        const panel = document.getElementById('edit-order-panel');
+
+        if (overlay && panel) {
+          overlay.classList.add('show');
+          panel.classList.add('show');
+          document.body.style.overflow = 'hidden';
+        }
+      }
+
+      function closeEditOrderPanel() {
+        const overlay = document.getElementById('edit-order-overlay');
+        const panel = document.getElementById('edit-order-panel');
+
+        if (overlay && panel) {
+          overlay.classList.remove('show');
+          panel.classList.remove('show');
+          document.body.style.overflow = '';
+        }
+      }
+
+      // Menu filtering
+      function filterMenu(categoryId) {
+        const menuItems = document.querySelectorAll('.menu-item');
+        const tabs = document.querySelectorAll('.menu-tab');
+
+        // Update active tab
+        tabs.forEach(tab => tab.classList.remove('active'));
+        event.target.classList.add('active');
+
+        // Filter items
+        menuItems.forEach(item => {
+          const itemCategoryId = item.getAttribute('data-category-id');
+          if (categoryId === 0 || parseInt(itemCategoryId) === categoryId) {
+            item.style.display = 'flex';
+          } else {
+            item.style.display = 'none';
+          }
+        });
+      }
+
+      // Add item to order from button
+      function addItemToOrderFromButton(button) {
+        const menuItem = button.closest('.menu-item');
+        const itemId = menuItem.getAttribute('data-product-id');
+        const itemName = menuItem.getAttribute('data-product-name');
+        const itemPrice = parseFloat(menuItem.getAttribute('data-product-price'));
+
+        addItemToOrder(itemId, itemName, itemPrice);
+      }
+
+      // Add item to order
+      function addItemToOrder(itemId, itemName, itemPrice, sizeId, sizeName) {
+        const orderItemsContainer = document.getElementById('current-order-items');
+
+        // Remove empty message if exists
+        const emptyMessage = orderItemsContainer.querySelector('div[style*="text-align: center"]');
+        if (emptyMessage) {
+          emptyMessage.remove();
+        }
+
+        // Create unique key for item (product + size)
+        const itemKey = itemId + (sizeId ? '_' + sizeId : '');
+
+        // Check if item already exists (same product and size)
+        let existingItem = null;
+        const existingItems = orderItemsContainer.querySelectorAll('.order-edit-item');
+        existingItems.forEach(item => {
+          const existingProductId = item.getAttribute('data-product-id');
+          const existingSizeId = item.getAttribute('data-size-id');
+          const existingKey = existingProductId + (existingSizeId ? '_' + existingSizeId : '');
+          if (existingKey === itemKey) {
+            existingItem = item;
+          }
+        });
+
+        if (existingItem) {
+          // Increase quantity
+          const quantityEl = existingItem.querySelector('.quantity');
+          const currentQty = parseInt(quantityEl.textContent);
+          quantityEl.textContent = currentQty + 1;
+
+          // Update price
+          const priceEl = existingItem.querySelector('.order-edit-item-price');
+          const newPrice = (currentQty + 1) * itemPrice;
+          priceEl.textContent = formatCurrency(newPrice);
+        } else {
+          // Add new item
+          const newItem = document.createElement('div');
+          newItem.className = 'order-edit-item';
+          newItem.setAttribute('data-temp-id', 'new-' + Date.now());
+          newItem.setAttribute('data-product-id', itemId);
+          newItem.setAttribute('data-price', itemPrice);
+          if (sizeId) {
+            newItem.setAttribute('data-size-id', sizeId);
+          }
+
+          const sizeDisplay = sizeName ? `<div class="order-edit-item-size">Size: ${sizeName}</div>` : '';
+
+          newItem.innerHTML = `
+            <div class="order-edit-item-info">
+              <div class="order-edit-item-name">${itemName}</div>
+              ${sizeDisplay}
+            </div>
+            <div class="order-edit-item-controls">
+              <button class="btn-quantity" onclick="updateQuantityNew(this, -1)">−</button>
+              <span class="quantity">1</span>
+              <button class="btn-quantity" onclick="updateQuantityNew(this, 1)">+</button>
+              <button class="btn-remove-item" onclick="removeItemNew(this)">🗑️</button>
+            </div>
+            <div class="order-edit-item-price">${formatCurrency(itemPrice)}</div>
+          `;
+
+          orderItemsContainer.appendChild(newItem);
+        }
+
+        updateTotalPrice();
+        const displayName = itemName + (sizeName ? ' (' + sizeName + ')' : '');
+        showToast('Đã thêm ' + displayName + ' vào order', 'success');
+      }
+
+      // Update quantity for new items
+      function updateQuantityNew(button, change) {
+        const item = button.closest('.order-edit-item');
+        const quantityEl = item.querySelector('.quantity');
+        let currentQty = parseInt(quantityEl.textContent);
+        currentQty += change;
+
+        if (currentQty < 1) {
+          currentQty = 1;
+        }
+
+        quantityEl.textContent = currentQty;
+
+        // Update price
+        const itemPrice = parseFloat(item.getAttribute('data-price'));
+        const priceEl = item.querySelector('.order-edit-item-price');
+        priceEl.textContent = formatCurrency(itemPrice * currentQty);
+
+        updateTotalPrice();
+      }
+
+      // Remove new item
+      function removeItemNew(button) {
+        if (confirm('Bạn có chắc muốn xóa món này?')) {
+          const item = button.closest('.order-edit-item');
+          item.remove();
+
+          // Check if order is empty
+          const orderItemsContainer = document.getElementById('current-order-items');
+          if (orderItemsContainer.querySelectorAll('.order-edit-item').length === 0) {
+            orderItemsContainer.innerHTML = `
+              <div style="text-align: center; padding: 40px; color: #999;">
+                <p>Chưa có món nào trong order</p>
+                <p style="font-size: 14px;">Nhấn nút + để thêm món</p>
+              </div>
+            `;
+          }
+
+          updateTotalPrice();
+          showToast('Đã xóa món khỏi order', 'info');
+        }
+      }
+
+      // Update quantity for existing items from DB (in panel)
+      function updateQuantityInPanel(button, change) {
+        const item = button.closest('.order-edit-item');
+        const quantityEl = item.querySelector('.quantity');
+        let currentQty = parseInt(quantityEl.textContent) || 0;
+        currentQty += change;
+
+        if (currentQty < 1) {
+          currentQty = 1;
+        }
+
+        quantityEl.textContent = currentQty;
+
+        // Update price
+        const itemPrice = parseFloat(item.getAttribute('data-price'));
+        const priceEl = item.querySelector('.order-edit-item-price');
+        priceEl.textContent = formatCurrency(itemPrice * currentQty);
+
+        updateTotalPrice();
+      }
+
+      // Remove existing item from panel
+      function removeItemFromPanel(button) {
+        if (confirm('Bạn có chắc muốn xóa món này?')) {
+          const item = button.closest('.order-edit-item');
+          item.remove();
+
+          // Check if order is empty
+          const orderItemsContainer = document.getElementById('current-order-items');
+          if (orderItemsContainer.querySelectorAll('.order-edit-item').length === 0) {
+            orderItemsContainer.innerHTML = `
+              <div style="text-align: center; padding: 40px; color: #999;">
+                <p>Chưa có món nào trong order</p>
+                <p style="font-size: 14px;">Nhấn nút + để thêm món</p>
+              </div>
+            `;
+          }
+
+          updateTotalPrice();
+          showToast('Đã xóa món khỏi order', 'info');
+        }
+      }
+
+      // Update total price
+      function updateTotalPrice() {
+        const orderItems = document.querySelectorAll('.order-edit-item');
+        let total = 0;
+
+        orderItems.forEach(item => {
+          const quantity = parseInt(item.querySelector('.quantity').textContent);
+          const price = parseFloat(item.getAttribute('data-price'));
+          total += quantity * price;
+        });
+
+        document.getElementById('edit-total').textContent = formatCurrency(total);
+      }
+
+      // Format currency helper
+      function formatCurrency(amount) {
+        return new Intl.NumberFormat('vi-VN', {
+          style: 'currency',
+          currency: 'VND'
+        }).format(amount);
+      }
+
+      // Open size selection modal
+      function openSizeModal(button) {
+        const menuItem = button.closest('.menu-item');
+        const productId = menuItem.getAttribute('data-product-id');
+        const productName = menuItem.getAttribute('data-product-name');
+
+        // Get sizes from hidden div
+        const sizesDataDiv = menuItem.querySelector('.product-sizes-data');
+        const sizeSpans = sizesDataDiv ? sizesDataDiv.querySelectorAll('span[data-size-id]') : [];
+
+        if (sizeSpans.length === 0) {
+          // No sizes available, use default price
+          const productPrice = parseFloat(menuItem.getAttribute('data-product-price'));
+          addItemToOrder(productId, productName, productPrice, null, null);
+          return;
+        }
+
+        // Populate modal with sizes
+        const modal = document.getElementById('size-modal');
+        const overlay = document.getElementById('size-modal-overlay');
+        const modalBody = document.getElementById('size-modal-body');
+        const modalTitle = document.getElementById('size-modal-product-name');
+
+        modalTitle.textContent = 'Chọn size - ' + productName;
+        modalBody.innerHTML = '';
+
+        sizeSpans.forEach(sizeSpan => {
+          const sizeId = sizeSpan.getAttribute('data-size-id');
+          const sizeName = sizeSpan.getAttribute('data-size-name');
+          const sizePrice = parseFloat(sizeSpan.getAttribute('data-size-price'));
+
+          const sizeOption = document.createElement('div');
+          sizeOption.className = 'size-option';
+          sizeOption.innerHTML = `
+            <div class="size-option-info">
+              <div class="size-option-name">${sizeName}</div>
+              <div class="size-option-price">${formatCurrency(sizePrice)}</div>
+            </div>
+            <button class="btn-select-size" onclick="selectSize('${productId}', '${productName}', ${sizePrice}, '${sizeId}', '${sizeName}')">
+              Chọn
+            </button>
+          `;
+          modalBody.appendChild(sizeOption);
+        });
+
+        // Show modal
+        overlay.classList.add('show');
+        modal.classList.add('show');
+      }
+
+      // Close size modal
+      function closeSizeModal() {
+        const modal = document.getElementById('size-modal');
+        const overlay = document.getElementById('size-modal-overlay');
+        overlay.classList.remove('show');
+        modal.classList.remove('show');
+      }
+
+      // Select size and add to order
+      function selectSize(productId, productName, price, sizeId, sizeName) {
+        addItemToOrder(productId, productName, price, sizeId, sizeName);
+        closeSizeModal();
+      }
+
+      // Update quantity
+      function updateQuantity(itemId, change) {
+        const quantityElement = event.target.parentElement.querySelector('.quantity');
+        let currentQty = parseInt(quantityElement.textContent);
+        currentQty += change;
+
+        if (currentQty < 1) {
+          currentQty = 1;
+        }
+
+        quantityElement.textContent = currentQty;
+        // TODO: Update total calculation
+        console.log('Updated quantity for item:', itemId, 'to:', currentQty);
+      }
+
+      // Save order changes
+      function saveOrderChanges() {
+        if (!confirm('Xác nhận cập nhật order?')) {
+          return;
+        }
+
+        // Get all order items
+        const orderItems = [];
+        const items = document.querySelectorAll('.order-edit-item');
+
+        items.forEach(item => {
+          const productId = item.getAttribute('data-product-id');
+          const productName = item.querySelector('.order-edit-item-name').textContent;
+          const quantity = parseInt(item.querySelector('.quantity').textContent);
+          const price = parseFloat(item.getAttribute('data-price'));
+          const sizeId = item.getAttribute('data-size-id');
+
+          if (productId && quantity > 0) {
+            const orderItem = {
+              productId: productId,
+              productName: productName,
+              quantity: quantity,
+              price: price
+            };
+            if (sizeId) {
+              orderItem.sizeId = sizeId;
+            }
+            orderItems.push(orderItem);
+          }
+        });
+
+        // Get table ID from URL or hidden field
+        const tableId = [[${selectedTableId}]];
+
+        if (!tableId) {
+          showToast('Lỗi: Không tìm thấy thông tin bàn', 'error');
+          return;
+        }
+
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/pizzario/cashier/tables/' + tableId + '/order/update';
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = /*[[@{${_csrf.parameterName}}]]*/ '_csrf';
+        csrfInput.value = /*[[@{${_csrf.token}}]]*/ '';
+        
+        form.appendChild(csrfInput);
+
+        // Add items as JSON
+        const itemsInput = document.createElement('input');
+        itemsInput.type = 'hidden';
+        itemsInput.name = 'items';
+        itemsInput.value = JSON.stringify(orderItems);
+        form.appendChild(itemsInput);
+
+        document.body.appendChild(form);
+        showToast('Đang cập nhật order...', 'info');
+        form.submit();
+      }
+
+      // Close panel on ESC key
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+          const panel = document.getElementById('edit-order-panel');
+          if (panel && panel.classList.contains('show')) {
+            closeEditOrderPanel();
           }
         }
       });
