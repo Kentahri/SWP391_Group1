@@ -22,6 +22,8 @@ public interface StaffRepository extends JpaRepository<Staff, Integer> {
 
     Optional<Staff> findByEmail(String email);
 
+//    List<Staff> findByRole(Staff.Role role);
+
     // Đếm số nhân viên có isActive = true (tương ứng cột is_active)
     int countByIsActiveTrue();
 

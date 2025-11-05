@@ -46,7 +46,8 @@ public class Shift {
 
     public void setShiftName(ShiftType shiftName) {
         this.shiftName = shiftName;
-        setSalaryByShiftType(shiftName);
+        if(shiftName != null) setSalaryByShiftType(shiftName);
+        else salaryPerShift = 0.0;
     }
 
     private void setSalaryByShiftType(ShiftType type) {
@@ -54,7 +55,6 @@ public class Shift {
             case SANG -> this.salaryPerShift = 150000;
             case CHIEU -> this.salaryPerShift = 150000;
             case TOI -> this.salaryPerShift = 200000;
-            default -> this.salaryPerShift = 0;
         }
     }
 }

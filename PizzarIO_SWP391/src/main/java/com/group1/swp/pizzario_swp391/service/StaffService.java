@@ -62,6 +62,16 @@ public class StaffService {
                 .collect(Collectors.toList());
     }
 
+//    public List<StaffResponseDTO> getAllStaffByRole(Staff.Role role) {
+//        if (role == null) {
+//            return getAllStaff();
+//        }
+//        List<Staff> staffList = staffRepository.findByRole(role);
+//        return staffList.stream()
+//                .map(staffMapper::toResponseDTO)
+//                .collect(Collectors.toList());
+//    }
+
     public List<StaffResponseDTO> getStaffWithoutManager() {
         List<Staff> staffList = staffRepository.findAll();
         return staffList.stream()
@@ -261,4 +271,5 @@ public class StaffService {
         
         return totalMonthly / activeStaffCount;
     }
+
 }
