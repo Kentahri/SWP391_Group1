@@ -126,17 +126,81 @@ function handleNewOrder(message) {
             // Chỉ hiển thị thông báo nếu không ở trang order detail
             if (!isOrderDetailPage) {
                 upsertOrderCard(orderData);
-                showNotification(`Order ${orderData.code} đã được cập nhật`, 'info');
+                // Hiển thị thông báo chi tiết hơn nếu có message
+                const notificationMsg = orderData.message || `Order ${orderData.code} đã được cập nhật`;
+                showNotification(notificationMsg, 'info');
+                // Nếu đang ở trang kitchen dashboard thì reload để cập nhật danh sách
+                if (isKitchenDashboardPage()) {
+                    scheduleDashboardReload();
+                }
+            }
+        } else if (orderData.type === 'ORDER_ITEM_CANCELLED') {
+            console.log('[Kitchen] Order item cancelled:', orderData);
+            
+            // Hiển thị thông báo khi có món bị hủy
+            if (!isOrderDetailPage) {
+                upsertOrderCard(orderData);
+                // Hiển thị thông báo về món bị hủy
+                const cancelledItemInfo = orderData.items && orderData.items.length > 0 
+                    ? orderData.items[0] 
+                    : null;
+                const itemName = cancelledItemInfo ? cancelledItemInfo.productName : 'Món';
+                const quantity = cancelledItemInfo ? cancelledItemInfo.quantity : '';
+                const notificationMsg = orderData.message || 
+                    `Order ${orderData.code}: ${itemName}${quantity ? ' (x' + quantity + ')' : ''} đã bị hủy`;
+                showNotification(notificationMsg, 'warning');
+                // Nếu đang ở trang kitchen dashboard thì reload để cập nhật danh sách
+                if (isKitchenDashboardPage()) {
+                    scheduleDashboardReload();
+                }
+            } else {
+                // Nếu đang ở trang order detail, reload để hiển thị trạng thái mới
+                const currentOrderId = window.location.pathname.split('/kitchen/order/')[1];
+                if (orderData.orderId == currentOrderId || orderData.id == currentOrderId) {
+                    console.log('[Kitchen] Order item cancelled on detail page - reloading to refresh status');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+            }
+        } else if (orderData.type === 'ORDER_COMPLETED') {
+            console.log('[Kitchen] Order completed:', orderData);
+            
+            // Order đã hoàn thành - dashboard sẽ tự động refresh để order này biến mất
+            // (vì dashboard chỉ hiển thị order chưa hoàn thành)
+            const notificationMsg = orderData.message || `Order ${orderData.code} đã hoàn thành`;
+            showNotification(notificationMsg, 'success');
+            
+            // Reload dashboard để order này biến mất khỏi danh sách
+            if (isKitchenDashboardPage()) {
+                scheduleDashboardReload();
+            }
+            
+            // Nếu đang ở trang order detail của order này, reload
+            if (isOrderDetailPage) {
+                const currentOrderId = window.location.pathname.split('/kitchen/order/')[1];
+                if (orderData.orderId == currentOrderId || orderData.id == currentOrderId) {
+                    console.log('[Kitchen] Order completed on detail page - reloading');
+                    setTimeout(() => {
+                        window.location.href = '/pizzario/kitchen'; // Redirect về dashboard
+                    }, 1500);
+                }
             }
         } else if (orderData.type === 'NEW_ORDER') {
             console.log('[Kitchen] New order:', orderData);
             upsertOrderCard(orderData);
             showNotification(`Có order mới: ${orderData.code} - ${orderData.tableName || 'Take away'}`, 'info');
             playNotificationSound();
+            if (isKitchenDashboardPage()) {
+                scheduleDashboardReload();
+            }
         } else {
             // Fallback cho message không có type
             upsertOrderCard(orderData);
             showNotification(`Có order mới: ${orderData.code} - ${orderData.tableName || 'Take away'}`, 'info');
+            if (isKitchenDashboardPage()) {
+                scheduleDashboardReload();
+            }
         }
 
     } catch (error) {
@@ -156,6 +220,11 @@ function handleKitchenNotification(message) {
         console.log('[Kitchen] Personal notification:', notification);
 
         showNotification(notification.message || notification, 'info');
+
+        // Nếu đang ở trang kitchen dashboard, làm mới để đồng bộ giao diện
+        if (isKitchenDashboardPage()) {
+            scheduleDashboardReload();
+        }
 
     } catch (error) {
         console.error('Error parsing kitchen notification:', error);
@@ -483,6 +552,52 @@ function showNotification(message, type = 'info') {
             }
         }, 300);
     }, 3000);
+}
+
+/**
+ * Kiểm tra có đang ở trang Kitchen Dashboard không
+ */
+function isKitchenDashboardPage() {
+    try {
+        const path = window.location.pathname || '';
+        // Trang dashboard không phải order-list, outstock hay order detail
+        const isKitchenArea = path.includes('/kitchen');
+        const isOrderList = path.includes('/kitchen/order-list');
+        const isOutstock = path.includes('/kitchen/outstock');
+        const isOrderDetail = path.includes('/kitchen/order/');
+        if (!isKitchenArea || isOrderList || isOutstock || isOrderDetail) return false;
+        // Dựa trên cấu trúc DOM đặc trưng của dashboard
+        const hasDashboardTitle = document.querySelector('.dashboard-title');
+        const hasOrderItems = document.getElementById('orderItemsContainer');
+        const hasCategoryFilter = document.getElementById('categoryFilter');
+        return Boolean(hasDashboardTitle && hasOrderItems && hasCategoryFilter);
+    } catch (e) {
+        return false;
+    }
+}
+
+/**
+ * Lên lịch reload trang (debounce) để tránh reload liên tục khi có nhiều message
+ */
+let dashboardReloadTimer = null;
+function scheduleDashboardReload(delayMs = 800) {
+    try {
+        if (dashboardReloadTimer) {
+            clearTimeout(dashboardReloadTimer);
+        }
+        dashboardReloadTimer = setTimeout(() => {
+            // Tránh reload nếu người dùng đang thao tác submit ngay trước đó
+            const isRecentUpdate = window.lastUpdateByThisUser &&
+                Date.now() - window.lastUpdateByThisUser.timestamp < 1000;
+            if (!isRecentUpdate) {
+                window.location.reload();
+            }
+            dashboardReloadTimer = null;
+        }, delayMs);
+    } catch (e) {
+        // fallback nếu có lỗi
+        window.location.reload();
+    }
 }
 
 /**

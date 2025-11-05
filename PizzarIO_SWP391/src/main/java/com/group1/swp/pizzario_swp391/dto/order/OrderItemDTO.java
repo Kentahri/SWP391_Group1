@@ -1,12 +1,8 @@
 package com.group1.swp.pizzario_swp391.dto.order;
 
 import com.group1.swp.pizzario_swp391.entity.OrderItem.OrderItemStatus;
-
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.group1.swp.pizzario_swp391.entity.ProductSize;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 /**
@@ -26,6 +22,7 @@ public class OrderItemDTO {
     double unitPrice;
     double totalPrice;
     String note;
+    ProductSize productSize;
     OrderItemStatus status;
 }
 

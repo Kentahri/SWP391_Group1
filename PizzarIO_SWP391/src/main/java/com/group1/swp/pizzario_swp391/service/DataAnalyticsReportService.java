@@ -166,50 +166,6 @@ public class DataAnalyticsReportService {
         return count;
     }
 
-    public List<ProductStatsDTO> getTopBestSellingProductsBetweenDates(LocalDate fromDate, LocalDate toDate) {
-        if (fromDate == null || toDate == null) {
-            System.err.println("Error: fromDate or toDate is null in service method");
-            return new ArrayList<>();
-        }
-
-        if (fromDate.isAfter(toDate)) {
-            System.err.println("Error: fromDate is after toDate in service method");
-            return new ArrayList<>();
-        }
-
-        try {
-            Pageable topFive = PageRequest.of(0, 5);
-            List<ProductStatsDTO> products = orderRepository.findTopBestSellingProductsBetweenDates(
-                    fromDate.atStartOfDay(),
-                    toDate.plusDays(1).atStartOfDay(),
-                    topFive);
-
-            if (products == null || products.isEmpty()) {
-                System.out.println("No products found in date range");
-                return new ArrayList<>();
-            }
-
-            List<ProductStatsDTO> result = new ArrayList<>();
-            for (int i = 0; i < products.size(); i++) {
-                ProductStatsDTO product = products.get(i);
-
-                ProductStatsDTO newProduct = new ProductStatsDTO(
-                        (long) (i + 1), // topId: thứ hạng
-                        product.productName(),
-                        product.orderCount(),
-                        product.quantitySold(),
-                        product.totalRevenue());
-                result.add(newProduct);
-            }
-
-            return result;
-        } catch (Exception e) {
-            System.err.println("Error in getTopBestSellingProductsBetweenDates: " + e.getMessage());
-            e.printStackTrace();
-            return new ArrayList<>();
-        }
-    }
-
     /**
      * Get top products với filter theo date range và category
      *

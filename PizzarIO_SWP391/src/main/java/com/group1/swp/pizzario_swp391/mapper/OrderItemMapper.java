@@ -13,12 +13,14 @@ public interface OrderItemMapper{
     
     @Mapping(target = "id", ignore = true)
     @Mapping(source = "totalPrice", target = "totalPrice")
+    @Mapping(source = "note", target = "note")
     OrderItem toOrderItem(CartItemDTO cartItemDTO);
 
     @Mapping(target = "productName", source = "productSize.product.name")
     @Mapping(target = "sizeName", source = "productSize.size.sizeName")
     @Mapping(target = "productImageUrl", source = "productSize.product.imageURL")
     @Mapping(target = "status", source = "orderItemStatus")
-//    @Mapping(target = "type", source = "orderItemType")
+    @Mapping(target = "productSize", source = "productSize")
+    @Mapping(source = "note", target = "note")
     OrderItemDTO toOrderItemDTO(OrderItem orderItem);
 }

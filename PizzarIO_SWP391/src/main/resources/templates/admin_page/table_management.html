@@ -1,77 +1,79 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Quản lý Bàn ăn • Admin Dashboard</title>
-    <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
-    <link rel="stylesheet" th:href="@{/css/admin_page/table-management.css}" />
-    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
+    <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}"/>
+    <link rel="stylesheet" th:href="@{/css/admin_page/table-management.css}"/>
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}"/>
     <meta
-      name="_csrf_parameter"
-      th:if="${_csrf != null}"
-      th:content="${_csrf.parameterName}"
+            name="_csrf_parameter"
+            th:if="${_csrf != null}"
+            th:content="${_csrf.parameterName}"
     />
-  </head>
+</head>
 
-  <body th:data-error-table-id="${errorTableId}">
-    <div class="app">
-      <!-- SIDEBAR -->
-      <div th:insert="~{fragments/sidebar :: sidebar('tables')}"></div>
+<body th:data-error-table-id="${errorTableId}">
+<div class="app">
+    <!-- SIDEBAR -->
+    <div th:insert="~{fragments/sidebar :: sidebar('tables')}"></div>
 
-      <!-- MAIN -->
-      <div class="main-content">
+    <!-- MAIN -->
+    <div class="main-content">
         <header class="page-header">
-          <div>
-            <h1>Quản lý Bàn ăn</h1>
-            <p class="muted">Quản lý và theo dõi trạng thái bàn ăn</p>
-          </div>
-          <div class="userbox">
-            <div class="avatar">M</div>
-            <div class="who">
-              <strong>Manager</strong>
-              <span class="muted">Quản lý</span>
+            <div>
+                <h1>Quản lý Bàn ăn</h1>
+                <p class="muted">Quản lý và theo dõi trạng thái bàn ăn</p>
             </div>
-          </div>
+            <div class="userbox">
+                <div class="avatar">M</div>
+                <div class="who">
+                    <strong>Manager</strong>
+                    <span class="muted">Quản lý</span>
+                </div>
+            </div>
         </header>
 
         <!-- Section Header -->
         <div class="section-header">
-          <div>
-            <h2>Sơ đồ bàn ăn</h2>
-            <p class="muted">Click vào bàn để xem chi tiết</p>
-          </div>
-          <div class="header-actions">
-            <!-- Dropdown lọc bàn -->
-            <div class="filter-dropdown">
-              <label for="tableFilter">🔍 Lọc bàn:</label>
-              <select id="tableFilter" name="condition">
-                <option value="ALL" th:selected="${selectedCondition == 'ALL'}">Tất cả bàn</option>
-                <option value="NON_RETIRED" th:selected="${selectedCondition == 'NON_RETIRED'}">Bàn đang hoạt động</option>
-                <option 
-                  th:each="condition : ${tableConditions}" 
-                  th:value="${condition}" 
-                  th:text="${condition}"
-                  th:selected="${selectedCondition == condition.name()}"
-                ></option>
-              </select>
+            <div>
+                <h2>Sơ đồ bàn ăn</h2>
+                <p class="muted">Click vào bàn để xem chi tiết</p>
             </div>
-            <button id="openAddTable" class="primary-btn" type="button">
-              ➕ Thêm bàn mới
-            </button>
-          </div>
+            <div class="header-actions">
+                <!-- Dropdown lọc bàn -->
+                <div class="filter-dropdown">
+                    <label for="tableFilter">🔍 Lọc bàn:</label>
+                    <select id="tableFilter" name="condition">
+                        <option value="ALL" th:selected="${selectedCondition == 'ALL'}">Tất cả bàn</option>
+                        <option value="NON_RETIRED" th:selected="${selectedCondition == 'NON_RETIRED'}">Bàn đang hoạt
+                            động
+                        </option>
+                        <option
+                                th:each="condition : ${tableConditions}"
+                                th:value="${condition}"
+                                th:text="${condition}"
+                                th:selected="${selectedCondition == condition.name()}"
+                        ></option>
+                    </select>
+                </div>
+                <button id="openAddTable" class="primary-btn" type="button">
+                    ➕ Thêm bàn mới
+                </button>
+            </div>
         </div>
 
         <!-- Grid Layout: Sơ đồ bàn + Chi tiết bàn -->
         <div class="grid">
-          <!-- Left: Sơ đồ bàn -->
-          <div class="card">
-            <div class="card-title">🪑 Sơ đồ bàn</div>
-            <div class="map-grid">
-              <div
-                th:each="table: ${tables}"
-                class="tile"
-                th:attr="
+            <!-- Left: Sơ đồ bàn -->
+            <div class="card">
+                <div class="card-title">🪑 Sơ đồ bàn</div>
+                <div class="map-grid">
+                    <div
+                            th:each="table: ${tables}"
+                            class="tile"
+                            th:attr="
                   data-id=${table.id},
                   data-status=${table.tableStatus != null ? table.tableStatus.name() : 'AVAILABLE'},
                   data-capacity=${table.capacity},
@@ -79,207 +81,209 @@
                   data-updated-at=${#temporals.format(table.updatedAt,'yyyy-MM-dd HH:mm')},
                   data-condition=${table.tableCondition != null ? table.tableCondition.name() : 'UNKNOWN'},
                   data-update-url=@{'/manager/tables/update/' + ${table.id}}"
-              >
-                <span class="status-dot"></span>
-                <h4>Bàn <span th:text="${table.id}"></span></h4>
-                <small>(<span th:text="${table.capacity}"></span> chỗ)</small>
-              </div>
-            </div>
-          </div>
-
-          <!-- Right: Chi tiết bàn -->
-          <div class="card">
-            <div class="card-title">📋 Chi tiết bàn</div>
-            <div>
-              <div class="detail-row">
-                <strong id="tableName">Chọn một bàn</strong>
-              </div>
-              <div class="detail-row">
-                <span class="muted">Trạng thái:</span>
-                <span id="detailStatus" class="status-badge">—</span>
-              </div>
-              <div class="detail-row">
-                <span class="muted">Sức chứa:</span>
-                <span><span id="detailCapacity">—</span> người</span>
-              </div>
-              <div class="detail-row">
-                <span class="muted">Tình trạng:</span>
-                <span id="detailCondition">—</span>
-              </div>
-              <div class="detail-row">
-                <span class="muted">Tạo lúc:</span>
-                <span id="detailCreatedAt">—</span>
-              </div>
-              <div class="detail-row">
-                <span class="muted">Cập nhật:</span>
-                <span id="detailUpdatedAt">—</span>
-              </div>
-
-              <!-- Condition Legend -->
-              <div class="status-legend">
-                <div class="legend-title">📊 Chú giải điều kiện của bàn</div>
-                <div class="legend-items">
-                  <div class="legend-item">
-                    <span class="legend-dot new"></span>
-                    <span class="legend-text">NEW - Bàn mới</span>
-                  </div>
-                  <div class="legend-item">
-                    <span class="legend-dot good"></span>
-                    <span class="legend-text">GOOD - Bàn tốt</span>
-                  </div>
-                  <div class="legend-item">
-                    <span class="legend-dot worn"></span>
-                    <span class="legend-text">WORN - Bàn cũ</span>
-                  </div>
-                  <div class="legend-item">
-                    <span class="legend-dot damaged"></span>
-                    <span class="legend-text">DAMAGED - Bàn hỏng</span>
-                  </div>
-                  <div class="legend-item">
-                    <span class="legend-dot retired"></span>
-                    <span class="legend-text">RETIRED - Bàn đã nghỉ</span>
-                  </div>
+                    >
+                        <span class="status-dot"></span>
+                        <h4>Bàn <span th:text="${table.id}"></span></h4>
+                        <small>(<span th:text="${table.capacity}"></span> chỗ)</small>
+                    </div>
                 </div>
-                <div class="legend-note">
-                  <small
-                    >ℹ️ Màu sắc hiển thị theo điều kiện bàn, không phải trạng thái</small
-                  >
-                </div>
-              </div>
-
-              <div id="tableActions" th:if="${!tables.isEmpty()}">
-                <button id="updateTableBtn" class="primary-btn">
-                  ✏️ Cập nhật bàn
-                </button>
-              </div>
             </div>
-          </div>
+
+            <!-- Right: Chi tiết bàn -->
+            <div class="card">
+                <div class="card-title">📋 Chi tiết bàn</div>
+                <div>
+                    <div class="detail-row">
+                        <strong id="tableName">Chọn một bàn</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span class="muted">Trạng thái:</span>
+                        <span id="detailStatus" class="status-badge">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="muted">Sức chứa:</span>
+                        <span><span id="detailCapacity">—</span> người</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="muted">Tình trạng:</span>
+                        <span id="detailCondition">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="muted">Tạo lúc:</span>
+                        <span id="detailCreatedAt">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="muted">Cập nhật:</span>
+                        <span id="detailUpdatedAt">—</span>
+                    </div>
+
+                    <!-- Condition Legend -->
+                    <div class="status-legend">
+                        <div class="legend-title">📊 Chú giải điều kiện của bàn</div>
+                        <div class="legend-items">
+                            <div class="legend-item">
+                                <span class="legend-dot new"></span>
+                                <span class="legend-text">NEW - Bàn mới</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot good"></span>
+                                <span class="legend-text">GOOD - Bàn tốt</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot worn"></span>
+                                <span class="legend-text">WORN - Bàn cũ</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot damaged"></span>
+                                <span class="legend-text">DAMAGED - Bàn hỏng</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot retired"></span>
+                                <span class="legend-text">RETIRED - Bàn đã nghỉ</span>
+                            </div>
+                        </div>
+                        <div class="legend-note">
+                            <small
+                            >ℹ️ Màu sắc hiển thị theo điều kiện bàn, không phải trạng thái</small
+                            >
+                        </div>
+                    </div>
+
+                    <div id="tableActions" th:if="${!tables.isEmpty()}">
+                        <button id="updateTableBtn" class="primary-btn">
+                            ✏️ Cập nhật bàn
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Modal: Add Table -->
         <div id="addTableModal" class="modal-overlay" aria-hidden="true">
-          <div class="modal" role="dialog" aria-modal="true">
-            <header>Thêm bàn mới</header>
-            <div class="content">
-              <form
-                id="addTableForm"
-                th:action="@{/manager/tables/add}"
-                method="post"
-                th:object="${tableCreateDTO}"
-              >
-                <input
-                  type="hidden"
-                  th:if="${_csrf != null}"
-                  th:name="${_csrf.parameterName}"
-                  th:value="${_csrf.token}"
-                />
-                <div class="form-row">
-                  <label>Sức chứa (số người)</label>
-                  <label>
-                    <input
-                      type="number"
-                      id="newCapacity"
-                      name="capacity"
-                      th:field="*{capacity}"
-                      min="1"
-                      max="20"
-                      required
-                      placeholder="Nhập số chỗ ngồi"
-                    />
-                  </label>
+            <div class="modal" role="dialog" aria-modal="true">
+                <header>Thêm bàn mới</header>
+                <div class="content">
+                    <form
+                            id="addTableForm"
+                            th:action="@{/manager/tables/add}"
+                            method="post"
+                            th:object="${tableCreateDTO}"
+                    >
+                        <input
+                                type="hidden"
+                                th:if="${_csrf != null}"
+                                th:name="${_csrf.parameterName}"
+                                th:value="${_csrf.token}"
+                        />
+                        <div class="form-row">
+                            <label>Sức chứa (số người)</label>
+                            <label>
+                                <input
+                                        type="number"
+                                        id="newCapacity"
+                                        name="capacity"
+                                        th:field="*{capacity}"
+                                        min="1"
+                                        max="20"
+                                        required
+                                        placeholder="Nhập số chỗ ngồi"
+                                />
+                            </label>
+                        </div>
+                        <div class="info-box">
+                            <p>ℹ️ Bàn mới sẽ tự động có:</p>
+                            <ul>
+                                <li>Trạng thái: AVAILABLE</li>
+                                <li>Tình trạng: NEW</li>
+                            </ul>
+                        </div>
+                        <div class="actions">
+                            <button
+                                    type="button"
+                                    class="btn-secondary"
+                                    id="cancelAddTable"
+                            >
+                                Hủy
+                            </button>
+                            <button type="submit" class="primary-btn">Thêm</button>
+                        </div>
+                    </form>
                 </div>
-                <div class="info-box">
-                  <p>ℹ️ Bàn mới sẽ tự động có:</p>
-                  <ul>
-                    <li>Trạng thái: AVAILABLE</li>
-                    <li>Tình trạng: NEW</li>
-                  </ul>
-                </div>
-                <div class="actions">
-                  <button
-                    type="button"
-                    class="btn-secondary"
-                    id="cancelAddTable"
-                  >
-                    Hủy
-                  </button>
-                  <button type="submit" class="primary-btn">Thêm</button>
-                </div>
-              </form>
             </div>
-          </div>
         </div>
 
         <!-- Modal: Update Table -->
         <div id="updateTableModal" class="modal-overlay" aria-hidden="true">
-          <div class="modal" role="dialog" aria-modal="true">
-            <header id="updateModalHeader">Cập nhật bàn</header>
-            <div class="content">
-              <form id="updateTableForm" method="post">
-                <input
-                  type="hidden"
-                  th:if="${_csrf != null}"
-                  th:name="${_csrf.parameterName}"
-                  th:value="${_csrf.token}"
-                />
-                <div class="form-row">
-                  <label>Sức chứa (số người)</label>
-                  <label>
-                    <input
-                      type="number"
-                      id="updateCapacity"
-                      name="capacity"
-                      min="1"
-                      max="20"
-                      required
-                      placeholder="Nhập số chỗ ngồi"
-                    />
-                  </label>
-                </div>
-                <div class="form-row">
-                  <label>Tình trạng bàn</label>
-                  <label>
-                    <select
-                      id="updateTableCondition"
-                      name="tableCondition"
-                      required
-                    >
-                      <option
-                        th:each="condition : ${tableConditions}"
-                        th:value="${condition}"
-                        th:text="${condition}"
-                      ></option>
-                    </select>
-                  </label>
-                </div>
-                <!-- Hiển thị lỗi nếu có -->
-                <div th:if="${updateError != null}" id="updateErrorBox" class="error-box">
-                  <p th:text="${updateError}">Lỗi cập nhật</p>
-                </div>
-                
-                <div class="info-box">
-                  <p>
-                    ℹ️ Lưu ý: Trạng thái bàn (AVAILABLE/OCCUPIED...) do Cashier
-                    quản lý
-                  </p>
-                </div>
-                <div class="actions">
-                  <button
-                    type="button"
-                    class="btn-secondary"
-                    id="cancelUpdateTable"
-                  >
-                    Hủy
-                  </button>
-                  <button type="submit" class="primary-btn">Cập nhật</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+            <div class="modal" role="dialog" aria-modal="true">
+                <header id="updateModalHeader">Cập nhật bàn</header>
+                <div class="content">
+                    <form id="updateTableForm" method="post">
+                        <input
+                                type="hidden"
+                                th:if="${_csrf != null}"
+                                th:name="${_csrf.parameterName}"
+                                th:value="${_csrf.token}"
+                        />
+                        <div class="form-row">
+                            <label>Sức chứa (số người)</label>
+                            <label>
+                                <input
+                                        type="number"
+                                        id="updateCapacity"
+                                        name="capacity"
+                                        min="1"
+                                        max="20"
+                                        required
+                                        placeholder="Nhập số chỗ ngồi"
+                                />
+                            </label>
+                        </div>
+                        <div class="form-row">
+                            <label>Tình trạng bàn</label>
+                            <label>
+                                <select
+                                        id="updateTableCondition"
+                                        name="tableCondition"
+                                        required
+                                >
+                                    <option
+                                            th:each="condition : ${tableConditions}"
+                                            th:value="${condition}"
+                                            th:text="${condition}"
+                                    ></option>
+                                </select>
+                            </label>
+                        </div>
+                        <!-- Hiển thị lỗi nếu có -->
+                        <div th:if="${updateError != null}" id="updateErrorBox" class="error-box">
+                            <p th:text="${updateError}">Lỗi cập nhật</p>
+                        </div>
 
-    <script th:src="@{/js/admin/table-management.js}"></script>
-  </body>
+                        <div class="info-box">
+                            <p>
+                                ℹ️ Lưu ý: Trạng thái bàn (AVAILABLE/OCCUPIED...) do Cashier
+                                quản lý
+                            </p>
+                        </div>
+                        <div class="actions">
+                            <button
+                                    type="button"
+                                    class="btn-secondary"
+                                    id="cancelUpdateTable"
+                            >
+                                Hủy
+                            </button>
+                            <button type="submit" class="primary-btn">Cập nhật</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/admin/table-management.js}"></script>
+<script th:src="@{/js/admin/product-dropdown.js}"></script>
+
+</body>
 </html>

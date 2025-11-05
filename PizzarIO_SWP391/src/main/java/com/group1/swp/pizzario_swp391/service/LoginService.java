@@ -155,6 +155,10 @@ public class LoginService {
             throw new RuntimeException("Nhân viên đã check-out rồi");
         }
 
+        if(staffShift.getStatus() == StaffShift.Status.NOT_CHECKOUT){
+            throw new RuntimeException("Nhân viên quên check out");
+        }
+
         if (now.isBefore(staffShift.getShift().getEndTime().toLocalTime())) {
             StaffShift.Status shiftType = StaffShift.Status.LEFT_EARLY;
             staffShift.setStatus(shiftType);

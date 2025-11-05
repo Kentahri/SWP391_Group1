@@ -35,10 +35,11 @@ public class KitchenOrderMessage {
     
     public enum MessageType {
         NEW_ORDER,          // New order from guest
-        ORDER_UPDATED,       // Order status or items updated
+        ORDER_UPDATED,       // Order status or items updated (including new items added)
         ORDER_CANCELLED,     // Order cancelled
         ORDER_COMPLETED,     // Order completed
-        ITEM_STATUS_CHANGED  // Individual item status changed
+        ITEM_STATUS_CHANGED, // Individual item status changed
+        ORDER_ITEM_CANCELLED // Order item was cancelled/removed by guest
     }
     
     @Data

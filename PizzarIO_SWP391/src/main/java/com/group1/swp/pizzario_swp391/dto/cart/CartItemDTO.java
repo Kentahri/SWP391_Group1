@@ -4,6 +4,8 @@ import com.group1.swp.pizzario_swp391.entity.ProductSize;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,5 +19,6 @@ public class CartItemDTO {
     double unitPrice;
     double totalPrice;
     ProductSize productSize;
+    List<ProductSize> productSizes;
     String note;
 }

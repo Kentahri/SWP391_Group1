@@ -1,35 +1,67 @@
 package com.group1.swp.pizzario_swp391.controller.manager;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
-import lombok.AccessLevel;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
-
 import com.group1.swp.pizzario_swp391.dto.category.CategoryResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.product.ProductCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.product.ProductResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.product.ProductUpdateDTO;
 import com.group1.swp.pizzario_swp391.service.CategoryService;
 import com.group1.swp.pizzario_swp391.service.ProductService;
-
 import jakarta.validation.Valid;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Controller
 @ManagerUrl
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-public class ProductController {
+public class ProductController{
 
     ProductService productService;
 
     CategoryService categoryService;
+
+    @Autowired
+    private Cloudinary cloudinary;
+
+    // Global handler cho lỗi upload
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<String> handleMaxSizeException(MaxUploadSizeExceededException exc) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body("File quá lớn! Vui lòng chọn ảnh nhỏ hơn 5MB.");
+    }
+
+    private String saveUploadedFile(MultipartFile file) throws IOException {
+        // Upload lên Cloudinary
+        Map uploadResult = cloudinary.uploader()
+                .upload(file.getBytes(),
+                        ObjectUtils.asMap(
+                                "folder", "pizzario/products",  // Thư mục trên cloud
+                                "resource_type", "image",
+                                "public_id", UUID.randomUUID().toString() + "_" + file.getOriginalFilename()
+                        ));
+
+        // Trả về URL từ cloud
+        return (String) uploadResult.get("secure_url");  // https://res.cloudinary.com/.../pizzario/products/abc.jpg
+    }
 
     @GetMapping("/products")
     public String list(Model model) {
@@ -81,10 +113,7 @@ public class ProductController {
                 .name(productUpdateDTO.getName())
                 .description(productUpdateDTO.getDescription())
                 .imageURL(productUpdateDTO.getImageURL())
-                .basePrice(productUpdateDTO.getBasePrice())
-                .flashSalePrice(productUpdateDTO.getFlashSalePrice())
-                .flashSaleStart(productUpdateDTO.getFlashSaleStart())
-                .flashSaleEnd(productUpdateDTO.getFlashSaleEnd())
+                .currentImageURL(productUpdateDTO.getCurrentImageURL())
                 .categoryId(productUpdateDTO.getCategoryId())
                 .active(productUpdateDTO.isActive())
                 .build();
@@ -99,47 +128,48 @@ public class ProductController {
     }
 
     @PostMapping("/products/save")
-    public String save(@Valid @ModelAttribute("productForm") ProductCreateDTO productForm,
+    public String save(
+            @Valid @ModelAttribute("productForm") ProductCreateDTO productForm,
             BindingResult bindingResult,
             Model model) {
 
-        if(productForm.getFlashSaleEnd() != null && productForm.getFlashSaleEnd() != null){
-            if(productForm.getFlashSaleEnd().isBefore(productForm.getFlashSaleStart())){
-                bindingResult.rejectValue("flashSaleEnd", "error.flashSaleEnd",
-                        "Ngày kết thúc phải lớn hơn ngày bắt đầu");
+        // === XỬ LÝ ẢNH ===
+        String finalImageURL = null;
+
+        // 1. Có file mới → upload
+        if (productForm.getImageFile() != null && !productForm.getImageFile().isEmpty()) {
+            try {
+                finalImageURL = saveUploadedFile(productForm.getImageFile());
+            } catch (Exception e) {
+                bindingResult.rejectValue("imageFile", "error.imageFile",
+                        "Lỗi upload ảnh: " + e.getMessage());
             }
         }
+        // 2. Không có file mới + đang edit → giữ ảnh cũ
+        else if (productForm.getId() != null && productForm.getCurrentImageURL() != null) {
+            finalImageURL = productForm.getCurrentImageURL();
+        }
 
-        // Kiểm tra validation errors
+        // Gán URL cuối cùng
+        productForm.setImageURL(finalImageURL);
+
+        // === KIỂM TRA LỖI VALIDATION ===
         if (bindingResult.hasErrors()) {
-            // Load lại dữ liệu cần thiết cho trang
-            List<ProductResponseDTO> products = productService.getAllProducts();
-            model.addAttribute("products", products);
-            List<CategoryResponseDTO> categories = categoryService.getAllCategories();
-            model.addAttribute("categories", categories);
-
-            // Đánh dấu để mở lại modal với lỗi
+            model.addAttribute("products", productService.getAllProducts());
             model.addAttribute("openModal", productForm.getId() == null ? "create" : "edit");
             model.addAttribute("hasErrors", true);
-
-            // Trả về trang với errors
             return "admin_page/product/product-list";
         }
 
+        // === LƯU VÀO DB ===
         try {
             if (productForm.getId() == null) {
-                // Create new product
                 productService.createProduct(productForm);
             } else {
-                // Update existing product
                 ProductUpdateDTO updateDTO = ProductUpdateDTO.builder()
                         .name(productForm.getName())
                         .description(productForm.getDescription())
                         .imageURL(productForm.getImageURL())
-                        .basePrice(productForm.getBasePrice())
-                        .flashSalePrice(productForm.getFlashSalePrice())
-                        .flashSaleStart(productForm.getFlashSaleStart())
-                        .flashSaleEnd(productForm.getFlashSaleEnd())
                         .categoryId(productForm.getCategoryId())
                         .active(productForm.isActive())
                         .build();
@@ -147,11 +177,7 @@ public class ProductController {
             }
             return "redirect:/manager/products";
         } catch (Exception e) {
-            // Xử lý lỗi từ service layer (business logic errors)
-            List<ProductResponseDTO> products = productService.getAllProducts();
-            model.addAttribute("products", products);
-            List<CategoryResponseDTO> categories = categoryService.getAllCategories();
-            model.addAttribute("categories", categories);
+            model.addAttribute("categories", categoryService.getAllCategories());
             model.addAttribute("openModal", productForm.getId() == null ? "create" : "edit");
             model.addAttribute("errorMessage", e.getMessage());
             return "admin_page/product/product-list";

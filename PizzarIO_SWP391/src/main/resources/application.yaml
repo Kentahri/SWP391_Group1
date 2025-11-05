@@ -6,25 +6,29 @@ spring:
       - optional:classpath:env.properties
       - optional:file:./config/manager-settings.yaml
   jpa:
-    show-sql: true
+    show-sql: false
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: create
     properties:
       hibernate:
         jdbc:
           time_zone: Asia/Ho_Chi_Minh
     defer-datasource-initialization: true
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 10MB
   devtools:
     add-properties: true
-
   datasource:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     url: ${DB_URL}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
-#  sql:
-#    init:
-#      mode: always
+  sql:
+    init:
+      mode: always
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}
@@ -40,7 +44,7 @@ spring:
           ssl:
             trust: smtp.gmail.com
   profiles:
-    active: dev
+    active: prod
 
 server:
   port: ${SERVER_PORT}
@@ -52,6 +56,7 @@ server:
         secure: false
         same-site: lax #Chống CSRF
       timeout: 30m
+    application-display-name: application
 
 logging:
   level:
@@ -64,5 +69,10 @@ gemini:
     key: ${GEMINI_API_KEY}
     model: ${GEMINI_MODEL}
 
+cloudinary:
+
+  cloud-name: ${CLOUD_NAME}
+  api-key: ${CLOUD_API_KEY}
+  api-secret: ${CLOUD_API_SECRET}
 pizzario:
   settings-file-path: ./config/manager-settings.yaml

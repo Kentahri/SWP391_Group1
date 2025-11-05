@@ -687,3 +687,88 @@ body {
 .mt-3 {
   margin-top: 1rem;
 }
+
+.nav-dropdown {
+    position: relative;
+    margin: 6px 0;
+}
+
+.nav-dropdown > .dropdown-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    color: #111827;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.nav-dropdown > .dropdown-toggle::after {
+    content: "˅";
+    font-size: 0.75em;
+    transition: transform 0.2s ease;
+    color: #6b7280;
+    font-weight: 900;
+}
+
+.nav-dropdown:hover > .dropdown-toggle,
+.nav-dropdown.active > .dropdown-toggle {
+    background: #eaf1ff;
+    color: #2563eb;
+}
+
+.nav-dropdown.active > .dropdown-toggle {
+    background: #eaf1ff;
+    border: 1px solid #bfd3ff;
+    font-weight: 600;
+}
+
+.nav-dropdown.active > .dropdown-toggle::after {
+    transform: rotate(180deg);
+}
+
+/* ẨN HOÀN TOÀN DROPDOWN MẶC ĐỊNH */
+.dropdown-menu {
+    display: none !important;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    margin-top: 4px;
+    padding: 6px 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    width: calc(100% - 24px);
+    margin-left: 12px;
+    margin-right: 12px;
+    overflow: hidden;
+}
+
+/* CHỈ HIỆN KHI .active */
+.nav-dropdown.active .dropdown-menu {
+    display: block !important;
+}
+
+.dropdown-item {
+    display: block;
+    padding: 8px 16px;
+    color: #374151;
+    text-decoration: none;
+    font-size: 0.925rem;
+    border-radius: 8px;
+    margin: 2px 8px;
+    transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background: #f3f4f6;
+    color: #2563eb;
+}
+
+.dropdown-item.active {
+    background: #dbeafe;
+    color: #2563eb;
+    font-weight: 600;
+    border: 1px solid #93c5fd;
+}

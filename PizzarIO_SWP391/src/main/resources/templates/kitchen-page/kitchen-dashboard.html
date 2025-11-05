@@ -14,59 +14,41 @@
         <i class="fas fa-circle"></i> Đang kết nối...
     </div> -->
 
-    <!-- Header -->
-    <header class="kitchen-header">
-        <div class="header-container">
-            <!-- Logo Section -->
-            <div class="header-brand">
-                <div class="brand-logo">
-                    <div class="logo-icon">
-                        <i class="fas fa-fire"></i>
-                    </div>
-                    <div class="brand-info">
-                        <h1 class="brand-title">Kitchen Manager</h1>
-                        <p class="brand-subtitle">PizzarIO Restaurant</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Navigation Section -->
-            <nav class="header-navigation">
-                <div class="nav-items">
-                    <a href="#" class="nav-link active" data-page="dashboard">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span>Dashboard</span>
-                    </a>
-                    <a th:href="@{/kitchen/order-list}" class="nav-link" data-page="orders">
-                        <i class="fas fa-list"></i>
-                        <span>Orders</span>
-                    </a>
-                    <a th:href="@{/kitchen/outstock}" class="nav-link" data-page="menu">
-                        <i class="fas fa-utensils"></i>
-                        <span>Menu</span>
-                    </a>
-                </div>
-            </nav>
-
-            <!-- User Section -->
-            <div class="header-user">
-                <div class="user-info">
-                    <div class="user-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="user-details">
-                        <span class="user-name" th:text="${staffName}">Kitchen Staff</span>
-                        <span class="user-role">Kitchen Staff</span>
-                    </div>
-                </div>
-                <form th:action="@{/logout}" method="post" class="logout-form">
-                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                    <button type="submit" class="logout-btn">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Logout</span>
-                    </button>
-                </form>
-            </div>
+    <!-- Top bar -->
+    <header class="topbar">
+        <div class="brand">🍕 PizzarIO</div>
+        <div class="staff-info">
+            <span>Tên: <strong th:text="${staff.name}">Kitchen Staff</strong></span>
+        </div>
+        <div class="datetime-info">
+            <div id="clock" class="clock">--:--:--</div>
+            <div id="date" class="date">--/--/----</div>
+        </div>
+        <div class="actions">
+            <a th:href="@{/kitchen/dashboard}" class="btn btn-primary" style="text-decoration: none; display: inline-block">
+                📊 Dashboard
+            </a>
+            <a th:href="@{/kitchen/order-list}" class="btn btn-secondary" style="text-decoration: none; display: inline-block">
+                📋 Danh sách đơn hàng
+            </a>
+            <a th:href="@{/kitchen/outstock}" class="btn btn-secondary" style="text-decoration: none; display: inline-block">
+                🍽️ Quản lý Menu
+            </a>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <input
+                    type="hidden"
+                    th:if="${_csrf != null}"
+                    th:name="${_csrf.parameterName}"
+                    th:value="${_csrf.token}"
+                />
+                <button
+                    type="submit"
+                    class="btn-logout"
+                    onclick="return confirm('Bạn có muốn đăng xuất không?')"
+                >
+                    🚪 Đăng xuất
+                </button>
+            </form>
         </div>
     </header>
 
@@ -77,16 +59,6 @@
             <div class="title-left">
                 <h1><i class="fas fa-tachometer-alt"></i> Kitchen Dashboard</h1>
                 <p>Danh sách món ăn được sắp xếp theo loại và thời gian</p>
-            </div>
-            <div class="title-right">
-                <div class="update-time">
-                    <i class="fas fa-clock"></i>
-                    <span>Cập nhật: <span id="lastUpdateTime" th:text="${lastUpdateTime}">--:--:--</span></span>
-                </div>
-                <button class="refresh-btn" onclick="refreshDashboard()">
-                    <i class="fas fa-sync-alt"></i>
-                    <span>Làm mới</span>
-                </button>
             </div>
         </div>
 
@@ -164,12 +136,12 @@
                         <div class="order-item-info">
                             <h3 class="order-item-name">
                                 <span th:text="${item.productName}">Product Name</span>
-                                <span th:if="${item.sizeName != null and !item.sizeName.isEmpty()}" 
-                                      class="order-item-size" 
-                                      th:text="'(' + ${item.sizeName} + ')'">(Size)</span>
                             </h3>
                             <div class="order-item-meta">
                                 <span class="order-item-quantity" th:text="'x' + ${item.quantity}">x1</span>
+                                <span th:if="${item.sizeName != null and !item.sizeName.isEmpty()}"
+                                      class="order-item-size"
+                                      th:text="${item.sizeName}">(Size)</span>
                                 <span th:class="${'order-item-status ' + (item.status == 'PENDING' ? 'new' : (item.status == 'PREPARING' ? 'preparing' : 'completed'))}"
                                       th:text="${item.status == 'PENDING' ? 'Mới' : (item.status == 'PREPARING' ? 'Đang làm' : 'Hoàn thành')}">Status</span>
                                 <span class="order-item-location">
@@ -187,7 +159,7 @@
                             </div>
                         </div>
                         <div class="order-item-action">
-                            <form th:action="@{/kitchen/update-item-status}" method="post" style="display: inline;">
+                            <form th:action="@{/kitchen/update-item-status}" method="post" style="display: inline;" class="update-item-form" th:data-item-id="${item.id}">
                                 <input type="hidden" th:name="itemId" th:value="${item.id}">
                                 <button th:if="${item.status == 'PENDING'}" 
                                         type="submit" 
@@ -217,25 +189,88 @@
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <script th:src="@{/js/kitchen/websocket.js}"></script>
     <script>
-        // Simple refresh function
-        function refreshDashboard() {
-            window.location.reload();
-        }
+        // Clock and Date Display
+        const $clock = document.getElementById("clock");
+        const $date = document.getElementById("date");
 
-        // Update time every second
-        function updateTime() {
+        function renderDateTime() {
             const now = new Date();
-            const timeString = now.toLocaleTimeString('vi-VN', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-            document.getElementById('lastUpdateTime').textContent = timeString;
+            if ($clock) {
+                $clock.textContent = now.toLocaleTimeString("vi-VN", { hour12: false });
+            }
+            if ($date) {
+                $date.textContent = now.toLocaleDateString("vi-VN", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                });
+            }
         }
 
-        // Update time every second
-        setInterval(updateTime, 1000);
-        updateTime();
+        renderDateTime();
+        setInterval(renderDateTime, 1000);
+
+        // Save scroll position before form submit
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            if (form && form.classList.contains('update-item-form')) {
+                // Lưu scroll position
+                const scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+                sessionStorage.setItem('kitchenDashboardScrollPosition', scrollPosition);
+                
+                // Lưu item ID để có thể highlight sau khi reload
+                const itemId = form.dataset.itemId;
+                if (itemId) {
+                    sessionStorage.setItem('kitchenDashboardUpdatedItemId', itemId);
+                }
+            }
+        });
+
+        // Restore scroll position after page load
+        window.addEventListener('load', function() {
+            // Restore scroll position
+            const savedScrollPosition = sessionStorage.getItem('kitchenDashboardScrollPosition');
+            if (savedScrollPosition !== null) {
+                // Sử dụng setTimeout để đảm bảo DOM đã render xong
+                setTimeout(function() {
+                    window.scrollTo(0, parseInt(savedScrollPosition, 10));
+                    // Xóa scroll position sau khi đã restore
+                    sessionStorage.removeItem('kitchenDashboardScrollPosition');
+                }, 100);
+            }
+
+            // Highlight item vừa được update (nếu có)
+            const updatedItemId = sessionStorage.getItem('kitchenDashboardUpdatedItemId');
+            if (updatedItemId) {
+                setTimeout(function() {
+                    // Tìm form có data-item-id tương ứng
+                    const updatedForm = document.querySelector(`form.update-item-form[data-item-id="${updatedItemId}"]`);
+                    if (updatedForm) {
+                        // Tìm order item container (có thể là .order-item-card hoặc .order-item)
+                        const orderItem = updatedForm.closest('.order-item-card') || updatedForm.closest('.order-item');
+                        if (orderItem) {
+                            // Thêm highlight class
+                            orderItem.classList.add('just-updated');
+                            
+                            // Scroll đến item nếu cần (đảm bảo item trong viewport)
+                            const rect = orderItem.getBoundingClientRect();
+                            const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+                            if (!isVisible) {
+                                orderItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                            
+                            // Xóa highlight sau 3 giây
+                            setTimeout(function() {
+                                orderItem.classList.remove('just-updated');
+                            }, 3000);
+                        }
+                    }
+                    // Xóa item ID sau khi đã highlight
+                    sessionStorage.removeItem('kitchenDashboardUpdatedItemId');
+                }, 200);
+            }
+        });
 
         // Navigation handling
         document.addEventListener('click', (e) => {

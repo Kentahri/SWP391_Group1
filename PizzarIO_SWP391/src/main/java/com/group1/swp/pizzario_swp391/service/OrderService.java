@@ -1,35 +1,38 @@
 package com.group1.swp.pizzario_swp391.service;
 
-import com.group1.swp.pizzario_swp391.dto.cart.CartItemDTO;
-import com.group1.swp.pizzario_swp391.dto.kitchen.KitchenOrderDTO;
-import com.group1.swp.pizzario_swp391.dto.order.OrderItemDTO;
-import com.group1.swp.pizzario_swp391.dto.websocket.KitchenOrderMessage;
-import com.group1.swp.pizzario_swp391.entity.Order;
-import com.group1.swp.pizzario_swp391.entity.OrderItem;
-import com.group1.swp.pizzario_swp391.mapper.OrderItemMapper;
-import com.group1.swp.pizzario_swp391.repository.OrderItemRepository;
-import com.group1.swp.pizzario_swp391.repository.OrderRepository;
-import com.group1.swp.pizzario_swp391.repository.ProductRepository;
-import com.group1.swp.pizzario_swp391.repository.SessionRepository;
-import jakarta.servlet.http.HttpSession;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.group1.swp.pizzario_swp391.dto.cart.CartItemDTO;
+import com.group1.swp.pizzario_swp391.dto.kitchen.KitchenOrderDTO;
+import com.group1.swp.pizzario_swp391.dto.order.OrderItemDTO;
+import com.group1.swp.pizzario_swp391.dto.order.UpdateOrderItemsDTO;
+import com.group1.swp.pizzario_swp391.dto.websocket.KitchenOrderMessage;
+import com.group1.swp.pizzario_swp391.entity.Order;
+import com.group1.swp.pizzario_swp391.entity.OrderItem;
+import com.group1.swp.pizzario_swp391.entity.ProductSize;
+import com.group1.swp.pizzario_swp391.mapper.OrderItemMapper;
+import com.group1.swp.pizzario_swp391.repository.OrderItemRepository;
+import com.group1.swp.pizzario_swp391.repository.OrderRepository;
+import com.group1.swp.pizzario_swp391.repository.ProductSizeRepository;
+import com.group1.swp.pizzario_swp391.repository.SessionRepository;
+
+import jakarta.servlet.http.HttpSession;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 
-public class OrderService{
+public class OrderService {
 
-    ProductRepository productRepository;
     OrderItemRepository orderItemRepository;
     OrderRepository orderRepository;
     SessionRepository sessionRepository;
@@ -37,6 +40,7 @@ public class OrderService{
     OrderItemMapper orderItemMapper;
     WebSocketService webSocketService;
     SessionService sessionService;
+    ProductSizeRepository productSizeRepository;
 
     public List<OrderItemDTO> getOrderedItemsForView(Long sessionId) {
         List<OrderItemDTO> orderedItems = new ArrayList<>();
@@ -56,6 +60,7 @@ public class OrderService{
         }
 
         Order order = getOrderForSession(sessionId);
+        boolean isNewOrder = (order == null);
         if (order == null) {
             order = new Order();
 //          Tạo mới 1 order và lưu vào DB
@@ -72,7 +77,6 @@ public class OrderService{
         Order finalOrder = order;
         cart.values().forEach(item -> {
             OrderItem orderItem = orderItemMapper.toOrderItem(item);
-//            orderItem.setProduct(productRepository.findById(item.getProductId()).orElse(null));
             orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
             orderItem.setOrderItemType(OrderItem.OrderItemType.DINE_IN);
             orderItem.setProductSize(item.getProductSize());
@@ -80,11 +84,12 @@ public class OrderService{
             orderItemRepository.save(orderItem);
             finalOrder.addOrderItem(orderItem);
         });
+        order.setUpdatedAt(LocalDateTime.now());
         orderRepository.save(order);
         cartService.clearCart(session);
 
-        // Gửi thông báo order mới đến kitchen
-        notifyKitchenNewOrder(order);
+        // Gửi thông báo đến kitchen: NEW_ORDER nếu là order mới, ORDER_UPDATED nếu là order đã tồn tại
+        notifyKitchenOrderChange(order, isNewOrder);
     }
 
     @Transactional
@@ -106,12 +111,19 @@ public class OrderService{
         order = orderRepository.save(order);
 
         for (CartItemDTO item : cart.values()) {
+            System.out.println("🔍 OrderService: CartItemDTO note = [" + item.getNote() + "]");
+            System.out.println("🔍 OrderService: CartItemDTO productId = " + item.getProductId() + ", productName = " + item.getProductName());
+
             OrderItem orderItem = orderItemMapper.toOrderItem(item);
-//            orderItem.setProduct(productRepository.findById(item.getProductId()).orElse(null));
+            System.out.println("🔍 OrderService: OrderItem note after mapping = [" + orderItem.getNote() + "]");
+
             orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
             orderItem.setOrderItemType(OrderItem.OrderItemType.TAKE_AWAY);
             orderItem.setProductSize(item.getProductSize());
             orderItemRepository.save(orderItem);
+
+            System.out.println("💾 OrderService: OrderItem saved with ID = " + orderItem.getId() + ", note = [" + orderItem.getNote() + "]");
+
             order.addOrderItem(orderItem);
             order.setTotalPrice(order.getTotalPrice() + item.getTotalPrice());
         }
@@ -121,13 +133,41 @@ public class OrderService{
         notifyKitchenNewOrder(order);
         return order;
     }
-    
+
     /**
      * Gửi thông báo order mới đến kitchen
      */
     private void notifyKitchenNewOrder(Order order) {
+        notifyKitchenOrderChange(order, true);
+    }
+    
+    /**
+     * Gửi thông báo order thay đổi đến kitchen
+     * @param order Order đã thay đổi
+     * @param isNewOrder true nếu là order mới, false nếu là order đã tồn tại được cập nhật
+     */
+    private void notifyKitchenOrderChange(Order order, boolean isNewOrder) {
         try {
+            KitchenOrderMessage.MessageType messageType = isNewOrder 
+                    ? KitchenOrderMessage.MessageType.NEW_ORDER 
+                    : KitchenOrderMessage.MessageType.ORDER_UPDATED;
+            
+            String messageText = isNewOrder 
+                    ? "Có order mới từ " + (order.getSession() != null && order.getSession().getTable() != null ?
+                            "Bàn " + order.getSession().getTable().getId() : "Take away")
+                    : "Order đã được cập nhật - có thêm món mới";
+            
+            // Lấy danh sách items để tính toán
+            List<OrderItem> orderItems = order.getOrderItems();
+            int totalItems = orderItems != null ? orderItems.size() : 0;
+            int completedItems = orderItems != null 
+                    ? (int) orderItems.stream()
+                            .filter(item -> item.getOrderItemStatus() == OrderItem.OrderItemStatus.SERVED)
+                            .count()
+                    : 0;
+            
             KitchenOrderMessage orderMessage = KitchenOrderMessage.builder()
+                    .type(messageType)
                     .orderId(order.getId())
                     .code(String.format("ORD-%05d", order.getId())) // Tạo code với padding 0
                     .tableName(order.getSession() != null && order.getSession().getTable() != null ?
@@ -136,15 +176,16 @@ public class OrderService{
                     .status(order.getOrderStatus() != null ? order.getOrderStatus().toString() : "PREPARING")
                     .priority("NORMAL") // Có thể thêm logic để xác định priority
                     .totalPrice(order.getTotalPrice())
+                    .totalItems(totalItems)
+                    .completedItems(completedItems)
                     .note(order.getNote())
-                    .message("Có order mới từ " + (order.getSession() != null && order.getSession().getTable() != null ?
-                            "Bàn " + order.getSession().getTable().getId() : "Take away"))
+                    .message(messageText)
                     .build();
 
             webSocketService.broadcastNewOrderToKitchen(orderMessage);
         } catch (Exception e) {
             // Log error nhưng không làm fail transaction
-            System.err.println("Error notifying kitchen of new order: " + e.getMessage());
+            System.err.println("Error notifying kitchen of order change: " + e.getMessage());
         }
     }
 
@@ -290,4 +331,73 @@ public class OrderService{
                 })
                 .toList();
     }
+
+    /**
+     * Cập nhật order items cho cashier (thêm món vào order đang có)
+     */
+    @Transactional
+    public void updateOrderItemsForCashier(Long orderId, List<UpdateOrderItemsDTO.OrderItemUpdate> newItems) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (order.getOrderStatus() != Order.OrderStatus.PREPARING) {
+            throw new RuntimeException("Chỉ có thể cập nhật order đang chuẩn bị");
+        }
+
+        for (UpdateOrderItemsDTO.OrderItemUpdate newItem : newItems) {
+            final ProductSize productSize;
+            if (newItem.getSizeId() != null && newItem.getProductId() != null) {
+
+                productSize = productSizeRepository.findByProductIdAndSizeId(
+                        newItem.getProductId(),
+                        newItem.getSizeId()
+                ).orElseThrow(() -> new RuntimeException(
+                        "Không tìm thấy ProductSize với productId: " + newItem.getProductId() + " và sizeId: " + newItem.getSizeId()));
+            } else if (newItem.getProductId() != null) {
+                List<ProductSize> productSizes = productSizeRepository.findByProductId(newItem.getProductId());
+                if (productSizes.isEmpty()) {
+                    throw new RuntimeException("Product không có size nào: " + newItem.getProductId());
+                }
+                productSize = productSizes.getFirst();
+            } else {
+                throw new RuntimeException("ProductId không được để trống");
+            }
+
+            // Check if item already exists in order (kiểm tra cả productId và sizeId)
+            OrderItem existingItem = order.getOrderItems().stream()
+                    .filter(item -> item.getProductSize() != null
+                            && item.getProductSize().getProduct().getId().equals(newItem.getProductId())
+                            && item.getProductSize().getSize().getId().equals(productSize.getSize().getId()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (existingItem != null) {
+                // Update quantity of existing item
+                existingItem.setQuantity(existingItem.getQuantity() + newItem.getQuantity());
+                existingItem.setTotalPrice(existingItem.getUnitPrice() * existingItem.getQuantity());
+            } else {
+                // Add new item
+                OrderItem orderItem = new OrderItem();
+                orderItem.setOrder(order);
+                orderItem.setQuantity(newItem.getQuantity());
+                orderItem.setUnitPrice(newItem.getPrice());
+                orderItem.setTotalPrice(newItem.getPrice() * newItem.getQuantity());
+                orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
+                orderItem.setOrderItemType(OrderItem.OrderItemType.DINE_IN);
+                orderItem.setProductSize(productSize); // Set ProductSize
+
+                order.getOrderItems().add(orderItem);
+                orderItemRepository.save(orderItem);
+            }
+        }
+
+        double newTotal = order.getOrderItems().stream()
+                .mapToDouble(OrderItem::getTotalPrice)
+                .sum();
+        order.setTotalPrice(newTotal);
+
+        orderRepository.save(order);
+        notifyKitchenOrderChange(order,false);
+    }
+
 }

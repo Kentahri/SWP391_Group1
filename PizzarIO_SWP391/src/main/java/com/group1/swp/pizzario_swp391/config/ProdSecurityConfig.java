@@ -139,7 +139,7 @@ public class ProdSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/webjars/**", "/css/**", "/images/**", "/static/js/**", "/js/**",
                                 "/guest/**", "/missing_pass/**", "/ws/**", "/app/**", "/topic/**", "/queue/**",
-                                "/api/chatbot/**")
+                                "/api/chatbot/**", "/templates/error.html")
                         .permitAll()
                         .requestMatchers("/manager/**").hasRole("MANAGER")
                         .requestMatchers("/kitchen/**").hasRole("KITCHEN")
@@ -151,7 +151,7 @@ public class ProdSecurityConfig {
                 // Session Management: Cho phép nhiều session độc lập
                 .sessionManagement(session -> session
                         .sessionFixation().changeSessionId() // Đổi session ID sau khi login
-                        .maximumSessions(1) // Cho phép tối đa 10 sessions đồng thời
+                        .maximumSessions(10) // Cho phép tối đa 10 sessions đồng thời
                         .maxSessionsPreventsLogin(false)
                         .expiredSessionStrategy(event -> event.getResponse().sendRedirect("/pizzario/login?expired"))
                 )

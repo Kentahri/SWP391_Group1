@@ -1,90 +1,108 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-  <body>
-    <!-- 
-  Sidebar Fragment
-  Usage: th:insert="~{fragments/sidebar :: sidebar(activePage='analytics')}"
-  activePage values: 'analytics', 'staff', 'staff_shifts', 'vouchers', 'categories', 'products', 'tables', 'settings'
+<body>
+<!--
+Sidebar Fragment
+Usage: th:insert="~{fragments/sidebar :: sidebar(activePage='analytics')}"
+activePage values: 'analytics', 'staff', 'staff_shifts', 'vouchers', 'categories', 'products', 'tables', 'settings'
 -->
-    <aside th:fragment="sidebar(activePage)" class="sidebar">
-      <div class="brand">
+<aside th:fragment="sidebar(activePage)" class="sidebar">
+    <div class="brand">
         <div class="logo">🍕</div>
         <div class="brand-text">
-          <strong>PizzarIO</strong>
-          <span>Admin Dashboard</span>
+            <strong>PizzarIO</strong>
+            <span>Admin Dashboard</span>
         </div>
-      </div>
+    </div>
 
-      <nav class="nav">
+    <nav class="nav">
         <a
-          th:href="@{/manager/analytics}"
-          th:classappend="${activePage == 'analytics'} ? 'active' : ''"
-          class="nav-link"
+                th:href="@{/manager/analytics}"
+                th:classappend="${activePage == 'analytics'} ? 'active' : ''"
+                class="nav-link"
         >
-          📊 Phân tích
+            📊 Phân tích
         </a>
         <a
-          th:href="@{/manager/staff}"
-          th:classappend="${activePage == 'staff'} ? 'active' : ''"
-          class="nav-link"
+                th:href="@{/manager/staff}"
+                th:classappend="${activePage == 'staff'} ? 'active' : ''"
+                class="nav-link"
         >
-          👥 Nhân viên
+            👥 Nhân viên
         </a>
         <a
-          th:href="@{/manager/staff_shifts}"
-          th:classappend="${activePage == 'staff_shifts'} ? 'active' : ''"
-          class="nav-link"
+                th:href="@{/manager/staff_shifts}"
+                th:classappend="${activePage == 'staff_shifts'} ? 'active' : ''"
+                class="nav-link"
         >
-          📅 Ca làm việc
+            📅 Ca làm việc
         </a>
         <a
-          th:href="@{/manager/vouchers}"
-          th:classappend="${activePage == 'vouchers'} ? 'active' : ''"
-          class="nav-link"
+                th:href="@{/manager/vouchers}"
+                th:classappend="${activePage == 'vouchers'} ? 'active' : ''"
+                class="nav-link"
         >
-          🎟️ Voucher
+            🎟️ Voucher
         </a>
         <a
-          th:href="@{/manager/categories}"
-          th:classappend="${activePage == 'categories'} ? 'active' : ''"
-          class="nav-link"
+                th:href="@{/manager/categories}"
+                th:classappend="${activePage == 'categories'} ? 'active' : ''"
+                class="nav-link"
         >
-          📂 Danh mục
+            📂 Danh mục
         </a>
-        <a
-          th:href="@{/manager/products}"
-          th:classappend="${activePage == 'products'} ? 'active' : ''"
-          class="nav-link"
-        >
-          🍕 Sản phẩm
-        </a>
-        <a
-          th:href="@{/manager/tables}"
-          th:classappend="${activePage == 'tables'} ? 'active' : ''"
-          class="nav-link"
-        >
-          🪑 Bàn ăn
-        </a>
-        <a
-          th:href="@{/manager/settings}"
-          th:classappend="${activePage == 'settings'} ? 'active' : ''"
-          class="nav-link"
-        >
-          ⚙️ Cài đặt
-        </a>
-      </nav>
 
-      <form th:action="@{/logout}" method="post" style="margin-top: auto">
+        <!-- DROPDOWN SẢN PHẨM -->
+        <div class="nav-dropdown"
+             th:classappend="${activePage == 'products' || activePage == 'sizes' || activePage == 'product-sizes'} ? 'active' : ''">
+            <a href="#" class="nav-link dropdown-toggle">
+                🍕 Sản phẩm
+            </a>
+            <ul class="dropdown-menu">
+                <li>
+                    <a th:href="@{/manager/products}"
+                       th:classappend="${activePage == 'products'} ? 'active' : ''"
+                       class="dropdown-item">Danh sách món</a>
+                </li>
+                <li>
+                    <a th:href="@{/manager/sizes}"
+                       th:classappend="${activePage == 'sizes'} ? 'active' : ''"
+                       class="dropdown-item">Kích thước (S, M, L)</a>
+                </li>
+                <li>
+                    <a th:href="@{/manager/product-sizes}"
+                       th:classappend="${activePage == 'product-sizes'} ? 'active' : ''"
+                       class="dropdown-item">Giá theo size</a>
+                </li>
+            </ul>
+        </div>
+        <a
+                th:href="@{/manager/tables}"
+                th:classappend="${activePage == 'tables'} ? 'active' : ''"
+                class="nav-link"
+        >
+            🪑 Bàn ăn
+        </a>
+        <a
+                th:href="@{/manager/settings}"
+                th:classappend="${activePage == 'settings'} ? 'active' : ''"
+                class="nav-link"
+        >
+            ⚙️ Cài đặt
+        </a>
+    </nav>
+
+    <form th:action="@{/logout}" method="post" style="margin-top: auto">
         <input
-          type="hidden"
-          th:if="${_csrf != null}"
-          th:name="${_csrf.parameterName}"
-          th:value="${_csrf.token}"
+                type="hidden"
+                th:if="${_csrf != null}"
+                th:name="${_csrf.parameterName}"
+                th:value="${_csrf.token}"
         />
         <button
-          type="submit"
-          class="nav-link"
-          style="
+                type="submit"
+                class="nav-link"
+                style="
             width: 100%;
             text-align: left;
             background: none;
@@ -94,9 +112,9 @@
             font-size: inherit;
           "
         >
-          🚪 Đăng xuất
+            🚪 Đăng xuất
         </button>
-      </form>
-    </aside>
-  </body>
+    </form>
+</aside>
+</body>
 </html>

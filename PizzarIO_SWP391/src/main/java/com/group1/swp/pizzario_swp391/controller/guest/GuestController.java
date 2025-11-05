@@ -34,6 +34,7 @@ public class GuestController{
     OrderService orderService;
     SessionRepository sessionRepository;
     ProductSizeService productSizeService;
+    private final OrderItemService orderItemService;
 
     @GetMapping
     public String guestPage(Model model, HttpSession session) {
@@ -127,11 +128,10 @@ public class GuestController{
                                  @RequestParam("productId") Long productId,
                                  @RequestParam("quantity") int quantity,
                                  @RequestParam(value = "note", required = false) String note,
-                                 @RequestParam("productSizeId") Long productSizeId,
-                                 HttpSession session,
+                                 @RequestParam(value = "newProductSizeId", required = false) Long newProductSizeId,
+                                 @RequestParam(value = "oldProductSizeId", required = false) Long oldProductSizeId, HttpSession session,
                                  RedirectAttributes redirectAttributes) {
-        System.out.println(productSizeId);
-        cartService.updateCartItem(session, productId, quantity, note, productSizeId);
+        cartService.updateCartItem(session, productId, quantity, note, newProductSizeId, oldProductSizeId);
         redirectAttributes.addAttribute("sessionId", sessionId);
         redirectAttributes.addAttribute("tableId", tableId);
         return "redirect:/guest/menu";
@@ -145,6 +145,19 @@ public class GuestController{
                                  HttpSession session,
                                  RedirectAttributes redirectAttributes) {
         cartService.removeFromCart(session, productId, productSizeId);
+        redirectAttributes.addAttribute("sessionId", sessionId);
+        redirectAttributes.addAttribute("tableId", tableId);
+        return "redirect:/guest/menu";
+    }
+
+    @PostMapping("/order/cancel")
+    public String cancelOrder(@RequestParam("orderItemId") Long orderItemId,
+                              @RequestParam("sessionId") Long sessionId,
+                              @RequestParam("tableId") Integer tableId,
+                              Model model,
+                              RedirectAttributes redirectAttributes) {
+        orderItemService.cancelOrderItem(orderItemId);
+        model.addAttribute("orderedItems", orderService.getOrderedItemsForView(sessionId));
         redirectAttributes.addAttribute("sessionId", sessionId);
         redirectAttributes.addAttribute("tableId", tableId);
         return "redirect:/guest/menu";
