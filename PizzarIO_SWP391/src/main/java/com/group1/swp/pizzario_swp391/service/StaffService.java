@@ -201,6 +201,11 @@ public class StaffService {
         return staff;
     }
 
+    public Staff findByEmailValid(String email){
+        Staff staff = loginRepository.findByEmail(email).orElse(null);
+        return staff;
+    }
+
     public void updateStaff(Staff staff) {
         staffRepository.save(staff);
     }

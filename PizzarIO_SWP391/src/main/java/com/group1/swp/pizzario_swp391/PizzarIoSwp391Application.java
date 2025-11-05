@@ -48,7 +48,7 @@ public class PizzarIoSwp391Application{
                     "0907654321",
                     "TP.HCM",
                     passwordEncoder.encode("123456789"),
-                    "huy@gmail.com",
+                    "hhcc782005@gmail.com",
                     Staff.Role.MANAGER,
                     true
             );

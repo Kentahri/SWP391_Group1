@@ -104,11 +104,19 @@ public class OrderService{
         order = orderRepository.save(order);
 
         for (CartItemDTO item : cart.values()) {
+            System.out.println("🔍 OrderService: CartItemDTO note = [" + item.getNote() + "]");
+            System.out.println("🔍 OrderService: CartItemDTO productId = " + item.getProductId() + ", productName = " + item.getProductName());
+
             OrderItem orderItem = orderItemMapper.toOrderItem(item);
+            System.out.println("🔍 OrderService: OrderItem note after mapping = [" + orderItem.getNote() + "]");
+
             orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
             orderItem.setOrderItemType(OrderItem.OrderItemType.TAKE_AWAY);
             orderItem.setProductSize(item.getProductSize());
             orderItemRepository.save(orderItem);
+
+            System.out.println("💾 OrderService: OrderItem saved with ID = " + orderItem.getId() + ", note = [" + orderItem.getNote() + "]");
+
             order.addOrderItem(orderItem);
             order.setTotalPrice(order.getTotalPrice() + item.getTotalPrice());
         }

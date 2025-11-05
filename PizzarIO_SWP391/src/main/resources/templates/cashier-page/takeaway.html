@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" th:href="@{/css/guest_page/guest-toast.css}" />
+<!--    <link rel="stylesheet" th:href="@{/css/guest_page/guest-toast.css}" />-->
     <style>
       /* Borrowed styles from guest-page/view_menu.html, trimmed */
       :root {
@@ -206,6 +206,31 @@
         background-color: var(--secondary-color);
         color: white;
       }
+
+      /* Modal styles */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background-color: white;
+        padding: 24px;
+        border-radius: 12px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        position: relative;
+      }
     </style>
   </head>
   <body>
@@ -233,11 +258,18 @@
           ></button>
         </nav>
 
+        <div id="productModal" class="modal">
+          <div class="modal-content" id="productModalContent"></div>
+        </div>
+
         <section class="product-grid" id="productGrid">
           <div
-            class="product-card"
-            th:each="p : ${products}"
-            th:attr="data-category-id=${p.categoryId}"
+                  class="product-card"
+                  th:each="p : ${products}"
+                  th:attr="data-category-id=${p.categoryId}"
+                  th:classappend="${!p.active ? 'inactive' : ''}"
+                  th:onclick="'showProductDetail(' + ${p.id} + ')'"
+                  style="cursor:pointer;"
           >
             <div class="thumb">
               <img
@@ -246,19 +278,17 @@
               />
             </div>
             <div class="name" th:text="${p.name}">Product Name</div>
-            <div class="price" th:text="${p.currentPriceFormatted}">
-              100.000₫
-            </div>
             <form
               class="ajax-form"
               method="post"
-              th:action="@{/cashier/takeaway/cart/add}"
+              th:action="@{'/cashier/takeaway/cart/add'}"
               style="width: 100%; margin-top: 10px"
               onclick="event.stopPropagation();"
             >
               <input type="hidden" name="productId" th:value="${p.id}" />
               <input type="hidden" name="quantity" value="1" />
               <input type="hidden" name="note" value="" />
+              <input type="hidden" name="productSizeId" value=""/>
               <button
                 type="submit"
                 class="product-card add-btn"
@@ -286,41 +316,53 @@
               >
                 0đ
               </div>
+              <form class="ajax-form" th:action="@{/cashier/takeaway/cart/update}" method="post">
+                <input type="hidden" name="productId" th:value="${item.productId}"/>
+                <input type="hidden" name="quantity" th:value="${item.quantity}"/>
+                <input type="hidden" name="note" th:value="${item.note}"/>
+
+                <select name="productSizeId"
+                        style="display:block; margin-top:6px; padding:6px; border-radius:4px; width:100%;"
+                        onchange="this.form.requestSubmit()">
+                    <option th:each="ps : ${item.productSizes}"
+                            th:value="${ps.id}"
+                            th:selected="${ps.id == item.productSize.id}"
+                            th:text="${ps.size.sizeName}">
+                    </option>
+                </select>
+
+            </form>
+
+              <form class="ajax-form" th:action="@{/cashier/takeaway/cart/update}" method="post">
+                <input type="hidden" name="productId" th:value="${item.productId}"/>
+                <input type="hidden" name="quantity" th:value="${item.quantity}"/>
+                <input type="hidden" name="productSizeId" th:value="${item.productSize.id}">
+
+
+                <div class="note-section">
+                  <input type="text" name="note"
+                         th:value="${item.note}"
+                         placeholder="Thêm ghi chú..."
+                         onblur="this.form.requestSubmit()"
+                         style="width:100%;padding:6px;border-radius:4px;border:1px solid #ccc;margin-top:5px;"/>
+                </div>
+              </form>
+
             </div>
             <div class="item-qty">
-              <form
-                class="ajax-form"
-                th:action="@{/cashier/takeaway/cart/update}"
-                method="post"
-              >
-                <input
-                  type="hidden"
-                  name="productId"
-                  th:value="${item.productId}"
-                />
-                <input
-                  type="hidden"
-                  name="quantity"
-                  th:value="${item.quantity - 1}"
-                />
+              <form class="ajax-form" th:action="@{/cashier/takeaway/cart/update}" method="post">
+                <input type="hidden" name="productId" th:value="${item.productId}"/>
+                <input type="hidden" name="quantity" th:value="${item.quantity - 1}"/>
+                <input type="hidden" name="note" th:value="${item.note}"/>
+                <input type="hidden" name="productSizeId" th:value="${item.productSize.id}"/>
                 <button type="submit">-</button>
               </form>
               <span th:text="${item.quantity}">1</span>
-              <form
-                class="ajax-form"
-                th:action="@{/cashier/takeaway/cart/update}"
-                method="post"
-              >
-                <input
-                  type="hidden"
-                  name="productId"
-                  th:value="${item.productId}"
-                />
-                <input
-                  type="hidden"
-                  name="quantity"
-                  th:value="${item.quantity + 1}"
-                />
+              <form class="ajax-form" th:action="@{/cashier/takeaway/cart/update}" method="post">
+                <input type="hidden" name="productId" th:value="${item.productId}"/>
+                <input type="hidden" name="quantity" th:value="${item.quantity + 1}"/>
+                <input type="hidden" name="note" th:value="${item.note}"/>
+                <input type="hidden" name="productSizeId" th:value="${item.productSize.id}"/>
                 <button type="submit">+</button>
               </form>
             </div>
@@ -329,11 +371,10 @@
               th:action="@{/cashier/takeaway/cart/remove}"
               method="post"
             >
-              <input
-                type="hidden"
-                name="productId"
-                th:value="${item.productId}"
-              />
+              <input type="hidden" name="productId" th:value="${item.productId}"/>
+              <input type="hidden" name="quantity" th:value="${item.quantity + 1}"/>
+              <input type="hidden" name="note" th:value="${item.note}"/>
+              <input type="hidden" name="productSizeId" th:value="${item.productSize.id}"/>
               <button class="remove-btn" type="submit">✕</button>
             </form>
           </div>
@@ -375,97 +416,18 @@
             💳 Thanh toán
           </button>
         </form>
-        <a
+        <form th:action="@{'/cashier/takeaway/rollback'}" method="post">
+          <button
+          type="submit"
           class="btn btn-secondary"
-          th:href="@{/cashier}"
           style="margin-top: 12px"
-          >← Quay lại Dashboard</a
+          >← Quay lại Dashboard</button
         >
+        </form>
+        
       </aside>
     </div>
 
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const productGrid = document.getElementById("productGrid");
-        const categoryBar = document.getElementById("categoryBar");
-        const searchBox = document.getElementById("searchBox");
-
-        function filterProducts() {
-          const cards = Array.from(
-            productGrid.querySelectorAll(".product-card")
-          );
-          const activeChip = categoryBar.querySelector(".cat-chip.active");
-          const activeCategoryId = parseInt(
-            activeChip.getAttribute("data-category-id")
-          );
-          const keyword = searchBox.value.toLowerCase().trim();
-          cards.forEach((card) => {
-            const cardCategoryId = parseInt(
-              card.getAttribute("data-category-id")
-            );
-            const cardName = card
-              .querySelector(".name")
-              .textContent.toLowerCase();
-            const categoryMatch =
-              activeCategoryId === 0 || cardCategoryId === activeCategoryId;
-            const keywordMatch = !keyword || cardName.includes(keyword);
-            card.style.display =
-              categoryMatch && keywordMatch ? "flex" : "none";
-          });
-        }
-
-        categoryBar.addEventListener("click", (e) => {
-          if (e.target.classList.contains("cat-chip")) {
-            categoryBar
-              .querySelector(".cat-chip.active")
-              .classList.remove("active");
-            e.target.classList.add("active");
-            filterProducts();
-          }
-        });
-
-        searchBox.addEventListener("input", filterProducts);
-
-        // AJAX form submission, update only sidebar
-        document.body.addEventListener("submit", async (e) => {
-          const form = e.target;
-
-          // Skip forms with data-normal-submit attribute (normal form submission)
-          if (form.hasAttribute("data-normal-submit")) {
-            console.log("Form has data-normal-submit, allowing normal submit");
-            return; // Allow normal form submission
-          }
-
-          // Only handle forms with ajax-form class
-          if (!form.classList.contains("ajax-form")) {
-            return; // Allow normal form submission for non-ajax forms
-          }
-
-          // This is an ajax-form, prevent default and handle with AJAX
-          e.preventDefault();
-          console.log("Handling ajax-form submission");
-          try {
-            const response = await fetch(form.action, {
-              method: form.method || "POST",
-              body: new FormData(form),
-            });
-            const html = await response.text();
-            const parser = new DOMParser();
-            const newDoc = parser.parseFromString(html, "text/html");
-            const newSidebar = newDoc.getElementById("sidebar");
-            const currentSidebar = document.getElementById("sidebar");
-            if (newSidebar && currentSidebar) {
-              currentSidebar.innerHTML = newSidebar.innerHTML;
-            } else {
-              window.location.reload();
-            }
-          } catch (err) {
-            alert("Có lỗi xảy ra. Vui lòng thử lại.");
-          }
-        });
-
-        filterProducts();
-      });
-    </script>
+    <script th:src="@{/js/cashier/view-menu-takeaway.js}"></script>
   </body>
 </html>
