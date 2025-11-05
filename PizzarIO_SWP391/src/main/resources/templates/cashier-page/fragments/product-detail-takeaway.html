@@ -1,47 +1,52 @@
 <div th:fragment="detail-content-takeaway">
-    <h2 th:text="${product.name}"></h2>
-    <img th:src="${product.imageURL ?: 'https://via.placeholder.com/200'}"
-         style="max-width: 100%; border-radius: 6px;">
-    <!--    <p><strong>Giá:</strong> <span th:text="${product.currentPriceFormatted}"></span></p>-->
-    <p><strong>Mô tả:</strong> <span th:text="${product.description ?: 'Chưa có mô tả.'}"></span></p>
+    <h2 th:text="${product.name}">Tên sản phẩm</h2>
 
-    <form class="ajax-form" th:action="@{/cashier/takeaway/cart/add}" method="post" style="margin-top: 15px;">
+    <img th:src="${product.imageURL ?: 'https://via.placeholder.com/400x300?text=Pizza'}"
+         th:alt="${product.name}">
+
+    <p>
+        <strong>Mô tả:</strong>
+        <span th:text="${product.description ?: 'Chưa có mô tả.'}"></span>
+    </p>
+
+    <form class="ajax-form" th:action="@{/cashier/takeaway/cart/add}" method="post">
         <input type="hidden" name="productId" th:value="${product.id}">
+
         <!-- CHỌN SIZE -->
         <div th:if="${productSizes != null and !productSizes.isEmpty()}">
-            <label for="sizeSelect"><strong>Chọn kích cỡ:</strong></label>
-            <select id="sizeSelect" name="productSizeId" required
-                    style="display:block; margin-top:6px; padding:6px; border-radius:4px; width:100%;">
+            <label for="sizeSelect">Chọn kích cỡ:</label>
+            <select id="sizeSelect" name="productSizeId" required>
                 <option th:each="ps : ${productSizes}"
-                        th:value="${ps.id}">
-            <span th:if="${ps.onFlashSale}"
-                  th:text="${ps.size.sizeName + ' - '
-                      + #numbers.formatDecimal(ps.currentPrice, 0, 'COMMA', 0, 'POINT') + '₫ (giá gốc: '
-                      + #numbers.formatDecimal(ps.basePrice, 0, 'COMMA', 0, 'POINT') + '₫)'}">
-            </span>
+                        th:value="${ps.id}"
+                        th:attr="data-flash-sale=${ps.onFlashSale}">
+                    <span th:if="${ps.onFlashSale}"
+                          th:text="${ps.size.sizeName + ' - '
+                              + #numbers.formatDecimal(ps.currentPrice, 0, 'COMMA', 0, 'POINT') + '₫ (Giảm giá từ '
+                              + #numbers.formatDecimal(ps.basePrice, 0, 'COMMA', 0, 'POINT') + '₫)'}">
+                    </span>
                     <span th:unless="${ps.onFlashSale}"
-                          th:text="${ps.sizeName + ' - '
-                      + #numbers.formatDecimal(ps.currentPrice, 0, 'COMMA', 0, 'POINT') + '₫'}">
-            </span>
+                          th:text="${ps.size.sizeName + ' - '
+                              + #numbers.formatDecimal(ps.currentPrice, 0, 'COMMA', 0, 'POINT') + '₫'}">
+                    </span>
                 </option>
             </select>
         </div>
+
         <label>Số lượng:</label>
-        <input type="number" name="quantity" value="1" min="1" style="width: 60px; margin-left: 8px;">
+        <input type="number" name="quantity" value="1" min="1" max="99">
 
-        <br><br>
-        <label>Ghi chú:</label><br>
-        <textarea name="note" rows="3" style="width: 100%; border-radius: 4px; padding: 6px;"></textarea>
+        <label>Ghi chú (tùy chọn):</label>
+        <textarea name="note" rows="3" placeholder="Ví dụ: Ít cay, thêm phô mai..."></textarea>
 
-        <div style="margin-top: 12px;">
+        <div>
             <button type="submit"
-                    onclick="document.getElementById('productModal').style.display='none'"
-                    style="background: #007bff; color: white; padding: 8px 12px; border: none; border-radius: 4px;">
+                    onclick="document.getElementById('productModal').style.display='none'">
                 Thêm vào giỏ
             </button>
-            <!--            <button type="button" -->
-            <!--                    style="margin-left: 8px;">Đóng-->
-            <!--            </button>-->
+            <button type="button"
+                    onclick="document.getElementById('productModal').style.display='none'">
+                ✕ Đóng
+            </button>
         </div>
     </form>
 </div>
