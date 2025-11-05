@@ -404,9 +404,19 @@ public class OrderService {
                     .orElse(null);
 
             if (existingItem != null) {
-                existingItem.setQuantity(newItem.getQuantity());
-                existingItem.setTotalPrice(existingItem.getUnitPrice() * existingItem.getQuantity());
-            } else {
+                if (newItem.getQuantity() == 0) {
+                    order.getOrderItems().remove(existingItem);
+                    orderItemRepository.delete(existingItem);
+                } else {
+                    existingItem.setQuantity(newItem.getQuantity());
+                    existingItem.setTotalPrice(existingItem.getUnitPrice() * existingItem.getQuantity());
+                    // Update note if provided
+                    if (newItem.getNote() != null) {
+                        existingItem.setNote(newItem.getNote());
+                    }
+                }
+            } else if (newItem.getQuantity() > 0) {
+                // Add new item only if quantity > 0
                 OrderItem orderItem = new OrderItem();
                 orderItem.setOrder(order);
                 orderItem.setQuantity(newItem.getQuantity());
@@ -415,6 +425,7 @@ public class OrderService {
                 orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
                 orderItem.setOrderItemType(OrderItem.OrderItemType.DINE_IN);
                 orderItem.setProductSize(productSize); // Set ProductSize
+                orderItem.setNote(newItem.getNote()); // Set note
 
                 order.getOrderItems().add(orderItem);
                 orderItemRepository.save(orderItem);
