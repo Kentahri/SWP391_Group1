@@ -3,6 +3,7 @@ package com.group1.swp.pizzario_swp391.dto.product;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 @NoArgsConstructor
@@ -29,4 +30,10 @@ public class ProductUpdateDTO{
     Long categoryId;
 
     boolean active;
+
+    // === MỚI: File upload ===
+    MultipartFile imageFile;
+
+    // === MỚI: Ảnh hiện tại (khi edit) ===
+    String currentImageURL;
 }

@@ -112,7 +112,7 @@
             <artifactId>commons-text</artifactId>
             <version>1.14.0</version>
         </dependency>
-<!--        Huy -->
+        <!--        Huy -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
@@ -137,7 +137,7 @@
             <version>5.2.0</version>
             <scope>test</scope>
         </dependency>
-<!--        -->
+        <!--        -->
 
         <!-- Thêm vào pom.xml -->
         <dependency>
@@ -156,7 +156,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-batch</artifactId>
         </dependency>
-
+<!--        cloud luu anh-->
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http44</artifactId>
+            <version>1.32.0</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -56,22 +56,12 @@
                 <div class="thumb">
                     <img
                             th:alt="${p.name}"
-                            th:src="${p.imageURL ?: 'https://via.placeholder.com/160?text=Product'}"
+                            th:src="@{${p.imageURL ?: 'https://via.placeholder.com/160?text=Product'}}"
                     />
                 </div>
                 <div class="name" th:text="${p.name}">Product Name</div>
-<!--                <div class="price">-->
-<!--                  <span th:if="${p.onFlashSale}">-->
-<!--                      <span style="color:#e53935;font-weight:bold;" th:text="${p.currentPriceFormatted}">90.000₫</span>-->
-<!--                    <span style="text-decoration:line-through; color:#888; margin-left:8px;"-->
-<!--                          th:text="${p.basePriceFormatted}">110.000₫</span>-->
-<!--                  </span>-->
-<!--                    <span th:unless="${p.onFlashSale}" th:text="${p.currentPriceFormatted}">-->
-<!--                    100.000₫-->
-<!--                  </span>-->
-<!--                </div>-->
-                <!-- NÚT THÊM VÀO GIỎ! -->
 
+                <!-- NÚT THÊM VÀO GIỎ! -->
                 <form class="ajax-form"
                       method="post"
                       th:action="@{/guest/cart/add}"
