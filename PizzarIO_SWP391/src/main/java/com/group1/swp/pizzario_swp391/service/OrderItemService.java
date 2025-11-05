@@ -1,28 +1,32 @@
 package com.group1.swp.pizzario_swp391.service;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.group1.swp.pizzario_swp391.dto.order.OrderItemDTO;
+import com.group1.swp.pizzario_swp391.dto.websocket.KitchenOrderMessage;
 import com.group1.swp.pizzario_swp391.entity.Order;
 import com.group1.swp.pizzario_swp391.entity.OrderItem;
 import com.group1.swp.pizzario_swp391.mapper.OrderItemMapper;
 import com.group1.swp.pizzario_swp391.repository.OrderItemRepository;
 import com.group1.swp.pizzario_swp391.repository.OrderRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 public class OrderItemService {
     private final OrderRepository orderRepository;
     private final OrderItemMapper orderItemMapper;
     private final OrderItemRepository orderItemRepository;
+    private final WebSocketService webSocketService;
 
-    public OrderItemService(OrderRepository orderRepository, OrderItemMapper orderItemMapper, OrderItemRepository orderItemRepository) {
+    public OrderItemService(OrderRepository orderRepository, OrderItemMapper orderItemMapper, OrderItemRepository orderItemRepository, WebSocketService webSocketService) {
         this.orderRepository = orderRepository;
         this.orderItemMapper = orderItemMapper;
         this.orderItemRepository = orderItemRepository;
+        this.webSocketService = webSocketService;
     }
 
     public List<OrderItemDTO> getOrderItemsByOrderId(Long orderId) {
@@ -39,9 +43,60 @@ public class OrderItemService {
         OrderItem item = orderItemRepository.findById(orderItemId).orElseThrow();
         if (item.getOrderItemStatus() == OrderItem.OrderItemStatus.PENDING) {
             Order order = item.getOrder();
+            String productName = item.getProductSize() != null && item.getProductSize().getProduct() != null 
+                    ? item.getProductSize().getProduct().getName() 
+                    : "Unknown Product";
+            
             order.setTotalPrice(order.getTotalPrice() - item.getTotalPrice());
             order.getOrderItems().remove(item);
             order.setUpdatedAt(LocalDateTime.now());
+            orderRepository.save(order);
+            
+            // Gửi thông báo đến kitchen qua websocket
+            notifyKitchenItemCancelled(order, item, productName);
+        }
+    }
+    
+    /**
+     * Gửi thông báo khi có item bị hủy đến kitchen
+     */
+    private void notifyKitchenItemCancelled(Order order, OrderItem cancelledItem, String productName) {
+        try {
+            // Lấy danh sách items còn lại sau khi hủy
+            List<OrderItem> remainingItems = orderItemRepository.findByOrderId(order.getId());
+            
+            KitchenOrderMessage cancelMessage = KitchenOrderMessage.builder()
+                    .type(KitchenOrderMessage.MessageType.ORDER_ITEM_CANCELLED)
+                    .orderId(order.getId())
+                    .code(String.format("ORD-%05d", order.getId()))
+                    .tableName(order.getSession() != null && order.getSession().getTable() != null 
+                            ? "Bàn " + order.getSession().getTable().getId() 
+                            : "Take away")
+                    .orderType(order.getOrderType() != null ? order.getOrderType().toString() : "DINE_IN")
+                    .status(order.getOrderStatus() != null ? order.getOrderStatus().toString() : "PREPARING")
+                    .priority("NORMAL")
+                    .totalPrice(order.getTotalPrice())
+                    .totalItems(remainingItems.size())
+                    .completedItems((int) remainingItems.stream()
+                            .filter(oi -> oi.getOrderItemStatus() == OrderItem.OrderItemStatus.SERVED)
+                            .count())
+                    .note(order.getNote())
+                    .message("Món đã bị hủy: " + productName + " (x" + cancelledItem.getQuantity() + ")")
+                    .items(List.of(
+                            KitchenOrderMessage.OrderItemInfo.builder()
+                                    .itemId(cancelledItem.getId())
+                                    .productName(productName)
+                                    .quantity(cancelledItem.getQuantity())
+                                    .status("CANCELLED")
+                                    .note(cancelledItem.getNote())
+                                    .price(cancelledItem.getTotalPrice())
+                                    .build()
+                    ))
+                    .build();
+
+            webSocketService.broadcastNewOrderToKitchen(cancelMessage);
+        } catch (Exception e) {
+            System.err.println("Error notifying kitchen of cancelled item: " + e.getMessage());
         }
     }
 }
