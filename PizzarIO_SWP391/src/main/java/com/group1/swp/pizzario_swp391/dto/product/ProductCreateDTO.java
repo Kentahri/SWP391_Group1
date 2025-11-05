@@ -1,8 +1,12 @@
 package com.group1.swp.pizzario_swp391.dto.product;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 @NoArgsConstructor
@@ -33,4 +37,10 @@ public class ProductCreateDTO{
 
     @Builder.Default
     boolean active = true;
+
+    // === MỚI: File upload ===
+    MultipartFile imageFile;
+
+    // === MỚI: Ảnh hiện tại (khi edit) ===
+    String currentImageURL;
 }

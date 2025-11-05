@@ -32,49 +32,73 @@
         </div>
 
         <!-- Modal thêm/sửa -->
-        <div id="productModal" class="modal">
+        <div id="productModal" class="modal" th:classappend="${openModal != null} ? 'show' : ''">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 id="modalTitle">Thêm món mới</h2>
+                    <h2 id="modalTitle" th:text="${productForm.id == null} ? 'Thêm món mới' : 'Chỉnh sửa món ăn'">Thêm món mới</h2>
                     <span class="close" onclick="closeModal()">×</span>
                 </div>
 
-                <form id="productForm" method="post" th:action="@{/manager/products/save}"
-                      th:object="${productForm}">
+                <!-- Form với enctype để upload file -->
+                <form id="productForm"
+                      method="post"
+                      th:action="@{/manager/products/save}"
+                      th:object="${productForm}"
+                      enctype="multipart/form-data"
+                      class="needs-validation" novalidate>
+
                     <input type="hidden" th:field="*{id}"/>
+                    <input type="hidden" th:field="*{currentImageURL}"/>
                     <input type="hidden" th:if="${_csrf != null}"
                            th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
                     <!-- Thông báo lỗi chung -->
                     <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
 
+                    <!-- Tên món -->
                     <div class="mb-3">
                         <label>Tên món <span class="required">*</span></label>
-                        <input type="text" th:field="*{name}" placeholder="Pizza Margherita"
-                               th:errorclass="error-field"/>
+                        <input type="text" class="form-control" th:field="*{name}"
+                               placeholder="Pizza Margherita" required />
                         <span class="error-message" th:if="${#fields.hasErrors('name')}"
                               th:errors="*{name}"></span>
                     </div>
 
+                    <!-- Mô tả -->
                     <div class="mb-3">
                         <label>Mô tả</label>
-                        <textarea th:field="*{description}" rows="3" placeholder="Mô tả món ăn..."
-                                  th:errorclass="error-field"></textarea>
+                        <textarea class="form-control" th:field="*{description}"
+                                  rows="3" placeholder="Mô tả món ăn..."></textarea>
                         <span class="error-message" th:if="${#fields.hasErrors('description')}"
                               th:errors="*{description}"></span>
                     </div>
 
+                    <!-- Upload ảnh -->
                     <div class="mb-3">
-                        <label>Ảnh (URL)</label>
-                        <input type="url" th:field="*{imageURL}" placeholder="https://example.com/pizza.jpg"
-                               th:errorclass="error-field"/>
-                        <span class="error-message" th:if="${#fields.hasErrors('imageURL')}"
-                              th:errors="*{imageURL}"></span>
+                        <label>Ảnh sản phẩm</label>
+
+                        <!-- Hiển thị ảnh hiện tại (khi edit) -->
+                        <div th:if="${productForm.currentImageURL != null and productForm.currentImageURL.trim() != ''}" class="mb-2">
+                            <img th:src="@{${productForm.currentImageURL}}"
+                                 alt="Ảnh hiện tại"
+                                 style="max-height: 120px; border-radius: 8px; border: 1px solid #ddd;" />
+                            <small class="text-muted d-block">Ảnh hiện tại</small>
+                        </div>
+
+                        <!-- Input file -->
+                        <input type="file"
+                               class="form-control"
+                               name="imageFile"
+                               accept="image/jpeg,image/png,image/gif,image/webp" />
+                        <div class="form-text">Chọn ảnh mới (JPG, PNG, GIF, WebP). Để trống nếu không muốn thay đổi.</div>
+                        <span class="error-message" th:if="${#fields.hasErrors('imageFile')}"
+                              th:errors="*{imageFile}"></span>
                     </div>
 
+                    <!-- Danh mục -->
                     <div class="mb-3">
                         <label>Danh mục <span class="required">*</span></label>
-                        <select th:field="*{categoryId}" th:errorclass="error-field">
+                        <select class="form-select" th:field="*{categoryId}" required>
                             <option value="">-- Chọn danh mục --</option>
                             <option th:each="c : ${categories}"
                                     th:value="${c.id}" th:text="${c.name}"></option>
@@ -83,10 +107,10 @@
                               th:errors="*{categoryId}"></span>
                     </div>
 
-                    <div class="mb-3">
-                        <label>
-                            <input type="checkbox" th:field="*{active}"/> Kích hoạt (hiển thị trên menu)
-                        </label>
+                    <!-- Trạng thái -->
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" th:field="*{active}"/>
+                        <label class="form-check-label">Kích hoạt (hiển thị trên menu)</label>
                     </div>
 
                     <div class="modal-footer">
@@ -106,8 +130,9 @@
                      th:id="'product-' + ${product.id}">
 
                     <div class="product-image">
-                        <img th:if="${product.imageURL != null && !product.imageURL.isEmpty()}"
-                             th:src="${product.imageURL}" alt="Product"
+                        <img th:if="${product.imageURL != null && !product.imageURL.trim().isEmpty()}"
+                             th:src="@{${product.imageURL}}"
+                             alt="Product"
                              loading="lazy"
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"/>
                         <div class="no-image-placeholder" style="display: none;">
@@ -119,10 +144,10 @@
                         <div class="product-name-line">
                             <h3 class="product-name" th:text="${product.name}">Pizza</h3>
                             <div class="product-badges">
-                <span class="badge status-badge"
-                      th:classappend="${product.active} ? 'badge-active' : 'badge-inactive'">
-                  <span th:text="${product.active} ? 'Có sẵn' : 'Đã ẩn'"></span>
-                </span>
+                                <span class="badge status-badge"
+                                      th:classappend="${product.active} ? 'badge-active' : 'badge-inactive'">
+                                    <span th:text="${product.active} ? 'Có sẵn' : 'Đã ẩn'"></span>
+                                </span>
                                 <span class="badge badge-category" th:text="${product.categoryName}"></span>
                             </div>
                         </div>

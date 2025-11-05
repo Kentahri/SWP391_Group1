@@ -14,9 +14,13 @@ spring:
         jdbc:
           time_zone: Asia/Ho_Chi_Minh
     defer-datasource-initialization: true
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 10MB
   devtools:
     add-properties: true
-
   datasource:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
@@ -52,6 +56,7 @@ server:
         secure: false
         same-site: lax #Chống CSRF
       timeout: 30m
+    application-display-name: application
 
 logging:
   level:
@@ -64,5 +69,10 @@ gemini:
     key: ${GEMINI_API_KEY}
     model: ${GEMINI_MODEL}
 
+cloudinary:
+
+  cloud-name: ${CLOUD_NAME}
+  api-key: ${CLOUD_API_KEY}
+  api-secret: ${CLOUD_API_SECRET}
 pizzario:
   settings-file-path: ./config/manager-settings.yaml
