@@ -7,6 +7,7 @@ import com.group1.swp.pizzario_swp391.service.OtpMailService;
 import com.group1.swp.pizzario_swp391.service.StaffService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -39,10 +40,10 @@ public class OtpEmailController {
         String subject = "Otp Code Mail";
 
         if (br.hasErrors()) {
-            return "authenticate/missing_pass"; // có account + BindingResult cho Thymeleaf
+            return "authenticate/missing_pass";
         }
 
-        Staff staff = staffService.findByEmail(email);
+        Staff staff = staffService.findByEmailValid(email);
 
         if(staff == null){
             model.addAttribute("errorMail", "Mail chưa được đăng kí hoặc chưa tồn tại");
@@ -103,6 +104,11 @@ public class OtpEmailController {
             if (newPassword == null || newPassword.isBlank() || !newPassword.equals(confirmPassword)) {
                 ra.addFlashAttribute("accountEmail", email);
                 ra.addFlashAttribute("error", "Mật khẩu xác nhận không khớp.");
+                return "redirect:/missing_pass/verify";
+            }
+
+            if(otpEmailService.checkValid(newPassword) != null){
+                ra.addFlashAttribute("errorPass", otpEmailService.checkValid(newPassword));
                 return "redirect:/missing_pass/verify";
             }
 
