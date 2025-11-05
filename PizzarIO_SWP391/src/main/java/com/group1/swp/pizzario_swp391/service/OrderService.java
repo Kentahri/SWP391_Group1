@@ -397,6 +397,7 @@ public class OrderService {
         order.setTotalPrice(newTotal);
 
         orderRepository.save(order);
+        notifyKitchenOrderChange(order,false);
     }
 
 }
