@@ -503,7 +503,16 @@ public class ReservationService {
      */
     public List<ReservationDTO> getUpcomingReservations() {
         List<Reservation> reservationList = reservationRepository.findUpcomingReservations();
-        return reservationList.stream().map(reservationMapper::toReservationDTO).collect(Collectors.toList());
+        return reservationList.stream().map(reservation -> {
+            ReservationDTO dto = reservationMapper.toReservationDTO(reservation);
+            // Set tableStatus từ bàn ăn
+            if (reservation.getDiningTable() != null) {
+                dto.setTableStatus(reservation.getDiningTable().getTableStatus().name());
+            }
+            // Set autoLockMinutes
+            dto.setAutoLockMinutes(setting.getAutoLockReservationMinutes());
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -511,7 +520,16 @@ public class ReservationService {
      */
     public List<ReservationDTO> getReservationsByTableId(Integer tableId) {
         List<Reservation> reservationList = reservationRepository.findAllReservationsByTableId(tableId);
-        return reservationList.stream().map(reservationMapper::toReservationDTO).collect(Collectors.toList());
+        return reservationList.stream().map(reservation -> {
+            ReservationDTO dto = reservationMapper.toReservationDTO(reservation);
+            // Set tableStatus từ bàn ăn
+            if (reservation.getDiningTable() != null) {
+                dto.setTableStatus(reservation.getDiningTable().getTableStatus().name());
+            }
+            // Set autoLockMinutes
+            dto.setAutoLockMinutes(setting.getAutoLockReservationMinutes());
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -522,7 +540,16 @@ public class ReservationService {
             return getUpcomingReservations();
         }
         List<Reservation> reservationList = reservationRepository.searchUpcomingReservations(LocalDateTime.now(), keyword.trim());
-        return reservationList.stream().map(reservationMapper::toReservationDTO).collect(Collectors.toList());
+        return reservationList.stream().map(reservation -> {
+            ReservationDTO dto = reservationMapper.toReservationDTO(reservation);
+            // Set tableStatus từ bàn ăn
+            if (reservation.getDiningTable() != null) {
+                dto.setTableStatus(reservation.getDiningTable().getTableStatus().name());
+            }
+            // Set autoLockMinutes
+            dto.setAutoLockMinutes(setting.getAutoLockReservationMinutes());
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     /**

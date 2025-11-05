@@ -706,6 +706,7 @@
                   <!-- Nút mở bàn cho khách (nút chính) -->
                   <form
                     th:action="@{/cashier/reservations/{id}/open(id=${reservation.id})}"
+                    th:if="${reservation.tableStatus != null && reservation.tableStatus == 'RESERVED' && reservation.isReadyToOpen()}"
                     method="post"
                     onsubmit="return confirm('Xác nhận khách đã đến và mở bàn?');"
                   >
@@ -1493,6 +1494,7 @@
                   <!-- Nút mở bàn cho khách (nút chính) -->
                   <form
                     th:action="@{/cashier/reservations/{id}/open(id=${reservation.id})}"
+                    th:if="${reservation.tableStatus != null && reservation.tableStatus == 'RESERVED' && reservation.isReadyToOpen()}"
                     method="post"
                     onsubmit="return confirm('Xác nhận khách đã đến và mở bàn?');"
                   >

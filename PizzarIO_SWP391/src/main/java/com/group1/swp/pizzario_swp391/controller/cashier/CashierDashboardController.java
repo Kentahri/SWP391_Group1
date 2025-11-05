@@ -5,6 +5,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.group1.swp.pizzario_swp391.dto.table.TableDTO;
+import com.group1.swp.pizzario_swp391.entity.DiningTable;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -62,6 +64,8 @@ public class CashierDashboardController {
             model.addAttribute("staff", staff);
             model.addAttribute("tables", tables);
             model.addAttribute("reservationCreateDTO", new ReservationCreateDTO());
+            model.addAttribute("tableStatus", null);
+            model.addAttribute("tableCapacity", null);
             return "cashier-page/cashier-dashboard";
         } catch (Exception e) {
             model.addAttribute("error", "Không thể tải dữ liệu. Vui lòng thử lại.");
@@ -131,6 +135,8 @@ public class CashierDashboardController {
             model.addAttribute("staff", staff);
             model.addAttribute("tables", tables);
             model.addAttribute("showReservationModal", true);
+            model.addAttribute("tableStatus", null);
+            model.addAttribute("tableCapacity", null);
 
             return "cashier-page/cashier-dashboard";
         }
@@ -171,6 +177,8 @@ public class CashierDashboardController {
             model.addAttribute("tables", tables);
             model.addAttribute("upcomingReservations", upcomingReservations);
             model.addAttribute("reservationCreateDTO", new ReservationCreateDTO());
+            model.addAttribute("tableStatus", null);
+            model.addAttribute("tableCapacity", null);
             return "cashier-page/cashier-dashboard";
         } catch (Exception e) {
             model.addAttribute("error", "Không thể tải danh sách đặt bàn. Vui lòng thử lại.");
@@ -189,12 +197,14 @@ public class CashierDashboardController {
 
             List<ReservationDTO> tableReservations = reservationService.getReservationsByTableId(tableId);
             List<TableForCashierDTO> tables = tableService.getTablesForCashier();
+            TableDTO table = tableService.getTableById(tableId);
 
             model.addAttribute("staff", staff);
             model.addAttribute("tables", tables);
             model.addAttribute("selectedTableId", tableId);
             model.addAttribute("tableReservations", tableReservations);
             model.addAttribute("reservationCreateDTO", new ReservationCreateDTO());
+            model.addAttribute("tableStatus", table.getTableStatus());
             return "cashier-page/cashier-dashboard";
         } catch (Exception e) {
             model.addAttribute("error", "Không thể tải danh sách đặt bàn. Vui lòng thử lại.");
@@ -229,6 +239,8 @@ public class CashierDashboardController {
             List<ReservationDTO> upcomingReservations = reservationService.getUpcomingReservations();
             model.addAttribute("upcomingReservations", upcomingReservations);
             model.addAttribute("reservationCreateDTO", new ReservationCreateDTO());
+            model.addAttribute("tableStatus", null);
+            model.addAttribute("tableCapacity", null);
 
             return "cashier-page/cashier-dashboard";
         } catch (Exception e) {
@@ -298,6 +310,8 @@ public class CashierDashboardController {
             model.addAttribute("reservationUpdateDTO", dto);
             model.addAttribute("showUpdateModal", true);
             model.addAttribute("returnUrl", returnUrl);
+            model.addAttribute("tableStatus", null);
+            model.addAttribute("tableCapacity", null);
 
             return "cashier-page/cashier-dashboard";
         }
@@ -375,6 +389,8 @@ public class CashierDashboardController {
             model.addAttribute("paymentHistory", paymentHistory);
             model.addAttribute("showHistory", true);
             model.addAttribute("reservationCreateDTO", new ReservationCreateDTO());
+            model.addAttribute("tableStatus", null);
+            model.addAttribute("tableCapacity", null);
             return "cashier-page/cashier-dashboard";
         } catch (Exception e) {
             model.addAttribute("error", "Không thể tải lịch sử hóa đơn. Vui lòng thử lại.");
