@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.group1.swp.pizzario_swp391.dto.payment.PaymentDTO;
 import com.group1.swp.pizzario_swp391.dto.payment.PaymentPendingMessage;
 import com.group1.swp.pizzario_swp391.dto.voucher.VoucherDTO;
+import com.group1.swp.pizzario_swp391.dto.websocket.KitchenOrderMessage;
 import com.group1.swp.pizzario_swp391.entity.DiningTable;
 import com.group1.swp.pizzario_swp391.entity.Membership;
 import com.group1.swp.pizzario_swp391.entity.Order;
@@ -344,6 +344,13 @@ public class PaymentService {
             
             orderRepository.save(order);
 
+            // Gửi thông báo đến kitchen khi order đã hoàn thành (để dashboard refresh)
+            try {
+                notifyKitchenOrderCompleted(order);
+            } catch (Exception e) {
+                System.err.println("Error notifying kitchen of completed order: " + e.getMessage());
+            }
+
             // Đóng session sau khi thanh toán thành công (không quan trọng, không làm fail transaction chính)
             try {
                 sessionService.closeSession(sessionId);
@@ -513,5 +520,43 @@ public class PaymentService {
 
     public void removePoints(Long sessionId) {
         pointsUsedBySession.remove(sessionId);
+    }
+    
+    /**
+     * Gửi thông báo đến kitchen khi order đã hoàn thành
+     * Kitchen-dashboard sẽ tự động refresh để order này biến mất khỏi danh sách
+     */
+    private void notifyKitchenOrderCompleted(Order order) {
+        try {
+            // Lấy danh sách items để tính toán
+            List<OrderItem> orderItems = order.getOrderItems();
+            int totalItems = orderItems != null ? orderItems.size() : 0;
+            int completedItems = orderItems != null 
+                    ? (int) orderItems.stream()
+                            .filter(item -> item.getOrderItemStatus() == OrderItem.OrderItemStatus.SERVED)
+                            .count()
+                    : 0;
+            
+            KitchenOrderMessage completedMessage = KitchenOrderMessage.builder()
+                    .type(KitchenOrderMessage.MessageType.ORDER_COMPLETED)
+                    .orderId(order.getId())
+                    .code(String.format("ORD-%05d", order.getId()))
+                    .tableName(order.getSession() != null && order.getSession().getTable() != null 
+                            ? "Bàn " + order.getSession().getTable().getId() 
+                            : "Take away")
+                    .orderType(order.getOrderType() != null ? order.getOrderType().toString() : "DINE_IN")
+                    .status(order.getOrderStatus() != null ? order.getOrderStatus().toString() : "COMPLETED")
+                    .priority("NORMAL")
+                    .totalPrice(order.getTotalPrice())
+                    .totalItems(totalItems)
+                    .completedItems(completedItems)
+                    .note(order.getNote())
+                    .message("Order " + String.format("ORD-%05d", order.getId()) + " đã hoàn thành và đã thanh toán")
+                    .build();
+
+            webSocketService.broadcastNewOrderToKitchen(completedMessage);
+        } catch (Exception e) {
+            System.err.println("Error notifying kitchen of completed order: " + e.getMessage());
+        }
     }
 }

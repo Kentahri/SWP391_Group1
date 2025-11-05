@@ -13,7 +13,113 @@ body {
     color: #4A3528;
 }
 
-/* ==================== Header Styles - Redesigned ==================== */
+/* ==================== Top Bar Styles (Cashier Style) ==================== */
+.topbar {
+    background: linear-gradient(135deg, #FFCC99 0%, #FFB366 100%);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(255, 153, 51, 0.3);
+    border-bottom: 3px solid #FF9933;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.brand {
+    font-size: 24px;
+    font-weight: 700;
+    color: #4A3528;
+}
+
+.staff-info {
+    font-size: 14px;
+    color: #4A3528;
+    font-weight: 600;
+}
+
+.datetime-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.clock {
+    font-size: 18px;
+    font-weight: 600;
+    color: #4A3528;
+}
+
+.date {
+    font-size: 12px;
+    color: #664C3D;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+}
+
+.btn-primary {
+    background: #FF9933;
+    color: white;
+    box-shadow: 0 3px 8px rgba(255, 153, 51, 0.3);
+}
+
+.btn-primary:hover {
+    background: #FF8000;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 12px rgba(255, 153, 51, 0.4);
+}
+
+.btn-secondary {
+    background: #FFE5CC;
+    color: #664C3D;
+    box-shadow: 0 2px 6px rgba(255, 204, 153, 0.3);
+}
+
+.btn-secondary:hover {
+    background: #FFD9B3;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(255, 204, 153, 0.4);
+}
+
+.btn-logout {
+    padding: 8px 16px;
+    background: #DC3545;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.btn-logout:hover {
+    background: #C82333;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(220, 53, 69, 0.4);
+}
+
+/* ==================== Header Styles - Redesigned (Legacy - keep for compatibility) ==================== */
 .kitchen-header {
     background: linear-gradient(135deg, #FFCC99 0%, #FFB366 100%);
     color: white;
@@ -600,6 +706,27 @@ body {
 .order-item-card.completed {
     background: #f0fdf4;
     border-color: #bbf7d0;
+}
+
+.order-item-card.just-updated {
+    animation: highlightUpdate 1s ease-in-out;
+    border: 2px solid #FF9933;
+    box-shadow: 0 0 15px rgba(255, 153, 51, 0.5);
+}
+
+@keyframes highlightUpdate {
+    0% {
+        background-color: #fff5e6;
+        box-shadow: 0 0 20px rgba(255, 153, 51, 0.8);
+    }
+    50% {
+        background-color: #ffe6cc;
+        box-shadow: 0 0 25px rgba(255, 153, 51, 1);
+    }
+    100% {
+        background-color: #fff5e6;
+        box-shadow: 0 0 15px rgba(255, 153, 51, 0.5);
+    }
 }
 
 .order-item-info {

@@ -1,5 +1,13 @@
 package com.group1.swp.pizzario_swp391.service;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.group1.swp.pizzario_swp391.dto.cart.CartItemDTO;
 import com.group1.swp.pizzario_swp391.dto.kitchen.KitchenOrderDTO;
 import com.group1.swp.pizzario_swp391.dto.order.OrderItemDTO;
@@ -10,17 +18,11 @@ import com.group1.swp.pizzario_swp391.mapper.OrderItemMapper;
 import com.group1.swp.pizzario_swp391.repository.OrderItemRepository;
 import com.group1.swp.pizzario_swp391.repository.OrderRepository;
 import com.group1.swp.pizzario_swp391.repository.SessionRepository;
+
 import jakarta.servlet.http.HttpSession;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -54,6 +56,7 @@ public class OrderService{
         }
 
         Order order = getOrderForSession(sessionId);
+        boolean isNewOrder = (order == null);
         if (order == null) {
             order = new Order();
 //          Tạo mới 1 order và lưu vào DB
@@ -81,8 +84,8 @@ public class OrderService{
         orderRepository.save(order);
         cartService.clearCart(session);
 
-        // Gửi thông báo order mới đến kitchen
-        notifyKitchenNewOrder(order);
+        // Gửi thông báo đến kitchen: NEW_ORDER nếu là order mới, ORDER_UPDATED nếu là order đã tồn tại
+        notifyKitchenOrderChange(order, isNewOrder);
     }
 
     @Transactional
@@ -123,8 +126,36 @@ public class OrderService{
      * Gửi thông báo order mới đến kitchen
      */
     private void notifyKitchenNewOrder(Order order) {
+        notifyKitchenOrderChange(order, true);
+    }
+    
+    /**
+     * Gửi thông báo order thay đổi đến kitchen
+     * @param order Order đã thay đổi
+     * @param isNewOrder true nếu là order mới, false nếu là order đã tồn tại được cập nhật
+     */
+    private void notifyKitchenOrderChange(Order order, boolean isNewOrder) {
         try {
+            KitchenOrderMessage.MessageType messageType = isNewOrder 
+                    ? KitchenOrderMessage.MessageType.NEW_ORDER 
+                    : KitchenOrderMessage.MessageType.ORDER_UPDATED;
+            
+            String messageText = isNewOrder 
+                    ? "Có order mới từ " + (order.getSession() != null && order.getSession().getTable() != null ?
+                            "Bàn " + order.getSession().getTable().getId() : "Take away")
+                    : "Order đã được cập nhật - có thêm món mới";
+            
+            // Lấy danh sách items để tính toán
+            List<OrderItem> orderItems = order.getOrderItems();
+            int totalItems = orderItems != null ? orderItems.size() : 0;
+            int completedItems = orderItems != null 
+                    ? (int) orderItems.stream()
+                            .filter(item -> item.getOrderItemStatus() == OrderItem.OrderItemStatus.SERVED)
+                            .count()
+                    : 0;
+            
             KitchenOrderMessage orderMessage = KitchenOrderMessage.builder()
+                    .type(messageType)
                     .orderId(order.getId())
                     .code(String.format("ORD-%05d", order.getId())) // Tạo code với padding 0
                     .tableName(order.getSession() != null && order.getSession().getTable() != null ?
@@ -133,15 +164,16 @@ public class OrderService{
                     .status(order.getOrderStatus() != null ? order.getOrderStatus().toString() : "PREPARING")
                     .priority("NORMAL") // Có thể thêm logic để xác định priority
                     .totalPrice(order.getTotalPrice())
+                    .totalItems(totalItems)
+                    .completedItems(completedItems)
                     .note(order.getNote())
-                    .message("Có order mới từ " + (order.getSession() != null && order.getSession().getTable() != null ?
-                            "Bàn " + order.getSession().getTable().getId() : "Take away"))
+                    .message(messageText)
                     .build();
 
             webSocketService.broadcastNewOrderToKitchen(orderMessage);
         } catch (Exception e) {
             // Log error nhưng không làm fail transaction
-            System.err.println("Error notifying kitchen of new order: " + e.getMessage());
+            System.err.println("Error notifying kitchen of order change: " + e.getMessage());
         }
     }
 
