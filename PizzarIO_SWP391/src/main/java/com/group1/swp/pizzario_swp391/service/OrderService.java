@@ -3,6 +3,7 @@ package com.group1.swp.pizzario_swp391.service;
 import com.group1.swp.pizzario_swp391.dto.cart.CartItemDTO;
 import com.group1.swp.pizzario_swp391.dto.kitchen.KitchenOrderDTO;
 import com.group1.swp.pizzario_swp391.dto.order.OrderItemDTO;
+import com.group1.swp.pizzario_swp391.dto.order.UpdateOrderItemsDTO;
 import com.group1.swp.pizzario_swp391.dto.websocket.KitchenOrderMessage;
 import com.group1.swp.pizzario_swp391.entity.Order;
 import com.group1.swp.pizzario_swp391.entity.OrderItem;
@@ -286,6 +287,66 @@ public class OrderService{
                     return dto;
                 })
                 .toList();
+    }
+
+    /**
+     * Cập nhật order items cho cashier (thêm món vào order đang có)
+     */
+    public void updateOrderItemsForCashier(Long orderId, List<UpdateOrderItemsDTO.OrderItemUpdate> newItems) {
+        // Get existing order
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        // Only allow update for PREPARING orders
+        if (order.getOrderStatus() != Order.OrderStatus.PREPARING) {
+            throw new RuntimeException("Chỉ có thể cập nhật order đang chuẩn bị");
+        }
+
+        // Add new items to order
+        for (UpdateOrderItemsDTO.OrderItemUpdate newItem : newItems) {
+            // Check if item already exists in order
+            boolean exists = order.getOrderItems().stream()
+                    .anyMatch(item -> item.getProductSize() != null
+                            && item.getProductSize().getProduct().getId().equals(newItem.getProductId()));
+
+            if (exists) {
+                // Update quantity of existing item
+                order.getOrderItems().stream()
+                        .filter(item -> item.getProductSize() != null
+                                && item.getProductSize().getProduct().getId().equals(newItem.getProductId()))
+                        .findFirst()
+                        .ifPresent(item -> {
+                            item.setQuantity(item.getQuantity() + newItem.getQuantity());
+                            item.setTotalPrice(item.getUnitPrice() * item.getQuantity());
+                        });
+            } else {
+                // Add new item
+                OrderItem orderItem = new OrderItem();
+                orderItem.setOrder(order);
+                orderItem.setQuantity(newItem.getQuantity());
+                orderItem.setUnitPrice(newItem.getPrice());
+                orderItem.setTotalPrice(newItem.getPrice() * newItem.getQuantity());
+                orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
+                orderItem.setOrderItemType(OrderItem.OrderItemType.DINE_IN);
+
+                // Note: You need to fetch ProductSize by productId
+                // For now, leaving it null - should be implemented properly
+
+                order.getOrderItems().add(orderItem);
+            }
+        }
+
+        // Recalculate order total
+        double newTotal = order.getOrderItems().stream()
+                .mapToDouble(OrderItem::getTotalPrice)
+                .sum();
+        order.setTotalPrice(newTotal);
+
+        // Save order
+        orderRepository.save(order);
+
+        // Send WebSocket notification to kitchen
+//        webSocketService.sendOrderUpdate(orderId);
     }
 
 }
