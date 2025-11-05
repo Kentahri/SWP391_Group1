@@ -467,10 +467,13 @@ public class CashierDashboardController {
             // Get order by table
             if (orderId == null) {
                 OrderDetailDTO orderDetail = tableService.getOrderDetailByTableId(tableId);
+
                 if (orderDetail == null || orderDetail.getOrderId() == null) {
-                    throw new RuntimeException("Không tìm thấy order cho bàn này");
+                    // Tạo order mới cho session này
+                    orderId = orderService.createOrderForTable(tableId);
+                } else {
+                    orderId = orderDetail.getOrderId();
                 }
-                orderId = orderDetail.getOrderId();
             }
 
             ObjectMapper objectMapper = new ObjectMapper();
