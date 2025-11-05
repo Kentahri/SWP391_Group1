@@ -9,66 +9,61 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface ProductRepository extends JpaRepository<Product, Long>{
-
-    //    @Query("select p from Product p " +
-//            "where p.active = true " +
-//            "order by p.basePrice asc")
-//    List<Product> findCheapestProducts(Pageable pageable);
-//
-//    @Query("select p from Product p " +
-//            "where p.active = true " +
-//            "order by p.basePrice desc")
-//    List<Product> findHighestPriceProducts(Pageable pageable);
-//
-//    @Query("select p from Product p " +
-//            "where p.active = true " +
-//            "and lower(p.category.name) like lower(concat('%', :categoryName, '%'))")
-//    List<Product> findByCategoryNameContainingIgnoreCaseAndActiveTrue(String categoryName);
-//
-//    @Query("select p from Product p " +
-//            "where p.active = true " +
-//            "and p.flashSalePrice > 0 " +
-//            "and p.flashSaleStart <= CURRENT_TIMESTAMP " +
-//            "and p.flashSaleEnd >= CURRENT_TIMESTAMP " +
-//            "order by (p.basePrice - p.flashSalePrice) desc " +
-//            "limit 5")
-//    List<Product> findPromotionProducts();
-// Sản phẩm có size rẻ nhất
+public interface ProductRepository extends JpaRepository<Product, Long> {
+    // Sản phẩm có size rẻ nhất
     @Query("""
-            select distinct p from Product p
-            join p.productSizes ps
-            where p.active = true
-            order by ps.basePrice asc
-            """)
+        select p from Product p
+        where p.active = true
+        and exists (
+            select 1 from ProductSize ps
+            where ps.product.id = p.id
+        )
+        order by (
+            select min(ps.basePrice) from ProductSize ps
+            where ps.product.id = p.id
+        ) asc
+        """)
     List<Product> findCheapestProducts(Pageable pageable);
 
     // Sản phẩm có size đắt nhất
     @Query("""
-            select distinct p from Product p
-            join p.productSizes ps
-            where p.active = true
-            order by ps.basePrice desc
-            """)
+        select p from Product p
+        where p.active = true
+        and exists (
+            select 1 from ProductSize ps
+            where ps.product.id = p.id
+        )
+        order by (
+            select max(ps.basePrice) from ProductSize ps
+            where ps.product.id = p.id
+        ) desc
+        """)
     List<Product> findHighestPriceProducts(Pageable pageable);
 
-    // Tìm sản phẩm theo tên category
+    // Tìm sản phẩm theo tên category (giữ nguyên)
     @Query("""
-            select distinct p from Product p
-            where p.active = true
-            and lower(p.category.name) like lower(concat('%', :categoryName, '%'))
-            """)
+        select distinct p from Product p
+        where p.active = true
+        and lower(p.category.name) like lower(concat('%', :categoryName, '%'))
+        """)
     List<Product> findByCategoryNameContainingIgnoreCaseAndActiveTrue(String categoryName);
 
-    // Sản phẩm đang có flash sale (theo ProductSize)
+    // Sản phẩm đang có flash sale
     @Query("""
-            select distinct p from Product p
-            join p.productSizes ps
-            where p.active = true
-            and ps.flashSalePrice > 0
-            and ps.flashSaleStart <= CURRENT_TIMESTAMP
-            and ps.flashSaleEnd >= CURRENT_TIMESTAMP
-            order by (ps.basePrice - ps.flashSalePrice) desc
-            """)
+        select distinct p from Product p
+        join p.productSizes ps
+        where p.active = true
+        and ps.flashSalePrice > 0
+        and ps.flashSaleStart <= CURRENT_TIMESTAMP
+        and ps.flashSaleEnd >= CURRENT_TIMESTAMP
+        order by (
+            select max(ps2.basePrice - ps2.flashSalePrice)
+            from ProductSize ps2
+            where ps2.product.id = p.id
+            and ps2.flashSalePrice > 0
+            and ps2.flashSaleStart <= CURRENT_TIMESTAMP
+            and ps2.flashSaleEnd >= CURRENT_TIMESTAMP
+        ) desc
+        """)
     List<Product> findPromotionProducts();
 }

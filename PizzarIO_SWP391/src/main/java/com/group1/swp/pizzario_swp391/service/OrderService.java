@@ -11,12 +11,15 @@ import org.springframework.transaction.annotation.Transactional;
 import com.group1.swp.pizzario_swp391.dto.cart.CartItemDTO;
 import com.group1.swp.pizzario_swp391.dto.kitchen.KitchenOrderDTO;
 import com.group1.swp.pizzario_swp391.dto.order.OrderItemDTO;
+import com.group1.swp.pizzario_swp391.dto.order.UpdateOrderItemsDTO;
 import com.group1.swp.pizzario_swp391.dto.websocket.KitchenOrderMessage;
 import com.group1.swp.pizzario_swp391.entity.Order;
 import com.group1.swp.pizzario_swp391.entity.OrderItem;
+import com.group1.swp.pizzario_swp391.entity.ProductSize;
 import com.group1.swp.pizzario_swp391.mapper.OrderItemMapper;
 import com.group1.swp.pizzario_swp391.repository.OrderItemRepository;
 import com.group1.swp.pizzario_swp391.repository.OrderRepository;
+import com.group1.swp.pizzario_swp391.repository.ProductSizeRepository;
 import com.group1.swp.pizzario_swp391.repository.SessionRepository;
 
 import jakarta.servlet.http.HttpSession;
@@ -28,7 +31,7 @@ import lombok.experimental.FieldDefaults;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 
-public class OrderService{
+public class OrderService {
 
     OrderItemRepository orderItemRepository;
     OrderRepository orderRepository;
@@ -37,6 +40,7 @@ public class OrderService{
     OrderItemMapper orderItemMapper;
     WebSocketService webSocketService;
     SessionService sessionService;
+    ProductSizeRepository productSizeRepository;
 
     public List<OrderItemDTO> getOrderedItemsForView(Long sessionId) {
         List<OrderItemDTO> orderedItems = new ArrayList<>();
@@ -107,11 +111,19 @@ public class OrderService{
         order = orderRepository.save(order);
 
         for (CartItemDTO item : cart.values()) {
+            System.out.println("🔍 OrderService: CartItemDTO note = [" + item.getNote() + "]");
+            System.out.println("🔍 OrderService: CartItemDTO productId = " + item.getProductId() + ", productName = " + item.getProductName());
+
             OrderItem orderItem = orderItemMapper.toOrderItem(item);
+            System.out.println("🔍 OrderService: OrderItem note after mapping = [" + orderItem.getNote() + "]");
+
             orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
             orderItem.setOrderItemType(OrderItem.OrderItemType.TAKE_AWAY);
             orderItem.setProductSize(item.getProductSize());
             orderItemRepository.save(orderItem);
+
+            System.out.println("💾 OrderService: OrderItem saved with ID = " + orderItem.getId() + ", note = [" + orderItem.getNote() + "]");
+
             order.addOrderItem(orderItem);
             order.setTotalPrice(order.getTotalPrice() + item.getTotalPrice());
         }
@@ -318,6 +330,74 @@ public class OrderService{
                     return dto;
                 })
                 .toList();
+    }
+
+    /**
+     * Cập nhật order items cho cashier (thêm món vào order đang có)
+     */
+    @Transactional
+    public void updateOrderItemsForCashier(Long orderId, List<UpdateOrderItemsDTO.OrderItemUpdate> newItems) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (order.getOrderStatus() != Order.OrderStatus.PREPARING) {
+            throw new RuntimeException("Chỉ có thể cập nhật order đang chuẩn bị");
+        }
+
+        for (UpdateOrderItemsDTO.OrderItemUpdate newItem : newItems) {
+            final ProductSize productSize;
+            if (newItem.getSizeId() != null && newItem.getProductId() != null) {
+
+                productSize = productSizeRepository.findByProductIdAndSizeId(
+                        newItem.getProductId(),
+                        newItem.getSizeId()
+                ).orElseThrow(() -> new RuntimeException(
+                        "Không tìm thấy ProductSize với productId: " + newItem.getProductId() + " và sizeId: " + newItem.getSizeId()));
+            } else if (newItem.getProductId() != null) {
+                List<ProductSize> productSizes = productSizeRepository.findByProductId(newItem.getProductId());
+                if (productSizes.isEmpty()) {
+                    throw new RuntimeException("Product không có size nào: " + newItem.getProductId());
+                }
+                productSize = productSizes.getFirst();
+            } else {
+                throw new RuntimeException("ProductId không được để trống");
+            }
+
+            // Check if item already exists in order (kiểm tra cả productId và sizeId)
+            OrderItem existingItem = order.getOrderItems().stream()
+                    .filter(item -> item.getProductSize() != null
+                            && item.getProductSize().getProduct().getId().equals(newItem.getProductId())
+                            && item.getProductSize().getSize().getId().equals(productSize.getSize().getId()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (existingItem != null) {
+                // Update quantity of existing item
+                existingItem.setQuantity(existingItem.getQuantity() + newItem.getQuantity());
+                existingItem.setTotalPrice(existingItem.getUnitPrice() * existingItem.getQuantity());
+            } else {
+                // Add new item
+                OrderItem orderItem = new OrderItem();
+                orderItem.setOrder(order);
+                orderItem.setQuantity(newItem.getQuantity());
+                orderItem.setUnitPrice(newItem.getPrice());
+                orderItem.setTotalPrice(newItem.getPrice() * newItem.getQuantity());
+                orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
+                orderItem.setOrderItemType(OrderItem.OrderItemType.DINE_IN);
+                orderItem.setProductSize(productSize); // Set ProductSize
+
+                order.getOrderItems().add(orderItem);
+                orderItemRepository.save(orderItem);
+            }
+        }
+
+        double newTotal = order.getOrderItems().stream()
+                .mapToDouble(OrderItem::getTotalPrice)
+                .sum();
+        order.setTotalPrice(newTotal);
+
+        orderRepository.save(order);
+        notifyKitchenOrderChange(order,false);
     }
 
 }

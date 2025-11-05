@@ -1,10 +1,11 @@
 package com.group1.swp.pizzario_swp391.dto.product;
 
-import lombok.*;
-import lombok.experimental.FieldDefaults;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 @Data
 @NoArgsConstructor
@@ -22,6 +23,7 @@ public class ProductResponseDTO {
     LocalDateTime updatedAt;
     String categoryName;
     Long categoryId;
+    List<ProductSizeDTO> sizes;
 
     // Formatted fields
     public String getCreatedAtFormatted() {

@@ -85,6 +85,8 @@ public class CartService{
 
         if (oldItem == null) return;
 
+        System.out.println("TAO LA INFO =================" + note);
+
         Long oldSizeId = oldItem.getProductSize().getId();
         note = (note != null) ? note.trim() : "";
 
@@ -143,13 +145,9 @@ public class CartService{
             }
 
             // Gộp note nếu có note mới
-            if (!note.isEmpty()) {
-                String combinedNote = Stream.of(oldItem.getNote(), note)
-                        .filter(n -> n != null && !n.isBlank())
-                        .distinct()
-                        .collect(Collectors.joining(", "));
-                oldItem.setNote(combinedNote);
-            }
+            oldItem.setNote(note);
+            System.out.println("✅ CartService: Note sau khi update = [" + oldItem.getNote() + "]");
+            System.out.println("✅ CartService: ProductId = " + oldItem.getProductId() + ", ProductSizeId = " + productSizeId);
 
             cart.put(productSizeId, oldItem);
         }

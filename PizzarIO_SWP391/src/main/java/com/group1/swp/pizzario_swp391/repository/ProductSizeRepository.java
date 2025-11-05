@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ProductSizeRepository extends JpaRepository<ProductSize, Long>{
 
@@ -18,4 +19,11 @@ public interface ProductSizeRepository extends JpaRepository<ProductSize, Long>{
     List<ProductSize> findAllWithRelations();
 
     List<ProductSize> findByProductId(Long productId);
+    
+    // Tìm ProductSize theo productId và sizeId
+    @Query("SELECT ps FROM ProductSize ps " +
+            "JOIN FETCH ps.product p " +
+            "JOIN FETCH ps.size s " +
+            "WHERE ps.product.id = :productId AND ps.size.id = :sizeId")
+    Optional<ProductSize> findByProductIdAndSizeId(Long productId, Long sizeId);
 }

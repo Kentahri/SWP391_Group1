@@ -52,6 +52,22 @@ public class OtpMailService {
 
     }
 
+    public String checkValid(String password){
+
+        if(password.length() < 8){
+            return "Password ít nhất 8 ký tự";
+        }
+
+        String REGEX = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d).+$";
+
+
+        if(!password.matches(REGEX)){
+            return "Password phải chứa ít nhất một chữ hoa, một chữ thường và một chữ số";
+        }
+
+        return null;
+    }
+
     public OtpMail getLatestOtpByStaffId(int staffId) {
         // gọi repository và truyền staffId vào
         return otpMailRepository.findLatestOtpByStaffId(staffId);
