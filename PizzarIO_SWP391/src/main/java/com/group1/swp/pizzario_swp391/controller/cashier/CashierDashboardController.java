@@ -3,6 +3,8 @@ package com.group1.swp.pizzario_swp391.controller.cashier;
 import java.security.Principal;
 import java.util.List;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -471,13 +473,10 @@ public class CashierDashboardController {
                 orderId = orderDetail.getOrderId();
             }
 
-            // Parse JSON string to list of items
-            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            com.fasterxml.jackson.core.type.TypeReference<List<UpdateOrderItemsDTO.OrderItemUpdate>> typeRef =
-                    new com.fasterxml.jackson.core.type.TypeReference<List<UpdateOrderItemsDTO.OrderItemUpdate>>() {};
+            ObjectMapper objectMapper = new ObjectMapper();
+            TypeReference<List<UpdateOrderItemsDTO.OrderItemUpdate>> typeRef = new TypeReference<>() {};
             List<UpdateOrderItemsDTO.OrderItemUpdate> items = objectMapper.readValue(itemsJson, typeRef);
 
-            // Call service to update order
             orderService.updateOrderItemsForCashier(orderId, items);
 
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật order thành công!");

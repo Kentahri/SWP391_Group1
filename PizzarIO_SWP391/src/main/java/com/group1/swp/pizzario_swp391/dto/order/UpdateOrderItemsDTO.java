@@ -1,9 +1,13 @@
 package com.group1.swp.pizzario_swp391.dto.order;
 
-import lombok.*;
-import lombok.experimental.FieldDefaults;
-
 import java.util.List;
+
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
 @Data
 @NoArgsConstructor
@@ -25,5 +29,6 @@ public class UpdateOrderItemsDTO {
         String productName;
         Integer quantity;
         Double price;
+        Long sizeId;
     }
 }

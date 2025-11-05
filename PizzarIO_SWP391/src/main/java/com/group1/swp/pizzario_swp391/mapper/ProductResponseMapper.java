@@ -1,5 +1,6 @@
 package com.group1.swp.pizzario_swp391.mapper;
 
+import com.group1.swp.pizzario_swp391.entity.ProductSize;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -19,39 +20,8 @@ public interface ProductResponseMapper {
     // Convert Entity to Response DTO
     @Mapping(target = "categoryName", source = "category.name")
     @Mapping(target = "categoryId", source = "category.id")
-    @Mapping(target = "basePrice", expression = "java(getMinPrice(product))")
-    @Mapping(target = "flashSalePrice", constant = "0.0")
     @Mapping(target = "sizes", expression = "java(mapProductSizes(product))")
     ProductResponseDTO toResponseDTO(Product product);
-
-    // Helper method to get minimum price from product sizes
-    default double getMinPrice(Product product) {
-        if (product.getProductSizes() == null || product.getProductSizes().isEmpty()) {
-            return 0.0;
-        }
-        return product.getProductSizes().stream()
-                .mapToDouble(ps -> ps.getBasePrice())
-                .min()
-                .orElse(0.0);
-    }
-
-    // Helper method to map ProductSize entities to DTOs
-    default List<ProductSizeDTO> mapProductSizes(Product product) {
-        if (product.getProductSizes() == null || product.getProductSizes().isEmpty()) {
-            return List.of();
-        }
-        return product.getProductSizes().stream()
-                .map(ps -> ProductSizeDTO.builder()
-                        .id(ps.getId())
-                        .sizeId(ps.getSize().getId())
-                        .sizeName(ps.getSize().getSizeName())
-                        .basePrice(ps.getBasePrice())
-                        .flashSalePrice(ps.getFlashSalePrice())
-                        .onFlashSale(ps.isOnFlashSale())
-                        .currentPrice(ps.getCurrentPrice())
-                        .build())
-                .collect(Collectors.toList());
-    }
     
     // Convert Create DTO to Entity
     @Mapping(target = "id", ignore = true)
@@ -66,4 +36,30 @@ public interface ProductResponseMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     void updateEntity(@MappingTarget Product product, ProductUpdateDTO updateDTO);
+
+    // Helper method to map ProductSizes to ProductSizeDTOs
+    default List<ProductSizeDTO> mapProductSizes(Product product) {
+        if (product == null || product.getProductSizes() == null) {
+            return List.of();
+        }
+        return product.getProductSizes().stream()
+                .map(this::toProductSizeDTO)
+                .collect(Collectors.toList());
+    }
+
+    // Helper method to convert ProductSize entity to ProductSizeDTO
+    default ProductSizeDTO toProductSizeDTO(ProductSize productSize) {
+        if (productSize == null) {
+            return null;
+        }
+        return ProductSizeDTO.builder()
+                .id(productSize.getId())
+                .sizeId(productSize.getSize() != null ? productSize.getSize().getId() : null)
+                .sizeName(productSize.getSize() != null ? productSize.getSize().getSizeName() : null)
+                .basePrice(productSize.getBasePrice())
+                .flashSalePrice(productSize.getFlashSalePrice())
+                .onFlashSale(productSize.isOnFlashSale())
+                .currentPrice(productSize.getCurrentPrice())
+                .build();
+    }
 }

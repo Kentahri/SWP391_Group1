@@ -1941,15 +1941,9 @@
                  th:if="${p.active}"
                  th:attr="data-category-id=${p.categoryId},
                           data-product-id=${p.id},
-                          data-product-name=${p.name},
-                          data-product-price=${p.basePrice}">
+                          data-product-name=${p.name}">
               <div class="menu-item-info">
                 <div class="menu-item-name" th:text="${p.name}">Product Name</div>
-                <div class="menu-item-price">
-                  <span th:if="${p.basePrice > 0}"
-                        th:text="${#numbers.formatDecimal(p.basePrice, 0, 'COMMA', 0, 'POINT')} + '₫'">0₫</span>
-                  <span th:if="${p.basePrice == 0}" style="color: #999; font-size: 12px;">Chọn size</span>
-                </div>
               </div>
               <button class="btn-add-item" onclick="openSizeModal(this)">
                 <span>+</span>
@@ -1958,7 +1952,7 @@
               <div class="product-sizes-data" style="display: none;">
                 <th:block th:if="${p.sizes != null && !p.sizes.isEmpty()}">
                   <span th:each="size, iterStat : ${p.sizes}"
-                        th:attr="data-size-id=${size.id},
+                        th:attr="data-size-id=${size.sizeId},
                                  data-size-name=${size.sizeName},
                                  data-size-price=${size.currentPrice}">
                   </span>
@@ -1977,9 +1971,9 @@
               <div class="order-edit-item"
                    th:each="item : ${orderDetail.items}"
                    th:attr="data-item-id=${item.id},
-                            data-product-id=${item.id},
-                            data-size-id=${item.productSize.id},
-                            data-price=${item.totalPrice}">
+                            data-product-id=${item.productSize.product.id},
+                            data-size-id=${item.productSize.size.id},
+                            data-price=${item.unitPrice}">
                 <div class="order-edit-item-info">
                   <div class="order-edit-item-name" th:text="${item.productName}">Product Name</div>
                   <div class="order-edit-item-size" th:if="${item.sizeName != null}"
@@ -2449,7 +2443,7 @@
       function updateQuantityInPanel(button, change) {
         const item = button.closest('.order-edit-item');
         const quantityEl = item.querySelector('.quantity');
-        let currentQty = parseInt(quantityEl.textContent);
+        let currentQty = parseInt(quantityEl.textContent) || 0;
         currentQty += change;
 
         if (currentQty < 1) {
