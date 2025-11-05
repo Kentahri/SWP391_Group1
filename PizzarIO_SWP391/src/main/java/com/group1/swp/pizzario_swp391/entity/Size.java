@@ -23,7 +23,7 @@ public class Size {
     private String sizeName;
 
     // Một size có thể áp dụng cho nhiều ProductSize
-    @OneToMany(mappedBy = "size", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "size", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ProductSize> productSizes = new ArrayList<>();
 
     public Size(String sizeName) {

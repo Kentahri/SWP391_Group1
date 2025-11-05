@@ -1,5 +1,13 @@
 package com.group1.swp.pizzario_swp391.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.group1.swp.pizzario_swp391.config.Setting;
 import com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO;
 import com.group1.swp.pizzario_swp391.dto.order.OrderItemDTO;
@@ -7,7 +15,11 @@ import com.group1.swp.pizzario_swp391.dto.table.TableCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.table.TableDTO;
 import com.group1.swp.pizzario_swp391.dto.table.TableForCashierDTO;
 import com.group1.swp.pizzario_swp391.dto.table.TableManagementDTO;
-import com.group1.swp.pizzario_swp391.dto.websocket.*;
+import com.group1.swp.pizzario_swp391.dto.websocket.TableReleaseRequest;
+import com.group1.swp.pizzario_swp391.dto.websocket.TableReleaseResponse;
+import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
+import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionResponse;
+import com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage;
 import com.group1.swp.pizzario_swp391.entity.DiningTable;
 import com.group1.swp.pizzario_swp391.entity.Order;
 import com.group1.swp.pizzario_swp391.entity.Reservation;
@@ -17,19 +29,13 @@ import com.group1.swp.pizzario_swp391.repository.OrderRepository;
 import com.group1.swp.pizzario_swp391.repository.ReservationRepository;
 import com.group1.swp.pizzario_swp391.repository.SessionRepository;
 import com.group1.swp.pizzario_swp391.repository.TableRepository;
+
 import jakarta.persistence.OptimisticLockException;
 import jakarta.servlet.http.HttpSession;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -322,6 +328,7 @@ public class TableService{
                         .totalPrice(item.getTotalPrice())
                         .note(item.getNote())
                         .status(item.getOrderItemStatus())
+                        .productSize(item.getProductSize())
                         .build())
                 .toList();
 

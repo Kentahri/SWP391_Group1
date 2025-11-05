@@ -3,6 +3,8 @@ package com.group1.swp.pizzario_swp391.controller.cashier;
 import java.security.Principal;
 import java.util.List;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +16,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.group1.swp.pizzario_swp391.annotation.CashierUrl;
 import com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO;
+import com.group1.swp.pizzario_swp391.dto.order.UpdateOrderItemsDTO;
 import com.group1.swp.pizzario_swp391.dto.reservation.ReservationCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.reservation.ReservationDTO;
 import com.group1.swp.pizzario_swp391.dto.reservation.ReservationUpdateDTO;
@@ -24,6 +27,8 @@ import com.group1.swp.pizzario_swp391.service.OrderService;
 import com.group1.swp.pizzario_swp391.service.ReservationService;
 import com.group1.swp.pizzario_swp391.service.StaffService;
 import com.group1.swp.pizzario_swp391.service.TableService;
+import com.group1.swp.pizzario_swp391.service.ProductService;
+import com.group1.swp.pizzario_swp391.service.CategoryService;
 
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -44,6 +49,8 @@ public class CashierDashboardController {
     ReservationService reservationService;
     ReservationMapper reservationMapper;
     OrderService orderService;
+    ProductService productService;
+    CategoryService categoryService;
 
     @GetMapping
     public String cashierDashboard(Model model, Principal principal) {
@@ -71,8 +78,7 @@ public class CashierDashboardController {
             String email = principal.getName();
             Staff staff = staffService.findByEmail(email);
 
-            OrderDetailDTO orderDetail = null;
-            orderDetail = tableService.getOrderDetailByTableId(tableId);
+            OrderDetailDTO orderDetail = tableService.getOrderDetailByTableId(tableId);
             List<TableForCashierDTO> tables = tableService.getTablesForCashier();
 
             model.addAttribute("staff", staff);
@@ -84,6 +90,11 @@ public class CashierDashboardController {
             var tableInfo = tableService.getTableById(tableId);
             model.addAttribute("tableCapacity", tableInfo.getCapacity());
             model.addAttribute("tableStatus", tableInfo.getTableStatus());
+
+            // Load products and categories for edit order panel
+            model.addAttribute("products", productService.getAllProducts());
+            model.addAttribute("categories", categoryService.getAllCategories());
+
             return "cashier-page/cashier-dashboard";
         } catch (Exception e) {
             model.addAttribute("error", "Không thể tải thông tin bàn. Vui lòng thử lại.");
@@ -126,7 +137,7 @@ public class CashierDashboardController {
 
         try {
             ReservationDTO reservation = reservationService.createReservation(dto);
-            redirectAttributes.addFlashAttribute("successMessage", "Đặt bàn thành công cho khách " + reservation.getCustomerName());
+            redirectAttributes.addFlashAttribute("successMessage", "Đặt bàn thành công cho khách " + reservation.getCustomerName() + " tại bàn " + dto.getTableId());
             return "redirect:/cashier";
         } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
@@ -439,6 +450,39 @@ public class CashierDashboardController {
             return "redirect:/cashier/tables/" + tableId + "/order";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Đã xảy ra lỗi. Vui lòng thử lại.");
+            return "redirect:/cashier/tables/" + tableId + "/order";
+        }
+    }
+
+    /**
+     * Cập nhật order items (thêm/xóa/sửa món)
+     */
+    @PostMapping("/tables/{id}/order/update")
+    public String updateOrderItems(
+            @PathVariable("id") Integer tableId,
+            @RequestParam("items") String itemsJson,
+            @RequestParam(value = "orderId", required = false) Long orderId,
+            RedirectAttributes redirectAttributes) {
+        try {
+            // Get order by table
+            if (orderId == null) {
+                OrderDetailDTO orderDetail = tableService.getOrderDetailByTableId(tableId);
+                if (orderDetail == null || orderDetail.getOrderId() == null) {
+                    throw new RuntimeException("Không tìm thấy order cho bàn này");
+                }
+                orderId = orderDetail.getOrderId();
+            }
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            TypeReference<List<UpdateOrderItemsDTO.OrderItemUpdate>> typeRef = new TypeReference<>() {};
+            List<UpdateOrderItemsDTO.OrderItemUpdate> items = objectMapper.readValue(itemsJson, typeRef);
+
+            orderService.updateOrderItemsForCashier(orderId, items);
+
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật order thành công!");
+            return "redirect:/cashier/tables/" + tableId + "/order";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
             return "redirect:/cashier/tables/" + tableId + "/order";
         }
     }
