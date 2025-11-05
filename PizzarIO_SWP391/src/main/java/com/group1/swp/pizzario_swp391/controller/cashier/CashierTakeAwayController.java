@@ -79,9 +79,10 @@ public class CashierTakeAwayController {
     public String updateCartItem(@RequestParam("productId") Long productId,
                                  @RequestParam("quantity") int quantity,
                                  @RequestParam(value = "note", required = false) String note,
-                                 @RequestParam(value = "productSizeId", required = false) Long productSizeId,
+                                 @RequestParam(value = "newProductSizeId", required = false) Long newProductSizeId,
+                                 @RequestParam(value = "oldProductSizeId", required = false) Long oldProductSizeId,
                                  HttpSession session) {
-        cartService.updateCartItem(session, productId, quantity, note, productSizeId);
+        cartService.updateCartItem(session, productId, quantity, note, newProductSizeId, oldProductSizeId);
         return "redirect:/cashier/takeaway";
     }
 

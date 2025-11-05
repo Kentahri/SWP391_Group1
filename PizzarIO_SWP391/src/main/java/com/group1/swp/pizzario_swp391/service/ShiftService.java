@@ -107,15 +107,13 @@ public class ShiftService {
             LocalDate d = ss.getWorkDate();
             if (d == null)
                 continue;
-            String shiftName = ss.getShift() != null && ss.getShift().getShiftName() != null
-                    ? ss.getShift().getShiftName().name()
-                    : "SANG";
-            long salary = defaultSalaryPerShift.getOrDefault(shiftName, 150_000L);
-            totals.computeIfPresent(d, (k, v) -> v + salary);
+            if (ss.getShift() == null) continue;
+            long salary = (long) ss.getShift().getSalaryPerShift();
+            if (totals.containsKey(d)) totals.put(d, totals.get(d) + salary);
         }
 
         for (LocalDate d : days) {
-            String label = d.getDayOfWeek().getValue() == 7 ? "CN" : "T" + (d.getDayOfWeek().getValue() + 1 - 1);
+            String label = d.getDayOfWeek().getValue() == 7 ? "Chủ Nhật" : "Thứ " + (d.getDayOfWeek().getValue()+1);
             result.put(label, totals.getOrDefault(d, 0L));
         }
         return result;

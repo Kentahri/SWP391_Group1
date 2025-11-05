@@ -99,8 +99,9 @@
                 <input type="hidden" name="productId" th:value="${item.productId}"/>
                 <input type="hidden" name="quantity" th:value="${item.quantity}"/>
                 <input type="hidden" name="note" th:value="${item.note}"/>
+                  <input type="hidden" name="oldProductSizeId" th:value="${item.productSize.id}"/>
 
-                <select name="productSizeId"
+                <select name="newProductSizeId"
                         style="display:block; margin-top:6px; padding:6px; border-radius:4px; width:100%;"
                         onchange="this.form.requestSubmit()">
                     <option th:each="ps : ${item.productSizes}"
@@ -115,7 +116,8 @@
               <form class="ajax-form" th:action="@{/cashier/takeaway/cart/update}" method="post">
                 <input type="hidden" name="productId" th:value="${item.productId}"/>
                 <input type="hidden" name="quantity" th:value="${item.quantity}"/>
-                <input type="hidden" name="productSizeId" th:value="${item.productSize.id}">
+                <input type="hidden" name="newProductSizeId" th:value="${item.productSize.id}">
+                  <input type="hidden" name="oldProductSizeId" th:value="${item.productSize.id}"/>
 
 
                 <div class="note-section">
@@ -133,16 +135,20 @@
                 <input type="hidden" name="productId" th:value="${item.productId}"/>
                 <input type="hidden" name="quantity" th:value="${item.quantity - 1}"/>
                 <input type="hidden" name="note" th:value="${item.note}"/>
-                <input type="hidden" name="productSizeId" th:value="${item.productSize.id}"/>
-                <button type="submit">-</button>
+                <input type="hidden" name="newProductSizeId" th:value="${item.productSize.id}"/>
+                  <input type="hidden" name="oldProductSizeId" th:value="${item.productSize.id}"/>
+
+                  <button type="submit">-</button>
               </form>
               <span th:text="${item.quantity}">1</span>
               <form class="ajax-form" th:action="@{/cashier/takeaway/cart/update}" method="post">
                 <input type="hidden" name="productId" th:value="${item.productId}"/>
                 <input type="hidden" name="quantity" th:value="${item.quantity + 1}"/>
                 <input type="hidden" name="note" th:value="${item.note}"/>
-                <input type="hidden" name="productSizeId" th:value="${item.productSize.id}"/>
-                <button type="submit">+</button>
+                <input type="hidden" name="newProductSizeId" th:value="${item.productSize.id}"/>
+                  <input type="hidden" name="oldProductSizeId" th:value="${item.productSize.id}"/>
+
+                  <button type="submit">+</button>
               </form>
             </div>
             <form
@@ -203,7 +209,7 @@
           >← Quay lại Dashboard</button
         >
         </form>
-        
+
       </aside>
     </div>
 
