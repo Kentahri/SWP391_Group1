@@ -13,14 +13,11 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ProductResponseDTO {
+
     Long id;
     String name;
     String description;
-    String imageURL;
-    double basePrice;
-    double flashSalePrice;
-    LocalDateTime flashSaleStart;
-    LocalDateTime flashSaleEnd;
+    String imageURL; // Đổi từ imageURL → imgUrl
     boolean active;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
@@ -28,7 +25,7 @@ public class ProductResponseDTO {
     Long categoryId;
     List<ProductSizeDTO> sizes;
 
-    // Formatted fields for display
+    // Formatted fields
     public String getCreatedAtFormatted() {
         return createdAt != null ? createdAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "";
     }
@@ -37,33 +34,11 @@ public class ProductResponseDTO {
         return updatedAt != null ? updatedAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "";
     }
 
-    public String getFlashSaleStartFormatted() {
-        return flashSaleStart != null ? flashSaleStart.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "";
-    }
-
-    public String getFlashSaleEndFormatted() {
-        return flashSaleEnd != null ? flashSaleEnd.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "";
-    }
-
     public String getStatusText() {
         return active ? "Hoạt động" : "Không hoạt động";
     }
 
-    public boolean isOnFlashSale() {
-        LocalDateTime now = LocalDateTime.now();
-        return flashSaleStart != null && flashSaleEnd != null
-                && now.isAfter(flashSaleStart) && now.isBefore(flashSaleEnd);
-    }
-
-    public double getCurrentPrice() {
-        return isOnFlashSale() ? flashSalePrice : basePrice;
-    }
-
-    public String getCurrentPriceFormatted() {
-        return String.format("%,.0f VND", getCurrentPrice());
-    }
-
-    public String getBasePriceFormatted() {
-        return String.format("%,.0f VND", basePrice);
+    public String getImgUrlOrDefault() {
+        return (imageURL != null && !imageURL.isBlank()) ? imageURL : "/images/no-image.png";
     }
 }
