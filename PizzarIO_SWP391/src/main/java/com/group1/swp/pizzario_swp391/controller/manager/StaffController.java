@@ -36,7 +36,7 @@ public class StaffController {
     // READ: list all staff
     @GetMapping("/staff")
     public String listStaffs(Model model) {
-        // Get staff data
+        // Get all staff data
         List<StaffResponseDTO> staffs = staffService.getAllStaff();
         model.addAttribute("staffs", staffs);
         model.addAttribute("roles", Staff.Role.values());
@@ -52,7 +52,7 @@ public class StaffController {
         model.addAttribute("chartLabels", labels);
         model.addAttribute("chartData", data);
 
-        // Calculate stats
+        // Calculate stats (initial stats - will be updated by client-side filter)
         long totalStaff = staffs.size();
         long activeStaff = staffs.stream().filter(StaffResponseDTO::isActive).count();
         model.addAttribute("totalStaff", totalStaff);

@@ -1,0 +1,196 @@
+/* ==================== Global Styles ==================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: #fff5e6;
+  color: #4a3528;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 40px;
+}
+
+/* ==================== Container ==================== */
+.container {
+  background: white;
+  border: 2px solid #ffe5cc;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(255, 153, 51, 0.15);
+  max-width: 500px;
+  width: 100%;
+  padding: 28px;
+  animation: fadeIn 0.3s ease;
+}
+
+.card {
+  /* Card wrapper - no additional styling needed */
+}
+
+/* ==================== Title ==================== */
+h1 {
+  margin-top: 0;
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #4a3528;
+  background: linear-gradient(135deg, #ffe5cc 0%, #ffdab3 100%);
+  padding: 16px 20px;
+  border-radius: 8px;
+  border-left: 4px solid #ff9933;
+  box-shadow: 0 2px 6px rgba(255, 153, 51, 0.2);
+}
+
+/* ==================== Form Styles ==================== */
+form {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #664c3d;
+  display: block;
+  margin-bottom: 4px;
+}
+
+label input[type="checkbox"] {
+  margin-right: 6px;
+  width: auto;
+}
+
+/* ==================== Input Styles ==================== */
+input[type="text"],
+input[type="date"],
+input[type="password"],
+input[type="email"],
+select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #ffe5cc;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  outline: none;
+  background: #fffaf0;
+  color: #4a3528;
+  transition: all 0.2s ease;
+}
+
+input:hover,
+select:hover {
+  border-color: #ffcc99;
+  background: #ffffff;
+}
+
+input:focus,
+select:focus {
+  border-color: #ff9933;
+  box-shadow: 0 0 0 4px rgba(255, 153, 51, 0.1);
+  background: #ffffff;
+}
+
+input[type="checkbox"] {
+  width: auto;
+  margin-right: 6px;
+}
+
+/* ==================== Button Styles ==================== */
+button[type="submit"] {
+  background: linear-gradient(135deg, #ff9933 0%, #ff8000 100%);
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 10px;
+  box-shadow: 0 4px 12px rgba(255, 153, 51, 0.3);
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+button[type="submit"]:hover {
+  background: linear-gradient(135deg, #ff8000 0%, #ff6600 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 153, 51, 0.4);
+}
+
+button[type="submit"]:active {
+  transform: translateY(0);
+}
+
+/* ==================== Error Styles ==================== */
+.error {
+  color: #e74c3c;
+  font-weight: 600;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  padding: 8px 12px;
+  background: #fef5f5;
+  border-left: 4px solid #e74c3c;
+  border-radius: 6px;
+}
+
+/* ==================== Back Link ==================== */
+.back-link {
+  display: inline-block;
+  margin-top: 16px;
+  text-decoration: none;
+  color: #ff9933;
+  font-weight: 600;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #ffe5cc;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.back-link:hover {
+  background: #ffdab3;
+  color: #ff8000;
+  box-shadow: 0 2px 8px rgba(255, 153, 51, 0.25);
+  text-decoration: none;
+}
+
+/* ==================== Animations ==================== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==================== Responsive Design ==================== */
+@media (max-width: 640px) {
+  body {
+    padding: 20px;
+  }
+  .container {
+    padding: 20px;
+    max-width: 100%;
+  }
+  h1 {
+    font-size: 1.3rem;
+    padding: 12px 14px;
+  }
+  button[type="submit"] {
+    width: 100%;
+  }
+}
