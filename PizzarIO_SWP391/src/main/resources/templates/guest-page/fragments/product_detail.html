@@ -22,7 +22,7 @@
                       + #numbers.formatDecimal(ps.basePrice, 0, 'COMMA', 0, 'POINT') + '₫)'}">
             </span>
                     <span th:unless="${ps.onFlashSale}"
-                          th:text="${ps.sizeName + ' - '
+                          th:text="${ps.size.sizeName + ' - '
                       + #numbers.formatDecimal(ps.currentPrice, 0, 'COMMA', 0, 'POINT') + '₫'}">
             </span>
                 </option>

@@ -13,7 +13,7 @@ public class ProductSizeDTO {
     Long sizeId;
     String sizeName;
     double basePrice;
-    double flashSalePrice;
+    Double flashSalePrice;
     boolean onFlashSale;
     double currentPrice;
 }
