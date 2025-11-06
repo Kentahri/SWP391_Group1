@@ -260,12 +260,35 @@
         <div
           th:if="${payment.paymentMethod != null && payment.paymentMethod == 'QR_BANKING'}"
         >
-          <div style="color: #007bff; font-size: 16px; margin-bottom: 10px">
+          <div
+            style="
+              color: #007bff;
+              font-size: 16px;
+              margin-bottom: 10px;
+              text-align: center;
+            "
+          >
             <i
               class="fas fa-qrcode"
-              style="font-size: 2rem; margin-bottom: 10px"
-            ></i
-            ><br />
+              style="font-size: 2rem; margin-bottom: 10px; display: block"
+            ></i>
+            <div style="margin: 15px 0">
+              <img
+                th:src="${'https://img.vietqr.io/image/BIDV-0388553383-compact.png?amount=' + #strings.replace(#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT'), ',', '') + '&addInfo=Thanh%20toan%20hoa%20don' + (orderId != null ? '%20so%20' + orderId : '')}"
+                alt="QR Code for Payment"
+                style="
+                  max-width: 200px;
+                  width: 200px;
+                  height: auto;
+                  border: 1px solid #ddd;
+                  border-radius: 8px;
+                  display: block;
+                  margin: 10px auto;
+                  background-color: #fff;
+                "
+              />
+            </div>
+            <br />
             <strong>Thanh toán bằng QR Banking</strong><br />
             <span style="font-size: 12px"
               >Sử dụng ứng dụng ngân hàng để quét mã QR</span
@@ -277,8 +300,12 @@
                 >0 VND</span
               ></strong
             >
-            <br /><br />
+              <br />
           </div>
+                <span
+                        th:text="${'Thanh toán hóa đơn số ' + (orderId != null ? orderId : '')}"
+                >Thanh toán hóa đơn số</span>
+            <br />
         </div>
         <div
           th:if="${payment.paymentMethod != null && payment.paymentMethod == 'CASH'}"
