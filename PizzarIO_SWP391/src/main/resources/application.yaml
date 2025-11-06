@@ -6,7 +6,7 @@ spring:
       - optional:classpath:env.properties
       - optional:file:./config/manager-settings.yaml
   jpa:
-    show-sql: true
+    show-sql: false
     hibernate:
       ddl-auto: create
     properties:
@@ -26,9 +26,9 @@ spring:
     password: ${DB_PASSWORD}
     url: ${DB_URL}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
-#  sql:
-#    init:
-#      mode: always
+  sql:
+    init:
+      mode: always
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}

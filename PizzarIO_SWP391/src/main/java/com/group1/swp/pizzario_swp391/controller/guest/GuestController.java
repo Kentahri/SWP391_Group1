@@ -128,11 +128,10 @@ public class GuestController{
                                  @RequestParam("productId") Long productId,
                                  @RequestParam("quantity") int quantity,
                                  @RequestParam(value = "note", required = false) String note,
-                                 @RequestParam("productSizeId") Long productSizeId,
-                                 HttpSession session,
+                                 @RequestParam(value = "newProductSizeId", required = false) Long newProductSizeId,
+                                 @RequestParam(value = "oldProductSizeId", required = false) Long oldProductSizeId, HttpSession session,
                                  RedirectAttributes redirectAttributes) {
-        System.out.println(productSizeId);
-        cartService.updateCartItem(session, productId, quantity, note, productSizeId);
+        cartService.updateCartItem(session, productId, quantity, note, newProductSizeId, oldProductSizeId);
         redirectAttributes.addAttribute("sessionId", sessionId);
         redirectAttributes.addAttribute("tableId", tableId);
         return "redirect:/guest/menu";
