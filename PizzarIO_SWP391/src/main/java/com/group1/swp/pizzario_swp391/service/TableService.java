@@ -310,8 +310,24 @@ public class TableService{
         // Tìm session đang active của bàn
         Session activeSession = sessionRepository.findByTableIdAndIsClosedFalse(tableId).orElse(null);
 
-        if (activeSession == null || activeSession.getOrder() == null) {
-            return null; // Bàn không có order
+        if (activeSession == null) {
+            return null;
+        }
+
+        // Nếu có session nhưng chưa có order, trả về OrderDetailDTO rỗng
+        if (activeSession.getOrder() == null) {
+            return OrderDetailDTO.builder()
+                    .sessionId(activeSession.getId())
+                    .tableId(tableId)
+                    .tableName("Bàn " + tableId)
+                    .orderStatus(Order.OrderStatus.PREPARING)
+                    .orderType(Order.OrderType.DINE_IN)
+                    .paymentStatus(Order.PaymentStatus.UNPAID)
+                    .totalPrice(0.0)
+                    .taxRate(0.1)
+                    .items(new java.util.ArrayList<>())
+                    .customerName("Khách vãng lai")
+                    .build();
         }
 
         Order order = activeSession.getOrder();
