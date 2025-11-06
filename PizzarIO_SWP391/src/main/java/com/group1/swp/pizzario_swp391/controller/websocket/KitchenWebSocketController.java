@@ -43,8 +43,7 @@ public class KitchenWebSocketController {
                 var item = message.getItems().get(0);
                 kitchenService.updateItemStatus(
                     item.getItemId(),
-                    item.getStatus(),
-                    item.getNote()
+                    item.getStatus()
                 );
             }
         } catch (Exception e) {
