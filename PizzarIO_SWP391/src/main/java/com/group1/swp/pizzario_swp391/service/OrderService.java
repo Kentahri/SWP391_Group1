@@ -333,6 +333,38 @@ public class OrderService {
     }
 
     /**
+     * Tạo order mới cho bàn (khi bàn có session nhưng chưa có order)
+     */
+    @Transactional
+    public Long createOrderForTable(Integer tableId) {
+        // Tìm session active của bàn
+        com.group1.swp.pizzario_swp391.entity.Session activeSession =
+                sessionRepository.findByTableIdAndIsClosedFalse(tableId)
+                        .orElseThrow(() -> new RuntimeException("Bàn chưa có session active"));
+
+        // Kiểm tra session đã có order chưa
+        if (activeSession.getOrder() != null) {
+            return activeSession.getOrder().getId();
+        }
+
+        // Tạo order mới
+        Order order = new Order();
+        order.setSession(activeSession);
+        order.setCreatedAt(LocalDateTime.now());
+        order.setUpdatedAt(LocalDateTime.now());
+        order.setOrderStatus(Order.OrderStatus.PREPARING);
+        order.setOrderType(Order.OrderType.DINE_IN);
+        order.setPaymentStatus(Order.PaymentStatus.UNPAID);
+        order.setNote("");
+        order.setTotalPrice(0.0);
+        order.setTaxRate(0.1); // 10% tax
+
+        order = orderRepository.save(order);
+
+        return order.getId();
+    }
+
+    /**
      * Cập nhật order items cho cashier (thêm món vào order đang có)
      */
     @Transactional
@@ -372,11 +404,19 @@ public class OrderService {
                     .orElse(null);
 
             if (existingItem != null) {
-                // Update quantity of existing item
-                existingItem.setQuantity(existingItem.getQuantity() + newItem.getQuantity());
-                existingItem.setTotalPrice(existingItem.getUnitPrice() * existingItem.getQuantity());
-            } else {
-                // Add new item
+                if (newItem.getQuantity() == 0) {
+                    order.getOrderItems().remove(existingItem);
+                    orderItemRepository.delete(existingItem);
+                } else {
+                    existingItem.setQuantity(newItem.getQuantity());
+                    existingItem.setTotalPrice(existingItem.getUnitPrice() * existingItem.getQuantity());
+                    // Update note if provided
+                    if (newItem.getNote() != null) {
+                        existingItem.setNote(newItem.getNote());
+                    }
+                }
+            } else if (newItem.getQuantity() > 0) {
+                // Add new item only if quantity > 0
                 OrderItem orderItem = new OrderItem();
                 orderItem.setOrder(order);
                 orderItem.setQuantity(newItem.getQuantity());
@@ -385,6 +425,7 @@ public class OrderService {
                 orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
                 orderItem.setOrderItemType(OrderItem.OrderItemType.DINE_IN);
                 orderItem.setProductSize(productSize); // Set ProductSize
+                orderItem.setNote(newItem.getNote()); // Set note
 
                 order.getOrderItems().add(orderItem);
                 orderItemRepository.save(orderItem);
