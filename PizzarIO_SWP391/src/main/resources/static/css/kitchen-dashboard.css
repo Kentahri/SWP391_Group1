@@ -747,6 +747,25 @@ body {
     flex-wrap: wrap;
 }
 
+.order-item-note {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #6c757d;
+    font-style: italic;
+    margin-top: 4px;
+    padding: 4px 8px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 3px solid #FFCC99;
+}
+
+.order-item-note i {
+    color: #FF9933;
+    font-size: 12px;
+}
+
 .order-item-size {
     padding: 4px 12px;
     border-radius: 12px;
