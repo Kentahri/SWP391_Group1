@@ -229,11 +229,48 @@ public class ReservationService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy reservation"));
 
         DiningTable table = reservation.getDiningTable();
+        DiningTable.TableStatus oldStatus = table.getTableStatus();
 
-        if (dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(setting.getAutoLockReservationMinutes()))) {
+        // Kiểm tra xem có reservation nào khác trên bàn này đang trong thời gian khóa không
+        LocalDateTime now = LocalDateTime.now();
+        List<Reservation> activeReservations = reservationRepository.findConflictReservation(
+                table.getId(),
+                now.minusMinutes(setting.getAutoLockReservationMinutes()),
+                now.plusMinutes(setting.getConflictReservationMinutes())
+        );
+
+        activeReservations.removeIf(r -> r.getId().equals(reservationId));
+
+        // Kiểm tra xem có reservation nào khác đang trong thời gian auto-lock không
+        boolean hasOtherActiveReservation = activeReservations.stream()
+                .anyMatch(r -> r.getStatus() == Reservation.Status.CONFIRMED &&
+                        now.isAfter(r.getStartTime().minusMinutes(setting.getAutoLockReservationMinutes())));
+
+        // Kiểm tra reservation hiện tại có cần khóa bàn không
+        boolean currentReservationNeedsLock = now.isAfter(dto.getStartTime().minusMinutes(setting.getAutoLockReservationMinutes()));
+
+        // Cập nhật trạng thái bàn
+        if (currentReservationNeedsLock || hasOtherActiveReservation) {
+            // Cần khóa bàn
             table.setTableStatus(DiningTable.TableStatus.RESERVED);
-        }else{
-            table.setTableStatus(DiningTable.TableStatus.AVAILABLE);
+        } else {
+            if (oldStatus == DiningTable.TableStatus.RESERVED) {
+                table.setTableStatus(DiningTable.TableStatus.AVAILABLE);
+
+                // Broadcast WebSocket thông báo mở bàn
+                webSocketService.broadcastTableStatusToGuests(table.getId(), table.getTableStatus());
+                webSocketService.broadcastTableStatusToCashier(
+                        TableStatusMessage.MessageType.TABLE_RELEASED,
+                        table.getId(),
+                        oldStatus,
+                        table.getTableStatus(),
+                        "SYSTEM",
+                        String.format("Bàn %d được mở lại sau khi cập nhật reservation #%d", table.getId(), reservationId)
+                );
+
+                log.info("Mở lại bàn {} vì không còn reservation nào cần khóa (sau khi update reservation #{})",
+                        table.getId(), reservationId);
+            }
         }
 
         // Cập nhật thông tin
@@ -263,7 +300,8 @@ public class ReservationService {
         DiningTable table = reservation.getDiningTable();
         DiningTable.TableStatus oldStatus = table.getTableStatus();
 
-        if (table.getTableStatus() == DiningTable.TableStatus.RESERVED) {
+        if (table.getTableStatus() == DiningTable.TableStatus.RESERVED &&
+                reservation.getStartTime().isBefore(LocalDateTime.now().plusMinutes(setting.getAutoLockReservationMinutes()))) {
             table.setTableStatus(DiningTable.TableStatus.AVAILABLE);
             tableRepository.save(table);
 
@@ -503,7 +541,16 @@ public class ReservationService {
      */
     public List<ReservationDTO> getUpcomingReservations() {
         List<Reservation> reservationList = reservationRepository.findUpcomingReservations();
-        return reservationList.stream().map(reservationMapper::toReservationDTO).collect(Collectors.toList());
+        return reservationList.stream().map(reservation -> {
+            ReservationDTO dto = reservationMapper.toReservationDTO(reservation);
+            // Set tableStatus từ bàn ăn
+            if (reservation.getDiningTable() != null) {
+                dto.setTableStatus(reservation.getDiningTable().getTableStatus().name());
+            }
+            // Set autoLockMinutes
+            dto.setAutoLockMinutes(setting.getAutoLockReservationMinutes());
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -511,7 +558,16 @@ public class ReservationService {
      */
     public List<ReservationDTO> getReservationsByTableId(Integer tableId) {
         List<Reservation> reservationList = reservationRepository.findAllReservationsByTableId(tableId);
-        return reservationList.stream().map(reservationMapper::toReservationDTO).collect(Collectors.toList());
+        return reservationList.stream().map(reservation -> {
+            ReservationDTO dto = reservationMapper.toReservationDTO(reservation);
+            // Set tableStatus từ bàn ăn
+            if (reservation.getDiningTable() != null) {
+                dto.setTableStatus(reservation.getDiningTable().getTableStatus().name());
+            }
+            // Set autoLockMinutes
+            dto.setAutoLockMinutes(setting.getAutoLockReservationMinutes());
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -522,7 +578,16 @@ public class ReservationService {
             return getUpcomingReservations();
         }
         List<Reservation> reservationList = reservationRepository.searchUpcomingReservations(LocalDateTime.now(), keyword.trim());
-        return reservationList.stream().map(reservationMapper::toReservationDTO).collect(Collectors.toList());
+        return reservationList.stream().map(reservation -> {
+            ReservationDTO dto = reservationMapper.toReservationDTO(reservation);
+            // Set tableStatus từ bàn ăn
+            if (reservation.getDiningTable() != null) {
+                dto.setTableStatus(reservation.getDiningTable().getTableStatus().name());
+            }
+            // Set autoLockMinutes
+            dto.setAutoLockMinutes(setting.getAutoLockReservationMinutes());
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     /**

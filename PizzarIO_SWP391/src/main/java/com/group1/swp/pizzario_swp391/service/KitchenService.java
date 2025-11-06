@@ -215,6 +215,10 @@ public class KitchenService {
                 .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
         
         List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
+        
+        // Kiểm tra và cập nhật order status cho TAKE_AWAY orders
+        checkAndUpdateTakeAwayOrderStatus(orderId, updatedOrder, orderItems);
+        
         notifyOrderUpdate(updatedOrder, orderItems);
     }
 
@@ -251,10 +255,40 @@ public class KitchenService {
             System.out.println("Item " + oi.getId() + " status: " + oi.getOrderItemStatus());
         }
         
+        // Kiểm tra và cập nhật order status cho TAKE_AWAY orders
+        checkAndUpdateTakeAwayOrderStatus(orderId, updatedOrder, orderItems);
+        
         // Gửi thông báo cập nhật order về frontend với dữ liệu từ database
         notifyOrderUpdate(updatedOrder, orderItems);
 
         System.out.println("Kitchen updated item " + itemId + " to status " + status);
+    }
+
+    /**
+     * Kiểm tra và cập nhật order status cho TAKE_AWAY orders
+     * Nếu tất cả items của order TAKE_AWAY đều có status = SERVED, 
+     * thì cập nhật order status thành COMPLETED
+     */
+    @Transactional
+    private void checkAndUpdateTakeAwayOrderStatus(Long orderId, Order order, List<OrderItem> orderItems) {
+        // Kiểm tra xem order có orderType = TAKE_AWAY không
+        if (order.getOrderType() != null && order.getOrderType() == Order.OrderType.TAKE_AWAY) {
+            // Lọc các items không phải CANCELLED
+            List<OrderItem> activeItems = orderItems.stream()
+                    .filter(item -> item.getOrderItemStatus() != OrderItem.OrderItemStatus.CANCELLED)
+                    .collect(Collectors.toList());
+            
+            // Nếu có ít nhất 1 item active và tất cả đều SERVED
+            if (!activeItems.isEmpty() && activeItems.stream()
+                    .allMatch(item -> item.getOrderItemStatus() == OrderItem.OrderItemStatus.SERVED)) {
+                // Cập nhật order status thành COMPLETED
+                order.setOrderStatus(Order.OrderStatus.COMPLETED);
+                order.setUpdatedAt(java.time.LocalDateTime.now());
+                orderRepository.save(order);
+                
+                System.out.println("Order " + orderId + " (TAKE_AWAY) đã được cập nhật thành COMPLETED vì tất cả items đều SERVED");
+            }
+        }
     }
 
     /**
