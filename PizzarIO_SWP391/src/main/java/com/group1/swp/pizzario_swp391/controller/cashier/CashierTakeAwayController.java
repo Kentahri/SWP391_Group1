@@ -127,7 +127,8 @@ public class CashierTakeAwayController {
                                      Model model,
                                      Principal principal,
                                      RedirectAttributes redirectAttributes,
-                                     HttpServletRequest request) {
+                                     HttpServletRequest request,
+                                     jakarta.servlet.http.HttpServletResponse response) {
         Staff staff = staffService.findByEmail(principal.getName());
         var order = orderService.getOrderById(orderId);
         if (order == null || order.getOrderType() != Order.OrderType.TAKE_AWAY) {
@@ -205,6 +206,14 @@ public class CashierTakeAwayController {
         model.addAttribute("staff", staff);
         model.addAttribute("backUrl", "/cashier/takeaway");
         model.addAttribute("orderTypeLabel", "Take-away");
+
+        // Set no-cache headers to discourage going back to previous state
+        try {
+            response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+            response.addHeader("Cache-Control", "post-check=0, pre-check=0");
+            response.setHeader("Pragma", "no-cache");
+            response.setDateHeader("Expires", 0);
+        } catch (Exception ignored) {}
 
         // Tái sử dụng guest payment.html
         return "guest-page/payment";

@@ -1,6 +1,6 @@
 /* Payment Page Styles */
 body {
-  background-color: #e3f2fd;
+  background: #fff5e6;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
   padding: 0;
@@ -24,27 +24,45 @@ body {
 
 .payment-page {
   min-height: 100vh;
-  background-color: #e3f2fd;
+  background-color: transparent;
+}
+
+/* Container wrapper aligned with waiting theme */
+.payment-container {
+  background: #ffffff;
+  border: 2px solid #ffe5cc;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(255, 153, 51, 0.15);
+  max-width: 1100px;
+  padding: 28px;
+  animation: fadeInUp 0.4s ease;
 }
 
 /* Order Summary Top Section */
 .order-summary-top {
-  background: white;
+  background: #fffaf0;
   padding: 2rem 0;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 2px solid #ffe5cc;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(255, 153, 51, 0.15);
 }
 
 .order-summary-top h3 {
-  color: #8d6e63;
-  font-weight: 600;
+  color: #4a3528;
+  font-weight: 700;
   margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #ffe5cc 0%, #ffdab3 100%);
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 4px solid #ff9933;
+  box-shadow: 0 2px 6px rgba(255, 153, 51, 0.2);
 }
 
 .order-summary-top h3 i {
   margin-right: 0.5rem;
   font-size: 1.3rem !important;
-  color: #8d6e63 !important;
+  color: #ff8000 !important;
 }
 
 .order-items-list {
@@ -82,13 +100,37 @@ body {
 }
 
 .order-item-price {
-  font-weight: 600;
-  color: #8d6e63;
-  font-size: 1rem;
+  font-weight: 800;
+  color: #2e1f17; /* darker for better contrast */
+  font-size: 1.05rem;
+}
+
+/* Stronger colors for order summary amounts */
+#subtotalTop,
+#taxAmountTop {
+  color: #1b5e20;
+  font-weight: 800;
+}
+
+#discountAmountTop {
+  color: #c0392b !important; /* stronger negative color */
+  font-weight: 800;
+}
+
+.summary-row span:last-child {
+  /* ensure right side amounts are readable if no id present */
+  color: #2e1f17;
+  font-weight: 700;
+}
+
+.summary-row span:first-child {
+  /* make labels (Tạm tính, Thuế, Giảm giá) match style */
+  color: #000000;
+  font-weight: 700;
 }
 
 .summary-divider {
-  border-color: #e0e0e0;
+  border-color: #ffcc99;
   margin: 1rem 0;
 }
 
@@ -107,9 +149,9 @@ body {
 
 .total-row {
   font-size: 1.2rem;
-  color: #8d6e63;
-  font-weight: 600;
-  border-top: 2px solid #8d6e63;
+  color: #4a3528;
+  font-weight: 700;
+  border-top: 2px dashed #ffcc99;
   padding-top: 1rem;
   margin-top: 0.5rem;
 }
@@ -125,10 +167,15 @@ body {
 }
 
 .section-title {
-  color: #8d6e63;
-  font-weight: 600;
+  color: #4a3528;
+  font-weight: 700;
   margin-bottom: 1.5rem;
   font-size: 1.5rem;
+  background: linear-gradient(135deg, #ffe5cc 0%, #ffdab3 100%);
+  padding: 10px 14px;
+  border-radius: 8px;
+  border-left: 4px solid #ff9933;
+  box-shadow: 0 2px 6px rgba(255, 153, 51, 0.2);
 }
 
 .section-title i {
@@ -151,10 +198,11 @@ body {
 }
 
 .voucher-card {
-  background: white;
+  background: #fffaf0;
   border-radius: 15px;
   padding: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 2px solid #ffe5cc;
+  box-shadow: 0 4px 6px rgba(255, 153, 51, 0.1);
   transition: all 0.3s ease;
   cursor: pointer;
   position: relative;
@@ -168,20 +216,21 @@ body {
 
 .voucher-icon {
   position: absolute;
-  left: -10px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 60px;
-  height: 40px;
-  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
-  border-radius: 0 20px 20px 0;
+  left: 12px;
+  top: 12px;
+  transform: none;
+  padding: 6px 10px;
+  height: auto;
+  width: auto;
+  background: linear-gradient(135deg, #ff9933 0%, #ff8000 100%);
+  border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 0.8rem;
-  font-weight: bold;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+  font-size: 0.85rem;
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(255, 153, 51, 0.35);
 }
 
 .voucher-icon i {
@@ -191,23 +240,39 @@ body {
 }
 
 .voucher-text {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .voucher-content {
-  margin-left: 2rem;
+  margin-left: 0;
+  padding-top: 8px;
+}
+
+.voucher-code {
+  display: inline-block;
+  background: linear-gradient(135deg, #ff9933 0%, #ff8000 100%);
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.voucher-details {
+  border-top: 2px dashed #ffcc99;
+  padding-top: 8px;
 }
 
 .voucher-description {
-  color: #8d6e63;
-  font-size: 0.95rem;
-  line-height: 1.4;
+  color: #4a3528;
+  font-size: 1rem;
+  line-height: 1.5;
   margin-bottom: 1rem;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .apply-btn {
-  background: #2e7d32;
+  background: linear-gradient(135deg, #ff9933 0%, #ff8000 100%);
   color: white;
   border: none;
   border-radius: 20px;
@@ -220,7 +285,7 @@ body {
 }
 
 .apply-btn:hover {
-  background: #1b5e20;
+  filter: brightness(0.95);
   transform: scale(1.05);
 }
 
@@ -245,15 +310,19 @@ body {
 }
 
 .membership-fixed-info .card {
-  border: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #fffaf0;
+  border: 2px solid #ffe5cc;
+  box-shadow: 0 4px 12px rgba(255, 153, 51, 0.15);
   border-radius: 12px;
 }
 
 .membership-fixed-info .card-header {
+  background: linear-gradient(135deg, #ff9933 0%, #ff8000 100%);
+  color: #ffffff;
   border-radius: 12px 12px 0 0 !important;
-  font-weight: 600;
-  font-size: 1.1rem;
+  border: none;
+  font-weight: 700;
+  font-size: 1.05rem;
 }
 
 .membership-fixed-info .card-body {
@@ -305,33 +374,101 @@ body {
   display: block;
 }
 
-.membership-form .input-group {
+.membership-form .input-group,
+.membership-section form.mb-2 .input-group {
   display: flex;
-  gap: 0.5rem;
+  gap: 0;
 }
 
 .membership-form .form-control {
   border-radius: 10px;
-  border: 2px solid #e9ecef;
+  border: 2px solid #ffe5cc;
   padding: 0.75rem 1rem;
   font-size: 1rem;
   transition: all 0.3s ease;
+  background: #fffaf0;
+  color: #4a3528;
 }
 
-.membership-form .form-control:focus {
-  border-color: #42a5f5;
-  box-shadow: 0 0 0 0.2rem rgba(66, 165, 245, 0.25);
-}
-
-.membership-form .btn-outline-primary {
-  border-radius: 10px;
+/* Apply template styles to the points form input as well */
+.membership-section form.mb-2 .form-control {
+  border: 2px solid #ffe5cc;
+  background: #fffaf0;
+  color: #4a3528;
   padding: 0.75rem 1rem;
-  font-weight: 500;
+  font-size: 1rem;
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
   transition: all 0.3s ease;
 }
 
-.membership-form .btn-outline-primary:hover {
-  transform: scale(1.05);
+.membership-section form.mb-2 .form-control:hover {
+  border-color: #ffcc99;
+  background: #ffffff;
+}
+
+.membership-section form.mb-2 .form-control:focus {
+  border-color: #ff9933;
+  box-shadow: 0 0 0 0.2rem rgba(255, 153, 51, 0.15);
+  background: #ffffff;
+  outline: none;
+}
+
+.membership-section form.mb-2 .form-control::placeholder {
+  color: #8a6a59;
+  opacity: 0.8;
+}
+
+/* Orange theme for points label and helper note */
+.membership-section form.mb-2 .form-label {
+  color: #ff8000;
+  font-weight: 700;
+}
+
+.membership-section form.mb-2 .text-muted {
+  color: #ff8000 !important;
+  font-weight: 600;
+}
+
+/* Points input specifically: visually connect with the apply button */
+.membership-form .input-group .form-control,
+.membership-section form.mb-2 .input-group .form-control {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: 0;
+}
+
+.membership-form .form-control:focus {
+  border-color: #ff9933;
+  box-shadow: 0 0 0 0.2rem rgba(255, 153, 51, 0.15);
+  background: #ffffff;
+}
+
+.membership-form .btn-outline-primary,
+.membership-section form.mb-2 .btn-outline-primary {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  background: linear-gradient(135deg, #ff9933 0%, #ff8000 100%);
+  border: none;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(255, 153, 51, 0.25);
+}
+
+.membership-form .btn-outline-primary:hover,
+.membership-section form.mb-2 .btn-outline-primary:hover {
+  transform: translateY(-2px);
+  filter: brightness(0.95);
+}
+
+.membership-form .btn-outline-primary:active,
+.membership-section form.mb-2 .btn-outline-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(255, 153, 51, 0.25);
 }
 
 .membership-form .btn-outline-primary i {
@@ -389,7 +526,7 @@ body {
 }
 
 .payment-icon {
-  background: white;
+  background: #fffaf0;
   border-radius: 15px;
   padding: 1.5rem;
   margin-bottom: 0.5rem;
@@ -399,7 +536,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #e9ecef;
+  border: 2px solid #ffe5cc;
 }
 
 .payment-icon i {
@@ -425,25 +562,25 @@ body {
 
 /* Hover effects for payment methods - but not when selected */
 .payment-method-label:hover .payment-icon {
-  border-color: #42a5f5;
+  border-color: #ff9933;
   transform: translateY(-1px);
-  box-shadow: 0 6px 12px rgba(66, 165, 245, 0.2);
+  box-shadow: 0 6px 12px rgba(255, 153, 51, 0.2);
 }
 
 .payment-method-label:hover .payment-icon i {
-  color: #42a5f5 !important;
+  color: #ff9933 !important;
 }
 
 .payment-method-label:hover .payment-text {
-  color: #42a5f5;
+  color: #ff8000;
 }
 
 /* Override hover effects when selected */
 .payment-radio:checked + .payment-method-label:hover .payment-icon {
-  background: #42a5f5;
-  border-color: #42a5f5;
+  background: #ff9933;
+  border-color: #ff9933;
   transform: translateY(-2px);
-  box-shadow: 0 8px 15px rgba(66, 165, 245, 0.3);
+  box-shadow: 0 8px 15px rgba(255, 153, 51, 0.3);
 }
 
 .payment-radio:checked + .payment-method-label:hover .payment-icon i {
@@ -456,10 +593,10 @@ body {
 }
 
 .payment-radio:checked + .payment-method-label .payment-icon {
-  background: #42a5f5;
-  border-color: #42a5f5;
+  background: #ff9933;
+  border-color: #ff9933;
   transform: translateY(-2px);
-  box-shadow: 0 8px 15px rgba(66, 165, 245, 0.3);
+  box-shadow: 0 8px 15px rgba(255, 153, 51, 0.3);
 }
 
 .payment-radio:checked + .payment-method-label .payment-icon i {
@@ -467,13 +604,13 @@ body {
 }
 
 .payment-radio:checked + .payment-method-label .payment-text {
-  color: #42a5f5;
+  color: #ff8000;
   font-weight: 600;
 }
 
 /* Special styling for QR Banking - only when selected */
 .payment-radio:checked + .payment-method-label .qr-banking {
-  background: #42a5f5 !important;
+  background: #ff9933 !important;
   color: white !important;
 }
 
@@ -535,7 +672,7 @@ body {
 }
 
 .order-item-price {
-  color: #ffd700;
+  color: #ff8000;
   font-weight: 600;
 }
 
@@ -632,11 +769,23 @@ body {
 .applied-voucher {
   position: sticky;
   top: 2rem;
+  margin-top: 1rem;
 }
 
 .applied-voucher .alert i {
   margin-right: 0.5rem;
   font-size: 1rem !important;
+}
+
+.applied-voucher .alert {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  color: #155724;
+  border: none;
+  box-shadow: none;
+}
+
+.applied-voucher .alert strong {
+  color: inherit;
 }
 
 /* Payment Method Styles */
@@ -704,7 +853,7 @@ body {
 
 /* Payment Button */
 .payment-btn {
-  background: linear-gradient(135deg, #42a5f5 0%, #1976d2 100%);
+  background: linear-gradient(135deg, #ff9933 0%, #ff8000 100%);
   border: none;
   border-radius: 50px;
   padding: 1rem 3rem;
@@ -713,7 +862,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 1px;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(66, 165, 245, 0.3);
+  box-shadow: 0 4px 15px rgba(255, 153, 51, 0.3);
   color: white;
 }
 
@@ -725,8 +874,8 @@ body {
 
 .payment-btn:hover:not(:disabled) {
   transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(66, 165, 245, 0.4);
-  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  box-shadow: 0 8px 25px rgba(255, 153, 51, 0.4);
+  filter: brightness(0.95);
 }
 
 .payment-btn:disabled {
@@ -944,6 +1093,19 @@ body {
 
 .alert-danger i {
   color: #721c24 !important;
+}
+
+/* Applied points alert (info) – match spacing and original palette */
+.membership-section .alert.alert-info {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  color: #155724;
+  border: none;
+  box-shadow: none;
+  margin-top: 1rem;
+}
+
+.membership-section .alert.alert-info strong {
+  color: inherit;
 }
 
 /* Custom Scrollbar */
