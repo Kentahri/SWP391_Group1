@@ -434,11 +434,14 @@
                         <span class="item-quantity"
                           >x<span th:text="${item.quantity}">1</span></span
                         >
-                        <span
-                          class="item-price"
-                          th:text="${#numbers.formatCurrency(item.unitPrice)}"
-                          >0đ</span
-                        >
+                        <span class="item-price">
+                          <span th:if="${item.productSize != null && item.productSize.onFlashSale}"
+                                style="text-decoration: line-through; color: #999; font-size: 11px; margin-right: 6px;"
+                                th:text="${#numbers.formatCurrency(item.productSize.basePrice)}">
+                          </span>
+                          <span th:text="${#numbers.formatCurrency(item.unitPrice)}"
+                                th:style="${item.productSize != null && item.productSize.onFlashSale ? 'color: #e74c3c; font-weight: 600;' : ''}">0đ</span>
+                        </span>
                       </div>
                       <div
                         th:if="${item.note != null && !#strings.isEmpty(item.note)}"
@@ -447,11 +450,9 @@
                         📝 <span th:text="${item.note}"></span>
                       </div>
                     </div>
-                    <div
-                      class="item-total"
-                      th:text="${#numbers.formatCurrency(item.totalPrice)}"
-                    >
-                      0đ
+                    <div class="item-total">
+                      <span th:text="${#numbers.formatCurrency(item.totalPrice)}"
+                            th:style="${item.productSize != null && item.productSize.onFlashSale ? 'color: #e74c3c; font-weight: 600;' : ''}">0đ</span>
                     </div>
                   </div>
                 </div>
@@ -511,9 +512,11 @@
                   <input type="hidden" id="payment-method" name="paymentMethod" value="CASH" />
                 </form>
 
-                <div th:if="${tableStatus.toString() == 'WAITING_PAYMENT' && orderDetail != null && orderDetail.sessionId != null}" style="margin-top: 16px;">
+                <div id="payment-buttons-container"
+                     th:style="${tableStatus.toString() == 'WAITING_PAYMENT' && orderDetail != null && orderDetail.sessionId != null ? 'margin-top: 16px;' : 'margin-top: 16px; display: none;'}"
+                     style="margin-top: 16px;">
                   <button type="button" class="btn-action btn-confirm-payment btn-confirm-cash"
-                          th:if="${orderDetail.paymentMethod != null and orderDetail.paymentMethod.toString() == 'CASH'}"
+                          th:style="${orderDetail != null && orderDetail.paymentMethod != null && orderDetail.paymentMethod.toString() == 'CASH' ? '' : 'display: none;'}"
                           onclick="(function(){
                             if(confirm('Xác nhận khách đã thanh toán bằng tiền mặt?')) {
                               document.getElementById('payment-method').value='CASH';
@@ -523,7 +526,7 @@
                     💵 Xác nhận thanh toán tiền mặt
                   </button>
                   <button type="button" class="btn-action btn-confirm-payment btn-confirm-qr"
-                          th:if="${orderDetail.paymentMethod != null and orderDetail.paymentMethod.toString() == 'QR_BANKING'}"
+                          th:style="${orderDetail != null && orderDetail.paymentMethod != null && orderDetail.paymentMethod.toString() == 'QR_BANKING' ? '' : 'display: none;'}"
                           onclick="(function(){
                             if(confirm('Xác nhận khách đã thanh toán qua QR Banking?')) {
                               document.getElementById('payment-method').value='QR_BANKING';
@@ -705,6 +708,7 @@
                   <!-- Nút mở bàn cho khách (nút chính) -->
                   <form
                     th:action="@{/cashier/reservations/{id}/open(id=${reservation.id})}"
+                    th:if="${reservation.tableStatus != null && reservation.tableStatus == 'RESERVED' && reservation.isReadyToOpen()}"
                     method="post"
                     onsubmit="return confirm('Xác nhận khách đã đến và mở bàn?');"
                   >
@@ -1492,6 +1496,7 @@
                   <!-- Nút mở bàn cho khách (nút chính) -->
                   <form
                     th:action="@{/cashier/reservations/{id}/open(id=${reservation.id})}"
+                    th:if="${reservation.tableStatus != null && reservation.tableStatus == 'RESERVED' && reservation.isReadyToOpen()}"
                     method="post"
                     onsubmit="return confirm('Xác nhận khách đã đến và mở bàn?');"
                   >
@@ -1954,7 +1959,9 @@
                   <span th:each="size, iterStat : ${p.sizes}"
                         th:attr="data-size-id=${size.sizeId},
                                  data-size-name=${size.sizeName},
-                                 data-size-price=${size.currentPrice}">
+                                 data-size-price=${size.currentPrice},
+                                 data-base-price=${size.basePrice},
+                                 data-is-on-sale=${size.onFlashSale}">
                   </span>
                 </th:block>
               </div>
@@ -1973,11 +1980,20 @@
                    th:attr="data-item-id=${item.id},
                             data-product-id=${item.productSize.product.id},
                             data-size-id=${item.productSize.size.id},
-                            data-price=${item.unitPrice}">
+                            data-price=${item.unitPrice},
+                            data-base-price=${item.productSize.basePrice},
+                            data-is-on-sale=${item.productSize.onFlashSale}">
                 <div class="order-edit-item-info">
                   <div class="order-edit-item-name" th:text="${item.productName}">Product Name</div>
                   <div class="order-edit-item-size" th:if="${item.sizeName != null}"
                        th:text="'Size: ' + ${item.sizeName}">Size</div>
+                  <div class="order-edit-item-note">
+                    <input type="text"
+                           class="item-note-input"
+                           placeholder="Ghi chú"
+                           th:value="${item.note}"
+                           style="width: 100%; padding: 4px 8px; margin-top: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+                  </div>
                 </div>
                 <div class="order-edit-item-controls">
                   <button class="btn-quantity" onclick="updateQuantityInPanel(this, -1)">−</button>
@@ -1985,8 +2001,14 @@
                   <button class="btn-quantity" onclick="updateQuantityInPanel(this, 1)">+</button>
                   <button class="btn-remove-item" onclick="removeItemFromPanel(this)">🗑️</button>
                 </div>
-                <div class="order-edit-item-price"
-                     th:text="${#numbers.formatCurrency(item.unitPrice)}">
+                <div class="order-edit-item-price">
+                  <span th:if="${item.productSize.onFlashSale}"
+                        style="text-decoration: line-through; color: #999; font-size: 12px; margin-right: 8px;"
+                        th:text="${#numbers.formatCurrency(item.productSize.basePrice)}">
+                  </span>
+                  <span th:text="${#numbers.formatCurrency(item.unitPrice)}"
+                        th:style="${item.productSize.onFlashSale ? 'color: #e74c3c; font-weight: 600;' : ''}">
+                  </span>
                 </div>
               </div>
             </th:block>
@@ -2327,7 +2349,7 @@
       }
 
       // Add item to order
-      function addItemToOrder(itemId, itemName, itemPrice, sizeId, sizeName) {
+      function addItemToOrder(itemId, itemName, itemPrice, sizeId, sizeName, basePrice, isOnSale) {
         const orderItemsContainer = document.getElementById('current-order-items');
 
         // Remove empty message if exists
@@ -2357,10 +2379,8 @@
           const currentQty = parseInt(quantityEl.textContent);
           quantityEl.textContent = currentQty + 1;
 
-          // Update price
-          const priceEl = existingItem.querySelector('.order-edit-item-price');
-          const newPrice = (currentQty + 1) * itemPrice;
-          priceEl.textContent = formatCurrency(newPrice);
+          // Update price display (keep the strikethrough format if on sale)
+          updateTotalPrice();
         } else {
           // Add new item
           const newItem = document.createElement('div');
@@ -2368,16 +2388,39 @@
           newItem.setAttribute('data-temp-id', 'new-' + Date.now());
           newItem.setAttribute('data-product-id', itemId);
           newItem.setAttribute('data-price', itemPrice);
+          newItem.setAttribute('data-base-price', basePrice || itemPrice);
+          newItem.setAttribute('data-is-on-sale', isOnSale || false);
           if (sizeId) {
             newItem.setAttribute('data-size-id', sizeId);
           }
 
           const sizeDisplay = sizeName ? `<div class="order-edit-item-size">Size: ${sizeName}</div>` : '';
 
+          // Build price HTML with strikethrough if on sale
+          let priceHTML = '';
+          if (isOnSale && basePrice && basePrice > itemPrice) {
+            priceHTML = `
+              <span style="text-decoration: line-through; color: #999; font-size: 12px; margin-right: 8px;">
+                ${formatCurrency(basePrice)}
+              </span>
+              <span style="color: #e74c3c; font-weight: 600;">
+                ${formatCurrency(itemPrice)}
+              </span>
+            `;
+          } else {
+            priceHTML = formatCurrency(itemPrice);
+          }
+
           newItem.innerHTML = `
             <div class="order-edit-item-info">
               <div class="order-edit-item-name">${itemName}</div>
               ${sizeDisplay}
+              <div class="order-edit-item-note">
+                <input type="text"
+                       class="item-note-input"
+                       placeholder="Ghi chú (VD: Ít đá, nhiều đường...)"
+                       style="width: 100%; padding: 4px 8px; margin-top: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+              </div>
             </div>
             <div class="order-edit-item-controls">
               <button class="btn-quantity" onclick="updateQuantityNew(this, -1)">−</button>
@@ -2385,7 +2428,7 @@
               <button class="btn-quantity" onclick="updateQuantityNew(this, 1)">+</button>
               <button class="btn-remove-item" onclick="removeItemNew(this)">🗑️</button>
             </div>
-            <div class="order-edit-item-price">${formatCurrency(itemPrice)}</div>
+            <div class="order-edit-item-price">${priceHTML}</div>
           `;
 
           orderItemsContainer.appendChild(newItem);
@@ -2464,17 +2507,31 @@
       function removeItemFromPanel(button) {
         if (confirm('Bạn có chắc muốn xóa món này?')) {
           const item = button.closest('.order-edit-item');
-          item.remove();
 
-          // Check if order is empty
+          // Set quantity to 0 instead of removing (to tell backend to delete it)
+          const quantityEl = item.querySelector('.quantity');
+          quantityEl.textContent = '0';
+
+          // Hide the item visually
+          item.style.display = 'none';
+
+          // Check if all visible items are hidden
           const orderItemsContainer = document.getElementById('current-order-items');
-          if (orderItemsContainer.querySelectorAll('.order-edit-item').length === 0) {
-            orderItemsContainer.innerHTML = `
-              <div style="text-align: center; padding: 40px; color: #999;">
+          const visibleItems = Array.from(orderItemsContainer.querySelectorAll('.order-edit-item'))
+            .filter(i => i.style.display !== 'none');
+
+          if (visibleItems.length === 0) {
+            const existingEmpty = orderItemsContainer.querySelector('.empty-order-message');
+            if (!existingEmpty) {
+              const emptyDiv = document.createElement('div');
+              emptyDiv.className = 'empty-order-message';
+              emptyDiv.style.cssText = 'text-align: center; padding: 40px; color: #999;';
+              emptyDiv.innerHTML = `
                 <p>Chưa có món nào trong order</p>
                 <p style="font-size: 14px;">Nhấn nút + để thêm món</p>
-              </div>
-            `;
+              `;
+              orderItemsContainer.appendChild(emptyDiv);
+            }
           }
 
           updateTotalPrice();
@@ -2534,15 +2591,33 @@
           const sizeId = sizeSpan.getAttribute('data-size-id');
           const sizeName = sizeSpan.getAttribute('data-size-name');
           const sizePrice = parseFloat(sizeSpan.getAttribute('data-size-price'));
+          const basePrice = parseFloat(sizeSpan.getAttribute('data-base-price'));
+          const isOnSale = sizeSpan.getAttribute('data-is-on-sale') === 'true';
 
           const sizeOption = document.createElement('div');
           sizeOption.className = 'size-option';
+
+          // Build price display HTML
+          let priceHTML = '';
+          if (isOnSale && basePrice > sizePrice) {
+            priceHTML = `
+              <span style="text-decoration: line-through; color: #999; font-size: 13px; margin-right: 8px;">
+                ${formatCurrency(basePrice)}
+              </span>
+              <span style="color: #e74c3c; font-weight: 600;">
+                ${formatCurrency(sizePrice)}
+              </span>
+            `;
+          } else {
+            priceHTML = formatCurrency(sizePrice);
+          }
+
           sizeOption.innerHTML = `
             <div class="size-option-info">
               <div class="size-option-name">${sizeName}</div>
-              <div class="size-option-price">${formatCurrency(sizePrice)}</div>
+              <div class="size-option-price">${priceHTML}</div>
             </div>
-            <button class="btn-select-size" onclick="selectSize('${productId}', '${productName}', ${sizePrice}, '${sizeId}', '${sizeName}')">
+            <button class="btn-select-size" onclick="selectSize('${productId}', '${productName}', ${sizePrice}, '${sizeId}', '${sizeName}', ${basePrice}, ${isOnSale})">
               Chọn
             </button>
           `;
@@ -2563,8 +2638,8 @@
       }
 
       // Select size and add to order
-      function selectSize(productId, productName, price, sizeId, sizeName) {
-        addItemToOrder(productId, productName, price, sizeId, sizeName);
+      function selectSize(productId, productName, price, sizeId, sizeName, basePrice, isOnSale) {
+        addItemToOrder(productId, productName, price, sizeId, sizeName, basePrice, isOnSale);
         closeSizeModal();
       }
 
@@ -2599,8 +2674,11 @@
           const quantity = parseInt(item.querySelector('.quantity').textContent);
           const price = parseFloat(item.getAttribute('data-price'));
           const sizeId = item.getAttribute('data-size-id');
+          const noteInput = item.querySelector('.item-note-input');
+          const note = noteInput ? noteInput.value.trim() : '';
 
-          if (productId && quantity > 0) {
+          // Include all items, even quantity = 0 (backend will delete those)
+          if (productId) {
             const orderItem = {
               productId: productId,
               productName: productName,
@@ -2609,6 +2687,9 @@
             };
             if (sizeId) {
               orderItem.sizeId = sizeId;
+            }
+            if (note) {
+              orderItem.note = note;
             }
             orderItems.push(orderItem);
           }

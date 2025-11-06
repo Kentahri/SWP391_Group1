@@ -7,7 +7,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReservationDTO {
-    
+
     private Long id;
     private Integer tableId;
     private String tableName;
@@ -18,5 +18,16 @@ public class ReservationDTO {
     private LocalDateTime createdAt;
     private String status;
     private String note;
+    private String tableStatus;
+    private Integer autoLockMinutes;
+
+
+    public boolean isReadyToOpen() {
+        if (startTime == null || autoLockMinutes == null) {
+            return false;
+        }
+        LocalDateTime validateTime = LocalDateTime.now().plusMinutes(autoLockMinutes);
+        return startTime.isBefore(validateTime) || startTime.isEqual(validateTime);
+    }
 }
 

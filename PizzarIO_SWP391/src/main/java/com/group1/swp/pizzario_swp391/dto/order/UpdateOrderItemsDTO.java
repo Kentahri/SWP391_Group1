@@ -30,5 +30,6 @@ public class UpdateOrderItemsDTO {
         Integer quantity;
         Double price;
         Long sizeId;
+        String note;
     }
 }
