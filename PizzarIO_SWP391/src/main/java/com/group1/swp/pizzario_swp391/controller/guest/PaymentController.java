@@ -247,13 +247,25 @@ public class PaymentController {
         try {
             // Lấy thông tin thanh toán hiện tại để hiển thị QR nếu cần
             PaymentDTO payment = paymentService.getPaymentBySessionId(sessionId);
+            // Lấy chi tiết các món đã order
+            List<OrderItem> orderItems = paymentService.getOrderItemsBySessionId(sessionId);
+            // Lấy thông tin khách hàng
+            Membership membership = paymentService.getMembershipBySessionId(sessionId);
+            // Tính các giá trị để hiển thị
             double originalTotal = paymentService.calculateOriginalOrderTotal(sessionId);
             double discountAmount = paymentService.calculateDiscountAmount(sessionId);
             double finalTotal = originalTotal - discountAmount;
+            
+            // Thêm thông tin vào model
+            model.addAttribute("payment", payment);
+            model.addAttribute("orderItems", orderItems);
+            model.addAttribute("membership", membership);
             model.addAttribute("paymentMethod", payment.getPaymentMethod());
             model.addAttribute("orderTotal", payment.getOrderTotal());
             model.addAttribute("orderId", payment.getOrderId());
             model.addAttribute("tableNumber", payment.getTableNumber());
+            model.addAttribute("originalTotal", originalTotal);
+            model.addAttribute("discountAmount", discountAmount);
             model.addAttribute("finalTotal", finalTotal);
         } catch (Exception ignored) {}
         return "guest-page/waiting_confirm";
