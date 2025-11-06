@@ -84,9 +84,16 @@ window.addEventListener('beforeunload', function () {
  * Handle payment pending notification from guest
  */
 function handlePaymentPending(paymentData) {
+    console.log('📨 Nhận payment message:', paymentData);
+
     if (paymentData.type !== 'PAYMENT_PENDING') {
+        console.log('⏭️ Bỏ qua vì type không phải PAYMENT_PENDING:', paymentData.type);
         return;
     }
+
+    console.log('✅ Type = PAYMENT_PENDING, bắt đầu xử lý...');
+    hideEditOrderButton();
+    openConfirmPaymentButton(paymentData.paymentMethod);
 
     // Update payment notification badge
     updatePaymentNotificationBadge();
@@ -102,6 +109,50 @@ function handlePaymentPending(paymentData) {
 
     // Show payment confirmation modal
     showPaymentConfirmationModal(paymentData);
+}
+
+function openConfirmPaymentButton(paymentMethod) {
+    console.log('🔍 openConfirmPaymentButton() được gọi với paymentMethod:', paymentMethod);
+
+    // Tìm container chứa các nút thanh toán
+    const paymentButtonsContainer = document.getElementById('payment-buttons-container');
+
+    if (!paymentButtonsContainer) {
+        console.warn('⚠️ Không tìm thấy #payment-buttons-container');
+        return;
+    }
+
+    // Tìm 2 nút
+    const cashButton = paymentButtonsContainer.querySelector('.btn-confirm-cash');
+    const qrButton = paymentButtonsContainer.querySelector('.btn-confirm-qr');
+
+    if (cashButton) cashButton.style.display = 'none';
+    if (qrButton) qrButton.style.display = 'none';
+
+    if (paymentMethod === 'CASH' && cashButton) {
+        cashButton.style.display = 'inline-block';
+    } else if (paymentMethod === 'QR_BANKING' && qrButton) {
+        qrButton.style.display = 'inline-block';
+    } else {
+        if (cashButton) cashButton.style.display = 'inline-block';
+        if (qrButton) qrButton.style.display = 'inline-block';
+    }
+
+    paymentButtonsContainer.style.display = 'block';
+}
+
+/**
+ * Ẩn nút "Thêm món" khi đã thanh toán
+ */
+function hideEditOrderButton() {
+    const editButton = document.querySelector('.btn-edit-order');
+
+    if (editButton) {
+        editButton.style.setProperty('display', 'none', 'important');
+        console.log('✅ Đã ẩn nút "Thêm món" với !important');
+    } else {
+        console.warn('⚠️ Không tìm thấy nút .btn-edit-order');
+    }
 }
 
 /**
