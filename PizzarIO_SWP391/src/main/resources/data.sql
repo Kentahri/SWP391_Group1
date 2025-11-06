@@ -13,7 +13,7 @@ VALUES
 
 -- 2️⃣ SIZE
 INSERT INTO [Size] (size_name)
-VALUES (N'Small'), (N'Medium'), (N'Large');
+VALUES (N'Small'), (N'Medium'), (N'Large'), (N'Default');
 
 -- 3️⃣ PRODUCT (chỉ còn thông tin chung, không còn giá)
 INSERT INTO [Product] (name, description, img_url, is_active, created_at, updated_at, category_id)
@@ -80,6 +80,6 @@ VALUES
     (12, 2, 55000, 49000, GETDATE(), DATEADD(DAY, 5, GETDATE())),
 
     -- Combo
-    (13, 2, 399000, 349000, GETDATE(), DATEADD(DAY, 7, GETDATE())),
-    (14, 2, 249000, 219000, GETDATE(), DATEADD(DAY, 5, GETDATE())),
-    (15, 2, 159000, 139000, GETDATE(), DATEADD(DAY, 4, GETDATE()));
+    (13, 4, 399000, 349000, GETDATE(), DATEADD(DAY, 7, GETDATE())),
+    (14, 4, 249000, 219000, GETDATE(), DATEADD(DAY, 5, GETDATE())),
+    (15, 4, 159000, 139000, GETDATE(), DATEADD(DAY, 4, GETDATE()));

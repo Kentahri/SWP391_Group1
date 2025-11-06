@@ -40,7 +40,7 @@ public class ProductSize{
     private double basePrice;
 
     @Column(name = "flash_sale_price")
-    private double flashSalePrice;
+    private Double flashSalePrice;
 
     @Column(name = "flash_sale_start")
     private LocalDateTime flashSaleStart;
@@ -63,7 +63,10 @@ public class ProductSize{
     }
 
     public double getCurrentPrice() {
-        return isOnFlashSale() ? flashSalePrice : basePrice;
+        if (isOnFlashSale() && flashSalePrice != null) {
+            return flashSalePrice;
+        }
+        return basePrice;
     }
 
     public String getCurrentPriceFormatted() {

@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class SizeService {
+public class SizeService{
 
     SizeRepository sizeRepository;
 
@@ -93,6 +93,16 @@ public class SizeService {
     }
 
     private SizeResponseDTO toResponseDTO(Size size) {
+        return SizeResponseDTO.builder()
+                .id(size.getId())
+                .sizeName(size.getSizeName())
+                .productSizes(size.getProductSizes())
+                .build();
+    }
+
+    public SizeResponseDTO getSizeById(Long sizeId) {
+        Size size = sizeRepository.findById(sizeId)
+                .orElseThrow(() -> new RuntimeException("Size not found"));
         return SizeResponseDTO.builder()
                 .id(size.getId())
                 .sizeName(size.getSizeName())

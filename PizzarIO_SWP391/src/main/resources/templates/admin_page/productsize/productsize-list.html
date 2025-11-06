@@ -48,6 +48,9 @@
                     <input type="hidden" th:if="${_csrf != null}"
                            th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
+                    <div th:if="${errorMessage != null}" class="ps-alert-danger" style="margin-bottom:10px">
+                        <strong>Lỗi:</strong> <span th:text="${errorMessage}"></span>
+                    </div>
                     <!-- Lỗi chung -->
                     <div class="ps-alert-danger" th:if="${#fields.hasErrors('*')}">
                         <strong>Lỗi:</strong>
@@ -72,18 +75,17 @@
                         <label>Kích thước <span class="ps-required">*</span></label>
                         <select th:field="*{sizeId}" th:errorclass="ps-error-field">
                             <option value="">-- Chọn size --</option>
-                            <option th:each="s : ${activeSizes}"
+                            <option th:each="s : ${sizes}"
                                     th:value="${s.id}"
                                     th:text="${s.sizeName}"></option>
                         </select>
                         <span class="ps-error-message" th:if="${#fields.hasErrors('sizeId')}"
                               th:errors="*{sizeId}"></span>
                     </div>
-
                     <!-- Giá cơ bản -->
                     <div class="ps-mb-3">
                         <label>Giá cơ bản (₫) <span class="ps-required">*</span></label>
-                        <input type="number" step="1000" min="0" th:field="*{basePrice}"
+                        <input type="number" step="any" min="0" th:field="*{basePrice}"
                                placeholder="129000" th:errorclass="ps-error-field"/>
                         <span class="ps-error-message" th:if="${#fields.hasErrors('basePrice')}"
                               th:errors="*{basePrice}"></span>
@@ -92,7 +94,7 @@
                     <!-- Flash Sale Price -->
                     <div class="ps-mb-3">
                         <label>Giá flash sale (₫)</label>
-                        <input type="number" step="1000" min="0" th:field="*{flashSalePrice}"
+                        <input type="number" step="any" min="0" th:field="*{flashSalePrice}"
                                placeholder="99000" th:errorclass="ps-error-field"/>
                         <span class="ps-error-message" th:if="${#fields.hasErrors('flashSalePrice')}"
                               th:errors="*{flashSalePrice}"></span>
@@ -101,7 +103,10 @@
                     <!-- Flash Sale Start -->
                     <div class="ps-mb-3">
                         <label>Flash sale bắt đầu</label>
-                        <input type="datetime-local" th:field="*{flashSaleStart}"
+                        <input type="datetime-local"
+                               name="flashSaleStart"
+                               th:id="'flashSaleStart'"
+                               th:value="${productSizeForm.flashSaleStart != null} ? ${#temporals.format(productSizeForm.flashSaleStart, 'yyyy-MM-dd''T''HH:mm')}: ''"
                                th:errorclass="ps-error-field"/>
                         <span class="ps-error-message" th:if="${#fields.hasErrors('flashSaleStart')}"
                               th:errors="*{flashSaleStart}"></span>
@@ -110,7 +115,10 @@
                     <!-- Flash Sale End -->
                     <div class="ps-mb-3">
                         <label>Flash sale kết thúc</label>
-                        <input type="datetime-local" th:field="*{flashSaleEnd}"
+                        <input type="datetime-local"
+                               name="flashSaleEnd"
+                               th:id="'flashSaleEnd'"
+                               th:value="${productSizeForm.flashSaleEnd != null} ? ${#temporals.format(productSizeForm.flashSaleEnd, 'yyyy-MM-dd''T''HH:mm')}: ''"
                                th:errorclass="ps-error-field"/>
                         <span class="ps-error-message" th:if="${#fields.hasErrors('flashSaleEnd')}"
                               th:errors="*{flashSaleEnd}"></span>
@@ -143,10 +151,10 @@
                             ₫159,000
                         </p>
 
-                        <!-- Flash sale (nếu có) -->
-                        <div th:if="${ps.onFlashSale}" class="ps-flashsale">
+                        <!-- Flash sale -->
+                        <div class="ps-flashsale">
                             <p class="ps-flash-price"
-                               th:text="'₫' + ${#numbers.formatDecimal(ps.currentPrice, 0, 'COMMA', 0, 'POINT')}">
+                               th:text="'₫' + ${#numbers.formatDecimal(ps.flashSalePrice, 0, 'COMMA', 0, 'POINT')}">
                                 ₫99,000
                             </p>
                             <small th:text="'Từ ' + ${#temporals.format(ps.flashSaleStart, 'dd/MM HH:mm')} + ' → ' + ${#temporals.format(ps.flashSaleEnd, 'dd/MM HH:mm')}">

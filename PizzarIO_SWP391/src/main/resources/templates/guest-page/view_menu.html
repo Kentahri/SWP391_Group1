@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PizzarIO - Menu</title>
-    <!-- Google Fonts for better typography -->
-    <link rel="preconnect" href="https://fonts.googleapis.com"/>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-            href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap"
-            rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
     />
+    <!-- Guest View Menu CSS - Pizza Theme 🍕 -->
     <link rel="stylesheet" th:href="@{/css/guest_page/guest-toast.css}"/>
     <link rel="stylesheet" th:href="@{/css/guest_page/view_menu.css}"/>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
@@ -18,84 +18,84 @@
     <script th:src="@{/js/guest/view-menu-websocket.js}"></script>
     <script th:src="@{/js/guest/view_menu.js}"></script>
     <script th:src="@{/js/guest/toast-guest.js}" defer></script>
-</head>
-<body>
-<div id="toast-container" class="toast-container"></div>
+  </head>
+  <body>
+    <div id="toast-container" class="toast-container"></div>
 
-<div class="container">
-    <main class="menu-section">
+    <div class="container">
+      <main class="menu-section">
         <header class="menu-header">
-            <h1>Menu</h1>
-            <input
-                    id="searchBox"
-                    class="search-box"
-                    type="text"
-                    placeholder="Search for food..."
-            />
+          <h1>Menu</h1>
+          <input
+            id="searchBox"
+            class="search-box"
+            type="text"
+            placeholder="Tìm món..."
+          />
         </header>
 
         <nav class="category-nav" id="categoryBar">
-            <button class="cat-chip active" data-category-id="0">All</button>
-            <button
-                    th:each="cat : ${categories}"
-                    class="cat-chip"
-                    th:text="${cat.name}"
-                    th:attr="data-category-id=${cat.id}"
-            ></button>
+          <button class="cat-chip active" data-category-id="0">Tất cả</button>
+          <button
+            th:each="cat : ${categories}"
+            class="cat-chip"
+            th:text="${cat.name}"
+            th:attr="data-category-id=${cat.id}"
+          ></button>
         </nav>
 
+        <div id="productModal" class="modal">
+          <div class="modal-content" id="productModalContent"></div>
+        </div>
+
         <section class="product-grid" id="productGrid">
-            <div
-                    class="product-card"
-                    th:each="p : ${products}"
-                    th:attr="data-category-id=${p.categoryId}"
-                    th:classappend="${!p.active ? 'inactive' : ''}"
-                    th:onclick="'showProductDetail(' + ${p.id} + ',' + ${sessionId} + ',' + ${tableId} + ')'"
-                    style="cursor:pointer;"
-            >
-                <div class="thumb">
-                    <img
-                            th:alt="${p.name}"
-                            th:src="@{${p.imageURL ?: 'https://via.placeholder.com/160?text=Product'}}"
-                    />
-                </div>
-                <div class="name" th:text="${p.name}">Product Name</div>
-
-                <!-- NÚT THÊM VÀO GIỎ! -->
-                <form class="ajax-form"
-                      method="post"
-                      th:action="@{/guest/cart/add}"
-                      style="width:100%;margin-top:10px"
-                      onclick="event.stopPropagation();">
-                    <input type="hidden" name="productId" th:value="${p.id}">
-                    <input type="hidden" name="sessionId" th:value="${sessionId}">
-                    <input type="hidden" name="tableId" th:value="${tableId}">
-                    <input type="hidden" name="quantity" value="1"/>
-                    <input type="hidden" name="note" value=""/>
-                    <input type="hidden" name="productSizeId" value=""/>
-                    <button type="submit"
-                            class="product-card add-btn"
-                            style="margin-top:0;">
-                        Thêm vào giỏ
-                    </button>
-                </form>
+          <div
+                  class="product-card"
+                  th:each="p : ${products}"
+                  th:attr="data-category-id=${p.categoryId}"
+                  th:classappend="${!p.active ? 'inactive' : ''}"
+                  th:onclick="'showProductDetail(' + ${p.id} + ',' + ${sessionId} + ',' + ${tableId} + ')'"
+                  style="cursor:pointer;"
+          >
+            <div class="thumb">
+              <img
+                th:alt="${p.name}"
+                th:src="@{${p.imageURL ?: 'https://via.placeholder.com/160?text=Product'}}"
+              />
             </div>
+            <div class="name" th:text="${p.name}">Product Name</div>
+            <form
+              class="ajax-form"
+              method="post"
+              th:action="@{'/guest/cart/add'}"
+              style="width: 100%; margin-top: 10px"
+              onclick="event.stopPropagation();"
+            >
+              <input type="hidden" name="productId" th:value="${p.id}" />
+              <input type="hidden" name="sessionId" th:value="${sessionId}" />
+              <input type="hidden" name="tableId" th:value="${tableId}" />
+              <input type="hidden" name="quantity" value="1" />
+              <input type="hidden" name="note" value="" />
+              <input type="hidden" name="productSizeId" value=""/>
+              <button
+                type="submit"
+                class="add-btn"
+              >
+                Thêm vào giỏ
+              </button>
+            </form>
+          </div>
         </section>
-    </main>
+      </main>
 
-    <!-- Sidebar for Cart and Order -->
-    <aside class="sidebar" id="sidebar">
+      <!-- Sidebar for Cart and Order -->
+      <aside class="sidebar" id="sidebar">
         <!-- Cart Section: Replaced with fragment -->
         <div th:replace="~{guest-page/fragments/view_cart :: cart-view}"></div>
 
         <!-- Ordered Items Section: Replaced with fragment -->
         <div th:replace="~{guest-page/fragments/view_order :: order-view}"></div>
-    </aside>
-</div>
-
-<div id="productModal" class="modal">
-    <div class="modal-content" id="productModalContent"></div>
-</div>
-
-</body>
+      </aside>
+    </div>
+  </body>
 </html>
