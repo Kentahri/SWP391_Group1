@@ -4,475 +4,263 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hóa đơn thanh toán - PizzarIO</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f5f5f5;
-        margin: 0;
-        padding: 20px;
-      }
-      .receipt {
-        max-width: 400px;
-        margin: 0 auto;
-        background: white;
-        padding: 20px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-      }
-      .receipt-header {
-        text-align: center;
-        margin-bottom: 20px;
-      }
-      .receipt-title {
-        font-size: 18px;
-        font-weight: bold;
-        margin-bottom: 8px;
-        text-transform: uppercase;
-      }
-      .restaurant-name {
-        font-size: 16px;
-        font-weight: bold;
-        margin-bottom: 4px;
-      }
-      .restaurant-address {
-        font-size: 12px;
-        margin-bottom: 4px;
-      }
-      .restaurant-phone {
-        font-size: 12px;
-        margin-bottom: 10px;
-      }
-      .separator {
-        text-align: center;
-        margin: 10px 0;
-        font-size: 12px;
-      }
-      .transaction-info {
-        margin-bottom: 15px;
-      }
-      .date-time {
-        display: flex;
-        justify-content: space-between;
-        font-size: 12px;
-        margin-bottom: 4px;
-      }
-      .customer-info {
-        font-size: 12px;
-        margin-bottom: 4px;
-      }
-      .table-info {
-        font-size: 12px;
-        margin-bottom: 10px;
-      }
-      .items-header {
-        display: grid;
-        grid-template-columns: 1fr 70px 1fr; /* name, quantity, amount */
-        column-gap: 8px;
-        font-size: 12px;
-        font-weight: bold;
-        margin-bottom: 8px;
-        border-bottom: 1px solid #000;
-        padding-bottom: 4px;
-      }
-      .order-item {
-        display: grid;
-        grid-template-columns: 1fr 70px 1fr; /* keep same as header to align */
-        column-gap: 8px;
-        font-size: 12px;
-        margin-bottom: 4px;
-      }
-      .order-item > div:nth-child(2),
-      .items-header > div:nth-child(2) {
-        text-align: center; /* center quantity */
-      }
-      .order-item > div:nth-child(3),
-      .items-header > div:nth-child(3) {
-        text-align: right; /* right align amount */
-      }
-      .total-section {
-        margin-top: 15px;
-        border-top: 1px solid #000;
-        padding-top: 8px;
-      }
-      .total-row {
-        display: flex;
-        justify-content: space-between;
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 4px;
-      }
-      .payment-section {
-        text-align: center;
-        margin: 20px 0;
-        padding: 15px;
-        background: #f9f9f9;
-        border-radius: 8px;
-      }
-      .payment-title {
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 10px;
-      }
-      .action-buttons {
-        text-align: center;
-        margin-top: 20px;
-      }
-      .btn {
-        padding: 10px 20px;
-        margin: 5px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: bold;
-      }
-      .btn-primary {
-        background-color: #007bff;
-        color: white;
-      }
-      .btn-secondary {
-        background-color: #6c757d;
-        color: white;
-      }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/guest_page/waiting-payment.css}" />
   </head>
   <body>
-    <!-- Hidden data attribute để lưu redirectTarget -->
-    <div
-      id="payment-confirmation-data"
-      th:data-redirect-target="${redirectTarget != null ? redirectTarget : 'guest'}"
-      style="display: none"
-    ></div>
-    <div class="receipt">
-      <!-- Receipt Header -->
-      <div class="receipt-header">
-        <div class="receipt-title">HÓA ĐƠN THANH TOÁN</div>
-        <div class="restaurant-name">PizzarIO</div>
-        <div class="restaurant-address">KM29 - ĐL. Thăng Long</div>
-        <div class="restaurant-phone">ĐT: 0123456678-0987654321</div>
-        <div class="separator">*****************</div>
-      </div>
+    <div class="container">
+      <div
+        class="receipt"
+        th:classappend="${payment != null and payment.paymentStatus != null and payment.paymentStatus.toString() == 'PENDING'} ? ' waiting-payment' : ''"
+      >
+        <!-- Receipt Header -->
+        <div class="receipt-header">
+          <div class="receipt-title">HÓA ĐƠN THANH TOÁN</div>
+          <div class="restaurant-name">PizzarIO</div>
+          <div class="restaurant-address">KM29 - ĐL. Thăng Long</div>
+          <div class="restaurant-phone">ĐT: 0123456678-0987654321</div>
+          <div class="separator">*****************</div>
+        </div>
 
-      <!-- Transaction Information -->
-      <div class="transaction-info">
-        <div class="date-time">
-          <span th:text="${#temporals.format(payment.createdAt, 'dd-MM-yyyy')}"
-            >20-09-2025</span
+        <!-- Transaction Information -->
+        <div class="transaction-info">
+          <div class="date-time">
+            <span
+              th:text="${#temporals.format(payment.createdAt, 'dd-MM-yyyy')}"
+              >20-09-2025</span
+            >
+            <span th:text="${#temporals.format(payment.createdAt, 'HH:mm:ss')}"
+              >11:02:37</span
+            >
+          </div>
+          <div class="customer-info">
+            Khách hàng:
+            <span th:text="${payment.customerName ?: 'Khách vãng lai'}"
+              >Phan Văn A</span
+            >
+          </div>
+          <div class="table-info">
+            Bàn số: <span th:text="${payment.tableNumber ?: 'N/A'}">05</span>
+          </div>
+        </div>
+
+        <!-- Items Header -->
+        <div class="items-header">
+          <div>Tên món</div>
+          <div>Số lượng</div>
+          <div>Thành tiền</div>
+        </div>
+
+        <!-- Order Items -->
+        <div th:each="item : ${orderItems}" class="order-item">
+          <div th:text="${item.productSize.product.name}">Pizza Bò</div>
+          <div th:text="${item.quantity}">1</div>
+          <div
+            th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT')}"
           >
-          <span th:text="${#temporals.format(payment.createdAt, 'HH:mm:ss')}"
-            >11:02:37</span
-          >
+            245,000
+          </div>
         </div>
-        <div class="customer-info">
-          Khách hàng:
-          <span th:text="${payment.customerName ?: 'Khách vãng lai'}"
-            >Phan Văn A</span
-          >
-        </div>
-        <div class="table-info">
-          Bàn số: <span th:text="${payment.tableNumber ?: 'N/A'}">05</span>
-        </div>
-      </div>
 
-      <!-- Items Header -->
-      <div class="items-header">
-        <div>Tên món</div>
-        <div>Số lượng</div>
-        <div>Thành tiền</div>
-      </div>
-
-      <!-- Order Items -->
-      <div th:each="item : ${orderItems}" class="order-item">
-        <div th:text="${item.productSize.product.name}">Pizza Bò</div>
-        <div th:text="${item.quantity}">1</div>
-        <div
-          th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT')}"
-        >
-          245,000
-        </div>
-      </div>
-
-      <!-- Discount Information -->
-      <div th:if="${discountAmount > 0}" class="order-item">
-        <div>Giảm giá:</div>
-        <div>-</div>
-        <div
-          th:text="'-' + ${#numbers.formatDecimal(discountAmount, 0, 'COMMA', 0, 'POINT')}"
-        >
-          -0
-        </div>
-      </div>
-
-      <!-- Tax Information -->
-      <div class="order-item">
-        <div>Thuế (10%):</div>
-        <div>-</div>
-        <div
-          th:text="${#numbers.formatDecimal(finalTotal * 0.1, 0, 'COMMA', 0, 'POINT')}"
-        >
-          0
-        </div>
-      </div>
-
-      <!-- Total Section -->
-      <div class="total-section">
-        <div class="total-row">
-          <span>Tạm tính:</span>
-          <span
-            th:text="${#numbers.formatDecimal(originalTotal, 0, 'COMMA', 0, 'POINT')}"
-            >745,000</span
-          >
-        </div>
-        <div th:if="${discountAmount > 0}" class="total-row">
-          <span>Giảm giá:</span>
-          <span
+        <!-- Discount Information -->
+        <div th:if="${discountAmount > 0}" class="order-item">
+          <div>Giảm giá:</div>
+          <div>-</div>
+          <div
             th:text="'-' + ${#numbers.formatDecimal(discountAmount, 0, 'COMMA', 0, 'POINT')}"
-            >-0</span
           >
+            -0
+          </div>
         </div>
-        <div class="total-row">
-          <span>Thuế (10%):</span>
-          <span
+
+        <!-- Tax Information -->
+        <div class="order-item">
+          <div>Thuế (10%):</div>
+          <div>-</div>
+          <div
             th:text="${#numbers.formatDecimal(finalTotal * 0.1, 0, 'COMMA', 0, 'POINT')}"
-            >0</span
           >
-        </div>
-        <div
-          class="total-row"
-          style="
-            border-top: 1px solid #000;
-            padding-top: 8px;
-            font-weight: bold;
-            font-size: 16px;
-          "
-        >
-          <span>Tổng cộng:</span>
-          <span
-            th:text="${#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT')}"
-            >745,000</span
-          >
-        </div>
-      </div>
-
-      <!-- Payment Method Section -->
-      <div class="payment-section">
-        <div class="payment-title">Phương thức thanh toán</div>
-        <div
-          th:if="${payment.paymentMethod != null && payment.paymentMethod == 'QR_BANKING'}"
-        >
-          <div style="color: #007bff; font-size: 16px; margin-bottom: 10px">
-            <i
-              class="fas fa-qrcode"
-              style="font-size: 2rem; margin-bottom: 10px"
-            ></i
-            ><br />
-            <strong>Thanh toán bằng QR Banking</strong><br />
-            <span style="font-size: 12px"
-              >Sử dụng ứng dụng ngân hàng để quét mã QR</span
-            ><br />
-            <strong
-              >Số tiền:
-              <span
-                th:text="${#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT')} + ' VND'"
-                >0 VND</span
-              ></strong
-            >
-            <br /><br />
+            0
           </div>
         </div>
-        <div
-          th:if="${payment.paymentMethod != null && payment.paymentMethod == 'CASH'}"
-        >
-          <div style="color: #2e7d32; font-size: 16px; margin-bottom: 10px">
-            <i
-              class="fas fa-money-bill-wave"
-              style="font-size: 2rem; margin-bottom: 10px"
-            ></i
-            ><br />
-            <strong>Thanh toán bằng tiền mặt</strong><br />
-            <span style="font-size: 12px"
-              >Vui lòng chuẩn bị tiền mặt và thanh toán cho nhân viên thu
-              ngân</span
-            ><br />
-            <strong
-              >Số tiền:
-              <span
-                th:text="${#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT')} + ' VND'"
-                >0 VND</span
-              ></strong
+
+        <!-- Total Section -->
+        <div class="total-section">
+          <div class="total-row">
+            <span>Tạm tính:</span>
+            <span
+              th:text="${#numbers.formatDecimal(originalTotal, 0, 'COMMA', 0, 'POINT')}"
+              >745,000</span
+            >
+          </div>
+          <div th:if="${discountAmount > 0}" class="total-row">
+            <span>Giảm giá:</span>
+            <span
+              th:text="'-' + ${#numbers.formatDecimal(discountAmount, 0, 'COMMA', 0, 'POINT')}"
+              >-0</span
+            >
+          </div>
+          <div class="total-row">
+            <span>Thuế (10%):</span>
+            <span
+              th:text="${#numbers.formatDecimal(finalTotal * 0.1, 0, 'COMMA', 0, 'POINT')}"
+              >0</span
+            >
+          </div>
+          <div
+            class="total-row"
+            style="
+              border-top: 1px solid #000;
+              padding-top: 8px;
+              font-weight: bold;
+              font-size: 16px;
+            "
+          >
+            <span>Tổng cộng:</span>
+            <span
+              th:text="${#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT')}"
+              >745,000</span
             >
           </div>
         </div>
-      </div>
 
-      <!-- Action Buttons -->
-      <div class="action-buttons">
-        <button class="btn btn-primary" onclick="printReceipt()">
-          In hóa đơn
-        </button>
-        <button class="btn btn-secondary" onclick="goHome()">
-          Về trang chủ
-        </button>
+        <!-- Payment Method Section -->
+        <div class="payment-section">
+          <div class="payment-title">Phương thức thanh toán</div>
+          <div
+            th:if="${payment.paymentMethod != null && payment.paymentMethod == 'QR_BANKING'}"
+          >
+            <div
+              style="
+                color: #007bff;
+                font-size: 16px;
+                margin-bottom: 10px;
+                text-align: center;
+              "
+            >
+              <i
+                class="fas fa-qrcode"
+                style="font-size: 2rem; margin-bottom: 10px; display: block"
+              ></i>
+              <div style="margin: 15px 0">
+                <img
+                  th:src="${'https://img.vietqr.io/image/BIDV-0388553383-compact.png?amount=' + #strings.replace(#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT'), ',', '') + '&addInfo=Thanh%20toan%20hoa%20don' + (orderId != null ? '%20so%20' + orderId : '')}"
+                  alt="QR Code for Payment"
+                  style="
+                    max-width: 200px;
+                    width: 200px;
+                    height: auto;
+                    border: 1px solid #ddd;
+                    border-radius: 8px;
+                    display: block;
+                    margin: 10px auto;
+                    background-color: #fff;
+                  "
+                  class="qr-image"
+                />
+              </div>
+              <br />
+              <strong>Thanh toán bằng QR Banking</strong><br />
+              <span style="font-size: 12px"
+                >Sử dụng ứng dụng ngân hàng để quét mã QR</span
+              ><br />
+              <strong
+                >Số tiền:
+                <span
+                  th:text="${#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT')} + ' VND'"
+                  >0 VND</span
+                ></strong
+              >
+              <br />
+            </div>
+            <span
+              style="font-size: 12px"
+              th:text="${'Thanh toán hóa đơn số ' + (orderId != null ? orderId : '')}"
+              >Thanh toán hóa đơn số</span
+            >
+            <br />
+          </div>
+          <div
+            th:if="${payment.paymentMethod != null && payment.paymentMethod == 'CASH'}"
+          >
+            <div style="color: #2e7d32; font-size: 16px; margin-bottom: 10px">
+              <i
+                class="fas fa-money-bill-wave"
+                style="font-size: 2rem; margin-bottom: 10px"
+              ></i
+              ><br />
+              <strong>Thanh toán bằng tiền mặt</strong><br />
+              <span style="font-size: 12px"
+                >Vui lòng chuẩn bị tiền mặt và thanh toán cho nhân viên thu
+                ngân</span
+              ><br />
+              <strong
+                >Số tiền:
+                <span
+                  th:text="${#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT')} + ' VND'"
+                  >0 VND</span
+                ></strong
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div
+          class="action-buttons"
+          style="text-align: center; margin-top: 16px"
+        >
+          <button
+            class="btn btn-primary"
+            style="
+              background: #ff9933;
+              color: #fff;
+              border: none;
+              border-radius: 10px;
+              padding: 10px 20px;
+              box-shadow: 0 4px 12px rgba(255, 153, 51, 0.3);
+            "
+            onclick="printReceipt()"
+          >
+            In hóa đơn
+          </button>
+          <button
+            class="btn btn-secondary"
+            style="
+              background: #6c757d;
+              color: #fff;
+              border: none;
+              border-radius: 10px;
+              padding: 10px 20px;
+            "
+            onclick="goHome()"
+          >
+            Về trang chủ
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- WebSocket Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-
     <script th:inline="javascript">
-      // Initialize WebSocket connection for table release
-      let stompClient = null;
-      const BASE_URL = window.APP_CTX || "/pizzario";
-
-      // Connect WebSocket when page loads
-      document.addEventListener("DOMContentLoaded", function () {
-        connectWebSocket();
-      });
-
-      function connectWebSocket() {
-        const socketUrl = BASE_URL.replace(/\/$/, "") + "/ws";
-        const socket = new SockJS(socketUrl);
-        stompClient = Stomp.over(socket);
-        if (window.location.hostname !== "localhost") stompClient.debug = null;
-
-        stompClient.connect(
-          {},
-          function (frame) {
-            console.log("WebSocket connected for table release");
-            window.stompClient = stompClient; // Make it globally available
-          },
-          function (error) {
-            console.error("WebSocket connection failed:", error);
-          }
-        );
-      }
-
       function printReceipt() {
         window.print();
       }
 
       function goHome() {
-        // Lấy redirectTarget từ data attribute hoặc từ Thymeleaf inline
-        const dataElement = document.getElementById(
-          "payment-confirmation-data"
-        );
-        let redirectTarget = dataElement
-          ? dataElement.getAttribute("data-redirect-target")
-          : null;
-
-        // Fallback: thử lấy từ Thymeleaf inline
-        if (!redirectTarget || redirectTarget === "null") {
-          redirectTarget =
-            /*[[${redirectTarget != null ? redirectTarget : 'guest'}]]*/ "guest";
-        }
-
-        const sessionId = /*[[${sessionId}]]*/ null;
-        const tableId = /*[[${tableId}]]*/ null;
-        const backUrl = /*[[${backUrl}]]*/ null;
-
-        // Debug: Check values
-        console.log("=== goHome() Debug ===");
-        console.log(
-          "redirectTarget:",
-          redirectTarget,
-          "type:",
-          typeof redirectTarget
-        );
-        console.log("sessionId:", sessionId);
-        console.log("tableId:", tableId);
-        console.log("backUrl:", backUrl);
-
-        // Phân biệt rõ ràng dựa trên redirectTarget
-        // So sánh với cả string và kiểm tra type
-        const isCashier =
-          redirectTarget === "cashier" ||
-          String(redirectTarget) === "cashier" ||
-          (redirectTarget &&
-            redirectTarget.toString().toLowerCase() === "cashier");
-        const isGuest =
-          redirectTarget === "guest" ||
-          String(redirectTarget) === "guest" ||
-          (redirectTarget &&
-            redirectTarget.toString().toLowerCase() === "guest");
-
-        console.log("isCashier:", isCashier);
-        console.log("isGuest:", isGuest);
-
-        if (isCashier) {
-          // Take-away: redirect về cashier dashboard
-          console.log("Take-away: Redirecting to cashier");
-          if (
-            backUrl &&
-            backUrl !== "null" &&
-            backUrl !== null &&
-            String(backUrl).trim() !== ""
-          ) {
-            window.location.href = backUrl;
-          } else {
-            window.location.href = "/pizzario/cashier";
-          }
-          return;
-        }
-
-        // Guest/Dine-in: release table và về guest page
-        if (isGuest || !redirectTarget) {
-          console.log("Dine-in: Redirecting to guest");
-          // Nếu có sessionId và tableId thì release table qua WebSocket
-          if (
-            sessionId &&
-            sessionId !== null &&
-            sessionId !== "null" &&
-            tableId &&
-            tableId !== null &&
-            tableId !== "null"
-          ) {
-            console.log("Dine-in: Releasing table via WebSocket");
-            releaseTableAndGoHome(sessionId, tableId);
-          } else {
-            // Không có sessionId/tableId thì redirect trực tiếp
-            console.log("Dine-in: Redirecting directly to guest");
-            window.location.href = "/pizzario/guest";
-          }
-          return;
-        }
-
-        // Fallback: nếu không có redirectTarget hoặc giá trị không hợp lệ
-        console.log(
-          "Fallback: Unknown redirectTarget:",
-          redirectTarget,
-          "redirecting to guest"
-        );
-        window.location.href = "/pizzario/guest";
+        // Cashier confirmation: chỉ đóng tab hiện tại
+        console.log("Payment confirmation: closing tab");
+        attemptCloseTab();
       }
 
-      function releaseTableAndGoHome(sessionId, tableId) {
-        // Send WebSocket message to release table
-        if (window.stompClient && window.stompClient.connected) {
-          const request = {
-            tableId: tableId,
-            sessionId: sessionId,
-          };
-
-          try {
-            window.stompClient.send(
-              "/app/guest/table/release",
-              {},
-              JSON.stringify(request)
-            );
-            // Redirect after sending the request
-            setTimeout(() => {
-              window.location.href = "/pizzario/guest";
-            }, 1000);
-          } catch (error) {
-            console.error("Error sending table release request:", error);
-            // Fallback: direct redirect
-            window.location.href = "/pizzario/guest";
+      function attemptCloseTab() {
+        // Cố gắng đóng tab hiện tại; hoạt động nếu tab được mở bằng script
+        window.open("", "_self");
+        window.close();
+        // Fallback: nếu bị chặn, chuyển sang about:blank
+        setTimeout(function () {
+          if (!document.hidden && !window.closed) {
+            window.location.href = "about:blank";
           }
-        } else {
-          // Fallback: direct redirect if WebSocket not available
-          window.location.href = "/pizzario/guest";
-        }
+        }, 200);
       }
     </script>
   </body>

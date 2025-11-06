@@ -274,21 +274,10 @@ public class PaymentService {
                 .customerName(order.getMembership() != null ? order.getMembership().getName() : "Khách vãng lai")
                 .requestTime(LocalDateTime.now())
                 .paymentStatus(Order.PaymentStatus.PENDING)
+                .type("PAYMENT_PENDING")
                 .build();
 
         webSocketService.broadcastPaymentPendingToCashier(message);
-
-        // Đồng thời bắn tín hiệu cập nhật trạng thái bàn cho cashier để UI đổi ngay
-        try {
-            webSocketService.broadcastTableStatusToCashier(
-                    com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage.MessageType.TABLE_PAYMENT_PENDING,
-                    order.getSession().getTable().getId(),
-                    currentTableStatus,
-                    DiningTable.TableStatus.WAITING_PAYMENT,
-                    "GUEST-" + sessionId,
-                    "💰 Bàn " + order.getSession().getTable().getId() + " đang chờ thanh toán"
-            );
-        } catch (Exception ignored) {}
     }
 
     /**

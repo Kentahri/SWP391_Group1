@@ -1,10 +1,11 @@
 :root {
-  --bg: #f6f7fb;
-  --card: #fff;
-  --muted: #6b7280;
-  --text: #0f172a;
-  --accent: #2563eb;
-  --border: #e5e7eb;
+  --bg: #fff5e6;
+  --card: #ffffff;
+  --muted: #6c757d;
+  --text: #4a3528;
+  --accent: #ff9933;
+  --accent-strong: #ff8000;
+  --border: #ffe5cc;
 }
 body {
   margin: 0;
@@ -20,26 +21,43 @@ body {
 }
 .card {
   background: var(--card);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 24px rgba(255, 153, 51, 0.15);
+  animation: fadeIn 0.3s ease;
 }
 h1 {
   margin-top: 0;
   font-weight: 700;
 }
+.card h1,
+h1.page-title {
+  color: var(--text);
+  background: linear-gradient(135deg, #ffe5cc 0%, #ffdab3 100%);
+  padding: 16px 20px;
+  border-radius: 8px;
+  border-left: 4px solid var(--accent);
+  box-shadow: 0 2px 6px rgba(255, 153, 51, 0.2);
+}
 .primary-btn {
   display: inline-block;
-  background: var(--accent);
+  background: linear-gradient(
+    135deg,
+    var(--accent) 0%,
+    var(--accent-strong) 100%
+  );
   color: white;
   font-weight: 700;
   padding: 10px 14px;
   border-radius: 10px;
   text-decoration: none;
+  box-shadow: 0 4px 12px rgba(255, 153, 51, 0.3);
 }
 .primary-btn:hover {
-  filter: brightness(1.05);
+  filter: none;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 153, 51, 0.4);
 }
 table {
   width: 100%;
@@ -49,16 +67,46 @@ table {
 th,
 td {
   padding: 10px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #ffeddb;
   text-align: left;
   vertical-align: middle;
 }
 th {
-  background: #f3f4f6;
+  background: #fff5e6;
+  color: #664c3d;
+  border-top: 2px solid var(--border);
+  border-bottom: 2px solid var(--border);
+}
+tbody tr {
+  background: #ffffff;
+}
+tbody tr:hover {
+  background: #fff8f0;
+  transform: translateX(2px);
+  transition: all 0.2s ease;
 }
 .actions {
   display: flex;
   gap: 6px;
+}
+.actions .btn,
+.actions a,
+.actions button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background: #ffe5cc;
+  color: #664c3d;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.actions .btn:hover,
+.actions a:hover,
+.actions button:hover {
+  background: #ffdab3;
+  color: #ff8000;
+  box-shadow: 0 3px 8px rgba(255, 153, 51, 0.25);
 }
 .delete-btn {
   background: #ef4444;
@@ -82,10 +130,10 @@ th {
 
 .stat-card {
   background: var(--card);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 12px rgba(255, 153, 51, 0.15);
   transition: transform 0.2s ease;
 }
 
@@ -119,7 +167,48 @@ th {
   color: #7c3aed; /* Tím */
 }
 
+/* salary table */
+.card {
+  padding: 16px;
+  border-radius: 12px;
+}
+.card .detail {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.salary {
+  margin: 0 0 12px 0;
+}
+
+.salary .table {
+  border: 1px solid #eef2f6;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.shift {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.shfit .salary {
+  color: #111827;
+  font-weight: 600;
+}
+
+.chart {
+  margin: 0 0 12px 0;
+}
+
 /* ======= INACTIVE STAFF STYLING ======= */
+.staff .name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .inactive-staff {
   opacity: 0.6;
   background-color: #f8f9fa;
@@ -182,4 +271,137 @@ th {
 
 .activate-btn:hover {
   background-color: #15803d;
+}
+
+/* ======= Filters & Search ======= */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* chia đều khoảng cách */
+  gap: 12px;
+  margin: 12px 0 8px 0;
+  width: 100%;
+  flex-wrap: nowrap; /* giữ tất cả trên 1 hàng */
+}
+
+.toolbar > .primary-btn {
+  flex-shrink: 0;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: row; /* Đảm bảo nằm ngang */
+  gap: 12px;
+  align-items: center;
+  flex-wrap: nowrap; /* Không cho phép wrap xuống dòng */
+  flex-shrink: 0; /* Không cho phép thu nhỏ */
+  margin-left: auto;
+}
+
+.search-input {
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  background: #fffaf0;
+  color: var(--text);
+  transition: all 0.2s ease;
+  width: 200px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.filter-select {
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  background: #fffaf0;
+  color: var(--text);
+  transition: all 0.2s ease;
+  width: 140px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.search-input:focus,
+.filter-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(255, 153, 51, 0.1);
+  background: #ffffff;
+}
+
+/* ======= Badges ======= */
+.role-badge,
+.shift-badge {
+  padding: 6px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #fff3cd;
+  color: #7a5200;
+  border: 1px solid #ffe8a1;
+}
+
+/* ======= Pagination ======= */
+.pagination {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+.pagination a,
+.pagination button {
+  padding: 8px 12px;
+  background: #ffe5cc;
+  color: #664c3d;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.pagination a:hover,
+.pagination button:hover {
+  background: #ffdab3;
+  color: #ff8000;
+  box-shadow: 0 2px 8px rgba(255, 153, 51, 0.25);
+}
+.pagination .active {
+  background: linear-gradient(
+    135deg,
+    var(--accent) 0%,
+    var(--accent-strong) 100%
+  );
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(255, 153, 51, 0.35);
+}
+
+.alert .alert-success {
+  background-color: #d1fae5;
+  color: #065f46;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.alert .alert-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+/* ======= Animations ======= */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

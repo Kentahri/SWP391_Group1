@@ -22,23 +22,4 @@ public class StaffResponseDTO {
     String email;
     Role role;
     boolean active;
-    
-    // Formatted fields for display
-    public String getDateOfBirthFormatted() {
-        return dateOfBirth != null ? dateOfBirth.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
-    }
-    
-    public String getRoleText() {
-        if (role == null) return "";
-        switch (role) {
-            case CASHIER: return "Thu ngân";
-            case MANAGER: return "Quản lý";
-            case KITCHEN: return "Bếp";
-            default: return role.toString();
-        }
-    }
-    
-    public String getStatusText() {
-        return active ? "Hoạt động" : "Không hoạt động";
-    }
 }
