@@ -13,7 +13,7 @@ VALUES
 
 -- 2️⃣ SIZE
 INSERT INTO [Size] (size_name)
-VALUES (N'Small'), (N'Medium'), (N'Large');
+VALUES (N'Small'), (N'Medium'), (N'Large'), (N'Default');
 
 -- 3️⃣ PRODUCT (chỉ còn thông tin chung, không còn giá)
 INSERT INTO [Product] (name, description, img_url, is_active, created_at, updated_at, category_id)
