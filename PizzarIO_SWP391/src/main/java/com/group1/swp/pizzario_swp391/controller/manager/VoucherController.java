@@ -86,6 +86,10 @@ public class VoucherController {
             bindingResult.rejectValue("value", "value.invalid", "Giá trị voucher phải nhỏ hơn hoặc bằng 100");
         }
 
+        if(voucherForm.getValue() >= voucherForm.getMinOrderAmount()){
+            bindingResult.rejectValue("value", "value.invalid","Số tiền giảm giá không được vượt quá giá trị đơn hàng tối thiểu");
+        }
+
         if (bindingResult.hasErrors()) {
             model.addAttribute("voucherTypes", Voucher.VoucherType.values());
             model.addAttribute("vouchers", voucherService.getVouchersSort());
