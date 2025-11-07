@@ -139,7 +139,7 @@
       <div class="card">
         <h1>Đăng ký thành viên</h1>
         <form
-          th:action="@{'/guest/membership/register?sessionId=' + ${sessionId}}"
+          th:action="@{'/guest/membership/register'(sessionId=${sessionId}, returnUrl=${returnUrl})}"
           method="post"
           th:object="${registrationDTO}"
         >
@@ -189,10 +189,7 @@
           class="back-to-payment"
           style="margin-top: 20px; text-align: center"
         >
-          <a
-            th:href="@{'/guest/payment/session/' + ${sessionId}}"
-            class="btn btn-outline-secondary"
-          >
+          <a th:href="${returnUrlDisplay}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left"></i> Quay lại thanh toán
           </a>
         </div>
@@ -235,10 +232,7 @@
 
           <!-- Nút quay về thanh toán -->
           <div style="margin-top: 24px; text-align: center">
-            <a
-              th:href="@{'/guest/payment/session/' + ${sessionId}}"
-              class="btn btn-primary"
-            >
+            <a th:href="${returnUrlDisplay}" class="btn btn-primary">
               <i class="fas fa-arrow-left"></i> Quay lại thanh toán
             </a>
           </div>
