@@ -6,7 +6,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.group1.swp.pizzario_swp391.entity.Order;
+import com.group1.swp.pizzario_swp391.entity.Staff;
 import com.group1.swp.pizzario_swp391.service.PaymentService;
+import com.group1.swp.pizzario_swp391.service.OrderService;
+import com.group1.swp.pizzario_swp391.service.StaffService;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -19,13 +22,29 @@ import lombok.experimental.FieldDefaults;
 public class CashierPaymentController {
 
     PaymentService paymentService;
+    OrderService orderService;
+    StaffService staffService;
 
     @PostMapping("/confirm")
     public String confirmDineInPayment(@RequestParam("sessionId") Long sessionId,
                                        @RequestParam(value = "paymentMethod", required = true) String paymentMethod,
+                                       java.security.Principal principal,
                                        RedirectAttributes redirectAttributes) {
         try {
             Order.PaymentMethod method = Order.PaymentMethod.valueOf(paymentMethod);
+            // Attach current cashier (staff) to dine-in order before confirming, so staff_id is not null
+            try {
+                if (principal != null) {
+                    Staff staff = staffService.findByEmail(principal.getName());
+                    if (staff != null) {
+                        Order order = orderService.getOrderForSession(sessionId);
+                        if (order != null && order.getStaff() == null) {
+                            order.setStaff(staff);
+                            orderService.saveOrder(order);
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
             paymentService.confirmPaymentBySessionId(sessionId, method);
 
             redirectAttributes.addFlashAttribute("successMessage", "Xác nhận thanh toán thành công cho phiên " + sessionId + ".");

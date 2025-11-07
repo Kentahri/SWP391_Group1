@@ -6,13 +6,16 @@ import com.group1.swp.pizzario_swp391.dto.product.ProductUpdateDTO;
 import com.group1.swp.pizzario_swp391.dto.websocket.ProductStatusMessage;
 import com.group1.swp.pizzario_swp391.entity.Category;
 import com.group1.swp.pizzario_swp391.entity.Product;
+import com.group1.swp.pizzario_swp391.entity.Size;
 import com.group1.swp.pizzario_swp391.mapper.ProductResponseMapper;
 import com.group1.swp.pizzario_swp391.repository.CategoryRepository;
 import com.group1.swp.pizzario_swp391.repository.ProductRepository;
+import com.group1.swp.pizzario_swp391.repository.SizeRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +28,8 @@ public class ProductService {
     ProductRepository productRepository;
     ProductResponseMapper productMapper;
     CategoryRepository categoryRepository;
+    SizeRepository sizeRepository;
+    ProductSizeService productSizeService;
 
     WebSocketService webSocketService;
 
@@ -60,6 +65,7 @@ public class ProductService {
                 .build();
     }
 
+    @Transactional
     public void createProduct(ProductCreateDTO createDTO) {
         Product product = productMapper.toEntity(createDTO);
         LocalDateTime now = LocalDateTime.now();
@@ -71,13 +77,36 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException(CATEGORY_NOT_FOUND + " with ID: " + createDTO.getCategoryId()));
         product.setCategory(category);
 
+        // Lưu product trước để có ID
+        product = productRepository.save(product);
+
+        // Nếu là Combo và có giá combo -> tạo ProductSize mặc định với size "Medium"
+        boolean isCombo = category.getName() != null && category.getName().toLowerCase().contains("combo");
+        if (isCombo) {
+            Double comboPrice = createDTO.getComboPrice();
+            if (comboPrice == null || comboPrice < 0) {
+                throw new RuntimeException("Giá combo không hợp lệ");
+            }
+            Size defaultSize = sizeRepository.findAll().stream()
+                    .filter(s -> s.getSizeName() != null && s.getSizeName().equalsIgnoreCase("Default"))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy size mặc định 'Default'"));
+
+            productSizeService.createProductSize(
+                    com.group1.swp.pizzario_swp391.dto.productsize.ProductSizeCreateDTO.builder()
+                            .productId(product.getId())
+                            .sizeId(defaultSize.getId())
+                            .basePrice(comboPrice)
+                            .build()
+            );
+        }
+
+        // Broadcast sau khi tạo đầy đủ
         webSocketService.broadcastProductChange(
                 ProductStatusMessage.MessageType.PRODUCT_CREATED,
                 product,
                 "Manager"
         );
-
-        productRepository.save(product);
     }
 
     public void updateProduct(Long id, ProductUpdateDTO updateDTO) {

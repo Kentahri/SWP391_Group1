@@ -35,7 +35,8 @@
         <div id="productModal" class="modal" th:classappend="${openModal != null} ? 'show' : ''">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 id="modalTitle" th:text="${productForm.id == null} ? 'Thêm món mới' : 'Chỉnh sửa món ăn'">Thêm món mới</h2>
+                    <h2 id="modalTitle" th:text="${productForm.id == null} ? 'Thêm món mới' : 'Chỉnh sửa món ăn'">Thêm
+                        món mới</h2>
                     <span class="close" onclick="closeModal()">×</span>
                 </div>
 
@@ -59,7 +60,7 @@
                     <div class="mb-3">
                         <label>Tên món <span class="required">*</span></label>
                         <input type="text" class="form-control" th:field="*{name}"
-                               placeholder="Pizza Margherita" required />
+                               placeholder="Pizza Margherita" required/>
                         <span class="error-message" th:if="${#fields.hasErrors('name')}"
                               th:errors="*{name}"></span>
                     </div>
@@ -78,10 +79,11 @@
                         <label>Ảnh sản phẩm</label>
 
                         <!-- Hiển thị ảnh hiện tại (khi edit) -->
-                        <div th:if="${productForm.currentImageURL != null and productForm.currentImageURL.trim() != ''}" class="mb-2">
+                        <div th:if="${productForm.currentImageURL != null and productForm.currentImageURL.trim() != ''}"
+                             class="mb-2">
                             <img th:src="@{${productForm.currentImageURL}}"
                                  alt="Ảnh hiện tại"
-                                 style="max-height: 120px; border-radius: 8px; border: 1px solid #ddd;" />
+                                 style="max-height: 120px; border-radius: 8px; border: 1px solid #ddd;"/>
                             <small class="text-muted d-block">Ảnh hiện tại</small>
                         </div>
 
@@ -89,8 +91,9 @@
                         <input type="file"
                                class="form-control"
                                name="imageFile"
-                               accept="image/jpeg,image/png,image/gif,image/webp" />
-                        <div class="form-text">Chọn ảnh mới (JPG, PNG, GIF, WebP). Để trống nếu không muốn thay đổi.</div>
+                               accept="image/jpeg,image/png,image/gif,image/webp"/>
+                        <div class="form-text">Chọn ảnh mới (JPG, PNG, GIF, WebP). Để trống nếu không muốn thay đổi.
+                        </div>
                         <span class="error-message" th:if="${#fields.hasErrors('imageFile')}"
                               th:errors="*{imageFile}"></span>
                     </div>
@@ -106,7 +109,38 @@
                         <span class="error-message" th:if="${#fields.hasErrors('categoryId')}"
                               th:errors="*{categoryId}"></span>
                     </div>
+                    <div
+                            id="comboProductsSection"
+                            class="mb-3"
+                            style="display: none"
+                    >
+                        <label>Chọn món ăn cho combo</label>
+                        <div class="product-selection-container">
+                            <div
+                                    id="productSelectionList"
+                                    class="product-selection-list"
+                            >
+                                <!-- Products will be loaded here by JavaScript -->
+                                <div class="loading">Đang tải danh sách sản phẩm...</div>
+                            </div>
+                        </div>
 
+                        <div class="selected-products-summary">
+                            <h4>Món đã chọn:</h4>
+                            <div
+                                    id="selectedProductsList"
+                                    class="selected-products-list"
+                            >
+                                <div class="no-selected-products">Chưa chọn món nào</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Giá combo -->
+                    <div id="comboPriceSection" class="mb-3" style="display: none">
+                        <label>Giá combo <span class="required">*</span></label>
+                        <input type="number" class="form-control" th:field="*{comboPrice}" min="0" step="any"
+                               placeholder="Nhập giá combo..."/>
+                    </div>
                     <!-- Trạng thái -->
                     <div class="form-check mb-3">
                         <input type="checkbox" class="form-check-input" th:field="*{active}"/>

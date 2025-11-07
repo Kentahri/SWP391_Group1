@@ -1,178 +1,288 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Đang chờ xác nhận thanh toán</title>
-	<style>
-		:root {
-			--primary: #2e7d32;
-			--accent: #17a2b8;
-			--bg: #f8f9fa;
-			--text: #333;
-		}
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đang chờ xác nhận thanh toán</title>
+    <link rel="stylesheet" th:href="@{/css/guest_page/waiting-payment.css}" />
 
-		body {
-			margin: 0;
-			font-family: "Segoe UI", Arial, sans-serif;
-			background: var(--bg);
-			color: var(--text);
-		}
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Receipt Section -->
+      <div class="receipt" th:if="${payment != null}">
+        <!-- Receipt Header -->
+        <div class="receipt-header">
+          <div class="receipt-title">HÓA ĐƠN THANH TOÁN</div>
+          <div class="restaurant-name">PizzarIO</div>
+          <div class="restaurant-address">KM29 - ĐL. Thăng Long</div>
+          <div class="restaurant-phone">ĐT: 0123456678-0987654321</div>
+          <div class="separator">*****************</div>
+        </div>
 
-		.container {
-			min-height: 100vh;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			padding: 24px;
-		}
+        <!-- Transaction Information -->
+        <div class="transaction-info">
+          <div class="date-time">
+            <span
+              th:text="${#temporals.format(payment.createdAt, 'dd-MM-yyyy')}"
+              >20-09-2025</span
+            >
+            <span th:text="${#temporals.format(payment.createdAt, 'HH:mm:ss')}"
+              >11:02:37</span
+            >
+          </div>
+          <div class="customer-info">
+            Khách hàng:
+            <span th:text="${payment.customerName ?: 'Khách vãng lai'}"
+              >Phan Văn A</span
+            >
+          </div>
+          <div class="table-info">
+            Bàn số: <span th:text="${payment.tableNumber ?: 'N/A'}">05</span>
+          </div>
+        </div>
 
-		.card {
-			background: #fff;
-			border-radius: 16px;
-			box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-			max-width: 520px;
-			width: 100%;
-			padding: 28px;
-			text-align: center;
-		}
+        <!-- Items Header -->
+        <div class="items-header">
+          <div>Tên món</div>
+          <div>Số lượng</div>
+          <div>Thành tiền</div>
+        </div>
 
-		.qr-box { margin-top: 16px; padding: 16px; border: 1px dashed #e0e0e0; border-radius: 12px; }
-		.qr-title { font-weight: 600; margin-bottom: 10px; color: var(--accent); }
-		.amount { font-size: 18px; font-weight: 700; color: #222; margin-top: 6px; }
-		.note { font-size: 13px; color: #666; margin-top: 8px; }
+        <!-- Order Items -->
+        <div th:each="item : ${orderItems}" class="order-item">
+          <div th:text="${item.productSize.product.name}">Pizza Bò</div>
+          <div th:text="${item.quantity}">1</div>
+          <div
+            th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT')}"
+          >
+            245,000
+          </div>
+        </div>
 
-		.spinner {
-			width: 56px;
-			height: 56px;
-			border: 6px solid #e9ecef;
-			border-top-color: var(--accent);
-			border-radius: 50%;
-			margin: 8px auto 20px;
-			animation: spin 1s linear infinite;
-		}
+        <!-- Discount Information -->
+        <div th:if="${discountAmount > 0}" class="order-item">
+          <div>Giảm giá:</div>
+          <div>-</div>
+          <div
+            th:text="'-' + ${#numbers.formatDecimal(discountAmount, 0, 'COMMA', 0, 'POINT')}"
+          >
+            -0
+          </div>
+        </div>
 
-		@keyframes spin {
-			to { transform: rotate(360deg); }
-		}
+        <!-- Tax Information -->
+        <div class="order-item">
+          <div>Thuế (10%):</div>
+          <div>-</div>
+          <div
+            th:text="${#numbers.formatDecimal(finalTotal * 0.1, 0, 'COMMA', 0, 'POINT')}"
+          >
+            0
+          </div>
+        </div>
 
-		.title {
-			font-size: 20px;
-			font-weight: 700;
-			margin: 6px 0 8px;
-			color: var(--primary);
-		}
+        <!-- Total Section -->
+        <div class="total-section">
+          <div class="total-row">
+            <span>Tạm tính:</span>
+            <span
+              th:text="${#numbers.formatDecimal(originalTotal, 0, 'COMMA', 0, 'POINT')}"
+              >745,000</span
+            >
+          </div>
+          <div th:if="${discountAmount > 0}" class="total-row">
+            <span>Giảm giá:</span>
+            <span
+              th:text="'-' + ${#numbers.formatDecimal(discountAmount, 0, 'COMMA', 0, 'POINT')}"
+              >-0</span
+            >
+          </div>
+          <div class="total-row">
+            <span>Thuế (10%):</span>
+            <span
+              th:text="${#numbers.formatDecimal(finalTotal * 0.1, 0, 'COMMA', 0, 'POINT')}"
+              >0</span
+            >
+          </div>
+          <div
+            class="total-row"
+            style="
+              border-top: 1px solid #000;
+              padding-top: 8px;
+              font-weight: bold;
+              font-size: 16px;
+            "
+          >
+            <span>Tổng cộng:</span>
+            <span
+              th:text="${#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT')}"
+              >745,000</span
+            >
+          </div>
+        </div>
 
-		.subtitle {
-			font-size: 14px;
-			color: #666;
-			margin-bottom: 16px;
-		}
+        <!-- Payment Method Section -->
+        <div class="payment-section">
+          <div class="payment-title">Phương thức thanh toán</div>
+          <div
+            th:if="${payment.paymentMethod != null && payment.paymentMethod == 'QR_BANKING'}"
+          >
+            <div
+              style="
+                color: #007bff;
+                font-size: 16px;
+                margin-bottom: 10px;
+                text-align: center;
+              "
+            >
+              <i
+                class="fas fa-qrcode"
+                style="font-size: 2rem; margin-bottom: 10px; display: block"
+              ></i>
+              <div style="margin: 15px 0">
+                <img
+                  th:src="${'https://img.vietqr.io/image/BIDV-0388553383-compact.png?amount=' + #strings.replace(#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT'), ',', '') + '&addInfo=Thanh%20toan%20hoa%20don' + (orderId != null ? '%20so%20' + orderId : '')}"
+                  alt="QR Code for Payment"
+                  style="
+                    max-width: 200px;
+                    width: 200px;
+                    height: auto;
+                    border: 1px solid #ddd;
+                    border-radius: 8px;
+                    display: block;
+                    margin: 10px auto;
+                    background-color: #fff;
+                  "
+                />
+              </div>
+              <br />
+              <strong>Thanh toán bằng QR Banking</strong><br />
+              <span style="font-size: 12px"
+                >Sử dụng ứng dụng ngân hàng để quét mã QR</span
+              ><br />
+              <strong
+                >Số tiền:
+                <span
+                  th:text="${#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT')} + ' VND'"
+                  >0 VND</span
+                ></strong
+              >
+              <br />
+            </div>
+            <span style="font-size: 12px"
+              th:text="${'Thanh toán hóa đơn số ' + (orderId != null ? orderId : '')}"
+              >Thanh toán hóa đơn số</span
+            >
+            <br />
+          </div>
+          <div
+            th:if="${payment.paymentMethod != null && payment.paymentMethod == 'CASH'}"
+          >
+            <div style="color: #2e7d32; font-size: 16px; margin-bottom: 10px">
+              <i
+                class="fas fa-money-bill-wave"
+                style="font-size: 2rem; margin-bottom: 10px"
+              ></i
+              ><br />
+              <strong>Thanh toán bằng tiền mặt</strong><br />
+              <span style="font-size: 12px"
+                >Vui lòng chuẩn bị tiền mặt và thanh toán cho nhân viên thu
+                ngân</span
+              ><br />
+              <strong
+                >Số tiền:
+                <span
+                  th:text="${#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT')} + ' VND'"
+                  >0 VND</span
+                ></strong
+              >
+            </div>
+          </div>
+        </div>
+      </div>
 
-		.hint {
-			font-size: 13px;
-			color: #888;
-			margin-top: 12px;
-		}
+      <!-- Waiting Confirmation Card -->
+      <div class="card">
+        <div class="badge">Phiên [[${sessionId}]]</div>
+        <div class="spinner"></div>
+        <div class="title">Đang chờ thu ngân xác nhận</div>
+        <div class="subtitle">
+          Vui lòng giữ nguyên màn hình. Chúng tôi sẽ tự động chuyển khi hoàn
+          tất.
+        </div>
+        <div class="hint">
+          Nếu chờ quá lâu, hãy báo nhân viên để hỗ trợ nhanh hơn.
+        </div>
+      </div>
+    </div>
 
-		.badge {
-			display: inline-block;
-			background: #e8f5e9;
-			color: var(--primary);
-			padding: 6px 10px;
-			border-radius: 999px;
-			font-size: 12px;
-			margin-bottom: 6px;
-		}
-	</style>
+    <script th:inline="javascript">
+      /*<![CDATA[*/
+      (function () {
+        var sessionId = /*[[${sessionId}]]*/ null;
+        var ctx = /*[[@{/}]]*/ "/pizzario/";
 
-	<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-</head>
-<body>
-	<div class="container">
-		<div class="card">
-			<div class="badge">Phiên [[${sessionId}]]</div>
-			<div class="spinner"></div>
-			<div class="title">Đang chờ thu ngân xác nhận</div>
-			<div class="subtitle">Vui lòng giữ nguyên màn hình. Chúng tôi sẽ tự động chuyển khi hoàn tất.</div>
+        // DEBUG: Kiểm tra sessionId có giá trị không
+        console.log("=== WAITING CONFIRM DEBUG ===");
+        console.log("sessionId from server:", sessionId);
+        console.log("context path:", ctx);
 
-			<!-- Hiển thị QR nếu khách chọn QR_BANKING -->
-			<div class="qr-box" th:if="${paymentMethod != null and paymentMethod.toString() == 'QR_BANKING'}">
-				<div class="qr-title">Quét QR để thanh toán</div>
-				<div style="text-align: center; margin: 15px 0">
-                    <img
-                            th:src="|https://img.vietqr.io/image/BIDV-0388553383-compact.png?amount=${#strings.replace(#numbers.formatDecimal(finalTotal * 1.1, 0, 'COMMA', 0, 'POINT'), ',', '')}&addInfo=${'Thanh toan hoa don so ' + orderId}|"
-							alt="QR Code for Payment"
-							style="
-                  max-width: 200px;
-                  height: auto;
-                  border: 1px solid #ddd;
-                  border-radius: 8px;
-                "
-					/>
-					<br />
-					<span
-							style="
-                  font-size: 10px;
-                  color: #666;
-                  margin-top: 5px;
-                  display: block;
-                "
-					>
-                Quét mã QR bằng ứng dụng ngân hàng
-              </span>
-				</div>
-				<div class="amount">Số tiền: <span th:text="${#numbers.formatCurrency(orderTotal * 1.1)}">0đ</span></div>
-				<div class="note">Nội dung: <span th:text="${'Thanh toan don #' + orderId}">Thanh toan don</span></div>
-				<div class="hint">Sau khi thanh toán xong, vui lòng chờ thu ngân xác nhận.</div>
-			</div>
-			<div class="hint">Nếu chờ quá lâu, hãy báo nhân viên để hỗ trợ nhanh hơn.</div>
-		</div>
-	</div>
+        if (!sessionId) {
+          console.error("sessionId is NULL! WebSocket will NOT connect!");
+          return;
+        }
 
-	<script th:inline="javascript">
-		/*<![CDATA[*/
-		(function() {
-			var sessionId = /*[[${sessionId}]]*/ null;
-            var ctx = /*[[@{/}]]*/ '/pizzario/';
+        console.log("sessionId OK, connecting WebSocket...");
 
-			// DEBUG: Kiểm tra sessionId có giá trị không
-			console.log('=== WAITING CONFIRM DEBUG ===');
-			console.log('sessionId from server:', sessionId);
-			console.log('context path:', ctx);
+        var socket = new SockJS((ctx || "").replace(/\/$/, "") + "/ws");
+        var client = Stomp.over(socket);
+        if (window.location.hostname !== "localhost") {
+          client.debug = null;
+        }
 
-			if (!sessionId) {
-				console.error('sessionId is NULL! WebSocket will NOT connect!');
-				return;
-			}
-
-			console.log('sessionId OK, connecting WebSocket...');
-
-			var socket = new SockJS((ctx || '').replace(/\/$/, '') + '/ws');
-			var client = Stomp.over(socket);
-			if (window.location.hostname !== 'localhost') { client.debug = null; }
-
-			client.connect({}, function() {
-				client.subscribe('/queue/payment-' + sessionId, function(message) {
-					console.log('Received message from queue:', message);
-					try {
-						var data = JSON.parse(message.body);
-						// Nếu cashier xác nhận thành công => thông báo và quay về trang chọn bàn
-						if (data && (data.paymentStatus === 'PAID' || data.type === 'CONFIRMED')) {
-							try { alert('Thanh toán thành công! Vui lòng chọn bàn mới.'); } catch(e) {}
-							// Redirect đến endpoint complete để invalidate session
-							var completeUrl = (ctx || '').replace(/\/$/, '') + '/guest/payment/session/' + sessionId + '/complete';
-							window.location.href = completeUrl;
-						}
-
-					} catch (e) {
-						console.error('Waiting page parse error:', e);
-					}
-				});
-			});
-		})();
-		/*]]>*/
-	</script>
-</body>
+        client.connect({}, function () {
+          client.subscribe("/queue/payment-" + sessionId, function (message) {
+            console.log("Received message from queue:", message);
+            try {
+              var data = JSON.parse(message.body);
+              // Nếu cashier xác nhận thành công => hiển thị thông báo và quay về trang chọn bàn
+              if (
+                data &&
+                (data.paymentStatus === "PAID" || data.type === "CONFIRMED")
+              ) {
+                try {
+                  var container = document.querySelector(".card");
+                  if (container) {
+                    container.innerHTML =
+                      "" +
+                      '<div class="badge">Phiên ' +
+                      sessionId +
+                      "</div>" +
+                      '<div class="title" style="color:#2e7d32;font-size:1.6rem">Đã xác nhận thanh toán</div>' +
+                      '<div class="subtitle" style="color:#ff8000;font-weight:800;font-size:1.25rem">PizzarIO xin cảm ơn và hẹn gặp lại quý khách!</div>' +
+                      '<div class="hint">Đang chuyển về trang khách hàng...</div>';
+                  }
+                } catch (e) {}
+                // Redirect đến endpoint complete để invalidate session (trễ 2s để người dùng kịp xem thông báo)
+                var completeUrl =
+                  (ctx || "").replace(/\/$/, "") +
+                  "/guest/payment/session/" +
+                  sessionId +
+                  "/complete";
+                setTimeout(function () {
+                  window.location.href = completeUrl;
+                }, 3000);
+              }
+            } catch (e) {
+              console.error("Waiting page parse error:", e);
+            }
+          });
+        });
+      })();
+      /*]]>*/
+    </script>
+  </body>
 </html>
