@@ -816,30 +816,86 @@
                 margin-bottom: 20px;
                 padding: 20px 0;
               "
-				>
-					📋 Lịch sử hóa đơn
-				</h2>
-				
-				<div
-						th:if="${#lists.isEmpty(paymentHistory)}"
-						class="no-reservations-card"
-				>
-					<div class="no-reservations-content">
-						<div class="no-reservations-icon">📄</div>
-						<div class="no-reservations-text">Chưa có hóa đơn nào</div>
-					</div>
-				</div>
-				
-				<div
-						th:each="order : ${paymentHistory}"
-						class="reservation-card"
-						style="max-width: 100%"
-				>
-					<!-- Order Header -->
-					<div class="reservation-card-header" style="margin-bottom: 16px">
-						<div>
-							<div
-									style="
+            >
+              📋 Lịch sử hóa đơn
+            </h2>
+
+            <!-- Search Bar and Filter -->
+            <div
+              th:if="${!#lists.isEmpty(paymentHistory)}"
+              style="
+                margin-bottom: 16px;
+                display: flex;
+                justify-content: flex-end;
+                gap: 12px;
+                align-items: center;
+              "
+            >
+              <select
+                id="orderTypeFilter"
+                style="
+                  padding: 10px 14px;
+                  border: 2px solid #ffe5cc;
+                  border-radius: 10px;
+                  background: #fffaf0;
+                  color: #4a3528;
+                  font-size: 14px;
+                  width: 140px;
+                  transition: all 0.2s ease;
+                  margin: 0;
+                  cursor: pointer;
+                "
+                onchange="applyFilters()"
+                onfocus="this.style.borderColor='#ff9933'; this.style.boxShadow='0 0 0 4px rgba(255, 153, 51, 0.1)'; this.style.background='#ffffff'"
+                onblur="this.style.borderColor='#ffe5cc'; this.style.boxShadow='none'; this.style.background='#fffaf0'"
+              >
+                <option value="ALL">Tất cả</option>
+                <option value="DINE_IN">Tại bàn</option>
+                <option value="TAKE_AWAY">Mang về</option>
+              </select>
+              <input
+                type="text"
+                id="invoice-search"
+                placeholder="🔍 Tìm kiếm"
+                style="
+                  padding: 10px 14px;
+                  border: 2px solid #ffe5cc;
+                  border-radius: 10px;
+                  background: #fffaf0;
+                  color: #4a3528;
+                  font-size: 14px;
+                  width: 200px;
+                  transition: all 0.2s ease;
+                  margin: 0;
+                "
+                oninput="applyFilters()"
+                onfocus="this.style.borderColor='#ff9933'; this.style.boxShadow='0 0 0 4px rgba(255, 153, 51, 0.1)'; this.style.background='#ffffff'"
+                onblur="this.style.borderColor='#ffe5cc'; this.style.boxShadow='none'; this.style.background='#fffaf0'"
+              />
+            </div>
+
+            <div
+              th:if="${#lists.isEmpty(paymentHistory)}"
+              class="no-reservations-card"
+            >
+              <div class="no-reservations-content">
+                <div class="no-reservations-icon">📄</div>
+                <div class="no-reservations-text">Chưa có hóa đơn nào</div>
+              </div>
+            </div>
+
+            <div
+              th:each="order : ${paymentHistory}"
+              class="reservation-card invoice-card"
+              th:data-order-id="${order.orderId}"
+              th:data-order-type="${order.orderType != null ? order.orderType.toString() : ''}"
+              style="max-width: 100%"
+            >
+              <!-- Order Header -->
+              <div class="reservation-card-header" style="margin-bottom: 16px">
+                <div>
+                  <div
+                    style="
                       font-size: 18px;
                       font-weight: 700;
                       color: #2c3e50;
@@ -1371,16 +1427,16 @@
                     background: #f8f9fa;
                     border-radius: 4px;
                   "
-						>
-							<strong>Ghi chú đơn hàng:</strong><br/>
-							<span th:text="${order.note}"></span>
-						</div>
-						
-						<!-- Action Buttons -->
-						<div style="text-align: center; margin-top: 20px">
-							<button
-									onclick="printReceipt()"
-									style="
+                >
+                  <strong>Ghi chú đơn hàng:</strong><br />
+                  <span th:text="${order.note}"></span>
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="text-align: center; margin-top: 20px">
+                  <button
+                    th:onclick="'printReceipt(' + ${order.orderId} + ')'"
+                    style="
                       padding: 10px 20px;
                       margin: 5px;
                       background-color: #007bff;
@@ -2140,8 +2196,7 @@
         }
     }
 
-    // Print receipt functionality
-    function printReceipt() {
+      function printReceipt() {
         window.print();
     }
 </script>
