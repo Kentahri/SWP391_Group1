@@ -239,23 +239,17 @@ public class CashierTakeAwayController {
             var session = sessionService.getOrCreateSessionForTakeAwayOrder(order);
             Long sessionId = session.getId();
 
-            // Verify order có session_id trước khi gọi PaymentService
             order = orderService.getOrderById(orderId); // Reload order
             if (order.getSession() == null || !order.getSession().getId().equals(sessionId)) {
                 throw new RuntimeException("Order chưa được link với session. SessionId: " + sessionId);
             }
 
-            // Sử dụng PaymentService để xử lý payment (xử lý voucher, points, etc.)
             Order.PaymentMethod method = Order.PaymentMethod.valueOf(paymentMethod);
-            paymentService.confirmPaymentBySessionId(sessionId, method);
-
-            // Sau khi PaymentService xử lý, order status sẽ là COMPLETED
-            // Nhưng với take-away, cần giữ ở PREPARING cho đến khi kitchen hoàn thành
-            order = orderService.getOrderById(orderId); // Reload order sau khi PaymentService xử lý
-            order.setOrderStatus(Order.OrderStatus.PREPARING);
+            paymentService.confirmPaymentTakeawayBySessionId(sessionId, method);
+            
+            order = orderService.getOrderById(orderId);
             orderService.saveOrder(order);
 
-            // Redirect đến trang confirmation trước
             return "redirect:/cashier/takeaway/order/" + orderId + "/payment/confirmation";
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Phương thức thanh toán không hợp lệ.");
@@ -312,7 +306,7 @@ public class CashierTakeAwayController {
         model.addAttribute("payment", paymentDTO);
         model.addAttribute("orderItems", orderItems);
         model.addAttribute("orderId", orderId);
-        model.addAttribute("sessionId", sessionId); // Truyền sessionId để payment-confirmation hoạt động
+        model.addAttribute("sessionId", sessionId);
         model.addAttribute("tableId", null);
 
         model.addAttribute("originalTotal", originalTotal);
