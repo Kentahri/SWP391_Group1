@@ -4,14 +4,23 @@
 <!-- =============================================================== -->
 <!-- FRAGMENT CHO DANH SÁCH ĐÃ ĐẶT (ORDER)                            -->
 <!-- =============================================================== -->
-<div th:fragment="order-view" class="order-section">
-    <h2>My Order 🗒️</h2>
+<div th:fragment="order-view" id="order-view" class="order-section">
+    <h2>Món đã gọi 🗒️</h2>
     <div class="items-list" id="orderedItemsList">
         <th:block th:if="${#lists.isEmpty(orderedItems)}">
-            <p class="empty-message">You haven't ordered anything yet.</p>
+            <p class="empty-message">Bạn chưa gọi món nào.</p>
         </th:block>
 
-        <div class="order-item" th:each="item : ${orderedItems}">
+        <div class="order-item"
+             th:each="item : ${orderedItems}"
+             th:attr="data-order-item-id=${item.id}"
+             th:classappend="${
+               #strings.equalsIgnoreCase(item.status, 'PENDING') ? ' order-status-pending' : (
+               #strings.equalsIgnoreCase(item.status, 'PREPARING') ? ' order-status-preparing' : (
+               #strings.equalsIgnoreCase(item.status, 'READY') ? ' order-status-ready' : (
+               #strings.equalsIgnoreCase(item.status, 'SERVED') ? ' order-status-served' : (
+               #strings.equalsIgnoreCase(item.status, 'CANCELLED') ? ' order-status-cancelled' : ' order-status-unknown'
+             )))) }">
             <div class="item-details">
                 <div class="name" th:text="${item.productName} + ' x' + ${item.quantity}"></div>
                 <div class="size" th:text="${item.productSize.size.sizeName}">Default</div>
@@ -19,17 +28,30 @@
                 <div class="note" th:text="${item.note}"></div>
             </div>
 
-            <span class="status" th:text="${item.status}"></span>
-            <!-- Chỉ hiển thị nút Cancel khi trạng thái là PENDING -->
+            <span class="status"
+                  th:classappend="${
+                    #strings.equalsIgnoreCase(item.status, 'PENDING') ? ' status-pending' : (
+                    #strings.equalsIgnoreCase(item.status, 'PREPARING') ? ' status-preparing' : (
+                    #strings.equalsIgnoreCase(item.status, 'READY') ? ' status-ready' : (
+                    #strings.equalsIgnoreCase(item.status, 'SERVED') ? ' status-served' : (
+                    #strings.equalsIgnoreCase(item.status, 'CANCELLED') ? ' status-cancelled' : ''
+                  )))) }"
+                  th:text="${
+                    #strings.equalsIgnoreCase(item.status, 'PENDING') ? 'Đang chờ' : (
+                    #strings.equalsIgnoreCase(item.status, 'PREPARING') ? 'Đang chuẩn bị' : (
+                    #strings.equalsIgnoreCase(item.status, 'READY') ? 'Sẵn sàng' : (
+                    #strings.equalsIgnoreCase(item.status, 'SERVED') ? 'Đã phục vụ' : (
+                    #strings.equalsIgnoreCase(item.status, 'CANCELLED') ? 'Đã hủy' : item.status
+                  )))) }"></span>
+            <!-- Nút Cancel chỉ hiển thị khi trạng thái là PENDING -->
             <form class="ajax-form"
-                  th:if="${#strings.equalsIgnoreCase(item.status?.toString(), 'PENDING')}"
                   th:action="@{/guest/order/cancel}" method="post"
-                  style="display:inline-block; margin-left:10px;">
+                  th:style="${#strings.equalsIgnoreCase(item.status, 'PENDING')} ? 'display:inline-block; margin-left:10px;' : 'display:none; margin-left:10px;'">
                 <input type="hidden" name="sessionId" th:value="${sessionId}"/>
                 <input type="hidden" name="orderItemId" th:value="${item.id}"/>
                 <input type="hidden" name="tableId" th:value="${tableId}"/>
                 <button type="submit" class="btn btn-danger" style="padding:4px 8px;">
-                    Cancel ❌
+                    Hủy ❌
                 </button>
             </form>
         </div>
@@ -38,7 +60,7 @@
     <div class="summary">
         <th:block th:with="orderTotalSum=${#aggregates.sum(orderedItems.![totalPrice])}">
             <div class="row" th:if="${!#lists.isEmpty(orderedItems)}">
-                <span>Order Total</span>
+                <span>Tổng đơn</span>
                 <span class="total" id="orderTotal"
                       th:text="${#numbers.formatCurrency(orderTotalSum)}">0₫</span>
             </div>
@@ -48,7 +70,7 @@
     <button class="btn btn-primary"
             th:onclick="|window.location.href='/pizzario/guest/payment/session/' + ${sessionId}|"
             th:disabled="${#lists.isEmpty(orderedItems)}">
-        <i class="fas fa-credit-card"></i> Request Payment
+        <i class="fas fa-credit-card"></i> Yêu cầu thanh toán
     </button>
 </div>
 

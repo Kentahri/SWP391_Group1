@@ -157,7 +157,7 @@ public class OrderService {
                             "Bàn " + order.getSession().getTable().getId() : "Take away")
                     : "Order đã được cập nhật - có thêm món mới";
             
-            // Lấy danh sách items để tính toán
+            // Lấy danh sách items để tính toán và gửi
             List<OrderItem> orderItems = order.getOrderItems();
             int totalItems = orderItems != null ? orderItems.size() : 0;
             int completedItems = orderItems != null 
@@ -165,6 +165,23 @@ public class OrderService {
                             .filter(item -> item.getOrderItemStatus() == OrderItem.OrderItemStatus.SERVED)
                             .count()
                     : 0;
+            
+            // Convert OrderItems to OrderItemInfo list
+            List<KitchenOrderMessage.OrderItemInfo> itemInfos = new ArrayList<>();
+            if (orderItems != null) {
+                itemInfos = orderItems.stream()
+                        .map(item -> KitchenOrderMessage.OrderItemInfo.builder()
+                                .itemId(item.getId())
+                                .productName(item.getProductSize() != null && item.getProductSize().getProduct() != null 
+                                        ? item.getProductSize().getProduct().getName() 
+                                        : "Unknown Product")
+                                .quantity(item.getQuantity())
+                                .status(item.getOrderItemStatus() != null ? item.getOrderItemStatus().toString() : "PENDING")
+                                .note(item.getNote())
+                                .price(item.getTotalPrice())
+                                .build())
+                        .collect(java.util.stream.Collectors.toList());
+            }
             
             KitchenOrderMessage orderMessage = KitchenOrderMessage.builder()
                     .type(messageType)
@@ -180,6 +197,7 @@ public class OrderService {
                     .completedItems(completedItems)
                     .note(order.getNote())
                     .message(messageText)
+                    .items(itemInfos)
                     .build();
 
             webSocketService.broadcastNewOrderToKitchen(orderMessage);
