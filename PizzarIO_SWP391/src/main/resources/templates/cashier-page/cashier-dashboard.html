@@ -512,9 +512,11 @@
                   <input type="hidden" id="payment-method" name="paymentMethod" value="CASH" />
                 </form>
 
-                <div th:if="${tableStatus.toString() == 'WAITING_PAYMENT' && orderDetail != null && orderDetail.sessionId != null}" style="margin-top: 16px;">
+                <div id="payment-buttons-container"
+                     th:style="${tableStatus.toString() == 'WAITING_PAYMENT' && orderDetail != null && orderDetail.sessionId != null ? 'margin-top: 16px;' : 'margin-top: 16px; display: none;'}"
+                     style="margin-top: 16px;">
                   <button type="button" class="btn-action btn-confirm-payment btn-confirm-cash"
-                          th:if="${orderDetail.paymentMethod != null and orderDetail.paymentMethod.toString() == 'CASH'}"
+                          th:style="${orderDetail != null && orderDetail.paymentMethod != null && orderDetail.paymentMethod.toString() == 'CASH' ? '' : 'display: none;'}"
                           onclick="(function(){
                             if(confirm('Xác nhận khách đã thanh toán bằng tiền mặt?')) {
                               document.getElementById('payment-method').value='CASH';
@@ -524,7 +526,7 @@
                     💵 Xác nhận thanh toán tiền mặt
                   </button>
                   <button type="button" class="btn-action btn-confirm-payment btn-confirm-qr"
-                          th:if="${orderDetail.paymentMethod != null and orderDetail.paymentMethod.toString() == 'QR_BANKING'}"
+                          th:style="${orderDetail != null && orderDetail.paymentMethod != null && orderDetail.paymentMethod.toString() == 'QR_BANKING' ? '' : 'display: none;'}"
                           onclick="(function(){
                             if(confirm('Xác nhận khách đã thanh toán qua QR Banking?')) {
                               document.getElementById('payment-method').value='QR_BANKING';

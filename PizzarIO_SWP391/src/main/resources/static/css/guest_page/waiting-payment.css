@@ -1,0 +1,248 @@
+/* ==================== Global Styles (aligned with staff-create.css) ==================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: #fff5e6;
+  color: #4a3528;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 40px;
+}
+
+/* ==================== Container ==================== */
+.container {
+  background: white;
+  border: 2px solid #ffe5cc;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(255, 153, 51, 0.15);
+  max-width: 900px;
+  width: 100%;
+  padding: 28px;
+  animation: fadeIn 0.3s ease;
+}
+
+.card {
+  background: #fffaf0;
+  border: 2px solid #ffe5cc;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(255, 153, 51, 0.15);
+}
+
+/* ==================== Title / Labels ==================== */
+h1,
+.page-title {
+  margin-top: 0;
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #4a3528;
+  background: linear-gradient(135deg, #ffe5cc 0%, #ffdab3 100%);
+  padding: 16px 20px;
+  border-radius: 8px;
+  border-left: 4px solid #ff9933;
+  box-shadow: 0 2px 6px rgba(255, 153, 51, 0.2);
+  margin-bottom: 18px;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 8px 0 6px;
+  color: #4a3528;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: #664c3d;
+}
+
+.hint {
+  font-size: 0.9rem;
+  color: #8a6a59;
+  margin-top: 10px;
+}
+
+.badge {
+  display: inline-block;
+  background: #ffe5cc;
+  color: #ff8000;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 2px solid #ffcc99;
+  margin-bottom: 8px;
+}
+
+/* ==================== Receipt Box ==================== */
+.receipt {
+  background: #ffffff;
+  border: 2px solid #ffe5cc;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(255, 153, 51, 0.1);
+  margin-bottom: 20px;
+}
+
+.receipt-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.receipt-title {
+  font-size: 1rem;
+  font-weight: 800;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  color: #4a3528;
+}
+
+.restaurant-name {
+  font-weight: 700;
+}
+
+.separator {
+  text-align: center;
+  margin: 8px 0;
+  font-size: 0.85rem;
+}
+
+.items-header {
+  display: grid;
+  grid-template-columns: 1fr 70px 1fr;
+  column-gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  border-bottom: 2px dashed #ffcc99;
+  padding-bottom: 6px;
+}
+
+.order-item {
+  display: grid;
+  grid-template-columns: 1fr 70px 1fr;
+  column-gap: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+.order-item > div:nth-child(2),
+.items-header > div:nth-child(2) {
+  text-align: center;
+}
+
+.order-item > div:nth-child(3),
+.items-header > div:nth-child(3) {
+  text-align: right;
+}
+
+.total-section {
+  margin-top: 14px;
+  border-top: 2px dashed #ffcc99;
+  padding-top: 8px;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+/* ==================== Payment Method Box ==================== */
+.payment-section {
+  text-align: center;
+  margin: 18px 0;
+  padding: 16px;
+  background: #fffaf0;
+  border: 2px solid #ffe5cc;
+  border-radius: 12px;
+}
+
+.payment-title {
+  font-size: 1rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: #4a3528;
+}
+
+.qr-box {
+  margin-top: 12px;
+  padding: 16px;
+  border: 2px dashed #ffcc99;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.qr-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #ff8000;
+}
+
+.amount {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #4a3528;
+  margin-top: 6px;
+}
+
+.note {
+  font-size: 0.9rem;
+  color: #8a6a59;
+  margin-top: 8px;
+}
+
+/* ==================== Spinner ==================== */
+.spinner {
+  width: 56px;
+  height: 56px;
+  border: 6px solid #ffe5cc;
+  border-top-color: #ff9933;
+  border-radius: 50%;
+  margin: 8px auto 16px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==================== Animations ==================== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==================== Responsive ==================== */
+@media (max-width: 640px) {
+  body {
+    padding: 20px;
+  }
+  .container {
+    padding: 20px;
+    max-width: 100%;
+  }
+  .items-header,
+  .order-item {
+    grid-template-columns: 1fr 56px 1fr;
+  }
+}

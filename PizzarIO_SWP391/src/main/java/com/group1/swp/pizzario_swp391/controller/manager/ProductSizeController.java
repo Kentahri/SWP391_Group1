@@ -4,6 +4,8 @@ import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
 import com.group1.swp.pizzario_swp391.dto.productsize.ProductSizeCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.productsize.ProductSizeResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.productsize.ProductSizeUpdateDTO;
+import com.group1.swp.pizzario_swp391.entity.ProductSize;
+import com.group1.swp.pizzario_swp391.repository.ProductSizeRepository;
 import com.group1.swp.pizzario_swp391.service.ProductService;
 import com.group1.swp.pizzario_swp391.service.ProductSizeService;
 import com.group1.swp.pizzario_swp391.service.SizeService;
@@ -22,11 +24,12 @@ import java.util.List;
 @ManagerUrl
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-public class ProductSizeController {
+public class ProductSizeController{
 
     ProductSizeService productSizeService;
     ProductService productService;
     SizeService sizeService;
+    private final ProductSizeRepository productSizeRepository;
 
     @GetMapping("/product-sizes")
     public String list(Model model) {
@@ -110,6 +113,22 @@ public class ProductSizeController {
             if (form.getId() == null) {
                 productSizeService.createProductSize(form);
             } else {
+                ProductSize productSize = productSizeRepository.findByProductIdAndSizeId(form.getProductId(), form.getSizeId()).orElse(null);
+                if (productSize == null) {
+                    List<ProductSizeResponseDTO> productSizes = productSizeService.getAllProductSizes();
+                    // Lấy tên món và size để hiển thị lỗi thân thiện
+                    String productName = productService.getProductById(form.getProductId()).getName();
+                    String sizeName = sizeService.getSizeById(form.getSizeId()).getSizeName();
+                    model.addAttribute("productSizes", productSizes);
+                    model.addAttribute("products", productService.getAllProducts());
+                    model.addAttribute("sizes", sizeService.getAllSizesForSelect());
+                    model.addAttribute("openModal", form.getId() == null ? "create" : "edit");
+                    model.addAttribute("errorMessage", String.format(
+                            "Không tìm thấy giá cho món \"%s\" với kích thước \"%s\"",
+                            productName, sizeName
+                    ));
+                    return "admin_page/productsize/productsize-list";
+                }
                 ProductSizeUpdateDTO updateDTO = ProductSizeUpdateDTO.builder()
                         .productId(form.getProductId())
                         .sizeId(form.getSizeId())
@@ -118,7 +137,7 @@ public class ProductSizeController {
                         .flashSaleStart(form.getFlashSaleStart())
                         .flashSaleEnd(form.getFlashSaleEnd())
                         .build();
-                productSizeService.updateProductSize(form.getId(), updateDTO);
+                productSizeService.updateProductSize(productSize.getId(), updateDTO);
             }
             return "redirect:/manager/product-sizes";
         } catch (Exception e) {
