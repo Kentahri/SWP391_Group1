@@ -192,6 +192,54 @@ public class OrderService {
         }
     }
 
+    /**
+     * Gửi thông báo order update đến guest
+     *
+     * @param order Order đã được cập nhật
+     */
+    private void notifyGuestOrderUpdate(Order order) {
+        try {
+            // Chỉ gửi notification nếu order có session (DINE_IN order)
+            if (order.getSession() == null) {
+                return;
+            }
+
+            Long sessionId = order.getSession().getId();
+
+            // Lấy danh sách items để tính toán
+            List<OrderItem> orderItems = order.getOrderItems();
+            int totalItems = orderItems != null ? orderItems.size() : 0;
+            int completedItems = orderItems != null
+                    ? (int) orderItems.stream()
+                    .filter(item -> item.getOrderItemStatus() == OrderItem.OrderItemStatus.SERVED)
+                    .count()
+                    : 0;
+
+            String notificationMessage = "Order của bạn đã được cập nhật bởi cashier";
+
+            KitchenOrderMessage orderMessage = KitchenOrderMessage.builder()
+                    .type(KitchenOrderMessage.MessageType.ORDER_UPDATED)
+                    .orderId(order.getId())
+                    .code(String.format("ORD-%05d", order.getId()))
+                    .tableName(order.getSession().getTable() != null ?
+                            "Bàn " + order.getSession().getTable().getId() : "")
+                    .orderType(order.getOrderType() != null ? order.getOrderType().toString() : "DINE_IN")
+                    .status(order.getOrderStatus() != null ? order.getOrderStatus().toString() : "PREPARING")
+                    .totalPrice(order.getTotalPrice())
+                    .totalItems(totalItems)
+                    .completedItems(completedItems)
+                    .message(notificationMessage)
+                    .build();
+
+            System.out.println("Sending order update to guest - SessionId: " + sessionId + ", Message: " + notificationMessage);
+            System.out.println("Order message object: " + orderMessage);
+
+            webSocketService.broadcastOrderUpdateToGuest(sessionId, orderMessage);
+        } catch (Exception e) {
+            System.err.println("Error notifying guest of order update: " + e.getMessage());
+        }
+    }
+
     public Order getOrderForSession(Long sessionId) {
         if (sessionId == null) return null;
         return sessionRepository.findById(sessionId)
@@ -426,7 +474,11 @@ public class OrderService {
         order.setTotalPrice(newTotal);
 
         orderRepository.save(order);
+
         notifyKitchenOrderChange(order, false);
+
+        // Gửi notification đến guest nếu order có session
+        notifyGuestOrderUpdate(order);
     }
 
     @NotNull
