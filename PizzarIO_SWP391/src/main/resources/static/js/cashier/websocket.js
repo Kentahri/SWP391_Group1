@@ -104,7 +104,7 @@ function handlePaymentPending(paymentData) {
         var metadata = {};
         if (paymentData.tableNumber) metadata.tableId = paymentData.tableNumber;
         if (paymentData.orderId) metadata.orderId = paymentData.orderId;
-        showToast('💰 ' + tableLabel + ' đang chờ thanh toán', 'info', metadata);
+        // showToast('💰 ' + tableLabel + ' đang chờ thanh toán', 'info', metadata);
     } catch (e) { /* ignore */
     }
 
