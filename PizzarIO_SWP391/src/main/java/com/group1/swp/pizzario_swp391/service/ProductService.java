@@ -104,7 +104,7 @@ public class ProductService {
         );
 
     }
-
+    //=============
     public void updateProductActive(Long id, Boolean active) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(PRODUCT_NOT_FOUND));

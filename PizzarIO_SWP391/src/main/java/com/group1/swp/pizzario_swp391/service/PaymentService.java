@@ -378,6 +378,57 @@ public class PaymentService {
         }
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public void confirmPaymentTakeawayBySessionId(Long sessionId, Order.PaymentMethod paymentMethod) {
+
+        try {
+            Order order = sessionService.getOrderBySessionId(sessionId);
+
+            double finalOriginalTotal = calculateOriginalOrderTotal(sessionId);
+            double finalDiscountAmount = calculateDiscountAmount(sessionId);
+            double finalFinalTotal = finalOriginalTotal - finalDiscountAmount;
+
+            if (paymentMethod == null) {
+                throw new IllegalArgumentException("PaymentMethod cannot be null");
+            }
+
+            order.setPaymentMethod(paymentMethod);
+            order.setPaymentStatus(Order.PaymentStatus.PAID);
+            order.setUpdatedAt(LocalDateTime.now());
+
+            if (order.getVoucher() != null) {
+                try {
+                    updateVoucherUsage(order.getVoucher());
+                } catch (Exception e) {
+                    System.err.println("Error updating voucher usage: " + e.getMessage());
+                }
+            }
+
+            if (order.getMembership() != null) {
+                try {
+                    int usedPoints = getPointsUsed(sessionId);
+                    if (usedPoints > 0) {
+                        Membership m = order.getMembership();
+                        int current = m.getPoints() != null ? m.getPoints() : 0;
+                        m.setPoints(Math.max(0, current - usedPoints));
+                        // Persist via membershipService
+                        membershipService.save(m);
+                    }
+                    updateMembershipPointsInNewTransaction(order.getMembership(), finalFinalTotal);
+                } catch (Exception e) {
+                    System.err.println("Error updating membership points: " + e.getMessage());
+                }
+            }
+
+            orderRepository.save(order);
+
+        } catch (Exception e){
+            System.err.println("Error in confirmPaymentTakeawayBySessionId: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
     /**
      * Lấy thông tin membership từ session
      */
