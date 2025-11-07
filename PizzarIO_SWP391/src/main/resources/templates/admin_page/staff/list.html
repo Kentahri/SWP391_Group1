@@ -58,78 +58,82 @@
 
         <!-- MAIN LAYOUT: trái = bảng lương theo ca (từ DB), phải = biểu đồ chi trả lương -->
         <div class="container">
-          <div class="card">
-            <div class="card detail">
-              <!-- LEFT: Bảng lương theo ca (dữ liệu lấy từ model 'shifts') -->
-              <aside>
-                <h3 class="salary">Bảng lương theo ca</h3>
+          <div class="dashboard-grid">
+            <!-- LEFT: Bảng lương theo ca (dữ liệu lấy từ model 'shifts') -->
+            <div class="card salary-card">
+              <h3 class="salary">Bảng lương theo ca</h3>
 
-                <div th:if="${shifts != null and !shifts.isEmpty()}">
-                  <div class="salary table" th:each="s : ${shifts}">
-                    <div class="shift" th:text="${s.shiftName}"></div>
-
-                    <div
-                      class="shift salary"
+              <div
+                class="shifts-container"
+                th:if="${shifts != null and !shifts.isEmpty()}"
+              >
+                <div class="shift-item" th:each="s : ${shifts}">
+                  <div class="shift-row">
+                    <span class="shift-name" th:text="${s.shiftName}"></span>
+                    <span
+                      class="shift-salary"
                       th:text="${s.salaryPerShift != null ? #numbers.formatDecimal(s.salaryPerShift, 1, 'COMMA', 0, 'POINT') + ' VND' : '—'}"
-                    ></div>
+                    ></span>
                   </div>
                 </div>
-              </aside>
+              </div>
+            </div>
 
-              <!-- RIGHT: Biểu đồ chi trả lương hàng ngày (dựa trên StaffShift dữ liệu) -->
-              <section>
-                <h3 class="chart">Biểu đồ chi trả lương hàng ngày</h3>
-                <p class="muted">Tổng chi phí nhân sự trong tuần</p>
+            <!-- RIGHT: Biểu đồ chi trả lương hàng ngày (dựa trên StaffShift dữ liệu) -->
+            <div class="card chart-card">
+              <h3 class="chart">Biểu đồ chi trả lương hàng ngày</h3>
+              <p class="muted">Tổng chi phí nhân sự trong tuần</p>
 
+              <div class="chart-container">
                 <canvas id="payrollChart" height="160"></canvas>
+              </div>
 
-                <!-- inject Thymeleaf data into JS -->
-                <script th:inline="javascript">
-                  /*<![CDATA[*/
-                  let chartLabels = [[${chartLabels}]];
-                  let chartData = [[${chartData}]];
-                  /*]]>*/
-                </script>
+              <!-- inject Thymeleaf data into JS -->
+              <script th:inline="javascript">
+                /*<![CDATA[*/
+                let chartLabels = [[${chartLabels}]];
+                let chartData = [[${chartData}]];
+                /*]]>*/
+              </script>
 
-                <script>
-                  const ctx = document
-                    .getElementById("payrollChart")
-                    .getContext("2d");
-                  const payrollChart = new Chart(ctx, {
-                    type: "bar",
-                    data: {
-                      labels: chartLabels,
-                      datasets: [
-                        {
-                          label: "Chi trả (VND)",
-                          data: chartData,
-                          backgroundColor: "rgba(59,130,246,0.8)",
-                          borderRadius: 6,
-                        },
-                      ],
-                    },
-                    options: {
-                      scales: {
-                        y: {
-                          ticks: {
-                            callback: function (value) {
-                              // format display: 1.2M / 2.4M etc
-                              if (value >= 1000000)
-                                return (value / 1000000).toFixed(1) + "M";
-                              if (value >= 1000)
-                                return (value / 1000).toFixed(0) + "k";
-                              return value;
-                            },
+              <script>
+                const ctx = document
+                  .getElementById("payrollChart")
+                  .getContext("2d");
+                const payrollChart = new Chart(ctx, {
+                  type: "bar",
+                  data: {
+                    labels: chartLabels,
+                    datasets: [
+                      {
+                        label: "Chi trả (VND)",
+                        data: chartData,
+                        backgroundColor: "rgba(255, 153, 51, 0.8)",
+                        borderRadius: 6,
+                      },
+                    ],
+                  },
+                  options: {
+                    scales: {
+                      y: {
+                        ticks: {
+                          callback: function (value) {
+                            // format display: 1.2M / 2.4M etc
+                            if (value >= 1000000)
+                              return (value / 1000000).toFixed(1) + "M";
+                            if (value >= 1000)
+                              return (value / 1000).toFixed(0) + "k";
+                            return value;
                           },
                         },
                       },
-                      plugins: {
-                        legend: { display: false },
-                      },
                     },
-                  });
-                </script>
-              </section>
+                    plugins: {
+                      legend: { display: false },
+                    },
+                  },
+                });
+              </script>
             </div>
           </div>
         </div>
