@@ -14,6 +14,14 @@ function showToast(message, type, duration = 3000) {
         return;
     }
 
+    // Đảm bảo message không bao giờ empty
+    if (!message || message.trim() === '') {
+        console.warn('Empty message passed to showToast, using default');
+        message = 'Có thông báo mới';
+    }
+
+    console.log('showToast called with:', { message, type, duration });
+
     const toast = document.createElement('div');
     toast.className = 'toast ' + type;
     toast.textContent = message;

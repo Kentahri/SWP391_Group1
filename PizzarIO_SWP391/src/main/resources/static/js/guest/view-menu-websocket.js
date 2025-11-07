@@ -16,9 +16,15 @@ window.addEventListener("DOMContentLoaded", function () {
 });
 
 function initializeGuestSession() {
-  guestSessionId =
-    "guest_" + Math.random().toString(36).slice(2) + "_" + Date.now();
-  console.log("Guest session initialized:", guestSessionId);
+  // Lấy sessionId từ URL params hoặc từ backend
+  const urlParams = new URLSearchParams(window.location.search);
+  guestSessionId = urlParams.get('sessionId') || window.GUEST_SESSION_ID || null;
+
+  if (!guestSessionId) {
+    console.error("Cannot find sessionId from URL or backend");
+  } else {
+    console.log("Guest session initialized:", guestSessionId);
+  }
 }
 
 function connectWebSocket() {
@@ -30,13 +36,26 @@ function connectWebSocket() {
 }
 
 function onConnected(frame) {
+  console.log("WebSocket connected:", frame);
   showToast("Đã kết nối WebSocket thành công.", "success");
   reconnectAttempts = 0;
+
+  // Subscribe kênh cá nhân cho table release
   stompClient.subscribe(
     "/queue/guest-" + guestSessionId,
     handlePersonalMessage
   );
-  showToast("Đã đăng ký kênh cá nhân cho phiên: " + guestSessionId, "success");
+
+  // Subscribe kênh nhận order update từ cashier
+  if (guestSessionId) {
+    stompClient.subscribe(
+      "/queue/order-update-" + guestSessionId,
+      handleOrderUpdateMessage
+    );
+    console.log("Subscribed to order-update channel for session:", guestSessionId);
+  }
+
+  console.log("All subscriptions registered for session:", guestSessionId);
 }
 
 function onError(error) {
@@ -82,6 +101,46 @@ function handleTableReleaseSuccess(data) {
     const guestUrl = BASE_URL.replace(/\/$/, "") + "/guest";
     window.location.href = guestUrl;
   }, 1500);
+}
+
+/**
+ * Xử lý message khi order được cập nhật bởi cashier
+ */
+function handleOrderUpdateMessage(message) {
+  try {
+    const data = JSON.parse(message.body);
+    console.log("[Guest] Order update received:", data);
+    console.log("[Guest] Full data object:", JSON.stringify(data, null, 2));
+
+    // Hiển thị thông báo cho guest với message cụ thể
+    let displayMessage = "Order của bạn đã được cập nhật bởi cashier";
+
+    if (data.message && data.message.trim() !== "") {
+      displayMessage = data.message;
+    }
+
+    console.log("[Guest] Displaying toast with message:", displayMessage);
+
+    // Đảm bảo showToast function tồn tại
+    if (typeof showToast === "function") {
+      showToast(displayMessage, "success");
+    } else {
+      console.error("showToast function not found!");
+      alert(displayMessage); // Fallback to alert
+    }
+
+    setTimeout(() => {
+      location.reload();
+    }, 1000);
+
+  } catch (error) {
+    console.error("Error parsing order update message:", error);
+    if (typeof showToast === "function") {
+      showToast("Có lỗi khi nhận cập nhật order", "error");
+    } else {
+      alert("Có lỗi khi nhận cập nhật order");
+    }
+  }
 }
 
 window.releaseTable = function (tableId) {
