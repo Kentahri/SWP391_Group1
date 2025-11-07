@@ -34,7 +34,7 @@ function subscribeToTopics() {
     });
 
     // Subscribe to payment pending notifications
-    stompClient.subscribe('/topic/payment-pending', function(message) {
+    stompClient.subscribe('/topic/payment-pending', function (message) {
         const paymentData = JSON.parse(message.body);
         console.log('Payment pending received:', paymentData);
         handlePaymentPending(paymentData);
@@ -104,8 +104,9 @@ function handlePaymentPending(paymentData) {
         var metadata = {};
         if (paymentData.tableNumber) metadata.tableId = paymentData.tableNumber;
         if (paymentData.orderId) metadata.orderId = paymentData.orderId;
-        showToast('💰 ' + tableLabel + ' đang chờ thanh toán', 'info', metadata);
-    } catch (e) { /* ignore */ }
+        // showToast('💰 ' + tableLabel + ' đang chờ thanh toán', 'info', metadata);
+    } catch (e) { /* ignore */
+    }
 
     // Show payment confirmation modal
     showPaymentConfirmationModal(paymentData);
@@ -181,7 +182,7 @@ function showPaymentConfirmationModal(paymentData) {
     document.getElementById('payment-table-number').textContent = paymentData.tableNumber || 'N/A';
     document.getElementById('payment-customer-name').textContent = paymentData.customerName || 'Khách vãng lai';
     document.getElementById('payment-total-amount').textContent =
-        new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(paymentData.totalAmount || 0);
+        new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'}).format(paymentData.totalAmount || 0);
     document.getElementById('payment-method').textContent =
         paymentData.paymentMethod === 'QR_BANKING' ? 'QR Banking' : 'Tiền mặt';
     document.getElementById('payment-session-id').value = paymentData.sessionId;

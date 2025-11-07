@@ -15,7 +15,7 @@ window.addEventListener("DOMContentLoaded", function () {
   initializeGuestSession();
   initializeOrderId();
   connectWebSocket();
-  
+
   // Lắng nghe sự kiện khi order được place thành công
   setupOrderPlaceListener();
 });
@@ -34,7 +34,7 @@ function setupOrderPlaceListener() {
       }, 1000); // Đợi server xử lý xong
     }
   });
-  
+
   // Kiểm tra xem có ordered items không khi page load
   setTimeout(() => {
     checkAndUpdateOrderId();
@@ -56,7 +56,7 @@ function initializeGuestSession() {
   // Lấy sessionId từ URL params
   const urlParams = new URLSearchParams(window.location.search);
   const urlSessionId = urlParams.get("sessionId");
-  
+
   if (urlSessionId) {
     guestSessionId = urlSessionId;
   } else {
@@ -79,7 +79,7 @@ function initializeOrderId() {
 function updateOrderIdFromServer() {
   const urlParams = new URLSearchParams(window.location.search);
   const sessionId = urlParams.get("sessionId");
-  
+
   if (sessionId) {
     // Gọi API để lấy orderId (nếu có order)
     // Cho phép cập nhật cả khi đã có orderId (để đảm bảo đồng bộ)
@@ -120,22 +120,34 @@ function connectWebSocket() {
 }
 
 function onConnected(frame) {
-  console.log("[Guest] WebSocket connected:", frame);
+  console.log("WebSocket connected:", frame);
+  showToast("Đã kết nối WebSocket thành công.", "success");
   reconnectAttempts = 0;
-  
-  // Subscribe vào queue cá nhân
+
+  // Subscribe kênh cá nhân cho table release
   stompClient.subscribe(
     "/queue/guest-" + guestSessionId,
     handlePersonalMessage
   );
-  
+
   // Subscribe vào topic kitchen-orders để nhận order updates real-time
   stompClient.subscribe(
     "/topic/kitchen-orders",
     handleOrderUpdate
   );
-  
+
   console.log("[Guest] Subscribed to WebSocket topics");
+
+  // Subscribe kênh nhận order update từ cashier
+  if (guestSessionId) {
+    stompClient.subscribe(
+      "/queue/order-update-" + guestSessionId,
+      handleOrderUpdateMessage
+    );
+    console.log("Subscribed to order-update channel for session:", guestSessionId);
+  }
+
+  console.log("All subscriptions registered for session:", guestSessionId);
 }
 
 function onError(error) {
@@ -173,19 +185,19 @@ function handleOrderUpdate(message) {
   try {
     const orderData = JSON.parse(message.body);
     console.log("[Guest] Order update received:", orderData);
-    
+
     // Nếu chưa có orderId, thử lấy từ server hoặc từ message
     if (!guestOrderId) {
       // Thử lấy orderId từ server trước
       updateOrderIdFromServer();
-      
+
       // Nếu message có orderId và có thể là order của guest này (dựa vào sessionId)
       // Thì tạm thời xử lý, sau đó sẽ filter lại
       if (orderData.orderId) {
         // Kiểm tra xem có phải order của guest này không bằng cách so sánh sessionId
         const urlParams = new URLSearchParams(window.location.search);
         const sessionId = urlParams.get("sessionId");
-        
+
         // Nếu có sessionId và message type là NEW_ORDER, có thể là order mới của guest
         if (sessionId && orderData.type === "NEW_ORDER") {
           guestOrderId = orderData.orderId;
@@ -194,18 +206,18 @@ function handleOrderUpdate(message) {
           return;
         }
       }
-      
+
       // Nếu vẫn chưa có orderId, bỏ qua message
       console.log("[Guest] Ignoring order update - no orderId yet");
       return;
     }
-    
+
     // Chỉ xử lý nếu là order của guest này
     if (orderData.orderId != guestOrderId) {
       console.log("[Guest] Ignoring order update - not for this guest (orderId: " + orderData.orderId + " vs " + guestOrderId + ")");
       return;
     }
-    
+
     // Xử lý theo loại message
     switch (orderData.type) {
       case "ORDER_UPDATED":
@@ -235,7 +247,7 @@ function handleOrderUpdate(message) {
  */
 function handleOrderUpdated(orderData) {
   console.log("[Guest] Order updated:", orderData);
-  
+
   // Nếu có items trong message, cập nhật UI trực tiếp
   if (orderData.items && orderData.items.length > 0) {
     updateOrderItemsUI(orderData.items);
@@ -252,10 +264,10 @@ function handleOrderUpdated(orderData) {
  */
 function handleOrderItemCancelled(orderData) {
   console.log("[Guest] Order item cancelled:", orderData);
-  
+
   // Reload ordered items để cập nhật UI
   reloadOrderedItems();
-  
+
   if (orderData.items && orderData.items.length > 0) {
     const cancelledItem = orderData.items[0];
     showToast(
@@ -272,7 +284,7 @@ function handleOrderItemCancelled(orderData) {
  */
 function handleOrderCompleted(orderData) {
   console.log("[Guest] Order completed:", orderData);
-  
+
   reloadOrderedItems();
   showToast("Đơn hàng của bạn đã hoàn thành!", "success");
 }
@@ -286,13 +298,13 @@ function updateOrderItemsUI(items) {
     console.warn("[Guest] orderedItemsList not found");
     return;
   }
-  
+
   // Tìm và cập nhật từng item
   items.forEach(item => {
     const itemElement = orderedItemsList.querySelector(
       `[data-order-item-id="${item.itemId}"]`
     );
-    
+
     if (itemElement) {
       // Cập nhật status
       const statusElement = itemElement.querySelector(".status");
@@ -301,7 +313,7 @@ function updateOrderItemsUI(items) {
         statusElement.textContent = getStatusText(item.status);
         statusElement.className = "status " + statusClass;
       }
-      
+
       // Cập nhật class của card để đổi màu theo trạng thái
       const orderStatusClasses = [
         "order-status-pending",
@@ -324,7 +336,7 @@ function updateOrderItemsUI(items) {
         // => reload phần ordered items để lấy đúng fragment có nút Cancel
         reloadOrderedItems();
       }
-      
+
       // Animation để người dùng thấy thay đổi
       itemElement.style.animation = "none";
       setTimeout(() => {
@@ -340,15 +352,15 @@ function updateOrderItemsUI(items) {
 function reloadOrderedItems() {
   const urlParams = new URLSearchParams(window.location.search);
   const sessionId = urlParams.get("sessionId");
-  
+
   if (!sessionId) {
     console.warn("[Guest] No sessionId to reload ordered items");
     return;
   }
-  
+
   // Cập nhật orderId trước khi reload
   updateOrderIdFromServer();
-  
+
   // Gọi API để lấy ordered items mới
   fetch(`${BASE_URL}/guest/order/ordered-items?sessionId=${sessionId}`)
     .then(response => {
@@ -364,7 +376,7 @@ function reloadOrderedItems() {
         // Parse HTML fragment
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = html;
-        
+
         // Tìm phần order-view trong fragment
         const orderViewFragment = tempDiv.querySelector("#order-view");
         if (orderViewFragment) {
@@ -389,7 +401,7 @@ function reloadOrderedItems() {
             }
           }
         }
-        
+
         // Cập nhật lại orderId sau khi reload
         updateOrderIdFromServer();
       }
@@ -471,6 +483,46 @@ function handleTableReleaseSuccess(data) {
     const guestUrl = BASE_URL.replace(/\/$/, "") + "/guest";
     window.location.href = guestUrl;
   }, 1500);
+}
+
+/**
+ * Xử lý message khi order được cập nhật bởi cashier
+ */
+function handleOrderUpdateMessage(message) {
+  try {
+    const data = JSON.parse(message.body);
+    console.log("[Guest] Order update received:", data);
+    console.log("[Guest] Full data object:", JSON.stringify(data, null, 2));
+
+    // Hiển thị thông báo cho guest với message cụ thể
+    let displayMessage = "Order của bạn đã được cập nhật bởi cashier";
+
+    if (data.message && data.message.trim() !== "") {
+      displayMessage = data.message;
+    }
+
+    console.log("[Guest] Displaying toast with message:", displayMessage);
+
+    // Đảm bảo showToast function tồn tại
+    if (typeof showToast === "function") {
+      showToast(displayMessage, "success");
+    } else {
+      console.error("showToast function not found!");
+      alert(displayMessage); // Fallback to alert
+    }
+
+    setTimeout(() => {
+      location.reload();
+    }, 1000);
+
+  } catch (error) {
+    console.error("Error parsing order update message:", error);
+    if (typeof showToast === "function") {
+      showToast("Có lỗi khi nhận cập nhật order", "error");
+    } else {
+      alert("Có lỗi khi nhận cập nhật order");
+    }
+  }
 }
 
 window.releaseTable = function (tableId) {
