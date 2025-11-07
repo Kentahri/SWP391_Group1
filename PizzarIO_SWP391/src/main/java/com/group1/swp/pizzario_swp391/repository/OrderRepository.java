@@ -80,30 +80,17 @@ public interface OrderRepository extends JpaRepository<Order, Long>{
             @Param("categoryId") Long categoryId,
             Pageable pageable);
 
-    //        @Query("""
-//                         SELECT p
-//                         FROM Order o
-//                         JOIN o.orderItems oi
-//                         JOIN oi.productSize.product p
-//                         WHERE o.orderStatus = 'COMPLETED' AND o.paymentStatus = 'PAID'
-//                         GROUP BY p.id, p.name, p.description, p.imageURL, p.basePrice,
-//                                  p.flashSalePrice, p.flashSaleStart, p.flashSaleEnd,
-//                                  p.active, p.createdAt, p.updatedAt, p.category
-//                         ORDER BY SUM(oi.quantity) DESC
-//                         limit :quantity
-//                \s""")
-//        List<Product> findTopBestSellingProductsForGemini(int quantity);
+
     @Query("""
-            SELECT ps.product
+            SELECT p
             FROM Order o
             JOIN o.orderItems oi
             JOIN oi.productSize.product p
-            JOIN ProductSize ps ON ps.product = p
             WHERE o.orderStatus = 'COMPLETED'
               AND o.paymentStatus = 'PAID'
-            GROUP BY ps.product.id, ps.product.name, ps.product.description,
-                     ps.product.imageURL, ps.product.active,
-                     ps.product.createdAt, ps.product.updatedAt, ps.product.category
+            GROUP BY p.id, p.name, p.description,
+                     p.imageURL, p.active,
+                     p.createdAt, p.updatedAt, p.category
             ORDER BY SUM(oi.quantity) DESC
             """)
     List<Product> findTopBestSellingProductsForGemini(int quantity);

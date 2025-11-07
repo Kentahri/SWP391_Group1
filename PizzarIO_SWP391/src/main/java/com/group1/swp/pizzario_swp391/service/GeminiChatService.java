@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.Normalizer;
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class GeminiChatService {
 
 
@@ -65,7 +67,7 @@ public class GeminiChatService {
             - Khuyến khích, gợi ý, không ép buộc.
             - Dùng emoji hợp lý (1–3 emoji mỗi câu, đừng lạm dụng).
             - Nếu người dùng hỏi chung chung → hỏi lại để làm rõ nhu cầu (ví dụ: ăn mấy người? thích vị gì?).
-            - Không dùng các cái ký hiệu trong markdown như *, -, >, #, v.v.
+            - Không dùng các cái ký hiệu trong markdown như **, *.
             
             Khi tư vấn món:
             - Nếu khách hỏi món rẻ nhất → gợi ý các món giá thấp dễ chọn.
@@ -82,6 +84,7 @@ public class GeminiChatService {
             
             Cuối mỗi câu trả lời:
             - Gợi ý hành động tiếp theo cho khách (ví dụ: hỏi thêm về số người ăn, gợi ý món khác, hỏi về sở thích vị ăn, v.v.).
+            - Gợi ý khách xem thêm món ở trn màn hình để biết thêm chi tiết nhé
             
             Ví dụ câu trả lời chuẩn:
             “Bạn muốn tìm món giá dễ thương đúng không nè? 😄 \s
@@ -161,7 +164,7 @@ public class GeminiChatService {
                     .temperature(0.7f)
                     .topK(50f)
                     .topP(0.85f)
-                    .maxOutputTokens(1024)
+                    .maxOutputTokens(4096)
                     .build();
 
             return geminiClient.models.generateContent(model, fullPrompt, config).text();
@@ -301,23 +304,41 @@ public class GeminiChatService {
         StringBuilder response = new StringBuilder();
 
         switch (type.toLowerCase()) {
-            case "giá rẻ nhất" -> response.append("Các món giá rẻ nhất:");
-            case "giá cao nhất" -> response.append("Các món cao cấp:");
-            case "khuyến mãi" -> response.append("Các món đang khuyến mãi:");
-            case "combo" -> response.append("Combo:");
-            case "bán chạy" -> response.append("Món bán chạy nhất:");
+            case "giá rẻ nhất" -> response.append("Các món giá rẻ nhất:\n\n");
+            case "giá cao nhất" -> response.append("Các món cao cấp:\n\n");
+            case "khuyến mãi" -> response.append("Các món đang khuyến mãi:\n\n");
+            case "combo" -> response.append("Combo:\n\n");
+            case "bán chạy" -> response.append("Món bán chạy nhất:\n\n");
+            case "pizza" -> response.append("Các món pizza:\n\n");
+            default -> response.append("Danh sách sản phẩm:\n\n");
         }
 
         for (int i = 0; i < Math.min(products.size(), 5); i++) {
             Product product = products.get(i);
-            response.append(product.getName());
+            response.append(i + 1).append(". ").append(product.getName());
 
-//            response.append(" - ").append(formatPrice(product.getBasePrice()));
 
-            if (product.getDescription() != null && !product.getDescription().isEmpty()) {
-                response.append("\n   ").append(product.getDescription());
+            if (product.getProductSizes() != null && !product.getProductSizes().isEmpty()) {
+                response.append("\n   ");
+                for (int j = 0; j < product.getProductSizes().size(); j++) {
+                    var productSize = product.getProductSizes().get(j);
+                    if (j > 0) {
+                        response.append(" | ");
+                    }
+                    response.append("Size ").append(productSize.getSize().getSizeName()).append(": ");
+
+                    if (productSize.isOnFlashSale()) {
+                        response.append(formatPrice(productSize.getFlashSalePrice()))
+                                .append(" (giảm từ ").append(formatPrice(productSize.getBasePrice())).append(" xuống)");
+                    } else {
+                        response.append(formatPrice(productSize.getBasePrice()));
+                    }
+                }
             }
+            response.append("\n\n");
         }
+
+        System.out.println(response.toString());
 
         return response.toString();
     }

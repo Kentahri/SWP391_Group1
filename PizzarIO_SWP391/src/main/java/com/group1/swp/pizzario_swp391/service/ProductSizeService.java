@@ -96,18 +96,7 @@ public class ProductSizeService{
         ProductSize ps = productSizeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bản ghi ID: " + id));
 
-        if (productSizeRepository.existsByProductIdAndSizeIdAndIdNot(dto.getProductId(), dto.getSizeId(), id)) {
-            throw new RuntimeException("Cặp sản phẩm và kích thước đã tồn tại");
-        }
-
-        Product product = productRepository.findById(dto.getProductId())
-                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại ID: " + dto.getProductId()));
-
-        Size size = sizeRepository.findById(dto.getSizeId())
-                .orElseThrow(() -> new RuntimeException("Kích thước không tồn tại ID: " + dto.getSizeId()));
-
-        ps.setProduct(product);
-        ps.setSize(size);
+        // Chỉ cho phép cập nhật giá và thời gian flash sale
         ps.setBasePrice(dto.getBasePrice());
         ps.setFlashSalePrice(dto.getFlashSalePrice());
         ps.setFlashSaleStart(dto.getFlashSaleStart());

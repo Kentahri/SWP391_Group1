@@ -43,9 +43,9 @@ public class ProductSizeUpdateDTO {
         return flashSaleStart.isBefore(flashSaleEnd);
     }
 
-    @AssertTrue(message = "Thời gian bắt đầu flash sale phải trong tương lai")
-    private boolean isFlashSaleStartInFuture() {
-        if (flashSaleStart == null) return true;
-        return flashSaleStart.isAfter(LocalDateTime.now());
-    }
+    // @AssertTrue(message = "Thời gian bắt đầu flash sale phải trong tương lai")
+    // private boolean isFlashSaleStartInFuture() {
+    //     if (flashSaleStart == null) return true;
+    //     return flashSaleStart.isAfter(LocalDateTime.now());
+    // }
 }

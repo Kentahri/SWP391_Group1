@@ -47,7 +47,7 @@ function handleTableUpdate(update) {
 
     // Show notification - Ưu tiên message từ backend
     let message;
-    
+
     if (update.message) {
         // Dùng message từ backend (ưu tiên cao nhất)
         message = update.message;
@@ -61,7 +61,7 @@ function handleTableUpdate(update) {
         };
         message = defaultMessages[update.type] || `Bàn ${update.tableId} cập nhật`;
     }
-    
+
     showToast(message, 'info');
 }
 
@@ -70,20 +70,20 @@ function handleTableUpdate(update) {
  */
 function handleTableRetired(update) {
     console.log('Handling table retired:', update);
-    
+
     const tableCard = document.getElementById('table-' + update.tableId);
     if (tableCard) {
         // Thêm animation fade out trước khi xóa
         tableCard.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
         tableCard.style.opacity = '0';
         tableCard.style.transform = 'scale(0.8)';
-        
+
         // Xóa bàn khỏi UI sau animation
         setTimeout(() => {
             tableCard.remove();
         }, 500);
     }
-    
+
     // Hiển thị thông báo
     const message = update.message || `🔒 Bàn ${update.tableId} đã được đánh dấu retired và sẽ không hiển thị nữa`;
     showToast(message, 'warning');

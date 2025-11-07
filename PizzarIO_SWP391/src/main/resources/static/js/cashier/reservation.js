@@ -1,7 +1,7 @@
 /**
  * Mở modal đặt bàn
  */
-window.openReservationModal = function(tableId) {
+window.openReservationModal = function (tableId) {
     const modal = document.getElementById('reservation-modal');
     const form = document.getElementById('reservation-form');
 
@@ -19,7 +19,7 @@ window.openReservationModal = function(tableId) {
 
     // Show modal
     modal.classList.add('show');
-    
+
     // Prevent body scroll when modal is open
     document.body.style.overflow = 'hidden';
 };
@@ -27,13 +27,13 @@ window.openReservationModal = function(tableId) {
 /**
  * Đóng modal đặt bàn
  */
-window.closeReservationModal = function() {
+window.closeReservationModal = function () {
     const modal = document.getElementById('reservation-modal');
     modal.classList.remove('show');
-    
+
     // Restore body scroll when modal is closed
     document.body.style.overflow = '';
-    
+
     // Xóa tất cả toast trong modal khi đóng
     const modalToastContainer = document.getElementById('modal-toast-container');
     modalToastContainer.innerHTML = '';
@@ -42,7 +42,7 @@ window.closeReservationModal = function() {
 /**
  * Đóng modal khi click ra bên ngoài
  */
-window.addEventListener('click', function(event) {
+window.addEventListener('click', function (event) {
     const modal = document.getElementById('reservation-modal');
     if (event.target === modal) {
         closeReservationModal();

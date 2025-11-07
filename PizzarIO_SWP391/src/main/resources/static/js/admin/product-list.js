@@ -73,6 +73,7 @@ function setupComboFeature(form) {
 
   const categorySelect = form.querySelector('select[name="categoryId"]');
   const comboSection = document.getElementById("comboProductsSection");
+  const comboPriceSection = document.getElementById("comboPriceSection");
 
   if (!categorySelect || !comboSection) return;
 
@@ -85,9 +86,11 @@ function setupComboFeature(form) {
 
     if (categoryName.includes("combo")) {
       comboSection.style.display = "block";
+      comboPriceSection && (comboPriceSection.style.display = "block");
       loadProducts();
     } else {
       comboSection.style.display = "none";
+      comboPriceSection && (comboPriceSection.style.display = "none");
       selectedProducts = [];
       updateSelectedList();
     }
@@ -111,22 +114,24 @@ function setupComboFeature(form) {
 
     this.action = "/pizzario/manager/products/save";
 
-    // Thêm dữ liệu combo vào form
+    // Thêm dữ liệu combo vào form (đổi sang comboItemsJson + chọn theo ProductSize)
     if (selectedProducts.length > 0) {
-      let input = document.getElementById("selectedProductsJson");
+      let input = document.getElementById("comboItemsJson");
       if (!input) {
         input = document.createElement("input");
         input.type = "hidden";
-        input.id = "selectedProductsJson";
-        input.name = "selectedProductsJson";
+        input.id = "comboItemsJson";
+        input.name = "comboItemsJson";
         this.appendChild(input);
       }
-      input.value = JSON.stringify(selectedProducts);
+      // Rút gọn dữ liệu chỉ còn productSizeId + quantity
+      const minimal = selectedProducts.map(p => ({ productSizeId: p.productSizeId, quantity: p.quantity }));
+      input.value = JSON.stringify(minimal);
     }
   });
 }
 
-// Load danh sách sản phẩm cho combo
+// Load danh sách sản phẩm và render theo ProductSize cho combo
 function loadProducts() {
   const container = document.getElementById("productSelectionList");
   if (!container) return;
@@ -147,43 +152,52 @@ function loadProducts() {
       }
 
       container.innerHTML = activeProducts
-        .map(
-          (p) => `
-        <div class="product-selection-item" data-id="${p.id}" data-price="${p.basePrice}" data-name="${p.name}">
-          <label>
-            <input type="checkbox" class="product-checkbox" data-id="${p.id}">
-            <span>${p.name}</span>
-          </label>
-          <span class="product-price">${p.basePriceFormatted}</span>
-          <div class="quantity-control" style="display: none;">
-            <input type="number" min="1" value="1" class="quantity-input" data-id="${p.id}">
-          </div>
-        </div>
-      `
-        )
+        .map((p) => {
+          const sizes = Array.isArray(p.sizes) ? p.sizes : [];
+          if (sizes.length === 0) return "";
+          const sizeItems = sizes
+            .map(
+              (s) => `
+              <div class="product-size-item" data-psid="${s.id}" data-name="${p.name}" data-size="${s.sizeName}" data-price="${s.currentPrice}">
+                <label>
+                  <input type="checkbox" class="productsize-checkbox" data-psid="${s.id}">
+                  <span>${p.name} - ${s.sizeName}</span>
+                </label>
+                <span class="product-price">${Number(s.currentPrice).toLocaleString()} đ</span>
+                <div class="quantity-control" style="display: none;">
+                  <input type="number" min="1" value="1" class="quantity-input" data-psid="${s.id}">
+                </div>
+              </div>
+            `
+            )
+            .join("");
+          return `<div class="product-selection-item">${sizeItems}</div>`;
+        })
         .join("");
 
-      // Gắn sự kiện cho checkbox
-      container.querySelectorAll(".product-checkbox").forEach((cb) => {
+      // Gắn sự kiện cho checkbox theo ProductSize
+      container.querySelectorAll(".productsize-checkbox").forEach((cb) => {
         cb.addEventListener("change", function () {
-          const item = this.closest(".product-selection-item");
+          const item = this.closest(".product-size-item");
           const quantityControl = item.querySelector(".quantity-control");
 
-          const id = this.dataset.id;
+          const psid = this.dataset.psid;
           const name = item.dataset.name;
+          const sizeName = item.dataset.size;
           const price = parseFloat(item.dataset.price);
 
           if (this.checked) {
             quantityControl.style.display = "flex";
             selectedProducts.push({
-              id: id,
+              productSizeId: psid,
               name: name,
+              sizeName: sizeName,
               price: price,
               quantity: 1,
             });
           } else {
             quantityControl.style.display = "none";
-            selectedProducts = selectedProducts.filter((p) => p.id !== id);
+            selectedProducts = selectedProducts.filter((p) => p.productSizeId !== psid);
           }
 
           updateSelectedList();
@@ -194,9 +208,8 @@ function loadProducts() {
       // Gắn sự kiện cho input số lượng
       container.querySelectorAll(".quantity-input").forEach((input) => {
         input.addEventListener("change", function () {
-          const product = selectedProducts.find(
-            (p) => p.id === this.dataset.id
-          );
+          const psid = this.dataset.psid;
+          const product = selectedProducts.find((p) => p.productSizeId === psid);
           if (product) {
             product.quantity = parseInt(this.value) || 1;
             updateSelectedList();
@@ -240,7 +253,7 @@ function updateDescription() {
   if (!form) return;
 
   const descField = form.querySelector('textarea[name="description"]');
-  const priceField = form.querySelector('input[name="basePrice"]');
+  const priceField = form.querySelector('input[name="comboPrice"]');
 
   if (selectedProducts.length === 0) {
     if (descField) descField.value = "";
@@ -250,17 +263,17 @@ function updateDescription() {
   // Cập nhật mô tả
   if (descField) {
     descField.value = selectedProducts
-      .map((p) => `${p.name} x${p.quantity}`)
+      .map((p) => `${p.name} (${p.sizeName}) x${p.quantity}`)
       .join(", ");
   }
 
-  // Tính và cập nhật giá (giảm 10%)
-  if (priceField) {
+  // Gợi ý giá nếu chưa nhập
+  if (priceField && !priceField.value) {
     const total = selectedProducts.reduce(
       (sum, p) => sum + p.price * p.quantity,
       0
     );
-    priceField.value = Math.round(total * 0.9);
+    priceField.value = Math.round(total);
   }
 }
 

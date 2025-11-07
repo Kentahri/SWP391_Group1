@@ -4,7 +4,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -140,32 +142,33 @@ public class OrderService {
     private void notifyKitchenNewOrder(Order order) {
         notifyKitchenOrderChange(order, true);
     }
-    
+
     /**
      * Gửi thông báo order thay đổi đến kitchen
-     * @param order Order đã thay đổi
+     *
+     * @param order      Order đã thay đổi
      * @param isNewOrder true nếu là order mới, false nếu là order đã tồn tại được cập nhật
      */
     private void notifyKitchenOrderChange(Order order, boolean isNewOrder) {
         try {
-            KitchenOrderMessage.MessageType messageType = isNewOrder 
-                    ? KitchenOrderMessage.MessageType.NEW_ORDER 
+            KitchenOrderMessage.MessageType messageType = isNewOrder
+                    ? KitchenOrderMessage.MessageType.NEW_ORDER
                     : KitchenOrderMessage.MessageType.ORDER_UPDATED;
-            
-            String messageText = isNewOrder 
+
+            String messageText = isNewOrder
                     ? "Có order mới từ " + (order.getSession() != null && order.getSession().getTable() != null ?
-                            "Bàn " + order.getSession().getTable().getId() : "Take away")
+                    "Bàn " + order.getSession().getTable().getId() : "Take away")
                     : "Order đã được cập nhật - có thêm món mới";
-            
+
             // Lấy danh sách items để tính toán
             List<OrderItem> orderItems = order.getOrderItems();
             int totalItems = orderItems != null ? orderItems.size() : 0;
-            int completedItems = orderItems != null 
+            int completedItems = orderItems != null
                     ? (int) orderItems.stream()
-                            .filter(item -> item.getOrderItemStatus() == OrderItem.OrderItemStatus.SERVED)
-                            .count()
+                    .filter(item -> item.getOrderItemStatus() == OrderItem.OrderItemStatus.SERVED)
+                    .count()
                     : 0;
-            
+
             KitchenOrderMessage orderMessage = KitchenOrderMessage.builder()
                     .type(messageType)
                     .orderId(order.getId())
@@ -395,38 +398,23 @@ public class OrderService {
                 throw new RuntimeException("ProductId không được để trống");
             }
 
-            // Check if item already exists in order (kiểm tra cả productId và sizeId)
-            OrderItem existingItem = order.getOrderItems().stream()
-                    .filter(item -> item.getProductSize() != null
-                            && item.getProductSize().getProduct().getId().equals(newItem.getProductId())
-                            && item.getProductSize().getSize().getId().equals(productSize.getSize().getId()))
-                    .findFirst()
-                    .orElse(null);
+            if (newItem.getOrderItemId() != null) {
+                // Tìm món cũ
+                OrderItem existingItem = order.getOrderItems().stream()
+                        .filter(item -> Objects.equals(item.getId(), newItem.getOrderItemId()))
+                        .findAny().orElse(null);
 
-            if (existingItem != null) {
-                if (newItem.getQuantity() == 0) {
-                    order.getOrderItems().remove(existingItem);
-                    orderItemRepository.delete(existingItem);
-                } else {
-                    existingItem.setQuantity(newItem.getQuantity());
-                    existingItem.setTotalPrice(existingItem.getUnitPrice() * existingItem.getQuantity());
-                    // Update note if provided
-                    if (newItem.getNote() != null) {
+                if (existingItem != null) {
+                    if (newItem.getQuantity() == 0) {
+                        order.getOrderItems().remove(existingItem);
+                        orderItemRepository.delete(existingItem);
+                    } else {
                         existingItem.setNote(newItem.getNote());
+                        orderItemRepository.save(existingItem);
                     }
                 }
             } else if (newItem.getQuantity() > 0) {
-                // Add new item only if quantity > 0
-                OrderItem orderItem = new OrderItem();
-                orderItem.setOrder(order);
-                orderItem.setQuantity(newItem.getQuantity());
-                orderItem.setUnitPrice(newItem.getPrice());
-                orderItem.setTotalPrice(newItem.getPrice() * newItem.getQuantity());
-                orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
-                orderItem.setOrderItemType(OrderItem.OrderItemType.DINE_IN);
-                orderItem.setProductSize(productSize); // Set ProductSize
-                orderItem.setNote(newItem.getNote()); // Set note
-
+                OrderItem orderItem = getOrderItem(newItem, order, productSize);
                 order.getOrderItems().add(orderItem);
                 orderItemRepository.save(orderItem);
             }
@@ -438,7 +426,21 @@ public class OrderService {
         order.setTotalPrice(newTotal);
 
         orderRepository.save(order);
-        notifyKitchenOrderChange(order,false);
+        notifyKitchenOrderChange(order, false);
+    }
+
+    @NotNull
+    private static OrderItem getOrderItem(UpdateOrderItemsDTO.OrderItemUpdate newItem, Order order, ProductSize productSize) {
+        OrderItem orderItem = new OrderItem();
+        orderItem.setOrder(order);
+        orderItem.setQuantity(newItem.getQuantity());
+        orderItem.setUnitPrice(newItem.getPrice());
+        orderItem.setTotalPrice(newItem.getPrice() * newItem.getQuantity());
+        orderItem.setOrderItemStatus(OrderItem.OrderItemStatus.PENDING);
+        orderItem.setOrderItemType(OrderItem.OrderItemType.DINE_IN);
+        orderItem.setProductSize(productSize);
+        orderItem.setNote(newItem.getNote());
+        return orderItem;
     }
 
 }

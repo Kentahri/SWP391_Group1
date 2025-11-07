@@ -43,4 +43,10 @@ public class ProductCreateDTO{
 
     // === MỚI: Ảnh hiện tại (khi edit) ===
     String currentImageURL;
+
+    // === COMBO: Giá combo và danh sách thành phần (JSON) ===
+    // comboPrice chỉ dùng khi danh mục là Combo
+    Double comboPrice;
+    // JSON dạng: [{"productSizeId": number, "quantity": number}, ...]
+    String comboItemsJson;
 }

@@ -94,6 +94,7 @@ public class CashierDashboardController {
             var tableInfo = tableService.getTableById(tableId);
             model.addAttribute("tableCapacity", tableInfo.getCapacity());
             model.addAttribute("tableStatus", tableInfo.getTableStatus());
+            model.addAttribute("tableId", tableId);
 
             // Load products and categories for edit order panel
             model.addAttribute("products", productService.getAllProducts());
