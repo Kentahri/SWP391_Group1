@@ -426,15 +426,9 @@
 							</div>
 							<div th:each="item : ${orderDetail.items}" class="order-item">
 								<div class="order-item-info">
-									<div class="item-name" th:text="${item.productName}">
+									<div class="item-name" 
+										th:text="${item.sizeName != null && !#strings.isEmpty(item.sizeName) ? item.productName + ' (' + item.sizeName + ')' : item.productName}">
 										—
-									</div>
-									<div
-											th:if="${item.sizeName != null && !#strings.isEmpty(item.sizeName)}"
-											class="item-size"
-											style="color: #6c757d; font-size: 13px; margin-top: 2px;"
-									>
-										Size: <span th:text="${item.sizeName}"></span>
 									</div>
 									<div class="item-detail">
                         <span class="item-quantity"
@@ -856,7 +850,7 @@
               <input
                 type="text"
                 id="invoice-search"
-                placeholder="🔍 Tìm kiếm"
+                placeholder="🔍 Tìm theo mã đơn"
                 style="
                   padding: 10px 14px;
                   border: 2px solid #ffe5cc;
@@ -872,6 +866,18 @@
                 onfocus="this.style.borderColor='#ff9933'; this.style.boxShadow='0 0 0 4px rgba(255, 153, 51, 0.1)'; this.style.background='#ffffff'"
                 onblur="this.style.borderColor='#ffe5cc'; this.style.boxShadow='none'; this.style.background='#fffaf0'"
               />
+            </div>
+
+            <div
+              th:if="${!#lists.isEmpty(paymentHistory)}"
+              id="history-no-results"
+              class="no-reservations-card"
+              style="display: none"
+            >
+              <div class="no-reservations-content">
+                <div class="no-reservations-icon">🔎</div>
+                <div class="no-reservations-text">Không tìm thấy hóa đơn phù hợp</div>
+              </div>
             </div>
 
             <div
@@ -1202,7 +1208,7 @@
                     margin-bottom: 4px;
                   "
 						>
-							<div th:text="${item.productName}">Pizza Bò</div>
+							<div th:text="${item.sizeName != null && !#strings.isEmpty(item.sizeName) ? item.productName + ' (' + item.sizeName + ')' : item.productName}">Pizza Bò</div>
 							<div style="text-align: center" th:text="${item.quantity}">
 								1
 							</div>
@@ -2051,10 +2057,8 @@
                             data-base-price=${item.productSize.basePrice},
                             data-is-on-sale=${item.productSize.onFlashSale}">
 						<div class="order-edit-item-info">
-							<div class="order-edit-item-name" th:text="${item.productName}">Product Name</div>
-							<div class="order-edit-item-size" th:if="${item.sizeName != null}"
-							     th:text="'Size: ' + ${item.sizeName}">Size
-							</div>
+							<div class="order-edit-item-name" 
+								th:text="${item.sizeName != null && !#strings.isEmpty(item.sizeName) ? item.productName + ' (' + item.sizeName + ')' : item.productName}">Product Name</div>
 							<div class="order-edit-item-note">
 								<input type="text"
 								       class="item-note-input"
@@ -2166,11 +2170,54 @@
                 }, 300);
             }, 5000);
         });
+
+        applyFilters();
     });
 
     // Custom logout confirmation
     function confirmLogout() {
         return confirm("Bạn có muốn đăng xuất không?");
+    }
+
+    function applyFilters() {
+        const searchInput = document.getElementById('invoice-search');
+        const orderTypeSelect = document.getElementById('orderTypeFilter');
+        const invoiceCards = document.querySelectorAll('.invoice-card');
+
+        if (!searchInput && !orderTypeSelect) {
+            return;
+        }
+
+        const selectedType = orderTypeSelect ? orderTypeSelect.value : 'ALL';
+        const rawSearch = searchInput ? searchInput.value.trim() : '';
+        const normalizedSearch = rawSearch.toLowerCase();
+
+        let visibleCount = 0;
+
+        invoiceCards.forEach((card) => {
+            if (!(card instanceof HTMLElement)) {
+                return;
+            }
+
+            const cardType = (card.getAttribute('data-order-type') || '').toUpperCase();
+            const cardIdRaw = card.getAttribute('data-order-id') || '';
+            const normalizedId = cardIdRaw.toString().toLowerCase();
+
+            const matchesType = selectedType === 'ALL' || cardType === selectedType;
+            const matchesSearch = !normalizedSearch || normalizedId.includes(normalizedSearch);
+
+            if (matchesType && matchesSearch) {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        const noResults = document.getElementById('history-no-results');
+        if (noResults) {
+            noResults.style.display = visibleCount === 0 ? '' : 'none';
+        }
     }
 
     // Toggle order detail functionality
@@ -2741,7 +2788,7 @@
         });
 
         // Get table ID from URL or hidden field
-        const tableId = [[${selectedTableId}]];
+        const tableId = /*[[${selectedTableId}]]*/ null;
 
         if (!tableId) {
             showToast('Lỗi: Không tìm thấy thông tin bàn', 'error');
