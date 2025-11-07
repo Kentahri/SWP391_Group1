@@ -1,440 +1,446 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cashier Dashboard - Table Management</title>
-    <link rel="stylesheet" th:href="@{/css/cashier-dashboard.css}" />
-    <style>
-      .order-status.preparing {
-        background: #fff3cd;
-        color: #856404;
-      }
-      .order-status.served {
-        background: #d1ecf1;
-        color: #0c5460;
-      }
-      .order-status.completed {
-        background: #d4edda;
-        color: #155724;
-      }
-      .payment-status.paid {
-        background: #d4edda;
-        color: #155724;
-      }
-      .payment-status.unpaid {
-        background: #f8d7da;
-        color: #721c24;
-      }
-      .payment-status.pending {
-        background: #fff3cd;
-        color: #856404;
-      }
-      .order-status.cancelled {
-        background: #f8d7da;
-        color: #721c24;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="dashboard-container">
-      <!-- Top bar -->
-      <header class="topbar">
-        <div class="brand">🍕 PizzarIO</div>
-        <div class="staff-info">
-          <span>Tên: <strong th:text="${staff.name}"></strong></span>
-        </div>
-        <div class="datetime-info">
-          <div id="clock" class="clock">--:--:--</div>
-          <div id="date" class="date">--/--/----</div>
-        </div>
-        <div class="actions">
-          <!-- Notification Bell -->
-          <button class="btn btn-notification" type="button" onclick="openNotificationModal()">
-            <span class="notification-icon">🔔</span>
-            <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
-          </button>
+<head>
+	<meta charset="UTF-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>Cashier Dashboard - Table Management</title>
+	<link rel="stylesheet" th:href="@{/css/cashier-dashboard.css}"/>
+	<style>
+        .order-status.preparing {
+            background: #fff3cd;
+            color: #856404;
+        }
 
-          <button class="btn btn-secondary">
-            <a
-              th:href="@{/cashier/reservations/upcoming}"
-              style="text-decoration: none"
-              >📅 Bàn đã đặt trước</a
-            >
-          </button>
-          <a
-            class="btn btn-primary"
-            th:href="@{/cashier/takeaway}"
-            style="text-decoration: none; display: inline-block"
-            target="_blank"
-          >➕ Tạo đơn hàng</a
-          >
-          <button class="btn btn-secondary" type="button">
-            <a th:href="@{/cashier/history}" style="text-decoration: none"
-              >📋 Lịch sử</a
-            >
-          </button>
-          <form th:action="@{/logout}" method="post">
-            <input
-              type="hidden"
-              th:if="${_csrf != null}"
-              th:name="${_csrf.parameterName}"
-              th:value="${_csrf.token}"
-            />
-            <button
-              type="submit"
-              class="btn-logout"
-              onclick="return confirmLogout()"
-            >
-              🚪 Đăng xuất
-            </button>
-          </form>
-        </div>
-      </header>
+        .order-status.served {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
 
-      <div class="layout">
-        <!-- Left: Table Management -->
-        <section class="panel left" id="left-panel">
-          <div class="section-title">Quản lý bàn</div>
+        .order-status.completed {
+            background: #d4edda;
+            color: #155724;
+        }
 
-          <!-- Legend -->
-          <div class="legend">
-            <div class="legend-items">
-              <div class="legend-item">
-                <span class="legend-dot available"></span>
-                <span>Bàn đang trống</span>
-              </div>
-              <div class="legend-item">
-                <span class="legend-dot occupied"></span>
-                <span>Bàn đang có khách</span>
-              </div>
-              <div class="legend-item">
-                <span class="legend-dot paid"></span>
-                <span>Bàn đang chờ thanh toán</span>
-              </div>
-              <div class="legend-item">
-                <span class="legend-dot reserved"></span>
-                <span>Bàn đã được đặt trước</span>
-              </div>
-              <div class="legend-item">
-                <span class="legend-dot locked"></span>
-                <span>Bàn bị khóa (gộp bàn)</span>
-              </div>
-            </div>
-          </div>
+        .payment-status.paid {
+            background: #d4edda;
+            color: #155724;
+        }
 
-          <!-- Table Grid -->
-          <div class="table-grid" id="table-grid">
-            <a
-              th:each="table : ${tables}"
-              th:id="'table-' + ${table.id}"
-              th:class="'table-card ' + ${table.tableStatus.toString().toLowerCase()} + ${selectedTableId != null && selectedTableId == table.id ? ' selected' : ''}"
-              th:href="@{/cashier/tables/{id}/order(id=${table.id})}"
-              th:attr="data-id=${table.id},
+        .payment-status.unpaid {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .payment-status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .order-status.cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+	</style>
+</head>
+<body>
+<div class="dashboard-container">
+	<!-- Top bar -->
+	<header class="topbar">
+		<div class="brand">🍕 PizzarIO</div>
+		<div class="staff-info">
+			<span>Tên: <strong th:text="${staff.name}"></strong></span>
+		</div>
+		<div class="datetime-info">
+			<div id="clock" class="clock">--:--:--</div>
+			<div id="date" class="date">--/--/----</div>
+		</div>
+		<div class="actions">
+			<!-- Notification Bell -->
+			<button class="btn btn-notification" type="button" onclick="openNotificationModal()">
+				<span class="notification-icon">🔔</span>
+				<span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+			</button>
+			
+			<button class="btn btn-secondary">
+				<a
+						th:href="@{/cashier/reservations/upcoming}"
+						style="text-decoration: none"
+				>📅 Bàn đã đặt trước</a
+				>
+			</button>
+			<a
+					class="btn btn-primary"
+					th:href="@{/cashier/takeaway}"
+					style="text-decoration: none; display: inline-block"
+					target="_blank"
+			>➕ Tạo đơn hàng</a
+			>
+			<button class="btn btn-secondary" type="button">
+				<a th:href="@{/cashier/history}" style="text-decoration: none"
+				>📋 Lịch sử</a
+				>
+			</button>
+			<form th:action="@{/logout}" method="post">
+				<input
+						type="hidden"
+						th:if="${_csrf != null}"
+						th:name="${_csrf.parameterName}"
+						th:value="${_csrf.token}"
+				/>
+				<button
+						type="submit"
+						class="btn-logout"
+						onclick="return confirmLogout()"
+				>
+					🚪 Đăng xuất
+				</button>
+			</form>
+		</div>
+	</header>
+	
+	<div class="layout">
+		<!-- Left: Table Management -->
+		<section class="panel left" id="left-panel">
+			<div class="section-title">Quản lý bàn</div>
+			
+			<!-- Legend -->
+			<div class="legend">
+				<div class="legend-items">
+					<div class="legend-item">
+						<span class="legend-dot available"></span>
+						<span>Bàn đang trống</span>
+					</div>
+					<div class="legend-item">
+						<span class="legend-dot occupied"></span>
+						<span>Bàn đang có khách</span>
+					</div>
+					<div class="legend-item">
+						<span class="legend-dot paid"></span>
+						<span>Bàn đang chờ thanh toán</span>
+					</div>
+					<div class="legend-item">
+						<span class="legend-dot reserved"></span>
+						<span>Bàn đã được đặt trước</span>
+					</div>
+					<div class="legend-item">
+						<span class="legend-dot locked"></span>
+						<span>Bàn bị khóa (gộp bàn)</span>
+					</div>
+				</div>
+			</div>
+			
+			<!-- Table Grid -->
+			<div class="table-grid" id="table-grid">
+				<a
+						th:each="table : ${tables}"
+						th:id="'table-' + ${table.id}"
+						th:class="'table-card ' + ${table.tableStatus.toString().toLowerCase()} + ${selectedTableId != null && selectedTableId == table.id ? ' selected' : ''}"
+						th:href="@{/cashier/tables/{id}/order(id=${table.id})}"
+						th:attr="data-id=${table.id},
 				            data-status=${table.tableStatus},
 				            data-capacity=${table.capacity}"
-              style="text-decoration: none; color: inherit; cursor: pointer"
-            >
-              <div class="table-icon">
-                <span th:if="${table.tableStatus == 'AVAILABLE'}">🪑</span>
-                <span th:if="${table.tableStatus == 'OCCUPIED'}">👥</span>
-                <span th:if="${table.tableStatus == 'WAITING_PAYMENT'}"
-                  >✅</span
-                >
-                <span th:if="${table.tableStatus == 'RESERVED'}">🕐</span>
-                <span th:if="${table.tableStatus == 'LOCKED'}">🔒</span>
-              </div>
-              <div class="table-number">Bàn [[${table.id}]]</div>
-              <div class="table-info">
-                <!-- Hiển thị số người -->
-                <div
-                  class="party-size"
-                  th:if="${table.tableStatus != 'AVAILABLE'}"
-                >
-                  Số người tối đa:
-                  <span
-                    th:text="${table.capacity != null ? table.capacity : 'N/A'}"
-                    >N/A</span
-                  >
-                </div>
-
-                <!-- Hiển thị trạng thái -->
-                <div class="table-status-text">
+						style="text-decoration: none; color: inherit; cursor: pointer"
+				>
+					<div class="table-icon">
+						<span th:if="${table.tableStatus == 'AVAILABLE'}">🪑</span>
+						<span th:if="${table.tableStatus == 'OCCUPIED'}">👥</span>
+						<span th:if="${table.tableStatus == 'WAITING_PAYMENT'}"
+						>✅</span
+						>
+						<span th:if="${table.tableStatus == 'RESERVED'}">🕐</span>
+						<span th:if="${table.tableStatus == 'LOCKED'}">🔒</span>
+					</div>
+					<div class="table-number">Bàn [[${table.id}]]</div>
+					<div class="table-info">
+						<!-- Hiển thị số người -->
+						<div
+								class="party-size"
+								th:if="${table.tableStatus != 'AVAILABLE'}"
+						>
+							Số người tối đa:
+							<span
+									th:text="${table.capacity != null ? table.capacity : 'N/A'}"
+							>N/A</span
+							>
+						</div>
+						
+						<!-- Hiển thị trạng thái -->
+						<div class="table-status-text">
                   <span th:if="${table.tableStatus == 'AVAILABLE'}"
-                    >Available</span
+                  >Available</span
                   >
-                  <span th:if="${table.tableStatus == 'OCCUPIED'}"
-                    >Occupied</span
-                  >
-                  <span th:if="${table.tableStatus == 'WAITING_PAYMENT'}"
-                    >Paid</span
-                  >
-                  <span th:if="${table.tableStatus == 'RESERVED'}"
-                    >Reserved</span
-                  >
-                  <span th:if="${table.tableStatus == 'LOCKED'}"
-                    >Locked</span
-                  >
-                </div>
-
-                <!-- Hiển thị thông tin bổ sung -->
-                <div
-                  class="table-extra-info"
-                  th:if="${table.tableStatus == 'WAITING_PAYMENT'}"
-                >
-                  <span>Payment</span>
-                </div>
-                <div
-                  class="table-extra-info"
-                  th:if="${table.tableStatus == 'RESERVED'}"
-                >
-                  <span>Reserved</span>
-                </div>
-                <div
-                  class="table-extra-info"
-                  th:if="${table.tableStatus == 'LOCKED'}"
-                >
-                  <span>Merged</span>
-                </div>
-              </div>
-            </a>
-          </div>
-        </section>
-
-        <!-- Resizable Divider -->
-        <div class="resize-handle" id="resize-handle"></div>
-
-        <!-- Right: Table details -->
-        <section class="panel right" id="right-panel">
-          <div
-            class="section-title"
-            id="right-panel-title"
-            th:if="${showHistory == null || !showHistory}"
-          >
+							<span th:if="${table.tableStatus == 'OCCUPIED'}"
+							>Occupied</span
+							>
+							<span th:if="${table.tableStatus == 'WAITING_PAYMENT'}"
+							>Paid</span
+							>
+							<span th:if="${table.tableStatus == 'RESERVED'}"
+							>Reserved</span
+							>
+							<span th:if="${table.tableStatus == 'LOCKED'}"
+							>Locked</span
+							>
+						</div>
+						
+						<!-- Hiển thị thông tin bổ sung -->
+						<div
+								class="table-extra-info"
+								th:if="${table.tableStatus == 'WAITING_PAYMENT'}"
+						>
+							<span>Payment</span>
+						</div>
+						<div
+								class="table-extra-info"
+								th:if="${table.tableStatus == 'RESERVED'}"
+						>
+							<span>Reserved</span>
+						</div>
+						<div
+								class="table-extra-info"
+								th:if="${table.tableStatus == 'LOCKED'}"
+						>
+							<span>Merged</span>
+						</div>
+					</div>
+				</a>
+			</div>
+		</section>
+		
+		<!-- Resizable Divider -->
+		<div class="resize-handle" id="resize-handle"></div>
+		
+		<!-- Right: Table details -->
+		<section class="panel right" id="right-panel">
+			<div
+					class="section-title"
+					id="right-panel-title"
+					th:if="${showHistory == null || !showHistory}"
+			>
             <span
-              th:text="${upcomingReservations != null ? 'Danh sách đặt bàn sắp tới' : (tableReservations != null ? 'Đơn đặt trước - Bàn ' + selectedTableId : 'Đơn bàn chi tiết')}"
-              >Đơn bàn chi tiết</span
+		            th:text="${upcomingReservations != null ? 'Danh sách đặt bàn sắp tới' : (tableReservations != null ? 'Đơn đặt trước - Bàn ' + selectedTableId : 'Đơn bàn chi tiết')}"
+            >Đơn bàn chi tiết</span
             >
-          </div>
-
-          <!-- Table Detail View (default - no table selected) -->
-          <div
-            id="table-detail"
-            class="table-detail"
-            th:if="${orderDetail == null && selectedTableId == null && upcomingReservations == null && tableReservations == null && (showHistory == null || !showHistory)}"
-          >
-            <div class="placeholder">Chọn 1 bàn để xem chi tiết</div>
-          </div>
-
-          <!-- Empty Table View (table selected but no order) -->
-          <div
-            th:if="${selectedTableId != null && orderDetail == null && upcomingReservations == null && tableReservations == null && (showHistory == null || !showHistory)}"
-            class="table-detail"
-          >
-            <div class="detail-card">
-              <!-- Thông tin bàn -->
-              <div class="detail-row">
-                <strong>Bàn số:</strong>
-                <span th:text="${selectedTableId}">—</span>
-              </div>
-              <div class="detail-row">
-                <strong>Sức chứa:</strong>
-                <span><span th:text="${tableCapacity}">—</span> người</span>
-              </div>
-              <div class="detail-row">
-                <strong>Trạng thái:</strong>
-                <span
-                  th:text="${tableStatus.toString() == 'AVAILABLE' ? 'Bàn đang trống' :
+			</div>
+			
+			<!-- Table Detail View (default - no table selected) -->
+			<div
+					id="table-detail"
+					class="table-detail"
+					th:if="${orderDetail == null && selectedTableId == null && upcomingReservations == null && tableReservations == null && (showHistory == null || !showHistory)}"
+			>
+				<div class="placeholder">Chọn 1 bàn để xem chi tiết</div>
+			</div>
+			
+			<!-- Empty Table View (table selected but no order) -->
+			<div
+					th:if="${selectedTableId != null && orderDetail == null && upcomingReservations == null && tableReservations == null && (showHistory == null || !showHistory)}"
+					class="table-detail"
+			>
+				<div class="detail-card">
+					<!-- Thông tin bàn -->
+					<div class="detail-row">
+						<strong>Bàn số:</strong>
+						<span th:text="${selectedTableId}">—</span>
+					</div>
+					<div class="detail-row">
+						<strong>Sức chứa:</strong>
+						<span><span th:text="${tableCapacity}">—</span> người</span>
+					</div>
+					<div class="detail-row">
+						<strong>Trạng thái:</strong>
+						<span
+								th:text="${tableStatus.toString() == 'AVAILABLE' ? 'Bàn đang trống' :
                             (tableStatus.toString() == 'OCCUPIED' ? 'Bàn có khách' :
                             (tableStatus.toString() == 'RESERVED' ? 'Đã đặt trước' :
                             (tableStatus.toString() == 'WAITING_PAYMENT' ? 'Chờ thanh toán' :
                             (tableStatus.toString() == 'LOCKED' ? 'Đang khóa' : '—'))))}"
-                  th:style="${tableStatus.toString() == 'AVAILABLE' ? 'color: #28a745; font-weight: 600;' :
+								th:style="${tableStatus.toString() == 'AVAILABLE' ? 'color: #28a745; font-weight: 600;' :
                              (tableStatus.toString() == 'OCCUPIED' ? 'color: #dc3545; font-weight: 600;' :
                              (tableStatus.toString() == 'RESERVED' ? 'color: #ffc107; font-weight: 600;' :
                              (tableStatus.toString() == 'WAITING_PAYMENT' ? 'color: #17a2b8; font-weight: 600;' :
                              (tableStatus.toString() == 'LOCKED' ? 'color: #795548; font-weight: 600;' : ''))))}"
-                >—</span>
-              </div>
-
-              <!-- Nút actions ở dưới -->
-              <div class="table-actions">
-                <!-- Nút mở khóa bàn (chỉ hiển thị khi bàn LOCKED) -->
-                <form
-                  th:if="${tableStatus != null && tableStatus.toString() == 'LOCKED'}"
-                  th:action="@{/cashier/tables/{tableId}/unlock(tableId=${selectedTableId})}"
-                  method="post"
-                  onsubmit="return confirm('Xác nhận mở khóa bàn này?');"
-                >
-                  <input
-                    type="hidden"
-                    th:name="${_csrf.parameterName}"
-                    th:value="${_csrf.token}"
-                  />
-                  <button
-                    type="submit"
-                    class="btn-action btn-unlock"
-                  >
-                    🔓 Mở khóa bàn
-                  </button>
-                </form>
-
-                <!-- Các nút khác (chỉ hiển thị khi bàn KHÔNG LOCKED) -->
-                <div
-                  th:if="${tableStatus == null || tableStatus.toString() != 'LOCKED'}"
-                  class="action-buttons-group"
-                >
-                  <button
-                    class="btn-action btn-reserve"
-                    th:onclick="'openReservationModal(' + ${selectedTableId} + ')'"
-                  >
-                    📅 Đặt trước bàn này
-                  </button>
-                  <a
-                    th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}"
-                    class="btn-action btn-view-reservations"
-                  >
-                    📋 Xem đơn đặt trước
-                  </a>
-
-                  <form
-                    th:if="${tableStatus != null && tableStatus.toString() == 'AVAILABLE'}"
-                    th:action="@{/cashier/tables/{tableId}/lock(tableId=${selectedTableId})}"
-                    method="post"
-                    onsubmit="return confirm('Xác nhận khóa bàn này để gộp bàn?');"
-                  >
-                    <input
-                      type="hidden"
-                      th:name="${_csrf.parameterName}"
-                      th:value="${_csrf.token}"
-                    />
-                    <button
-                      type="submit"
-                      class="btn-action btn-lock"
-                    >
-                      🔒 Khóa bàn
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Order Detail View (when table is selected and has order) -->
-          <div
-            th:if="${orderDetail != null && (showHistory == null || !showHistory)}"
-            class="table-detail"
-          >
-            <div class="detail-card">
-              <!-- Thông tin bàn -->
-              <div class="detail-row">
-                <strong>Bàn số:</strong>
-                <span th:text="${selectedTableId}">—</span>
-              </div>
-              <div class="detail-row">
-                <strong>Sức chứa:</strong>
-                <span><span th:text="${tableCapacity}">—</span> người</span>
-              </div>
-              <div class="detail-row">
-                <strong>Trạng thái:</strong>
-                <span
-                  th:text="${tableStatus.toString() == 'AVAILABLE' ? 'Bàn đang trống' :
+						>—</span>
+					</div>
+					
+					<!-- Nút actions ở dưới -->
+					<div class="table-actions">
+						<!-- Nút mở khóa bàn (chỉ hiển thị khi bàn LOCKED) -->
+						<form
+								th:if="${tableStatus != null && tableStatus.toString() == 'LOCKED'}"
+								th:action="@{/cashier/tables/{tableId}/unlock(tableId=${selectedTableId})}"
+								method="post"
+								onsubmit="return confirm('Xác nhận mở khóa bàn này?');"
+						>
+							<input
+									type="hidden"
+									th:name="${_csrf.parameterName}"
+									th:value="${_csrf.token}"
+							/>
+							<button
+									type="submit"
+									class="btn-action btn-unlock"
+							>
+								🔓 Mở khóa bàn
+							</button>
+						</form>
+						
+						<!-- Các nút khác (chỉ hiển thị khi bàn KHÔNG LOCKED) -->
+						<div
+								th:if="${tableStatus == null || tableStatus.toString() != 'LOCKED'}"
+								class="action-buttons-group"
+						>
+							<button
+									class="btn-action btn-reserve"
+									th:onclick="'openReservationModal(' + ${selectedTableId} + ')'"
+							>
+								📅 Đặt trước bàn này
+							</button>
+							<a
+									th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}"
+									class="btn-action btn-view-reservations"
+							>
+								📋 Xem đơn đặt trước
+							</a>
+							
+							<form
+									th:if="${tableStatus != null && tableStatus.toString() == 'AVAILABLE'}"
+									th:action="@{/cashier/tables/{tableId}/lock(tableId=${selectedTableId})}"
+									method="post"
+									onsubmit="return confirm('Xác nhận khóa bàn này để gộp bàn?');"
+							>
+								<input
+										type="hidden"
+										th:name="${_csrf.parameterName}"
+										th:value="${_csrf.token}"
+								/>
+								<button
+										type="submit"
+										class="btn-action btn-lock"
+								>
+									🔒 Khóa bàn
+								</button>
+							</form>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			<!-- Order Detail View (when table is selected and has order) -->
+			<div
+					th:if="${orderDetail != null && (showHistory == null || !showHistory)}"
+					class="table-detail"
+			>
+				<div class="detail-card">
+					<!-- Thông tin bàn -->
+					<div class="detail-row">
+						<strong>Bàn số:</strong>
+						<span th:text="${selectedTableId}">—</span>
+					</div>
+					<div class="detail-row">
+						<strong>Sức chứa:</strong>
+						<span><span th:text="${tableCapacity}">—</span> người</span>
+					</div>
+					<div class="detail-row">
+						<strong>Trạng thái:</strong>
+						<span
+								th:text="${tableStatus.toString() == 'AVAILABLE' ? 'Bàn đang trống' :
                             (tableStatus.toString() == 'OCCUPIED' ? 'Bàn có khách' :
                             (tableStatus.toString() == 'RESERVED' ? 'Đã đặt trước' :
                             (tableStatus.toString() == 'WAITING_PAYMENT' ? 'Chờ thanh toán' :
                             (tableStatus.toString() == 'LOCKED' ? 'Đang khóa' : '—'))))}"
-                  th:style="${tableStatus.toString() == 'AVAILABLE' ? 'color: #28a745; font-weight: 600;' :
+								th:style="${tableStatus.toString() == 'AVAILABLE' ? 'color: #28a745; font-weight: 600;' :
                              (tableStatus.toString() == 'OCCUPIED' ? 'color: #dc3545; font-weight: 600;' :
                              (tableStatus.toString() == 'RESERVED' ? 'color: #ffc107; font-weight: 600;' :
                              (tableStatus.toString() == 'WAITING_PAYMENT' ? 'color: #17a2b8; font-weight: 600;' :
                              (tableStatus.toString() == 'LOCKED' ? 'color: #795548; font-weight: 600;' : ''))))}"
-                >—</span>
-              </div>
-            </div>
-            <div class="order-detail-card">
-              <div class="order-header">
+						>—</span>
+					</div>
+				</div>
+				<div class="order-detail-card">
+					<div class="order-header">
                 <span
-                  th:class="'order-status ' + ${orderDetail.orderStatus.toString().toLowerCase()}"
-                  th:text="${orderDetail.orderStatus == 'PREPARING' ? 'Đang chuẩn bị' : (orderDetail.orderStatus == 'COMPLETED' ? 'Hoàn thành' : orderDetail.orderStatus)}"
+		                th:class="'order-status ' + ${orderDetail.orderStatus.toString().toLowerCase()}"
+		                th:text="${orderDetail.orderStatus == 'PREPARING' ? 'Đang chuẩn bị' : (orderDetail.orderStatus == 'COMPLETED' ? 'Hoàn thành' : orderDetail.orderStatus)}"
                 >
                 </span>
-                <button
-                  th:if="${orderDetail != null && tableStatus.toString() == 'OCCUPIED'}"
-                  class="btn-edit-order"
-                  onclick="openEditOrderPanel()"
-                  type="button">
-                  ✏️ Thêm món
-                </button>
-              </div>
-
-              <div class="order-meta">
-                <div class="meta-row">
-                  <span class="meta-label">Mã đơn:</span>
-                  <span class="meta-value"
-                    >#<span th:text="${orderDetail.orderId}">—</span></span
-                  >
-                </div>
-                <div class="meta-row">
-                  <span class="meta-label">Khách hàng:</span>
-                  <span
-                    class="meta-value"
-                    th:text="${orderDetail.customerName ?: 'Khách vãng lai'}"
-                    >—</span
-                  >
-                </div>
-                <div class="meta-row">
-                  <span class="meta-label">Trạng thái thanh toán:</span>
-                  <span
-                    th:class="'meta-value payment-' + ${orderDetail.paymentStatus.toString().toLowerCase()}"
-                    th:text="${orderDetail.paymentStatus.toString() == 'UNPAID' ? 'Chưa thanh toán' : (orderDetail.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : 'Đang xử lý')}"
-                  >
+						<button
+								th:if="${orderDetail != null && tableStatus.toString() == 'OCCUPIED'}"
+								class="btn-edit-order"
+								onclick="openEditOrderPanel()"
+								type="button">
+							✏️ Thêm món
+						</button>
+					</div>
+					
+					<div class="order-meta">
+						<div class="meta-row">
+							<span class="meta-label">Mã đơn:</span>
+							<span class="meta-value"
+							>#<span th:text="${orderDetail.orderId}">—</span></span
+							>
+						</div>
+						<div class="meta-row">
+							<span class="meta-label">Khách hàng:</span>
+							<span
+									class="meta-value"
+									th:text="${orderDetail.customerName ?: 'Khách vãng lai'}"
+							>—</span
+							>
+						</div>
+						<div class="meta-row">
+							<span class="meta-label">Trạng thái thanh toán:</span>
+							<span
+									th:class="'meta-value payment-' + ${orderDetail.paymentStatus.toString().toLowerCase()}"
+									th:text="${orderDetail.paymentStatus.toString() == 'UNPAID' ? 'Chưa thanh toán' : (orderDetail.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : 'Đang xử lý')}"
+							>
                   </span>
-                </div>
-                <div
-                  class="meta-row"
-                  th:if="${orderDetail.paymentMethod != null}"
-                >
-                  <span class="meta-label">Phương thức:</span>
-                  <span
-                    class="meta-value"
-                    th:text="${orderDetail.paymentMethod.toString() == 'CASH' ? 'Tiền mặt' : (orderDetail.paymentMethod.toString() == 'QR_BANKING' ? 'QR Code' : 'Thẻ tín dụng')}"
-                  ></span>
-                </div>
-              </div>
-
-              <div class="order-items-section">
-                <div class="section-header-small">
-                  <span>Món đã gọi</span>
-                  <span
-                    class="item-count"
-                    th:text="${#lists.isEmpty(orderDetail.items) ? '0 món' : #lists.size(orderDetail.items) + ' món'}"
-                    >0 món</span
-                  >
-                </div>
-                <div class="order-items-list">
-                  <div
-                    th:if="${#lists.isEmpty(orderDetail.items)}"
-                    class="no-items"
-                  >
-                    Chưa có món nào
-                  </div>
-                  <div th:each="item : ${orderDetail.items}" class="order-item">
-                    <div class="order-item-info">
-                      <div class="item-name" th:text="${item.productName}">
-                        —
-                      </div>
-                      <div
-                        th:if="${item.sizeName != null && !#strings.isEmpty(item.sizeName)}"
-                        class="item-size"
-                        style="color: #6c757d; font-size: 13px; margin-top: 2px;"
-                      >
-                        Size: <span th:text="${item.sizeName}"></span>
-                      </div>
-                      <div class="item-detail">
+						</div>
+						<div
+								class="meta-row"
+								th:if="${orderDetail.paymentMethod != null}"
+						>
+							<span class="meta-label">Phương thức:</span>
+							<span
+									class="meta-value"
+									th:text="${orderDetail.paymentMethod.toString() == 'CASH' ? 'Tiền mặt' : (orderDetail.paymentMethod.toString() == 'QR_BANKING' ? 'QR Code' : 'Thẻ tín dụng')}"
+							></span>
+						</div>
+					</div>
+					
+					<div class="order-items-section">
+						<div class="section-header-small">
+							<span>Món đã gọi</span>
+							<span
+									class="item-count"
+									th:text="${#lists.isEmpty(orderDetail.items) ? '0 món' : #lists.size(orderDetail.items) + ' món'}"
+							>0 món</span
+							>
+						</div>
+						<div class="order-items-list">
+							<div
+									th:if="${#lists.isEmpty(orderDetail.items)}"
+									class="no-items"
+							>
+								Chưa có món nào
+							</div>
+							<div th:each="item : ${orderDetail.items}" class="order-item">
+								<div class="order-item-info">
+									<div class="item-name" th:text="${item.productName}">
+										—
+									</div>
+									<div
+											th:if="${item.sizeName != null && !#strings.isEmpty(item.sizeName)}"
+											class="item-size"
+											style="color: #6c757d; font-size: 13px; margin-top: 2px;"
+									>
+										Size: <span th:text="${item.sizeName}"></span>
+									</div>
+									<div class="item-detail">
                         <span class="item-quantity"
-                          >x<span th:text="${item.quantity}">1</span></span
+                        >x<span th:text="${item.quantity}">1</span></span
                         >
-                        <span class="item-price">
+										<span class="item-price">
                           <span th:if="${item.productSize != null && item.productSize.onFlashSale}"
                                 style="text-decoration: line-through; color: #999; font-size: 11px; margin-right: 6px;"
                                 th:text="${#numbers.formatCurrency(item.productSize.basePrice)}">
@@ -442,290 +448,293 @@
                           <span th:text="${#numbers.formatCurrency(item.unitPrice)}"
                                 th:style="${item.productSize != null && item.productSize.onFlashSale ? 'color: #e74c3c; font-weight: 600;' : ''}">0đ</span>
                         </span>
-                      </div>
-                      <div
-                        th:if="${item.note != null && !#strings.isEmpty(item.note)}"
-                        class="item-note"
-                      >
-                        📝 <span th:text="${item.note}"></span>
-                      </div>
-                    </div>
-                    <div class="item-total">
+									</div>
+									<div
+											th:if="${item.note != null && !#strings.isEmpty(item.note)}"
+											class="item-note"
+									>
+										📝 <span th:text="${item.note}"></span>
+									</div>
+								</div>
+								<div class="item-total">
                       <span th:text="${#numbers.formatCurrency(item.totalPrice)}"
                             th:style="${item.productSize != null && item.productSize.onFlashSale ? 'color: #e74c3c; font-weight: 600;' : ''}">0đ</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="order-summary">
-                <div
-                  th:if="${orderDetail.voucherCode != null}"
-                  class="summary-row"
-                  style="background: #fff3cd; padding: 8px; border-radius: 4px; margin-bottom: 8px;"
-                >
-                  <span style="font-weight: 600;">Voucher:</span>
-                  <span
-                    class="voucher-code"
-                    th:text="${orderDetail.voucherCode}"
-                    style="color: #856404; font-weight: 600;"
-                    >—</span
-                  >
-                </div>
-                <div class="summary-row">
-                  <span>Tạm tính:</span>
-                  <span
-                    th:text="${#numbers.formatCurrency(orderDetail.totalPrice)}"
-                    >0đ</span
-                  >
-                </div>
-                <div
-                  th:if="${orderDetail.discountAmount != null && orderDetail.discountAmount > 0}"
-                  class="summary-row discount"
-                >
-                  <span>Giảm giá:</span>
-                  <span
-                    th:text="'-' + ${#numbers.formatCurrency(orderDetail.discountAmount)}"
-                    >-0đ</span
-                  >
-                </div>
-                <div class="summary-row">
-                  <span>Thuế (10%):</span>
-                  <span
-                    th:text="'+' + ${#numbers.formatCurrency((orderDetail.totalPrice - (orderDetail.discountAmount != null ? orderDetail.discountAmount : 0)) * 0.1)}"
-                    >0đ</span
-                  >
-                </div>
-                <div class="summary-row total">
-                  <span>Tổng cộng:</span>
-                  <span
-                    class="total-amount"
-                    th:text="${#numbers.formatCurrency((orderDetail.totalPrice - (orderDetail.discountAmount != null ? orderDetail.discountAmount : 0)) * 1.1)}"
-                    >0đ</span
-                  >
-                </div>
-
-                <!-- Nút xác nhận thanh toán ngay dưới Tổng cộng -->
-                <form id="payment-confirm-form" th:action="@{/cashier/payment/confirm}" method="post" style="display:none">
-                  <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                  <input type="hidden" id="payment-session-id" name="sessionId" th:value="${orderDetail != null ? orderDetail.sessionId : null}" />
-                  <input type="hidden" id="payment-method" name="paymentMethod" value="CASH" />
-                </form>
-
-                <div id="payment-buttons-container"
-                     th:style="${tableStatus.toString() == 'WAITING_PAYMENT' && orderDetail != null && orderDetail.sessionId != null ? 'margin-top: 16px;' : 'margin-top: 16px; display: none;'}"
-                     style="margin-top: 16px;">
-                  <button type="button" class="btn-action btn-confirm-payment btn-confirm-cash"
-                          th:style="${orderDetail != null && orderDetail.paymentMethod != null && orderDetail.paymentMethod.toString() == 'CASH' ? '' : 'display: none;'}"
-                          onclick="(function(){
+								</div>
+							</div>
+						</div>
+					</div>
+					
+					<div class="order-summary">
+						<div
+								th:if="${orderDetail.voucherCode != null}"
+								class="summary-row"
+								style="background: #fff3cd; padding: 8px; border-radius: 4px; margin-bottom: 8px;"
+						>
+							<span style="font-weight: 600;">Voucher:</span>
+							<span
+									class="voucher-code"
+									th:text="${orderDetail.voucherCode}"
+									style="color: #856404; font-weight: 600;"
+							>—</span
+							>
+						</div>
+						<div class="summary-row">
+							<span>Tạm tính:</span>
+							<span
+									th:text="${#numbers.formatCurrency(orderDetail.totalPrice)}"
+							>0đ</span
+							>
+						</div>
+						<div
+								th:if="${orderDetail.discountAmount != null && orderDetail.discountAmount > 0}"
+								class="summary-row discount"
+						>
+							<span>Giảm giá:</span>
+							<span
+									th:text="'-' + ${#numbers.formatCurrency(orderDetail.discountAmount)}"
+							>-0đ</span
+							>
+						</div>
+						<div class="summary-row">
+							<span>Thuế (10%):</span>
+							<span
+									th:text="'+' + ${#numbers.formatCurrency((orderDetail.totalPrice - (orderDetail.discountAmount != null ? orderDetail.discountAmount : 0)) * 0.1)}"
+							>0đ</span
+							>
+						</div>
+						<div class="summary-row total">
+							<span>Tổng cộng:</span>
+							<span
+									class="total-amount"
+									th:text="${#numbers.formatCurrency((orderDetail.totalPrice - (orderDetail.discountAmount != null ? orderDetail.discountAmount : 0)) * 1.1)}"
+							>0đ</span
+							>
+						</div>
+						
+						<!-- Nút xác nhận thanh toán ngay dưới Tổng cộng -->
+						<form id="payment-confirm-form" th:action="@{/cashier/payment/confirm}" method="post"
+						      style="display:none">
+							<input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
+							       th:value="${_csrf.token}"/>
+							<input type="hidden" id="payment-session-id" name="sessionId"
+							       th:value="${orderDetail != null ? orderDetail.sessionId : null}"/>
+							<input type="hidden" id="payment-method" name="paymentMethod" value="CASH"/>
+						</form>
+						
+						<div id="payment-buttons-container"
+						     th:style="${tableStatus.toString() == 'WAITING_PAYMENT' && orderDetail != null && orderDetail.sessionId != null ? 'margin-top: 16px;' : 'margin-top: 16px; display: none;'}"
+						     style="margin-top: 16px;">
+							<button type="button" class="btn-action btn-confirm-payment btn-confirm-cash"
+							        th:style="${orderDetail != null && orderDetail.paymentMethod != null && orderDetail.paymentMethod.toString() == 'CASH' ? '' : 'display: none;'}"
+							        onclick="(function(){
                             if(confirm('Xác nhận khách đã thanh toán bằng tiền mặt?')) {
                               document.getElementById('payment-method').value='CASH';
                               document.getElementById('payment-confirm-form').submit();
                             }
                           })()">
-                    💵 Xác nhận thanh toán tiền mặt
-                  </button>
-                  <button type="button" class="btn-action btn-confirm-payment btn-confirm-qr"
-                          th:style="${orderDetail != null && orderDetail.paymentMethod != null && orderDetail.paymentMethod.toString() == 'QR_BANKING' ? '' : 'display: none;'}"
-                          onclick="(function(){
+								💵 Xác nhận thanh toán tiền mặt
+							</button>
+							<button type="button" class="btn-action btn-confirm-payment btn-confirm-qr"
+							        th:style="${orderDetail != null && orderDetail.paymentMethod != null && orderDetail.paymentMethod.toString() == 'QR_BANKING' ? '' : 'display: none;'}"
+							        onclick="(function(){
                             if(confirm('Xác nhận khách đã thanh toán qua QR Banking?')) {
                               document.getElementById('payment-method').value='QR_BANKING';
                               document.getElementById('payment-confirm-form').submit();
                             }
                           })()">
-                    📱 Xác nhận thanh toán QR Banking
-                  </button>
-                </div>
-              </div>
-
-              <div
-                th:if="${orderDetail.note != null && !#strings.isEmpty(orderDetail.note)}"
-                class="order-note"
-              >
-                <strong>Ghi chú:</strong>
-                <span th:text="${orderDetail.note}"></span>
-              </div>
-            </div>
-
-            <!-- Đường phân cách và nút actions cho bàn -->
-            <div class="table-actions">
-              <div class="action-buttons-group">
-                <button
-                  class="btn-action btn-reserve"
-                  th:onclick="'openReservationModal(' + ${selectedTableId} + ')'"
-                >
-                  📅 Đặt trước
-                </button>
-                <a
-                  th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}"
-                  class="btn-action btn-view-reservations"
-                >
-                  📋 Xem đơn đặt trước
-                </a>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Upcoming Reservations View -->
-          <div th:if="${upcomingReservations != null}" class="reservation-list">
-            <div class="reservation-header">
-              <a th:href="@{/cashier}" class="btn-back-styled">← Quay lại</a>
-            </div>
-
-            <!-- Search Form - chỉ hiện trong upcoming reservations -->
-            <div class="search-container" style="margin: 16px 0">
-              <form
-                th:action="@{/cashier/reservations/upcoming}"
-                method="get"
-                style="display: flex; gap: 8px"
-              >
-                <input
-                  type="text"
-                  name="search"
-                  th:value="${searchKeyword}"
-                  placeholder="Tìm theo tên, SĐT, hoặc số bàn..."
-                  class="search-input"
-                  style="
+								📱 Xác nhận thanh toán QR Banking
+							</button>
+						</div>
+					</div>
+					
+					<div
+							th:if="${orderDetail.note != null && !#strings.isEmpty(orderDetail.note)}"
+							class="order-note"
+					>
+						<strong>Ghi chú:</strong>
+						<span th:text="${orderDetail.note}"></span>
+					</div>
+				</div>
+				
+				<!-- Đường phân cách và nút actions cho bàn -->
+				<div class="table-actions">
+					<div class="action-buttons-group">
+						<button
+								class="btn-action btn-reserve"
+								th:onclick="'openReservationModal(' + ${selectedTableId} + ')'"
+						>
+							📅 Đặt trước
+						</button>
+						<a
+								th:href="@{/cashier/tables/{tableId}/reservations(tableId=${selectedTableId})}"
+								class="btn-action btn-view-reservations"
+						>
+							📋 Xem đơn đặt trước
+						</a>
+					</div>
+				</div>
+			
+			</div>
+			
+			<!-- Upcoming Reservations View -->
+			<div th:if="${upcomingReservations != null}" class="reservation-list">
+				<div class="reservation-header">
+					<a th:href="@{/cashier}" class="btn-back-styled">← Quay lại</a>
+				</div>
+				
+				<!-- Search Form - chỉ hiện trong upcoming reservations -->
+				<div class="search-container" style="margin: 16px 0">
+					<form
+							th:action="@{/cashier/reservations/upcoming}"
+							method="get"
+							style="display: flex; gap: 8px"
+					>
+						<input
+								type="text"
+								name="search"
+								th:value="${searchKeyword}"
+								placeholder="Tìm theo tên, SĐT, hoặc số bàn..."
+								class="search-input"
+								style="
                     flex: 1;
                     padding: 10px;
                     border: 1px solid #ddd;
                     border-radius: 4px;
                     font-size: 14px;
                   "
-                />
-                <button
-                  type="submit"
-                  class="btn btn-primary"
-                  style="padding: 10px 20px; white-space: nowrap"
-                >
-                  🔍 Tìm kiếm
-                </button>
-                <a
-                  th:href="@{/cashier/reservations/upcoming}"
-                  class="btn btn-secondary"
-                  style="
+						/>
+						<button
+								type="submit"
+								class="btn btn-primary"
+								style="padding: 10px 20px; white-space: nowrap"
+						>
+							🔍 Tìm kiếm
+						</button>
+						<a
+								th:href="@{/cashier/reservations/upcoming}"
+								class="btn btn-secondary"
+								style="
                     padding: 10px 20px;
                     text-decoration: none;
                     display: inline-block;
                   "
-                  >↻ Xóa lọc</a
-                >
-              </form>
-            </div>
-
-            <div class="reservation-items">
-              <div
-                th:if="${#lists.isEmpty(upcomingReservations)}"
-                class="no-reservations-card"
-              >
-                <div class="no-reservations-content">
-                  <div class="no-reservations-icon">📅</div>
-                  <div class="no-reservations-text">
-                    Chưa có đơn đặt bàn nào
-                  </div>
-                </div>
-              </div>
-
-              <div
-                th:each="reservation : ${upcomingReservations}"
-                class="reservation-card"
-              >
-                <div class="reservation-card-header">
-                  <div class="reservation-table-name">
+						>↻ Xóa lọc</a
+						>
+					</form>
+				</div>
+				
+				<div class="reservation-items">
+					<div
+							th:if="${#lists.isEmpty(upcomingReservations)}"
+							class="no-reservations-card"
+					>
+						<div class="no-reservations-content">
+							<div class="no-reservations-icon">📅</div>
+							<div class="no-reservations-text">
+								Chưa có đơn đặt bàn nào
+							</div>
+						</div>
+					</div>
+					
+					<div
+							th:each="reservation : ${upcomingReservations}"
+							class="reservation-card"
+					>
+						<div class="reservation-card-header">
+							<div class="reservation-table-name">
                     <span
-                      style="font-weight: 700; color: #2c3e50"
-                      th:text="${reservation.tableName}"
-                      >Bàn #</span
+		                    style="font-weight: 700; color: #2c3e50"
+		                    th:text="${reservation.tableName}"
+                    >Bàn #</span
                     >
-                    <span
-                      style="font-size: 12px; color: #6c757d; margin-left: 8px"
-                      >| Đơn #<span th:text="${reservation.id}">—</span></span
-                    >
-                  </div>
-                  <span
-                    th:class="'reservation-status ' + ${reservation.status.toString().toLowerCase()}"
-                    th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' :
+								<span
+										style="font-size: 12px; color: #6c757d; margin-left: 8px"
+								>| Đơn #<span th:text="${reservation.id}">—</span></span
+								>
+							</div>
+							<span
+									th:class="'reservation-status ' + ${reservation.status.toString().toLowerCase()}"
+									th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' :
 						                (reservation.status == 'ARRIVED' ? 'Đã đến' : 
 						                (reservation.status == 'CANCELED' ? 'Đã hủy' : 'Không đến'))}"
-                  >
+							>
                   </span>
-                </div>
-
-                <div class="reservation-time">
-                  🕐 Thời gian:
-                  <span
-                    th:text="${#temporals.format(reservation.startTime, 'EEE, dd MMM yyyy HH:mm')}"
-                    >—</span
-                  >
-                </div>
-
-                <div class="reservation-info">
-                  <div class="reservation-info-row">
-                    <span class="reservation-info-label">👤 Khách hàng:</span>
-                    <span
-                      class="reservation-info-value"
-                      th:text="${reservation.customerName}"
-                      >—</span
-                    >
-                  </div>
-                  <div class="reservation-info-row">
+						</div>
+						
+						<div class="reservation-time">
+							🕐 Thời gian:
+							<span
+									th:text="${#temporals.format(reservation.startTime, 'EEE, dd MMM yyyy HH:mm')}"
+							>—</span
+							>
+						</div>
+						
+						<div class="reservation-info">
+							<div class="reservation-info-row">
+								<span class="reservation-info-label">👤 Khách hàng:</span>
+								<span
+										class="reservation-info-value"
+										th:text="${reservation.customerName}"
+								>—</span
+								>
+							</div>
+							<div class="reservation-info-row">
                     <span class="reservation-info-label"
-                      >📞 Số điện thoại:</span
+                    >📞 Số điện thoại:</span
                     >
-                    <span
-                      class="reservation-info-value"
-                      th:text="${reservation.customerPhone}"
-                      >—</span
-                    >
-                  </div>
-                  <div class="reservation-info-row">
-                    <span class="reservation-info-label">👥 Số khách:</span>
-                    <span
-                      class="reservation-info-value"
-                      th:text="${reservation.capacityExpected + ' người'}"
-                      >— người</span
-                    >
-                  </div>
-                  <div
-                    th:if="${reservation.note != null && !#strings.isEmpty(reservation.note)}"
-                    class="reservation-info-row"
-                  >
-                    <span class="reservation-info-label">📝 Ghi chú:</span>
-                    <span
-                      class="reservation-info-value"
-                      th:text="${reservation.note}"
-                      >—</span
-                    >
-                  </div>
-                </div>
-
-                <div
-                  th:if="${reservation.status.toString() == 'CONFIRMED'}"
-                  class="reservation-actions"
-                  style="display: flex; flex-direction: column; gap: 8px"
-                >
-                  <!-- Nút mở bàn cho khách (nút chính) -->
-                  <form
-                    th:action="@{/cashier/reservations/{id}/open(id=${reservation.id})}"
-                    th:if="${reservation.tableStatus != null && reservation.tableStatus == 'RESERVED' && reservation.isReadyToOpen()}"
-                    method="post"
-                    onsubmit="return confirm('Xác nhận khách đã đến và mở bàn?');"
-                  >
-                    <input
-                      type="hidden"
-                      th:name="${_csrf.parameterName}"
-                      th:value="${_csrf.token}"
-                    />
-                    <input
-                      type="hidden"
-                      name="returnUrl"
-                      value="/cashier/reservations/upcoming"
-                    />
-                    <button
-                      type="submit"
-                      class="btn-open-table"
-                      style="
+								<span
+										class="reservation-info-value"
+										th:text="${reservation.customerPhone}"
+								>—</span
+								>
+							</div>
+							<div class="reservation-info-row">
+								<span class="reservation-info-label">👥 Số khách:</span>
+								<span
+										class="reservation-info-value"
+										th:text="${reservation.capacityExpected + ' người'}"
+								>— người</span
+								>
+							</div>
+							<div
+									th:if="${reservation.note != null && !#strings.isEmpty(reservation.note)}"
+									class="reservation-info-row"
+							>
+								<span class="reservation-info-label">📝 Ghi chú:</span>
+								<span
+										class="reservation-info-value"
+										th:text="${reservation.note}"
+								>—</span
+								>
+							</div>
+						</div>
+						
+						<div
+								th:if="${reservation.status.toString() == 'CONFIRMED'}"
+								class="reservation-actions"
+								style="display: flex; flex-direction: column; gap: 8px"
+						>
+							<!-- Nút mở bàn cho khách (nút chính) -->
+							<form
+									th:action="@{/cashier/reservations/{id}/open(id=${reservation.id})}"
+									th:if="${reservation.tableStatus != null && reservation.tableStatus == 'RESERVED' && reservation.isReadyToOpen()}"
+									method="post"
+									onsubmit="return confirm('Xác nhận khách đã đến và mở bàn?');"
+							>
+								<input
+										type="hidden"
+										th:name="${_csrf.parameterName}"
+										th:value="${_csrf.token}"
+								/>
+								<input
+										type="hidden"
+										name="returnUrl"
+										value="/cashier/reservations/upcoming"
+								/>
+								<button
+										type="submit"
+										class="btn-open-table"
+										style="
                         width: 100%;
                         padding: 12px;
                         background-color: #2196f3;
@@ -736,17 +745,17 @@
                         font-weight: bold;
                         font-size: 15px;
                       "
-                    >
-                      🔓 Mở bàn cho khách
-                    </button>
-                  </form>
-
-                  <!-- Các nút phụ -->
-                  <div style="display: flex; gap: 8px">
-                    <a
-                      th:href="@{/cashier/reservations/{id}/edit(id=${reservation.id}, returnUrl='/cashier/reservations/upcoming')}"
-                      class="btn-edit-reservation"
-                      style="
+								>
+									🔓 Mở bàn cho khách
+								</button>
+							</form>
+							
+							<!-- Các nút phụ -->
+							<div style="display: flex; gap: 8px">
+								<a
+										th:href="@{/cashier/reservations/{id}/edit(id=${reservation.id}, returnUrl='/cashier/reservations/upcoming')}"
+										class="btn-edit-reservation"
+										style="
                         flex: 1;
                         text-align: center;
                         padding: 10px;
@@ -757,115 +766,115 @@
                         border: none;
                         cursor: pointer;
                       "
-                    >
-                      ✏️ Sửa
-                    </a>
-                    <form
-                      th:action="@{/cashier/reservations/{id}/delete(id=${reservation.id})}"
-                      method="post"
-                      onsubmit="return confirm('Bạn có chắc chắn muốn hủy đặt bàn này?');"
-                      style="flex: 1"
-                    >
-                      <input
-                        type="hidden"
-                        th:name="${_csrf.parameterName}"
-                        th:value="${_csrf.token}"
-                      />
-                      <input
-                        type="hidden"
-                        name="returnUrl"
-                        value="/cashier/reservations/upcoming"
-                      />
-                      <button
-                        type="submit"
-                        class="btn-cancel-reservation"
-                        style="width: 100%"
-                      >
-                        ❌ Hủy đặt bàn
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Payment History View -->
-          <div
-            th:if="${paymentHistory != null && showHistory == true}"
-            class="reservation-list"
-          >
-            <div class="reservation-header">
-              <a th:href="@{/cashier}" class="btn-back-styled">← Quay lại</a>
-            </div>
-
-            <h2
-              style="
+								>
+									✏️ Sửa
+								</a>
+								<form
+										th:action="@{/cashier/reservations/{id}/delete(id=${reservation.id})}"
+										method="post"
+										onsubmit="return confirm('Bạn có chắc chắn muốn hủy đặt bàn này?');"
+										style="flex: 1"
+								>
+									<input
+											type="hidden"
+											th:name="${_csrf.parameterName}"
+											th:value="${_csrf.token}"
+									/>
+									<input
+											type="hidden"
+											name="returnUrl"
+											value="/cashier/reservations/upcoming"
+									/>
+									<button
+											type="submit"
+											class="btn-cancel-reservation"
+											style="width: 100%"
+									>
+										❌ Hủy đặt bàn
+									</button>
+								</form>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			<!-- Payment History View -->
+			<div
+					th:if="${paymentHistory != null && showHistory == true}"
+					class="reservation-list"
+			>
+				<div class="reservation-header">
+					<a th:href="@{/cashier}" class="btn-back-styled">← Quay lại</a>
+				</div>
+				
+				<h2
+						style="
                 font-size: 24px;
                 font-weight: 700;
                 color: #2c3e50;
                 margin-bottom: 20px;
                 padding: 20px 0;
               "
-            >
-              📋 Lịch sử hóa đơn
-            </h2>
-
-            <div
-              th:if="${#lists.isEmpty(paymentHistory)}"
-              class="no-reservations-card"
-            >
-              <div class="no-reservations-content">
-                <div class="no-reservations-icon">📄</div>
-                <div class="no-reservations-text">Chưa có hóa đơn nào</div>
-              </div>
-            </div>
-
-            <div
-              th:each="order : ${paymentHistory}"
-              class="reservation-card"
-              style="max-width: 100%"
-            >
-              <!-- Order Header -->
-              <div class="reservation-card-header" style="margin-bottom: 16px">
-                <div>
-                  <div
-                    style="
+				>
+					📋 Lịch sử hóa đơn
+				</h2>
+				
+				<div
+						th:if="${#lists.isEmpty(paymentHistory)}"
+						class="no-reservations-card"
+				>
+					<div class="no-reservations-content">
+						<div class="no-reservations-icon">📄</div>
+						<div class="no-reservations-text">Chưa có hóa đơn nào</div>
+					</div>
+				</div>
+				
+				<div
+						th:each="order : ${paymentHistory}"
+						class="reservation-card"
+						style="max-width: 100%"
+				>
+					<!-- Order Header -->
+					<div class="reservation-card-header" style="margin-bottom: 16px">
+						<div>
+							<div
+									style="
                       font-size: 18px;
                       font-weight: 700;
                       color: #2c3e50;
                       margin-bottom: 4px;
                     "
-                  >
-                    Đơn hàng #<span th:text="${order.orderId}">—</span>
-                  </div>
-                  <div style="font-size: 12px; color: #6c757d">
-                    📅
-                    <span
-                      th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"
-                      >—</span
-                    >
-                  </div>
-                </div>
-                <span
-                  th:style="${order.orderStatus != null && order.orderStatus.toString() == 'PREPARING' ? 'background: #fff3cd; color: #856404;' : (order.orderStatus != null && order.orderStatus.toString() == 'COMPLETED' ? 'background: #d4edda; color: #155724;' : (order.orderStatus != null && order.orderStatus.toString() == 'CANCELLED' ? 'background: #f8d7da; color: #721c24;' : 'background: #d1ecf1; color: #0c5460;'))}"
-                  style="
+							>
+								Đơn hàng #<span th:text="${order.orderId}">—</span>
+							</div>
+							<div style="font-size: 12px; color: #6c757d">
+								📅
+								<span
+										th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"
+								>—</span
+								>
+							</div>
+						</div>
+						<span
+								th:style="${order.orderStatus != null && order.orderStatus.toString() == 'PREPARING' ? 'background: #fff3cd; color: #856404;' : (order.orderStatus != null && order.orderStatus.toString() == 'COMPLETED' ? 'background: #d4edda; color: #155724;' : (order.orderStatus != null && order.orderStatus.toString() == 'CANCELLED' ? 'background: #f8d7da; color: #721c24;' : 'background: #d1ecf1; color: #0c5460;'))}"
+								style="
                     padding: 4px 12px;
                     border-radius: 20px;
                     font-size: 12px;
                     font-weight: 600;
                     text-transform: uppercase;
                   "
-                >
+						>
                   <span
-                    th:text="${order.orderStatus != null && order.orderStatus.toString() == 'PREPARING' ? 'Đang chuẩn bị' : (order.orderStatus != null && order.orderStatus.toString() == 'COMPLETED' ? 'Hoàn thành' : (order.orderStatus != null && order.orderStatus.toString() == 'CANCELLED' ? 'Đã hủy' : 'Đang xử lý'))}"
-                    >—</span
+		                  th:text="${order.orderStatus != null && order.orderStatus.toString() == 'PREPARING' ? 'Đang chuẩn bị' : (order.orderStatus != null && order.orderStatus.toString() == 'COMPLETED' ? 'Hoàn thành' : (order.orderStatus != null && order.orderStatus.toString() == 'CANCELLED' ? 'Đã hủy' : 'Đang xử lý'))}"
+                  >—</span
                   >
                 </span>
-                <span
-                  th:if="${order.paymentStatus != null}"
-                  th:style="${order.paymentStatus.toString() == 'PAID' ? 'background: #d4edda; color: #155724;' : (order.paymentStatus.toString() == 'PENDING' ? 'background: #fff3cd; color: #856404;' : 'background: #f8d7da; color: #721c24;')}"
-                  style="
+						<span
+								th:if="${order.paymentStatus != null}"
+								th:style="${order.paymentStatus.toString() == 'PAID' ? 'background: #d4edda; color: #155724;' : (order.paymentStatus.toString() == 'PENDING' ? 'background: #fff3cd; color: #856404;' : 'background: #f8d7da; color: #721c24;')}"
+								style="
                     padding: 4px 12px;
                     border-radius: 20px;
                     font-size: 12px;
@@ -873,97 +882,97 @@
                     text-transform: uppercase;
                     margin-left: 8px;
                   "
-                >
+						>
                   <span
-                    th:text="${order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : (order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý' : 'Chưa thanh toán')}"
-                    >—</span
+		                  th:text="${order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : (order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý' : 'Chưa thanh toán')}"
+                  >—</span
                   >
                 </span>
-              </div>
-
-              <!-- Order Details Section -->
-              <div
-                class="reservation-info"
-                style="
+					</div>
+					
+					<!-- Order Details Section -->
+					<div
+							class="reservation-info"
+							style="
                   background: #f8f9fa;
                   padding: 12px;
                   border-radius: 8px;
                   margin-bottom: 12px;
                 "
-              >
-                <div class="reservation-info-row">
-                  <span class="reservation-info-label">🪑 Bàn:</span>
-                  <span
-                    class="reservation-info-value"
-                    th:text="${order.tableName ?: 'Take-away'}"
-                    >—</span
-                  >
-                </div>
-                <div class="reservation-info-row">
-                  <span class="reservation-info-label">🍽️ Loại đơn:</span>
-                  <span
-                    class="reservation-info-value"
-                    th:text="${order.orderType != null && order.orderType.toString() == 'DINE_IN' ? 'Tại cửa hàng' : 'Take-away'}"
-                    >—</span
-                  >
-                </div>
-                <div class="reservation-info-row">
+					>
+						<div class="reservation-info-row">
+							<span class="reservation-info-label">🪑 Bàn:</span>
+							<span
+									class="reservation-info-value"
+									th:text="${order.tableName ?: 'Take-away'}"
+							>—</span
+							>
+						</div>
+						<div class="reservation-info-row">
+							<span class="reservation-info-label">🍽️ Loại đơn:</span>
+							<span
+									class="reservation-info-value"
+									th:text="${order.orderType != null && order.orderType.toString() == 'DINE_IN' ? 'Tại cửa hàng' : 'Take-away'}"
+							>—</span
+							>
+						</div>
+						<div class="reservation-info-row">
                   <span class="reservation-info-label"
-                    >💳 Phương thức Thanh Toán:</span
+                  >💳 Phương thức Thanh Toán:</span
                   >
-                  <span
-                    class="reservation-info-value"
-                    th:text="${order.paymentMethod != null ? (order.paymentMethod.toString() == 'CASH' ? 'Tiền mặt' : (order.paymentMethod.toString() == 'QR_BANKING' ? 'QR Code' : (order.paymentMethod.toString() == 'CREDIT_CARD' ? 'Thẻ tín dụng' : order.paymentMethod.toString()))) : 'Chưa chọn'}"
-                    >—</span
-                  >
-                </div>
-                <div class="reservation-info-row">
+							<span
+									class="reservation-info-value"
+									th:text="${order.paymentMethod != null ? (order.paymentMethod.toString() == 'CASH' ? 'Tiền mặt' : (order.paymentMethod.toString() == 'QR_BANKING' ? 'QR Code' : (order.paymentMethod.toString() == 'CREDIT_CARD' ? 'Thẻ tín dụng' : order.paymentMethod.toString()))) : 'Chưa chọn'}"
+							>—</span
+							>
+						</div>
+						<div class="reservation-info-row">
                   <span class="reservation-info-label"
-                    >💰 Trạng thái Thanh Toán:</span
+                  >💰 Trạng thái Thanh Toán:</span
                   >
-                  <span
-                    class="reservation-info-value"
-                    th:class="${order.paymentStatus != null && order.paymentStatus.toString() == 'PAID' ? 'payment-status paid' : (order.paymentStatus != null && order.paymentStatus.toString() == 'PENDING' ? 'payment-status pending' : 'payment-status unpaid')}"
-                    th:text="${order.paymentStatus != null ? (order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : (order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý' : 'Chưa thanh toán')) : 'Chưa thanh toán'}"
-                    >—</span
-                  >
-                </div>
-              </div>
-
-              <!-- Order Summary -->
-              <div
-                style="
+							<span
+									class="reservation-info-value"
+									th:class="${order.paymentStatus != null && order.paymentStatus.toString() == 'PAID' ? 'payment-status paid' : (order.paymentStatus != null && order.paymentStatus.toString() == 'PENDING' ? 'payment-status pending' : 'payment-status unpaid')}"
+									th:text="${order.paymentStatus != null ? (order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : (order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý' : 'Chưa thanh toán')) : 'Chưa thanh toán'}"
+							>—</span
+							>
+						</div>
+					</div>
+					
+					<!-- Order Summary -->
+					<div
+							style="
                   margin-top: 16px;
                   padding-top: 12px;
                   border-top: 2px solid #e8e8e8;
                 "
-              >
-                <div
-                  class="summary-row total"
-                  style="
+					>
+						<div
+								class="summary-row total"
+								style="
                     display: flex;
                     justify-content: space-between;
                     font-weight: 700;
                     font-size: 16px;
                     color: #2c3e50;
                   "
-                >
-                  <span>Tổng cộng:</span>
-                  <span
-                    style="color: #e74c3c; font-size: 18px"
-                    th:text="${#numbers.formatCurrency(order.totalPrice)}"
-                    >0đ</span
-                  >
-                </div>
-              </div>
-
-              <!-- Action Button -->
-              <div style="margin-top: 12px; text-align: center">
-                <button
-                  th:onclick="'toggleOrderDetail(' + ${order.orderId} + ')'"
-                  th:id="'toggle-btn-' + ${order.orderId}"
-                  class="btn-detail-order"
-                  style="
+						>
+							<span>Tổng cộng:</span>
+							<span
+									style="color: #e74c3c; font-size: 18px"
+									th:text="${#numbers.formatCurrency(order.totalPrice)}"
+							>0đ</span
+							>
+						</div>
+					</div>
+					
+					<!-- Action Button -->
+					<div style="margin-top: 12px; text-align: center">
+						<button
+								th:onclick="'toggleOrderDetail(' + ${order.orderId} + ')'"
+								th:id="'toggle-btn-' + ${order.orderId}"
+								class="btn-detail-order"
+								style="
                     padding: 8px 16px;
                     background-color: #007bff;
                     color: white;
@@ -974,18 +983,18 @@
                     cursor: pointer;
                     transition: background-color 0.2s;
                   "
-                  onmouseover="this.style.backgroundColor='#0056b3'"
-                  onmouseout="this.style.backgroundColor='#007bff'"
-                >
-                  📋 Xem chi tiết
-                </button>
-              </div>
-
-              <!-- Order Detail Section (Hidden by default) -->
-              <div
-                th:id="'order-detail-' + ${order.orderId}"
-                class="order-detail-section"
-                style="
+								onmouseover="this.style.backgroundColor='#0056b3'"
+								onmouseout="this.style.backgroundColor='#007bff'"
+						>
+							📋 Xem chi tiết
+						</button>
+					</div>
+					
+					<!-- Order Detail Section (Hidden by default) -->
+					<div
+							th:id="'order-detail-' + ${order.orderId}"
+							class="order-detail-section"
+							style="
                   display: none;
                   margin-top: 16px;
                   padding: 16px;
@@ -993,47 +1002,47 @@
                   border-radius: 8px;
                   border: 1px solid #e9ecef;
                 "
-              >
-                <!-- Receipt Header -->
-                <div style="text-align: center; margin-bottom: 20px">
-                  <div
-                    style="
+					>
+						<!-- Receipt Header -->
+						<div style="text-align: center; margin-bottom: 20px">
+							<div
+									style="
                       font-size: 18px;
                       font-weight: bold;
                       margin-bottom: 8px;
                       text-transform: uppercase;
                     "
-                  >
-                    CHI TIẾT ĐƠN HÀNG
-                  </div>
-                  <div
-                    style="
+							>
+								CHI TIẾT ĐƠN HÀNG
+							</div>
+							<div
+									style="
                       font-size: 16px;
                       font-weight: bold;
                       margin-bottom: 4px;
                     "
-                  >
-                    PizzarIO
-                  </div>
-                  <div style="font-size: 12px; margin-bottom: 4px">
-                    KM29 - ĐL. Thăng Long
-                  </div>
-                  <div style="font-size: 12px; margin-bottom: 10px">
-                    ĐT: 0123456678-0987654321
-                  </div>
-                  <div
-                    style="text-align: center; margin: 10px 0; font-size: 12px"
-                  >
-                    *****************
-                  </div>
-                </div>
-
-                <!-- Order Status -->
-                <div style="text-align: center; margin-bottom: 15px">
+							>
+								PizzarIO
+							</div>
+							<div style="font-size: 12px; margin-bottom: 4px">
+								KM29 - ĐL. Thăng Long
+							</div>
+							<div style="font-size: 12px; margin-bottom: 10px">
+								ĐT: 0123456678-0987654321
+							</div>
+							<div
+									style="text-align: center; margin: 10px 0; font-size: 12px"
+							>
+								*****************
+							</div>
+						</div>
+						
+						<!-- Order Status -->
+						<div style="text-align: center; margin-bottom: 15px">
                   <span
-                    th:class="'order-status ' + ${order.orderStatus != null ? order.orderStatus.toString().toLowerCase() : ''}"
-                    th:text="${order.orderStatus != null && order.orderStatus.toString() == 'PREPARING' ? 'Đang chuẩn bị' : (order.orderStatus != null && order.orderStatus.toString() == 'COMPLETED' ? 'Hoàn thành' : (order.orderStatus != null && order.orderStatus.toString() == 'CANCELLED' ? 'Đã hủy' : 'Đang xử lý'))}"
-                    style="
+		                  th:class="'order-status ' + ${order.orderStatus != null ? order.orderStatus.toString().toLowerCase() : ''}"
+		                  th:text="${order.orderStatus != null && order.orderStatus.toString() == 'PREPARING' ? 'Đang chuẩn bị' : (order.orderStatus != null && order.orderStatus.toString() == 'COMPLETED' ? 'Hoàn thành' : (order.orderStatus != null && order.orderStatus.toString() == 'CANCELLED' ? 'Đã hủy' : 'Đang xử lý'))}"
+		                  style="
                       padding: 4px 12px;
                       border-radius: 20px;
                       font-size: 12px;
@@ -1043,74 +1052,74 @@
                     "
                   >
                   </span>
-                  <span
-                    th:class="'payment-status ' + ${order.paymentStatus.toString().toLowerCase()}"
-                    th:text="${order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : (order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý' : 'Chưa thanh toán')}"
-                    style="
+							<span
+									th:class="'payment-status ' + ${order.paymentStatus.toString().toLowerCase()}"
+									th:text="${order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : (order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý' : 'Chưa thanh toán')}"
+									style="
                       padding: 4px 12px;
                       border-radius: 20px;
                       font-size: 12px;
                       font-weight: 600;
                       text-transform: uppercase;
                     "
-                  >
+							>
                   </span>
-                </div>
-
-                <!-- Transaction Information -->
-                <div style="margin-bottom: 15px; font-size: 12px">
-                  <div
-                    style="
+						</div>
+						
+						<!-- Transaction Information -->
+						<div style="margin-bottom: 15px; font-size: 12px">
+							<div
+									style="
                       display: flex;
                       justify-content: space-between;
                       margin-bottom: 4px;
                     "
-                  >
+							>
                     <span
-                      th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy')}"
-                      >20-09-2025</span
+		                    th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy')}"
+                    >20-09-2025</span
                     >
-                    <span
-                      th:text="${#temporals.format(order.createdAt, 'HH:mm:ss')}"
-                      >11:02:37</span
-                    >
-                  </div>
-                  <div style="margin-bottom: 4px">
-                    Mã đơn hàng:
-                    <strong>#<span th:text="${order.orderId}">—</span></strong>
-                  </div>
-                  <div style="margin-bottom: 4px">
-                    Khách hàng:
-                    <span th:text="${order.customerName ?: 'Khách vãng lai'}"
-                      >Khách vãng lai</span
-                    >
-                    <span
-                      th:if="${order.customerPhone != null}"
-                      style="color: #6c757d"
-                    >
+								<span
+										th:text="${#temporals.format(order.createdAt, 'HH:mm:ss')}"
+								>11:02:37</span
+								>
+							</div>
+							<div style="margin-bottom: 4px">
+								Mã đơn hàng:
+								<strong>#<span th:text="${order.orderId}">—</span></strong>
+							</div>
+							<div style="margin-bottom: 4px">
+								Khách hàng:
+								<span th:text="${order.customerName ?: 'Khách vãng lai'}"
+								>Khách vãng lai</span
+								>
+								<span
+										th:if="${order.customerPhone != null}"
+										style="color: #6c757d"
+								>
                       (SĐT: <span th:text="${order.customerPhone}">—</span>)
                     </span>
-                  </div>
-                  <div style="margin-bottom: 4px">
+							</div>
+							<div style="margin-bottom: 4px">
                     <span th:if="${order.tableName != null}">
                       Bàn: <span th:text="${order.tableName}">05</span>
                     </span>
-                    <span th:if="${order.tableName == null}">
+								<span th:if="${order.tableName == null}">
                       Loại đơn: Take-away
                     </span>
-                  </div>
-                  <div
-                    th:if="${order.createdByStaffName != null}"
-                    style="margin-bottom: 10px"
-                  >
-                    Nhân viên phục vụ:
-                    <span th:text="${order.createdByStaffName}">—</span>
-                  </div>
-                </div>
-
-                <!-- Items Header -->
-                <div
-                  style="
+							</div>
+							<div
+									th:if="${order.createdByStaffName != null}"
+									style="margin-bottom: 10px"
+							>
+								Nhân viên phục vụ:
+								<span th:text="${order.createdByStaffName}">—</span>
+							</div>
+						</div>
+						
+						<!-- Items Header -->
+						<div
+								style="
                     display: grid;
                     grid-template-columns: 1fr 70px 1fr;
                     column-gap: 8px;
@@ -1120,132 +1129,132 @@
                     border-bottom: 1px solid #000;
                     padding-bottom: 4px;
                   "
-                >
-                  <div>Tên món</div>
-                  <div style="text-align: center">Số lượng</div>
-                  <div style="text-align: right">Thành tiền</div>
-                </div>
-
-                <!-- Order Items -->
-                <div
-                  th:each="item : ${order.items}"
-                  style="
+						>
+							<div>Tên món</div>
+							<div style="text-align: center">Số lượng</div>
+							<div style="text-align: right">Thành tiền</div>
+						</div>
+						
+						<!-- Order Items -->
+						<div
+								th:each="item : ${order.items}"
+								style="
                     display: grid;
                     grid-template-columns: 1fr 70px 1fr;
                     column-gap: 8px;
                     font-size: 12px;
                     margin-bottom: 4px;
                   "
-                >
-                  <div th:text="${item.productName}">Pizza Bò</div>
-                  <div style="text-align: center" th:text="${item.quantity}">
-                    1
-                  </div>
-                  <div
-                    style="text-align: right"
-                    th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT')}"
-                  >
-                    245,000
-                  </div>
-                </div>
-
-                <!-- Discount Information -->
-                <div
-                  th:if="${order.discountAmount != null && order.discountAmount > 0}"
-                  style="
+						>
+							<div th:text="${item.productName}">Pizza Bò</div>
+							<div style="text-align: center" th:text="${item.quantity}">
+								1
+							</div>
+							<div
+									style="text-align: right"
+									th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT')}"
+							>
+								245,000
+							</div>
+						</div>
+						
+						<!-- Discount Information -->
+						<div
+								th:if="${order.discountAmount != null && order.discountAmount > 0}"
+								style="
                     display: grid;
                     grid-template-columns: 1fr 70px 1fr;
                     column-gap: 8px;
                     font-size: 12px;
                     margin-bottom: 4px;
                   "
-                >
-                  <div>Giảm giá:</div>
-                  <div style="text-align: center">-</div>
-                  <div
-                    style="text-align: right"
-                    th:text="'-' + ${#numbers.formatDecimal(order.discountAmount, 0, 'COMMA', 0, 'POINT')}"
-                  >
-                    -0
-                  </div>
-                </div>
-
-                <!-- Tax Information -->
-                <div
-                  style="
+						>
+							<div>Giảm giá:</div>
+							<div style="text-align: center">-</div>
+							<div
+									style="text-align: right"
+									th:text="'-' + ${#numbers.formatDecimal(order.discountAmount, 0, 'COMMA', 0, 'POINT')}"
+							>
+								-0
+							</div>
+						</div>
+						
+						<!-- Tax Information -->
+						<div
+								style="
                     display: grid;
                     grid-template-columns: 1fr 70px 1fr;
                     column-gap: 8px;
                     font-size: 12px;
                     margin-bottom: 4px;
                   "
-                >
-                  <div>Thuế (10%):</div>
-                  <div style="text-align: center">-</div>
-                  <div
-                    style="text-align: right"
-                    th:text="${#numbers.formatDecimal(order.totalPrice * 0.1 / 1.1, 0, 'COMMA', 0, 'POINT')}"
-                  >
-                    0
-                  </div>
-                </div>
-
-                <!-- Total Section -->
-                <div
-                  style="
+						>
+							<div>Thuế (10%):</div>
+							<div style="text-align: center">-</div>
+							<div
+									style="text-align: right"
+									th:text="${#numbers.formatDecimal(order.totalPrice * 0.1 / 1.1, 0, 'COMMA', 0, 'POINT')}"
+							>
+								0
+							</div>
+						</div>
+						
+						<!-- Total Section -->
+						<div
+								style="
                     margin-top: 15px;
                     border-top: 1px solid #000;
                     padding-top: 8px;
                   "
-                >
-                  <div
-                    style="
+						>
+							<div
+									style="
                       display: flex;
                       justify-content: space-between;
                       font-size: 14px;
                       font-weight: bold;
                       margin-bottom: 4px;
                     "
-                  >
-                    <span>Tạm tính:</span>
-                    <span
-                      th:text="${#numbers.formatDecimal(order.totalPrice / 1.1, 0, 'COMMA', 0, 'POINT')}"
-                      >745,000</span
-                    >
-                  </div>
-                  <div
-                    th:if="${order.discountAmount != null && order.discountAmount > 0}"
-                    style="
+							>
+								<span>Tạm tính:</span>
+								<span
+										th:text="${#numbers.formatDecimal(order.totalPrice / 1.1, 0, 'COMMA', 0, 'POINT')}"
+								>745,000</span
+								>
+							</div>
+							<div
+									th:if="${order.discountAmount != null && order.discountAmount > 0}"
+									style="
                       display: flex;
                       justify-content: space-between;
                       font-size: 14px;
                       font-weight: bold;
                       margin-bottom: 4px;
                     "
-                  >
-                    <span>Giảm giá:</span>
-                    <span
-                      th:text="'-' + ${#numbers.formatDecimal(order.discountAmount, 0, 'COMMA', 0, 'POINT')}"
-                      >-0</span
-                    >
-                  </div>
-                  <div
-                    style="
+							>
+								<span>Giảm giá:</span>
+								<span
+										th:text="'-' + ${#numbers.formatDecimal(order.discountAmount, 0, 'COMMA', 0, 'POINT')}"
+								>-0</span
+								>
+							</div>
+							<div
+									style="
                       display: flex;
                       justify-content: space-between;
                       font-size: 14px;
                       font-weight: bold;
                       margin-bottom: 4px;
                     "
-                  >
-                    <span>Thuế (10%):</span>
-                    <span
-                      th:text="${#numbers.formatDecimal(order.totalPrice * 0.1 / 1.1, 0, 'COMMA', 0, 'POINT')}"
-                      >0</span
-                    >
-                  </div>
-                  <div
-                    style="
+							>
+								<span>Thuế (10%):</span>
+								<span
+										th:text="${#numbers.formatDecimal(order.totalPrice * 0.1 / 1.1, 0, 'COMMA', 0, 'POINT')}"
+								>0</span
+								>
+							</div>
+							<div
+									style="
                       display: flex;
                       justify-content: space-between;
                       font-size: 16px;
@@ -1253,125 +1262,125 @@
                       border-top: 1px solid #000;
                       padding-top: 8px;
                     "
-                  >
-                    <span>Tổng cộng:</span>
-                    <span
-                      th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')}"
-                      >745,000</span
-                    >
-                  </div>
-                </div>
-
-                <!-- Payment Method Section -->
-                <div
-                  style="
+							>
+								<span>Tổng cộng:</span>
+								<span
+										th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')}"
+								>745,000</span
+								>
+							</div>
+						</div>
+						
+						<!-- Payment Method Section -->
+						<div
+								style="
                     text-align: center;
                     margin: 20px 0;
                     padding: 15px;
                     background: #f9f9f9;
                     border-radius: 8px;
                   "
-                >
-                  <div
-                    style="
+						>
+							<div
+									style="
                       font-size: 14px;
                       font-weight: bold;
                       margin-bottom: 10px;
                     "
-                  >
-                    Phương thức thanh toán
-                  </div>
-                  <div
-                    th:if="${order.paymentMethod != null && order.paymentMethod.toString() == 'QR_BANKING'}"
-                  >
-                    <div
-                      style="
+							>
+								Phương thức thanh toán
+							</div>
+							<div
+									th:if="${order.paymentMethod != null && order.paymentMethod.toString() == 'QR_BANKING'}"
+							>
+								<div
+										style="
                         color: #007bff;
                         font-size: 16px;
                         margin-bottom: 10px;
                       "
-                    >
-                      <strong>Thanh toán bằng QR Banking</strong><br />
-                      <span
-                        style="font-size: 12px"
-                        th:text="${order.paymentStatus != null && order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán thành công' : (order.paymentStatus != null && order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý thanh toán' : 'Chưa thanh toán')}"
-                        >Đã thanh toán thành công</span
-                      >
-                    </div>
-                  </div>
-                  <div
-                    th:if="${order.paymentMethod != null && order.paymentMethod.toString() == 'CASH'}"
-                  >
-                    <div
-                      style="
+								>
+									<strong>Thanh toán bằng QR Banking</strong><br/>
+									<span
+											style="font-size: 12px"
+											th:text="${order.paymentStatus != null && order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán thành công' : (order.paymentStatus != null && order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý thanh toán' : 'Chưa thanh toán')}"
+									>Đã thanh toán thành công</span
+									>
+								</div>
+							</div>
+							<div
+									th:if="${order.paymentMethod != null && order.paymentMethod.toString() == 'CASH'}"
+							>
+								<div
+										style="
                         color: #2e7d32;
                         font-size: 16px;
                         margin-bottom: 10px;
                       "
-                    >
-                      <strong>Thanh toán bằng tiền mặt</strong><br />
-                      <span
-                        style="font-size: 12px"
-                        th:text="${order.paymentStatus != null && order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán thành công' : (order.paymentStatus != null && order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý thanh toán' : 'Chưa thanh toán')}"
-                        >Đã thanh toán thành công</span
-                      >
-                    </div>
-                  </div>
-                  <div
-                    th:if="${order.paymentMethod != null && order.paymentMethod.toString() == 'CREDIT_CARD'}"
-                  >
-                    <div
-                      style="
+								>
+									<strong>Thanh toán bằng tiền mặt</strong><br/>
+									<span
+											style="font-size: 12px"
+											th:text="${order.paymentStatus != null && order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán thành công' : (order.paymentStatus != null && order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý thanh toán' : 'Chưa thanh toán')}"
+									>Đã thanh toán thành công</span
+									>
+								</div>
+							</div>
+							<div
+									th:if="${order.paymentMethod != null && order.paymentMethod.toString() == 'CREDIT_CARD'}"
+							>
+								<div
+										style="
                         color: #6f42c1;
                         font-size: 16px;
                         margin-bottom: 10px;
                       "
-                    >
-                      <strong>Thanh toán bằng thẻ tín dụng</strong><br />
-                      <span
-                        style="font-size: 12px"
-                        th:text="${order.paymentStatus != null && order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán thành công' : (order.paymentStatus != null && order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý thanh toán' : 'Chưa thanh toán')}"
-                        >Đã thanh toán thành công</span
-                      >
-                    </div>
-                  </div>
-                  <div th:if="${order.paymentMethod == null}">
-                    <div
-                      style="
+								>
+									<strong>Thanh toán bằng thẻ tín dụng</strong><br/>
+									<span
+											style="font-size: 12px"
+											th:text="${order.paymentStatus != null && order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán thành công' : (order.paymentStatus != null && order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý thanh toán' : 'Chưa thanh toán')}"
+									>Đã thanh toán thành công</span
+									>
+								</div>
+							</div>
+							<div th:if="${order.paymentMethod == null}">
+								<div
+										style="
                         color: #6c757d;
                         font-size: 16px;
                         margin-bottom: 10px;
                       "
-                    >
-                      <strong>Chưa chọn phương thức thanh toán</strong><br />
-                      <span
-                        style="font-size: 12px"
-                        th:text="${order.paymentStatus != null && order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : (order.paymentStatus != null && order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý thanh toán' : 'Chưa thanh toán')}"
-                        >Chưa thanh toán</span
-                      >
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Order Note -->
-                <div
-                  th:if="${order.note != null && !#strings.isEmpty(order.note)}"
-                  style="
+								>
+									<strong>Chưa chọn phương thức thanh toán</strong><br/>
+									<span
+											style="font-size: 12px"
+											th:text="${order.paymentStatus != null && order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : (order.paymentStatus != null && order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý thanh toán' : 'Chưa thanh toán')}"
+									>Chưa thanh toán</span
+									>
+								</div>
+							</div>
+						</div>
+						
+						<!-- Order Note -->
+						<div
+								th:if="${order.note != null && !#strings.isEmpty(order.note)}"
+								style="
                     margin: 15px 0;
                     padding: 10px;
                     background: #f8f9fa;
                     border-radius: 4px;
                   "
-                >
-                  <strong>Ghi chú đơn hàng:</strong><br />
-                  <span th:text="${order.note}"></span>
-                </div>
-
-                <!-- Action Buttons -->
-                <div style="text-align: center; margin-top: 20px">
-                  <button
-                    onclick="printReceipt()"
-                    style="
+						>
+							<strong>Ghi chú đơn hàng:</strong><br/>
+							<span th:text="${order.note}"></span>
+						</div>
+						
+						<!-- Action Buttons -->
+						<div style="text-align: center; margin-top: 20px">
+							<button
+									onclick="printReceipt()"
+									style="
                       padding: 10px 20px;
                       margin: 5px;
                       background-color: #007bff;
@@ -1382,580 +1391,582 @@
                       font-size: 14px;
                       font-weight: bold;
                     "
-                  >
-                    In hóa đơn
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Table Reservations View -->
-          <div th:if="${tableReservations != null}" class="reservation-list">
-            <div
-              class="detail-card"
-              style="margin-bottom: 16px; box-shadow: none"
-            >
-              <div class="reservation-header">
-                <a
-                  th:href="@{/cashier/tables/{id}/order(id=${selectedTableId})}"
-                  class="btn-back-styled"
-                >
-                  ← Quay lại bàn <span th:text="${selectedTableId}">—</span>
-                </a>
-              </div>
-            </div>
-            <div class="reservation-items">
-              <div
-                th:if="${#lists.isEmpty(tableReservations)}"
-                class="no-reservations-card"
-              >
-                <div class="no-reservations-content">
-                  <div class="no-reservations-icon">📅</div>
-                  <div class="no-reservations-text">
-                    Chưa có đơn đặt bàn nào
-                  </div>
-                </div>
-              </div>
-
-              <div
-                th:each="reservation : ${tableReservations}"
-                class="reservation-card"
-              >
-                <div class="reservation-card-header">
-                  <div class="reservation-table-name">
+							>
+								In hóa đơn
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			<!-- Table Reservations View -->
+			<div th:if="${tableReservations != null}" class="reservation-list">
+				<div
+						class="detail-card"
+						style="margin-bottom: 16px; box-shadow: none"
+				>
+					<div class="reservation-header">
+						<a
+								th:href="@{/cashier/tables/{id}/order(id=${selectedTableId})}"
+								class="btn-back-styled"
+						>
+							← Quay lại bàn <span th:text="${selectedTableId}">—</span>
+						</a>
+					</div>
+				</div>
+				<div class="reservation-items">
+					<div
+							th:if="${#lists.isEmpty(tableReservations)}"
+							class="no-reservations-card"
+					>
+						<div class="no-reservations-content">
+							<div class="no-reservations-icon">📅</div>
+							<div class="no-reservations-text">
+								Chưa có đơn đặt bàn nào
+							</div>
+						</div>
+					</div>
+					
+					<div
+							th:each="reservation : ${tableReservations}"
+							class="reservation-card"
+					>
+						<div class="reservation-card-header">
+							<div class="reservation-table-name">
                     <span style="font-weight: 700; color: #2c3e50"
-                      >Bàn <span th:text="${reservation.tableId}">#</span></span
+                    >Bàn <span th:text="${reservation.tableId}">#</span></span
                     >
-                    <span
-                      style="font-size: 12px; color: #6c757d; margin-left: 8px"
-                      >| Đơn #<span th:text="${reservation.id}">—</span></span
-                    >
-                  </div>
-                  <span
-                    th:class="'reservation-status ' + ${reservation.status.toString().toLowerCase()}"
-                    th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' :
+								<span
+										style="font-size: 12px; color: #6c757d; margin-left: 8px"
+								>| Đơn #<span th:text="${reservation.id}">—</span></span
+								>
+							</div>
+							<span
+									th:class="'reservation-status ' + ${reservation.status.toString().toLowerCase()}"
+									th:text="${reservation.status == 'CONFIRMED' ? 'Đã xác nhận' :
 							                (reservation.status == 'ARRIVED' ? 'Đã đến' : 
 							                (reservation.status == 'CANCELED' ? 'Đã hủy' : 'Không đến'))}"
-                  >
+							>
                   </span>
-                </div>
-
-                <div class="reservation-time">
-                  🕐
-                  <span
-                    th:text="${#temporals.format(reservation.startTime, 'EEE, dd MMM yyyy HH:mm')}"
-                    >—</span
-                  >
-                </div>
-
-                <div class="reservation-info">
-                  <div class="reservation-info-row">
-                    <span class="reservation-info-label">👤 Khách hàng:</span>
-                    <span
-                      class="reservation-info-value"
-                      th:text="${reservation.customerName}"
-                      >—</span
-                    >
-                  </div>
-                  <div class="reservation-info-row">
+						</div>
+						
+						<div class="reservation-time">
+							🕐
+							<span
+									th:text="${#temporals.format(reservation.startTime, 'EEE, dd MMM yyyy HH:mm')}"
+							>—</span
+							>
+						</div>
+						
+						<div class="reservation-info">
+							<div class="reservation-info-row">
+								<span class="reservation-info-label">👤 Khách hàng:</span>
+								<span
+										class="reservation-info-value"
+										th:text="${reservation.customerName}"
+								>—</span
+								>
+							</div>
+							<div class="reservation-info-row">
                     <span class="reservation-info-label"
-                      >📞 Số điện thoại:</span
+                    >📞 Số điện thoại:</span
                     >
-                    <span
-                      class="reservation-info-value"
-                      th:text="${reservation.customerPhone}"
-                      >—</span
-                    >
-                  </div>
-                  <div class="reservation-info-row">
-                    <span class="reservation-info-label">👥 Số khách:</span>
-                    <span
-                      class="reservation-info-value"
-                      th:text="${reservation.capacityExpected + ' người'}"
-                      >— người</span
-                    >
-                  </div>
-                  <div
-                    th:if="${reservation.note != null && !#strings.isEmpty(reservation.note)}"
-                    class="reservation-info-row"
-                  >
-                    <span class="reservation-info-label">📝 Ghi chú:</span>
-                    <span
-                      class="reservation-info-value"
-                      th:text="${reservation.note}"
-                      >—</span
-                    >
-                  </div>
-                </div>
+								<span
+										class="reservation-info-value"
+										th:text="${reservation.customerPhone}"
+								>—</span
+								>
+							</div>
+							<div class="reservation-info-row">
+								<span class="reservation-info-label">👥 Số khách:</span>
+								<span
+										class="reservation-info-value"
+										th:text="${reservation.capacityExpected + ' người'}"
+								>— người</span
+								>
+							</div>
+							<div
+									th:if="${reservation.note != null && !#strings.isEmpty(reservation.note)}"
+									class="reservation-info-row"
+							>
+								<span class="reservation-info-label">📝 Ghi chú:</span>
+								<span
+										class="reservation-info-value"
+										th:text="${reservation.note}"
+								>—</span
+								>
+							</div>
+						</div>
+						
+						<div
+								th:if="${reservation.status.toString() == 'CONFIRMED'}"
+								class="reservation-actions"
+						>
+							<!-- Nút mở bàn cho khách (nút chính) -->
+							<form
+									th:action="@{/cashier/reservations/{id}/open(id=${reservation.id})}"
+									th:if="${reservation.tableStatus != null && reservation.tableStatus == 'RESERVED' && reservation.isReadyToOpen()}"
+									method="post"
+									onsubmit="return confirm('Xác nhận khách đã đến và mở bàn?');"
+							>
+								<input
+										type="hidden"
+										th:name="${_csrf.parameterName}"
+										th:value="${_csrf.token}"
+								/>
+								<input
+										type="hidden"
+										name="returnUrl"
+										th:value="'/cashier/tables/' + ${selectedTableId} + '/reservations'"
+								/>
+								<button type="submit" class="btn-open-table">
+									🔓 Mở bàn cho khách
+								</button>
+							</form>
+							
+							<!-- Các nút phụ -->
+							<div class="reservation-secondary-actions">
+								<a
+										th:href="@{/cashier/reservations/{id}/edit(id=${reservation.id}, returnUrl='/cashier/tables/' + ${selectedTableId} + '/reservations')}"
+										class="btn-edit-reservation"
+								>
+									✏️ Sửa
+								</a>
+								<form
+										th:action="@{/cashier/reservations/{id}/delete(id=${reservation.id})}"
+										method="post"
+										onsubmit="return confirm('Bạn có chắc chắn muốn hủy đặt bàn này?');"
+								>
+									<input
+											type="hidden"
+											th:name="${_csrf.parameterName}"
+											th:value="${_csrf.token}"
+									/>
+									<input
+											type="hidden"
+											name="returnUrl"
+											th:value="'/cashier/tables/' + ${selectedTableId} + '/reservations'"
+									/>
+									<button type="submit" class="btn-cancel-reservation">
+										❌ Hủy đặt bàn
+									</button>
+								</form>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	</div>
+</div>
 
-                <div
-                  th:if="${reservation.status.toString() == 'CONFIRMED'}"
-                  class="reservation-actions"
-                >
-                  <!-- Nút mở bàn cho khách (nút chính) -->
-                  <form
-                    th:action="@{/cashier/reservations/{id}/open(id=${reservation.id})}"
-                    th:if="${reservation.tableStatus != null && reservation.tableStatus == 'RESERVED' && reservation.isReadyToOpen()}"
-                    method="post"
-                    onsubmit="return confirm('Xác nhận khách đã đến và mở bàn?');"
-                  >
-                    <input
-                      type="hidden"
-                      th:name="${_csrf.parameterName}"
-                      th:value="${_csrf.token}"
-                    />
-                    <input
-                      type="hidden"
-                      name="returnUrl"
-                      th:value="'/cashier/tables/' + ${selectedTableId} + '/reservations'"
-                    />
-                    <button type="submit" class="btn-open-table">
-                      🔓 Mở bàn cho khách
-                    </button>
-                  </form>
-
-                  <!-- Các nút phụ -->
-                  <div class="reservation-secondary-actions">
-                    <a
-                      th:href="@{/cashier/reservations/{id}/edit(id=${reservation.id}, returnUrl='/cashier/tables/' + ${selectedTableId} + '/reservations')}"
-                      class="btn-edit-reservation"
-                    >
-                      ✏️ Sửa
-                    </a>
-                    <form
-                      th:action="@{/cashier/reservations/{id}/delete(id=${reservation.id})}"
-                      method="post"
-                      onsubmit="return confirm('Bạn có chắc chắn muốn hủy đặt bàn này?');"
-                    >
-                      <input
-                        type="hidden"
-                        th:name="${_csrf.parameterName}"
-                        th:value="${_csrf.token}"
-                      />
-                      <input
-                        type="hidden"
-                        name="returnUrl"
-                        th:value="'/cashier/tables/' + ${selectedTableId} + '/reservations'"
-                      />
-                      <button type="submit" class="btn-cancel-reservation">
-                        ❌ Hủy đặt bàn
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-    </div>
-
-    <div class="toast-container" id="toast-container">
-      <!-- Flash messages từ redirect (chỉ hiển thị nếu không phải lỗi validation modal) -->
-      <div
-        th:if="${successMessage}"
-        class="toast success"
-        style="display: block"
-        th:attr="data-message=${successMessage},
+<div class="toast-container" id="toast-container">
+	<!-- Flash messages từ redirect (chỉ hiển thị nếu không phải lỗi validation modal) -->
+	<div
+			th:if="${successMessage}"
+			class="toast success"
+			style="display: block"
+			th:attr="data-message=${successMessage},
                  data-type='success',
                  data-table-id=${selectedTableId != null ? selectedTableId : ''},
                  data-reservation-id=${lastReservationId != null ? lastReservationId : ''}"
-      >
-        <span th:text="${successMessage}"></span>
-      </div>
-      <div
-        th:if="${errorMessage != null and (showReservationModal == null or !showReservationModal)}"
-        class="toast error"
-        style="display: block"
-        th:attr="data-message=${errorMessage},
+	>
+		<span th:text="${successMessage}"></span>
+	</div>
+	<div
+			th:if="${errorMessage != null and (showReservationModal == null or !showReservationModal)}"
+			class="toast error"
+			style="display: block"
+			th:attr="data-message=${errorMessage},
                  data-type='error',
                  data-table-id=${selectedTableId != null ? selectedTableId : ''},
                  data-reservation-id=${lastReservationId != null ? lastReservationId : ''}"
-      >
-        <span th:text="${errorMessage}"></span>
-      </div>
-    </div>
+	>
+		<span th:text="${errorMessage}"></span>
+	</div>
+</div>
 
-    <!-- Modal Toast Container cho errors trong modal -->
-    <div class="modal-toast-container" id="modal-toast-container"></div>
+<!-- Modal Toast Container cho errors trong modal -->
+<div class="modal-toast-container" id="modal-toast-container"></div>
 
-    <!-- Modal đặt bàn -->
-    <div id="reservation-modal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Đặt trước bàn</h2>
-          <span class="modal-close" onclick="closeReservationModal()"
-            >&times;</span
-          >
-        </div>
-        <div class="modal-body">
-          <form
-            id="reservation-form"
-            th:action="@{/cashier/reservations}"
-            method="post"
-            th:object="${reservationCreateDTO}"
-          >
-            <input
-              type="hidden"
-              th:name="${_csrf.parameterName}"
-              th:value="${_csrf.token}"
-            />
-            <input type="hidden" id="table-id-hidden" th:field="*{tableId}" />
+<!-- Modal đặt bàn -->
+<div id="reservation-modal" class="modal">
+	<div class="modal-content">
+		<div class="modal-header">
+			<h2>Đặt trước bàn</h2>
+			<span class="modal-close" onclick="closeReservationModal()"
+			>&times;</span
+			>
+		</div>
+		<div class="modal-body">
+			<form
+					id="reservation-form"
+					th:action="@{/cashier/reservations}"
+					method="post"
+					th:object="${reservationCreateDTO}"
+			>
+				<input
+						type="hidden"
+						th:name="${_csrf.parameterName}"
+						th:value="${_csrf.token}"
+				/>
+				<input type="hidden" id="table-id-hidden" th:field="*{tableId}"/>
+				
+				<!-- Hiển thị lỗi chung (global errors) -->
+				<div th:if="${#fields.hasGlobalErrors()}" class="form-alert-error">
+					<span class="alert-icon">⚠️</span>
+					<div
+							th:each="error : ${#fields.globalErrors()}"
+							th:text="${error}"
+							class="error-message"
+					></div>
+				</div>
+				
+				<div class="form-group">
+					<label for="table-id-display">Bàn số</label>
+					<input
+							type="text"
+							id="table-id-display"
+							readonly
+							class="form-control"
+							th:field="*{tableId}"
+					/>
+				</div>
+				
+				<div class="form-group">
+					<label for="customer-name"
+					>Tên khách hàng <span class="required">*</span></label
+					>
+					<input
+							type="text"
+							id="customer-name"
+							th:field="*{customerName}"
+							required
+							th:classappend="${#fields.hasErrors('customerName')} ? 'is-invalid' : ''"
+							class="form-control"
+					/>
+					<div
+							class="invalid-feedback"
+							th:if="${#fields.hasErrors('customerName')}"
+							th:errors="*{customerName}"
+					></div>
+				</div>
+				
+				<div class="form-group">
+					<label for="customer-phone"
+					>Số điện thoại <span class="required">*</span></label
+					>
+					<input
+							type="tel"
+							id="customer-phone"
+							th:field="*{customerPhone}"
+							required
+							th:classappend="${#fields.hasErrors('customerPhone')} ? 'is-invalid' : ''"
+							class="form-control"
+					/>
+					<div
+							class="invalid-feedback"
+							th:if="${#fields.hasErrors('customerPhone')}"
+							th:errors="*{customerPhone}"
+					></div>
+				</div>
+				
+				<div class="form-group">
+					<label for="customer-capacity"
+					>Số lượng dự kiến <span class="required">*</span></label
+					>
+					<input
+							type="number"
+							id="customer-capacity"
+							th:field="*{capacityExpected}"
+							required
+							th:classappend="${#fields.hasErrors('capacityExpected')} ? 'is-invalid' : ''"
+							class="form-control"
+					/>
+					<div
+							class="invalid-feedback"
+							th:if="${#fields.hasErrors('capacityExpected')}"
+							th:errors="*{capacityExpected}"
+					></div>
+				</div>
+				
+				<div class="form-row">
+					<div class="form-group half">
+						<label for="start-time"
+						>Thời gian bắt đầu <span class="required">*</span></label
+						>
+						<input
+								type="datetime-local"
+								id="start-time"
+								th:field="*{startTime}"
+								required
+								th:classappend="${#fields.hasErrors('startTime')} ? 'is-invalid' : ''"
+								class="form-control"
+						/>
+						<div
+								class="invalid-feedback"
+								th:if="${#fields.hasErrors('startTime')}"
+								th:errors="*{startTime}"
+						></div>
+					</div>
+				</div>
+				
+				<div class="form-group">
+					<label for="note">Ghi chú (tùy chọn)</label>
+					<textarea
+							id="note"
+							th:field="*{note}"
+							th:classappend="${#fields.hasErrors('note')} ? 'is-invalid' : ''"
+							class="form-control"
+							rows="3"
+							placeholder="Nhập ghi chú nếu có..."
+					></textarea>
+					<div
+							class="invalid-feedback"
+							th:if="${#fields.hasErrors('note')}"
+							th:errors="*{note}"
+					></div>
+				</div>
+			</form>
+		</div>
+		<div class="modal-footer">
+			<button
+					type="button"
+					class="btn btn-secondary"
+					onclick="closeReservationModal()"
+			>
+				Hủy
+			</button>
+			<button type="submit" form="reservation-form" class="btn btn-primary">
+				Xác nhận đặt bàn
+			</button>
+		</div>
+	</div>
+</div>
 
-            <!-- Hiển thị lỗi chung (global errors) -->
-            <div th:if="${#fields.hasGlobalErrors()}" class="form-alert-error">
-              <span class="alert-icon">⚠️</span>
-              <div
-                th:each="error : ${#fields.globalErrors()}"
-                th:text="${error}"
-                class="error-message"
-              ></div>
-            </div>
+<!-- Modal cập nhật đặt bàn -->
+<div
+		id="update-reservation-modal"
+		class="modal"
+		th:if="${reservationUpdateDTO != null}"
+>
+	<div class="modal-content">
+		<div class="modal-header">
+			<h2>Cập nhật đặt bàn</h2>
+			<span class="modal-close" onclick="closeUpdateModal()">&times;</span>
+		</div>
+		<div class="modal-body">
+			<form
+					id="update-reservation-form"
+					th:action="@{/cashier/reservations/{id}/update(id=${reservationUpdateDTO.id})}"
+					method="post"
+					th:object="${reservationUpdateDTO}"
+			>
+				<input
+						type="hidden"
+						th:name="${_csrf.parameterName}"
+						th:value="${_csrf.token}"
+				/>
+				<input type="hidden" name="returnUrl" th:value="${returnUrl}"/>
+				
+				<!-- Hiển thị lỗi chung (global errors) -->
+				<div th:if="${#fields.hasGlobalErrors()}" class="form-alert-error">
+					<span class="alert-icon">⚠️</span>
+					<div
+							th:each="error : ${#fields.globalErrors()}"
+							th:text="${error}"
+							class="error-message"
+					></div>
+				</div>
+				
+				<div class="form-group">
+					<label for="update-table-id">Bàn số</label>
+					<input
+							type="text"
+							id="update-table-id"
+							readonly
+							class="form-control"
+							th:value="'Bàn ' + ${reservationUpdateDTO.tableId}"
+					/>
+				</div>
+				
+				<div class="form-group">
+					<label for="update-customer-name"
+					>Tên khách hàng <span class="required">*</span></label
+					>
+					<input
+							type="text"
+							id="update-customer-name"
+							th:field="*{customerName}"
+							required
+							th:classappend="${#fields.hasErrors('customerName')} ? 'is-invalid' : ''"
+							class="form-control"
+					/>
+					<div
+							class="invalid-feedback"
+							th:if="${#fields.hasErrors('customerName')}"
+							th:errors="*{customerName}"
+					></div>
+				</div>
+				
+				<div class="form-group">
+					<label for="update-customer-phone"
+					>Số điện thoại <span class="required">*</span></label
+					>
+					<input
+							type="tel"
+							id="update-customer-phone"
+							th:field="*{customerPhone}"
+							required
+							th:classappend="${#fields.hasErrors('customerPhone')} ? 'is-invalid' : ''"
+							class="form-control"
+					/>
+					<div
+							class="invalid-feedback"
+							th:if="${#fields.hasErrors('customerPhone')}"
+							th:errors="*{customerPhone}"
+					></div>
+				</div>
+				
+				<div class="form-group">
+					<label for="update-customer-capacity"
+					>Số lượng dự kiến <span class="required">*</span></label
+					>
+					<input
+							type="number"
+							id="update-customer-capacity"
+							th:field="*{capacityExpected}"
+							required
+							th:classappend="${#fields.hasErrors('capacityExpected')} ? 'is-invalid' : ''"
+							class="form-control"
+					/>
+					<div
+							class="invalid-feedback"
+							th:if="${#fields.hasErrors('capacityExpected')}"
+							th:errors="*{capacityExpected}"
+					></div>
+				</div>
+				
+				<div class="form-row">
+					<div class="form-group half">
+						<label for="update-start-time"
+						>Thời gian bắt đầu <span class="required">*</span></label
+						>
+						<input
+								type="datetime-local"
+								id="update-start-time"
+								th:field="*{startTime}"
+								required
+								th:classappend="${#fields.hasErrors('startTime')} ? 'is-invalid' : ''"
+								class="form-control"
+						/>
+						<div
+								class="invalid-feedback"
+								th:if="${#fields.hasErrors('startTime')}"
+								th:errors="*{startTime}"
+						></div>
+					</div>
+				</div>
+				
+				<div class="form-group">
+					<label for="update-note">Ghi chú (tùy chọn)</label>
+					<textarea
+							id="update-note"
+							th:field="*{note}"
+							th:classappend="${#fields.hasErrors('note')} ? 'is-invalid' : ''"
+							class="form-control"
+							rows="3"
+							placeholder="Nhập ghi chú nếu có..."
+					></textarea>
+					<div
+							class="invalid-feedback"
+							th:if="${#fields.hasErrors('note')}"
+							th:errors="*{note}"
+					></div>
+				</div>
+			</form>
+		</div>
+		<div class="modal-footer">
+			<button
+					type="button"
+					class="btn btn-secondary"
+					onclick="closeUpdateModal()"
+			>
+				Hủy
+			</button>
+			<button
+					type="submit"
+					form="update-reservation-form"
+					class="btn btn-primary"
+			>
+				Cập nhật
+			</button>
+		</div>
+	</div>
+</div>
 
-            <div class="form-group">
-              <label for="table-id-display">Bàn số</label>
-              <input
-                type="text"
-                id="table-id-display"
-                readonly
-                class="form-control"
-                th:field="*{tableId}"
-              />
-            </div>
+<!-- Notification History Modal -->
+<div id="notification-modal" class="modal">
+	<div class="modal-content" style="max-width: 800px;">
+		<div class="modal-header">
+			<h2>🔔 Lịch sử thông báo</h2>
+			<span class="modal-close" onclick="closeNotificationModal()">&times;</span>
+		</div>
+		<div class="modal-body" style="max-height: 60vh;">
+			<div class="notification-filters"
+			     style="margin-bottom: 16px; display: flex; gap: 8px; justify-content: flex-end;">
+				<button class="btn btn-secondary" onclick="clearAllNotifications()"
+				        style="font-size: 12px; padding: 6px 12px;">
+					🗑️ Xóa tất cả
+				</button>
+			</div>
+			<div id="notification-list" class="notification-list">
+				<!-- Notifications will be inserted here by JavaScript -->
+			</div>
+		</div>
+	</div>
+</div>
 
-            <div class="form-group">
-              <label for="customer-name"
-                >Tên khách hàng <span class="required">*</span></label
-              >
-              <input
-                type="text"
-                id="customer-name"
-                th:field="*{customerName}"
-                required
-                th:classappend="${#fields.hasErrors('customerName')} ? 'is-invalid' : ''"
-                class="form-control"
-              />
-              <div
-                class="invalid-feedback"
-                th:if="${#fields.hasErrors('customerName')}"
-                th:errors="*{customerName}"
-              ></div>
-            </div>
-
-            <div class="form-group">
-              <label for="customer-phone"
-                >Số điện thoại <span class="required">*</span></label
-              >
-              <input
-                type="tel"
-                id="customer-phone"
-                th:field="*{customerPhone}"
-                required
-                th:classappend="${#fields.hasErrors('customerPhone')} ? 'is-invalid' : ''"
-                class="form-control"
-              />
-              <div
-                class="invalid-feedback"
-                th:if="${#fields.hasErrors('customerPhone')}"
-                th:errors="*{customerPhone}"
-              ></div>
-            </div>
-
-            <div class="form-group">
-              <label for="customer-capacity"
-                >Số lượng dự kiến <span class="required">*</span></label
-              >
-              <input
-                type="number"
-                id="customer-capacity"
-                th:field="*{capacityExpected}"
-                required
-                th:classappend="${#fields.hasErrors('capacityExpected')} ? 'is-invalid' : ''"
-                class="form-control"
-              />
-              <div
-                class="invalid-feedback"
-                th:if="${#fields.hasErrors('capacityExpected')}"
-                th:errors="*{capacityExpected}"
-              ></div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group half">
-                <label for="start-time"
-                  >Thời gian bắt đầu <span class="required">*</span></label
-                >
-                <input
-                  type="datetime-local"
-                  id="start-time"
-                  th:field="*{startTime}"
-                  required
-                  th:classappend="${#fields.hasErrors('startTime')} ? 'is-invalid' : ''"
-                  class="form-control"
-                />
-                <div
-                  class="invalid-feedback"
-                  th:if="${#fields.hasErrors('startTime')}"
-                  th:errors="*{startTime}"
-                ></div>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="note">Ghi chú (tùy chọn)</label>
-              <textarea
-                id="note"
-                th:field="*{note}"
-                th:classappend="${#fields.hasErrors('note')} ? 'is-invalid' : ''"
-                class="form-control"
-                rows="3"
-                placeholder="Nhập ghi chú nếu có..."
-              ></textarea>
-              <div
-                class="invalid-feedback"
-                th:if="${#fields.hasErrors('note')}"
-                th:errors="*{note}"
-              ></div>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            onclick="closeReservationModal()"
-          >
-            Hủy
-          </button>
-          <button type="submit" form="reservation-form" class="btn btn-primary">
-            Xác nhận đặt bàn
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal cập nhật đặt bàn -->
-    <div
-      id="update-reservation-modal"
-      class="modal"
-      th:if="${reservationUpdateDTO != null}"
-    >
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Cập nhật đặt bàn</h2>
-          <span class="modal-close" onclick="closeUpdateModal()">&times;</span>
-        </div>
-        <div class="modal-body">
-          <form
-            id="update-reservation-form"
-            th:action="@{/cashier/reservations/{id}/update(id=${reservationUpdateDTO.id})}"
-            method="post"
-            th:object="${reservationUpdateDTO}"
-          >
-            <input
-              type="hidden"
-              th:name="${_csrf.parameterName}"
-              th:value="${_csrf.token}"
-            />
-            <input type="hidden" name="returnUrl" th:value="${returnUrl}" />
-
-            <!-- Hiển thị lỗi chung (global errors) -->
-            <div th:if="${#fields.hasGlobalErrors()}" class="form-alert-error">
-              <span class="alert-icon">⚠️</span>
-              <div
-                th:each="error : ${#fields.globalErrors()}"
-                th:text="${error}"
-                class="error-message"
-              ></div>
-            </div>
-
-            <div class="form-group">
-              <label for="update-table-id">Bàn số</label>
-              <input
-                type="text"
-                id="update-table-id"
-                readonly
-                class="form-control"
-                th:value="'Bàn ' + ${reservationUpdateDTO.tableId}"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="update-customer-name"
-                >Tên khách hàng <span class="required">*</span></label
-              >
-              <input
-                type="text"
-                id="update-customer-name"
-                th:field="*{customerName}"
-                required
-                th:classappend="${#fields.hasErrors('customerName')} ? 'is-invalid' : ''"
-                class="form-control"
-              />
-              <div
-                class="invalid-feedback"
-                th:if="${#fields.hasErrors('customerName')}"
-                th:errors="*{customerName}"
-              ></div>
-            </div>
-
-            <div class="form-group">
-              <label for="update-customer-phone"
-                >Số điện thoại <span class="required">*</span></label
-              >
-              <input
-                type="tel"
-                id="update-customer-phone"
-                th:field="*{customerPhone}"
-                required
-                th:classappend="${#fields.hasErrors('customerPhone')} ? 'is-invalid' : ''"
-                class="form-control"
-              />
-              <div
-                class="invalid-feedback"
-                th:if="${#fields.hasErrors('customerPhone')}"
-                th:errors="*{customerPhone}"
-              ></div>
-            </div>
-
-            <div class="form-group">
-              <label for="update-customer-capacity"
-                >Số lượng dự kiến <span class="required">*</span></label
-              >
-              <input
-                type="number"
-                id="update-customer-capacity"
-                th:field="*{capacityExpected}"
-                required
-                th:classappend="${#fields.hasErrors('capacityExpected')} ? 'is-invalid' : ''"
-                class="form-control"
-              />
-              <div
-                class="invalid-feedback"
-                th:if="${#fields.hasErrors('capacityExpected')}"
-                th:errors="*{capacityExpected}"
-              ></div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group half">
-                <label for="update-start-time"
-                  >Thời gian bắt đầu <span class="required">*</span></label
-                >
-                <input
-                  type="datetime-local"
-                  id="update-start-time"
-                  th:field="*{startTime}"
-                  required
-                  th:classappend="${#fields.hasErrors('startTime')} ? 'is-invalid' : ''"
-                  class="form-control"
-                />
-                <div
-                  class="invalid-feedback"
-                  th:if="${#fields.hasErrors('startTime')}"
-                  th:errors="*{startTime}"
-                ></div>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="update-note">Ghi chú (tùy chọn)</label>
-              <textarea
-                id="update-note"
-                th:field="*{note}"
-                th:classappend="${#fields.hasErrors('note')} ? 'is-invalid' : ''"
-                class="form-control"
-                rows="3"
-                placeholder="Nhập ghi chú nếu có..."
-              ></textarea>
-              <div
-                class="invalid-feedback"
-                th:if="${#fields.hasErrors('note')}"
-                th:errors="*{note}"
-              ></div>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            onclick="closeUpdateModal()"
-          >
-            Hủy
-          </button>
-          <button
-            type="submit"
-            form="update-reservation-form"
-            class="btn btn-primary"
-          >
-            Cập nhật
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Notification History Modal -->
-    <div id="notification-modal" class="modal">
-      <div class="modal-content" style="max-width: 800px;">
-        <div class="modal-header">
-          <h2>🔔 Lịch sử thông báo</h2>
-          <span class="modal-close" onclick="closeNotificationModal()">&times;</span>
-        </div>
-        <div class="modal-body" style="max-height: 60vh;">
-          <div class="notification-filters" style="margin-bottom: 16px; display: flex; gap: 8px; justify-content: flex-end;">
-            <button class="btn btn-secondary" onclick="clearAllNotifications()" style="font-size: 12px; padding: 6px 12px;">
-              🗑️ Xóa tất cả
-            </button>
-          </div>
-          <div id="notification-list" class="notification-list">
-            <!-- Notifications will be inserted here by JavaScript -->
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Edit Order Sliding Panel -->
-    <div id="edit-order-overlay" class="edit-order-overlay" onclick="closeEditOrderPanel()"></div>
-    <div id="edit-order-panel" class="edit-order-panel">
-      <div class="panel-header">
-        <h2>✏️ Chỉnh sửa order - Bàn <span id="edit-table-number">2</span></h2>
-        <button class="panel-close" onclick="closeEditOrderPanel()" type="button">&times;</button>
-      </div>
-
-      <div class="panel-body">
-        <!-- Menu Section -->
-        <div class="menu-section">
-          <h3>🍕 Menu món ăn</h3>
-          <div class="menu-tabs">
-            <button class="menu-tab active" onclick="filterMenu(0)">Tất cả</button>
-            <th:block th:each="cat : ${categories}">
-              <button class="menu-tab"
-                      th:text="${cat.name}"
-                      th:onclick="'filterMenu(' + ${cat.id} + ')'"
-                      th:attr="data-category-id=${cat.id}">
-              </button>
-            </th:block>
-          </div>
-
-          <div class="menu-items" id="menu-items-list">
-            <!-- Menu items loaded from database -->
-            <div class="menu-item"
-                 th:each="p : ${products}"
-                 th:if="${p.active}"
-                 th:attr="data-category-id=${p.categoryId},
+<!-- Edit Order Sliding Panel -->
+<div id="edit-order-overlay" class="edit-order-overlay" onclick="closeEditOrderPanel()"></div>
+<div id="edit-order-panel" class="edit-order-panel">
+	<div class="panel-header">
+		<h2>✏️ Chỉnh sửa order - Bàn <span id="edit-table-number" th:text="${tableId}"></span></h2>
+		<button class="panel-close" onclick="closeEditOrderPanel()" type="button">&times;</button>
+	</div>
+	
+	<div class="panel-body">
+		<!-- Menu Section -->
+		<div class="menu-section">
+			<h3>🍕 Menu món ăn</h3>
+			<div class="menu-tabs">
+				<button class="menu-tab active" onclick="filterMenu(0)">Tất cả</button>
+				<th:block th:each="cat : ${categories}">
+					<button class="menu-tab"
+					        th:text="${cat.name}"
+					        th:onclick="'filterMenu(' + ${cat.id} + ')'"
+					        th:attr="data-category-id=${cat.id}">
+					</button>
+				</th:block>
+			</div>
+			
+			<div class="menu-items" id="menu-items-list">
+				<!-- Menu items loaded from database -->
+				<div class="menu-item"
+				     th:each="p : ${products}"
+				     th:if="${p.active}"
+				     th:attr="data-category-id=${p.categoryId},
                           data-product-id=${p.id},
                           data-product-name=${p.name}">
-              <div class="menu-item-info">
-                <div class="menu-item-name" th:text="${p.name}">Product Name</div>
-              </div>
-              <button class="btn-add-item" onclick="openSizeModal(this)">
-                <span>+</span>
-              </button>
-              <!-- Hidden div to store sizes data as JSON -->
-              <div class="product-sizes-data" style="display: none;">
-                <th:block th:if="${p.sizes != null && !p.sizes.isEmpty()}">
+					<div class="menu-item-info">
+						<div class="menu-item-name" th:text="${p.name}">Product Name</div>
+					</div>
+					<button class="btn-add-item" onclick="openSizeModal(this)">
+						<span>+</span>
+					</button>
+					<!-- Hidden div to store sizes data as JSON -->
+					<div class="product-sizes-data" style="display: none;">
+						<th:block th:if="${p.sizes != null && !p.sizes.isEmpty()}">
                   <span th:each="size, iterStat : ${p.sizes}"
                         th:attr="data-size-id=${size.sizeId},
                                  data-size-name=${size.sizeName},
@@ -1963,185 +1974,187 @@
                                  data-base-price=${size.basePrice},
                                  data-is-on-sale=${size.onFlashSale}">
                   </span>
-                </th:block>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Current Order Section -->
-        <div class="current-order-section">
-          <h3>📋 Đơn hiện tại</h3>
-          <div class="current-order-items" id="current-order-items">
-            <!-- Order items will be added here dynamically -->
-            <th:block th:if="${orderDetail != null && orderDetail.items != null && !orderDetail.items.isEmpty()}">
-              <div class="order-edit-item"
-                   th:each="item : ${orderDetail.items}"
-                   th:attr="data-item-id=${item.id},
+						</th:block>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<!-- Current Order Section -->
+		<div class="current-order-section">
+			<h3>📋 Đơn hiện tại</h3>
+			<div class="current-order-items" id="current-order-items">
+				<!-- Order items will be added here dynamically -->
+				<th:block th:if="${orderDetail != null && orderDetail.items != null && !orderDetail.items.isEmpty()}">
+					<div class="order-edit-item"
+					     th:each="item : ${orderDetail.items}"
+					     th:attr="data-item-id=${item.id},
                             data-product-id=${item.productSize.product.id},
                             data-size-id=${item.productSize.size.id},
                             data-price=${item.unitPrice},
                             data-base-price=${item.productSize.basePrice},
                             data-is-on-sale=${item.productSize.onFlashSale}">
-                <div class="order-edit-item-info">
-                  <div class="order-edit-item-name" th:text="${item.productName}">Product Name</div>
-                  <div class="order-edit-item-size" th:if="${item.sizeName != null}"
-                       th:text="'Size: ' + ${item.sizeName}">Size</div>
-                  <div class="order-edit-item-note">
-                    <input type="text"
-                           class="item-note-input"
-                           placeholder="Ghi chú"
-                           th:value="${item.note}"
-                           style="width: 100%; padding: 4px 8px; margin-top: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
-                  </div>
-                </div>
-                <div class="order-edit-item-controls">
-                  <button class="btn-quantity" onclick="updateQuantityInPanel(this, -1)">−</button>
-                  <span class="quantity" th:text="${item.quantity}">1</span>
-                  <button class="btn-quantity" onclick="updateQuantityInPanel(this, 1)">+</button>
-                  <button class="btn-remove-item" onclick="removeItemFromPanel(this)">🗑️</button>
-                </div>
-                <div class="order-edit-item-price">
+						<div class="order-edit-item-info">
+							<div class="order-edit-item-name" th:text="${item.productName}">Product Name</div>
+							<div class="order-edit-item-size" th:if="${item.sizeName != null}"
+							     th:text="'Size: ' + ${item.sizeName}">Size
+							</div>
+							<div class="order-edit-item-note">
+								<input type="text"
+								       class="item-note-input"
+								       placeholder="Ghi chú"
+								       th:value="${item.note}"
+								       style="width: 100%; padding: 4px 8px; margin-top: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+							</div>
+						</div>
+						<div class="order-edit-item-controls">
+                  <span style="margin-right: 8px;">
+                    x<span class="quantity" th:text="${item.quantity}">1</span>
+                  </span>
+							<button class="btn-remove-item" onclick="removeItemFromPanel(this)">🗑️</button>
+						</div>
+						<div class="order-edit-item-price">
                   <span th:if="${item.productSize.onFlashSale}"
                         style="text-decoration: line-through; color: #999; font-size: 12px; margin-right: 8px;"
                         th:text="${#numbers.formatCurrency(item.productSize.basePrice)}">
                   </span>
-                  <span th:text="${#numbers.formatCurrency(item.unitPrice)}"
-                        th:style="${item.productSize.onFlashSale ? 'color: #e74c3c; font-weight: 600;' : ''}">
+							<span th:text="${#numbers.formatCurrency(item.unitPrice)}"
+							      th:style="${item.productSize.onFlashSale ? 'color: #e74c3c; font-weight: 600;' : ''}">
                   </span>
-                </div>
-              </div>
-            </th:block>
-            <div th:if="${orderDetail == null || orderDetail.items == null || orderDetail.items.isEmpty()}"
-                 style="text-align: center; padding: 40px; color: #999;">
-              <p>Chưa có món nào trong order</p>
-              <p style="font-size: 14px;">Nhấn nút + để thêm món</p>
-            </div>
-          </div>
+						</div>
+					</div>
+				</th:block>
+				<div th:if="${orderDetail == null || orderDetail.items == null || orderDetail.items.isEmpty()}"
+				     style="text-align: center; padding: 40px; color: #999;">
+					<p>Chưa có món nào trong order</p>
+					<p style="font-size: 14px;">Nhấn nút + để thêm món</p>
+				</div>
+			</div>
+			
+			<div class="order-summary-edit">
+				<div class="summary-row-edit total">
+					<span>Tổng cộng:</span>
+					<span id="edit-total"
+					      th:text="${orderDetail != null && orderDetail.totalPrice != null ? #numbers.formatCurrency(orderDetail.totalPrice) : '0đ'}">0đ</span>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div class="panel-footer">
+		<button class="btn btn-secondary" onclick="closeEditOrderPanel()" type="button">Hủy</button>
+		<button class="btn btn-primary" onclick="saveOrderChanges()" type="button" th:method="POST">💾 Cập nhật order
+		</button>
+	</div>
+</div>
 
-          <div class="order-summary-edit">
-            <div class="summary-row-edit total">
-              <span>Tổng cộng:</span>
-              <span id="edit-total"
-                    th:text="${orderDetail != null && orderDetail.totalPrice != null ? #numbers.formatCurrency(orderDetail.totalPrice) : '0đ'}">0đ</span>
-            </div>
-          </div>
-        </div>
-      </div>
+<!-- Size Selection Modal -->
+<div id="size-modal-overlay" class="size-modal-overlay" onclick="closeSizeModal()"></div>
+<div id="size-modal" class="size-modal">
+	<div class="size-modal-header">
+		<h3 id="size-modal-product-name">Chọn size</h3>
+		<button class="size-modal-close" onclick="closeSizeModal()" type="button">&times;</button>
+	</div>
+	<div class="size-modal-body" id="size-modal-body">
+		<!-- Size options will be dynamically populated here -->
+	</div>
+	<div class="size-modal-footer">
+		<button class="btn btn-secondary" onclick="closeSizeModal()" type="button">Đóng</button>
+	</div>
+</div>
 
-      <div class="panel-footer">
-        <button class="btn btn-secondary" onclick="closeEditOrderPanel()" type="button">Hủy</button>
-        <button class="btn btn-primary" onclick="saveOrderChanges()" type="button" th:method="POST">💾 Cập nhật order</button>
-      </div>
-    </div>
-
-    <!-- Size Selection Modal -->
-    <div id="size-modal-overlay" class="size-modal-overlay" onclick="closeSizeModal()"></div>
-    <div id="size-modal" class="size-modal">
-      <div class="size-modal-header">
-        <h3 id="size-modal-product-name">Chọn size</h3>
-        <button class="size-modal-close" onclick="closeSizeModal()" type="button">&times;</button>
-      </div>
-      <div class="size-modal-body" id="size-modal-body">
-        <!-- Size options will be dynamically populated here -->
-      </div>
-      <div class="size-modal-footer">
-        <button class="btn btn-secondary" onclick="closeSizeModal()" type="button">Đóng</button>
-      </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-    <script th:src="@{/js/cashier/utils.js}"></script>
-    <script th:src="@{/js/cashier/reservation.js}"></script>
-    <script>
-      // Initialize clock
-      function initializeClock() {
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script th:src="@{/js/cashier/utils.js}"></script>
+<script th:src="@{/js/cashier/reservation.js}"></script>
+<script>
+    // Initialize clock
+    function initializeClock() {
         const $clock = document.getElementById("clock");
         const $date = document.getElementById("date");
 
         if (!$clock || !$date) {
-          console.warn('Clock elements not found');
-          return;
+            console.warn('Clock elements not found');
+            return;
         }
 
         function render() {
-          const now = new Date();
-          $clock.textContent = now.toLocaleTimeString("vi-VN", { hour12: false });
-          $date.textContent = now.toLocaleDateString("vi-VN", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          });
+            const now = new Date();
+            $clock.textContent = now.toLocaleTimeString("vi-VN", {hour12: false});
+            $date.textContent = now.toLocaleDateString("vi-VN", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            });
         }
 
         render();
         setInterval(render, 1000);
-      }
+    }
 
-      // Initialize clock when DOM is ready
-      if (document.readyState === 'loading') {
+    // Initialize clock when DOM is ready
+    if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeClock);
-      } else {
+    } else {
         initializeClock();
-      }
+    }
 
-      document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", function () {
         const toasts = document.querySelectorAll(".toast-container .toast");
         toasts.forEach((toast) => {
-          setTimeout(() => {
-            toast.style.animation = "slideInRight 0.3s ease reverse";
             setTimeout(() => {
-              toast.remove();
-            }, 300);
-          }, 5000);
+                toast.style.animation = "slideInRight 0.3s ease reverse";
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 5000);
         });
-      });
+    });
 
-      // Custom logout confirmation
-      function confirmLogout() {
+    // Custom logout confirmation
+    function confirmLogout() {
         return confirm("Bạn có muốn đăng xuất không?");
-      }
+    }
 
-      // Toggle order detail functionality
-      function toggleOrderDetail(orderId) {
+    // Toggle order detail functionality
+    function toggleOrderDetail(orderId) {
         const detailSection = document.getElementById(
-          "order-detail-" + orderId
+            "order-detail-" + orderId
         );
         const toggleBtn = document.getElementById("toggle-btn-" + orderId);
 
         if (
-          detailSection.style.display === "none" ||
-          detailSection.style.display === ""
+            detailSection.style.display === "none" ||
+            detailSection.style.display === ""
         ) {
-          // Show detail
-          detailSection.style.display = "block";
-          toggleBtn.textContent = "🙈 Ẩn";
-          toggleBtn.style.backgroundColor = "#6c757d";
+            // Show detail
+            detailSection.style.display = "block";
+            toggleBtn.textContent = "🙈 Ẩn";
+            toggleBtn.style.backgroundColor = "#6c757d";
         } else {
-          // Hide detail
-          detailSection.style.display = "none";
-          toggleBtn.textContent = "📋 Xem chi tiết";
-          toggleBtn.style.backgroundColor = "#007bff";
+            // Hide detail
+            detailSection.style.display = "none";
+            toggleBtn.textContent = "📋 Xem chi tiết";
+            toggleBtn.style.backgroundColor = "#007bff";
         }
-      }
+    }
 
-      // Print receipt functionality
-      function printReceipt() {
+    // Print receipt functionality
+    function printReceipt() {
         window.print();
-      }
-    </script>
+    }
+</script>
 
-    <script th:src="@{/js/cashier/cashier-dashboard.js}"></script>
-    <script th:src="@{/js/cashier/utils.js}"></script>
-    <script th:src="@{/js/cashier/websocket.js}"></script>
-    <script th:src="@{/js/cashier/table.js}"></script>
-    <script th:src="@{/js/cashier/reservation.js}"></script>
+<script th:src="@{/js/cashier/cashier-dashboard.js}"></script>
+<script th:src="@{/js/cashier/utils.js}"></script>
+<script th:src="@{/js/cashier/websocket.js}"></script>
+<script th:src="@{/js/cashier/table.js}"></script>
+<script th:src="@{/js/cashier/reservation.js}"></script>
 
-    <!-- Resizable Panel Script -->
-    <script>
-      (function () {
+<!-- Resizable Panel Script -->
+<script>
+    (function () {
         const resizeHandle = document.getElementById("resize-handle");
         const leftPanel = document.getElementById("left-panel");
         const rightPanel = document.getElementById("right-panel");
@@ -2152,174 +2165,174 @@
         let startWidth = 0;
 
         if (resizeHandle && leftPanel && rightPanel) {
-          resizeHandle.addEventListener("mousedown", function (e) {
-            isResizing = true;
-            startX = e.clientX;
-            startWidth = leftPanel.offsetWidth;
+            resizeHandle.addEventListener("mousedown", function (e) {
+                isResizing = true;
+                startX = e.clientX;
+                startWidth = leftPanel.offsetWidth;
 
-            document.body.classList.add("resizing");
-            resizeHandle.classList.add("dragging");
+                document.body.classList.add("resizing");
+                resizeHandle.classList.add("dragging");
 
-            e.preventDefault();
-          });
+                e.preventDefault();
+            });
 
-          document.addEventListener("mousemove", function (e) {
-            if (!isResizing) return;
+            document.addEventListener("mousemove", function (e) {
+                if (!isResizing) return;
 
-            const deltaX = e.clientX - startX;
-            const newWidth = startWidth + deltaX;
-            const layoutWidth = layout.offsetWidth;
+                const deltaX = e.clientX - startX;
+                const newWidth = startWidth + deltaX;
+                const layoutWidth = layout.offsetWidth;
 
-            // Calculate min and max widths
-            const minWidth = 300;
-            const maxWidth = layoutWidth - minWidth - 8; // 8px for divider
+                // Calculate min and max widths
+                const minWidth = 300;
+                const maxWidth = layoutWidth - minWidth - 8; // 8px for divider
 
-            // Apply constraints
-            if (newWidth >= minWidth && newWidth <= maxWidth) {
-              const widthPercent = (newWidth / layoutWidth) * 100;
-              leftPanel.style.width = widthPercent + "%";
+                // Apply constraints
+                if (newWidth >= minWidth && newWidth <= maxWidth) {
+                    const widthPercent = (newWidth / layoutWidth) * 100;
+                    leftPanel.style.width = widthPercent + "%";
+                }
+
+                e.preventDefault();
+            });
+
+            document.addEventListener("mouseup", function () {
+                if (isResizing) {
+                    isResizing = false;
+                    document.body.classList.remove("resizing");
+                    resizeHandle.classList.remove("dragging");
+
+                    // Save the panel width to localStorage
+                    const widthPercent =
+                        (leftPanel.offsetWidth / layout.offsetWidth) * 100;
+                    localStorage.setItem("cashier-left-panel-width", widthPercent);
+                }
+            });
+
+            // Restore saved width on page load
+            const savedWidth = localStorage.getItem("cashier-left-panel-width");
+            if (savedWidth) {
+                leftPanel.style.width = savedWidth + "%";
             }
-
-            e.preventDefault();
-          });
-
-          document.addEventListener("mouseup", function () {
-            if (isResizing) {
-              isResizing = false;
-              document.body.classList.remove("resizing");
-              resizeHandle.classList.remove("dragging");
-
-              // Save the panel width to localStorage
-              const widthPercent =
-                (leftPanel.offsetWidth / layout.offsetWidth) * 100;
-              localStorage.setItem("cashier-left-panel-width", widthPercent);
-            }
-          });
-
-          // Restore saved width on page load
-          const savedWidth = localStorage.getItem("cashier-left-panel-width");
-          if (savedWidth) {
-            leftPanel.style.width = savedWidth + "%";
-          }
         }
-      })();
-    </script>
+    })();
+</script>
 
-    <script th:inline="javascript">
-      window.addEventListener("DOMContentLoaded", function () {
+<script th:inline="javascript">
+    window.addEventListener("DOMContentLoaded", function () {
         var showModal = /*[[${showReservationModal}]]*/ false;
         var showUpdateModal = /*[[${showUpdateModal}]]*/ false;
 
         if (showModal) {
-          setTimeout(function () {
-            var modal = document.getElementById("reservation-modal");
-            if (modal) {
-              modal.classList.add("show");
-            }
-          }, 100);
+            setTimeout(function () {
+                var modal = document.getElementById("reservation-modal");
+                if (modal) {
+                    modal.classList.add("show");
+                }
+            }, 100);
         }
 
         if (showUpdateModal) {
-          setTimeout(function () {
-            var modal = document.getElementById("update-reservation-modal");
-            if (modal) {
-              modal.classList.add("show");
-              // Đảm bảo modal hiển thị đúng cách
-              document.body.style.overflow = "hidden";
+            setTimeout(function () {
+                var modal = document.getElementById("update-reservation-modal");
+                if (modal) {
+                    modal.classList.add("show");
+                    // Đảm bảo modal hiển thị đúng cách
+                    document.body.style.overflow = "hidden";
 
-              // Format datetime-local input
-              var startTimeInput = document.getElementById("update-start-time");
-              if (startTimeInput && startTimeInput.value) {
-                // Convert the datetime value to proper format for datetime-local input
-                var dateValue = new Date(startTimeInput.value);
-                if (!isNaN(dateValue.getTime())) {
-                  startTimeInput.value = formatDateTimeLocal(dateValue);
+                    // Format datetime-local input
+                    var startTimeInput = document.getElementById("update-start-time");
+                    if (startTimeInput && startTimeInput.value) {
+                        // Convert the datetime value to proper format for datetime-local input
+                        var dateValue = new Date(startTimeInput.value);
+                        if (!isNaN(dateValue.getTime())) {
+                            startTimeInput.value = formatDateTimeLocal(dateValue);
+                        }
+                    }
                 }
-              }
-            }
-          }, 100);
+            }, 100);
         }
-      });
+    });
 
-      function closeUpdateModal() {
+    function closeUpdateModal() {
         var modal = document.getElementById("update-reservation-modal");
         if (modal) {
-          modal.classList.remove("show");
-          // Đảm bảo không có blur effect nào còn lại
-          document.body.style.overflow = "";
-          document.body.style.filter = "";
+            modal.classList.remove("show");
+            // Đảm bảo không có blur effect nào còn lại
+            document.body.style.overflow = "";
+            document.body.style.filter = "";
         }
-      }
+    }
 
-      // Xử lý khi click ra ngoài modal để đóng
-      document.addEventListener("click", function (event) {
+    // Xử lý khi click ra ngoài modal để đóng
+    document.addEventListener("click", function (event) {
         var updateModal = document.getElementById("update-reservation-modal");
         if (updateModal && event.target === updateModal) {
-          closeUpdateModal();
-        }
-      });
-
-      // Xử lý khi nhấn ESC để đóng modal
-      document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape") {
-          var updateModal = document.getElementById("update-reservation-modal");
-          if (updateModal && updateModal.classList.contains("show")) {
             closeUpdateModal();
-          }
         }
-      });
+    });
 
-      // ==================== KHỞI TẠO NOTIFICATION SYSTEM ====================
-      document.addEventListener('DOMContentLoaded', function() {
+    // Xử lý khi nhấn ESC để đóng modal
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            var updateModal = document.getElementById("update-reservation-modal");
+            if (updateModal && updateModal.classList.contains("show")) {
+                closeUpdateModal();
+            }
+        }
+    });
+
+    // ==================== KHỞI TẠO NOTIFICATION SYSTEM ====================
+    document.addEventListener('DOMContentLoaded', function () {
         initNotificationSystem();
 
         // Lưu các server-side flash messages vào notification history với metadata
         const toastContainer = document.getElementById('toast-container');
         if (toastContainer) {
-          const serverToasts = toastContainer.querySelectorAll('.toast[data-message]');
-          serverToasts.forEach(function(toast) {
-            const message = toast.getAttribute('data-message');
-            const type = toast.getAttribute('data-type') || 'info';
+            const serverToasts = toastContainer.querySelectorAll('.toast[data-message]');
+            serverToasts.forEach(function (toast) {
+                const message = toast.getAttribute('data-message');
+                const type = toast.getAttribute('data-type') || 'info';
 
-            // Lấy metadata từ data attributes
-            const metadata = {};
-            const tableId = toast.getAttribute('data-table-id');
-            const reservationId = toast.getAttribute('data-reservation-id');
+                // Lấy metadata từ data attributes
+                const metadata = {};
+                const tableId = toast.getAttribute('data-table-id');
+                const reservationId = toast.getAttribute('data-reservation-id');
 
-            if (tableId && tableId !== '') metadata.tableId = tableId;
-            if (reservationId && reservationId !== '') metadata.reservationId = reservationId;
+                if (tableId && tableId !== '') metadata.tableId = tableId;
+                if (reservationId && reservationId !== '') metadata.reservationId = reservationId;
 
-            if (message) {
-              saveNotification(message, type, metadata);
-            }
-          });
+                if (message) {
+                    saveNotification(message, type, metadata);
+                }
+            });
         }
-      });
+    });
 
-      function openEditOrderPanel() {
+    function openEditOrderPanel() {
         const overlay = document.getElementById('edit-order-overlay');
         const panel = document.getElementById('edit-order-panel');
 
         if (overlay && panel) {
-          overlay.classList.add('show');
-          panel.classList.add('show');
-          document.body.style.overflow = 'hidden';
+            overlay.classList.add('show');
+            panel.classList.add('show');
+            document.body.style.overflow = 'hidden';
         }
-      }
+    }
 
-      function closeEditOrderPanel() {
+    function closeEditOrderPanel() {
         const overlay = document.getElementById('edit-order-overlay');
         const panel = document.getElementById('edit-order-panel');
 
         if (overlay && panel) {
-          overlay.classList.remove('show');
-          panel.classList.remove('show');
-          document.body.style.overflow = '';
+            overlay.classList.remove('show');
+            panel.classList.remove('show');
+            document.body.style.overflow = '';
         }
-      }
+    }
 
-      // Menu filtering
-      function filterMenu(categoryId) {
+    // Menu filtering
+    function filterMenu(categoryId) {
         const menuItems = document.querySelectorAll('.menu-item');
         const tabs = document.querySelectorAll('.menu-tab');
 
@@ -2329,125 +2342,100 @@
 
         // Filter items
         menuItems.forEach(item => {
-          const itemCategoryId = item.getAttribute('data-category-id');
-          if (categoryId === 0 || parseInt(itemCategoryId) === categoryId) {
-            item.style.display = 'flex';
-          } else {
-            item.style.display = 'none';
-          }
+            const itemCategoryId = item.getAttribute('data-category-id');
+            if (categoryId === 0 || parseInt(itemCategoryId) === categoryId) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
         });
-      }
+    }
 
-      // Add item to order from button
-      function addItemToOrderFromButton(button) {
+    // Add item to order from button
+    function addItemToOrderFromButton(button) {
         const menuItem = button.closest('.menu-item');
         const itemId = menuItem.getAttribute('data-product-id');
         const itemName = menuItem.getAttribute('data-product-name');
         const itemPrice = parseFloat(menuItem.getAttribute('data-product-price'));
 
         addItemToOrder(itemId, itemName, itemPrice);
-      }
+    }
 
-      // Add item to order
-      function addItemToOrder(itemId, itemName, itemPrice, sizeId, sizeName, basePrice, isOnSale) {
+    // Add item to order
+    function addItemToOrder(itemId, itemName, itemPrice, sizeId, sizeName, basePrice, isOnSale) {
         const orderItemsContainer = document.getElementById('current-order-items');
 
         // Remove empty message if exists
         const emptyMessage = orderItemsContainer.querySelector('div[style*="text-align: center"]');
         if (emptyMessage) {
-          emptyMessage.remove();
+            emptyMessage.remove();
         }
 
-        // Create unique key for item (product + size)
-        const itemKey = itemId + (sizeId ? '_' + sizeId : '');
-
-        // Check if item already exists (same product and size)
-        let existingItem = null;
-        const existingItems = orderItemsContainer.querySelectorAll('.order-edit-item');
-        existingItems.forEach(item => {
-          const existingProductId = item.getAttribute('data-product-id');
-          const existingSizeId = item.getAttribute('data-size-id');
-          const existingKey = existingProductId + (existingSizeId ? '_' + existingSizeId : '');
-          if (existingKey === itemKey) {
-            existingItem = item;
-          }
-        });
-
-        if (existingItem) {
-          // Increase quantity
-          const quantityEl = existingItem.querySelector('.quantity');
-          const currentQty = parseInt(quantityEl.textContent);
-          quantityEl.textContent = currentQty + 1;
-
-          // Update price display (keep the strikethrough format if on sale)
-          updateTotalPrice();
-        } else {
-          // Add new item
-          const newItem = document.createElement('div');
-          newItem.className = 'order-edit-item';
-          newItem.setAttribute('data-temp-id', 'new-' + Date.now());
-          newItem.setAttribute('data-product-id', itemId);
-          newItem.setAttribute('data-price', itemPrice);
-          newItem.setAttribute('data-base-price', basePrice || itemPrice);
-          newItem.setAttribute('data-is-on-sale', isOnSale || false);
-          if (sizeId) {
+        // Always add new item (không gộp với món đã có)
+        const newItem = document.createElement('div');
+        newItem.className = 'order-edit-item';
+        newItem.setAttribute('data-temp-id', 'new-' + Date.now());
+        newItem.setAttribute('data-product-id', itemId);
+        newItem.setAttribute('data-price', itemPrice);
+        newItem.setAttribute('data-base-price', basePrice || itemPrice);
+        newItem.setAttribute('data-is-on-sale', isOnSale || false);
+        if (sizeId) {
             newItem.setAttribute('data-size-id', sizeId);
-          }
-
-          const sizeDisplay = sizeName ? `<div class="order-edit-item-size">Size: ${sizeName}</div>` : '';
-
-          // Build price HTML with strikethrough if on sale
-          let priceHTML = '';
-          if (isOnSale && basePrice && basePrice > itemPrice) {
-            priceHTML = `
-              <span style="text-decoration: line-through; color: #999; font-size: 12px; margin-right: 8px;">
-                ${formatCurrency(basePrice)}
-              </span>
-              <span style="color: #e74c3c; font-weight: 600;">
-                ${formatCurrency(itemPrice)}
-              </span>
-            `;
-          } else {
-            priceHTML = formatCurrency(itemPrice);
-          }
-
-          newItem.innerHTML = `
-            <div class="order-edit-item-info">
-              <div class="order-edit-item-name">${itemName}</div>
-              ${sizeDisplay}
-              <div class="order-edit-item-note">
-                <input type="text"
-                       class="item-note-input"
-                       placeholder="Ghi chú (VD: Ít đá, nhiều đường...)"
-                       style="width: 100%; padding: 4px 8px; margin-top: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
-              </div>
-            </div>
-            <div class="order-edit-item-controls">
-              <button class="btn-quantity" onclick="updateQuantityNew(this, -1)">−</button>
-              <span class="quantity">1</span>
-              <button class="btn-quantity" onclick="updateQuantityNew(this, 1)">+</button>
-              <button class="btn-remove-item" onclick="removeItemNew(this)">🗑️</button>
-            </div>
-            <div class="order-edit-item-price">${priceHTML}</div>
-          `;
-
-          orderItemsContainer.appendChild(newItem);
         }
+
+        const sizeDisplay = sizeName ? `<div class="order-edit-item-size">Size: ${sizeName}</div>` : '';
+
+        // Build price HTML with strikethrough if on sale
+        let priceHTML = '';
+        if (isOnSale && basePrice && basePrice > itemPrice) {
+            priceHTML = `
+            <span style="text-decoration: line-through; color: #999; font-size: 12px; margin-right: 8px;">
+              ${formatCurrency(basePrice)}
+            </span>
+            <span style="color: #e74c3c; font-weight: 600;">
+              ${formatCurrency(itemPrice)}
+            </span>
+          `;
+        } else {
+            priceHTML = formatCurrency(itemPrice);
+        }
+
+        newItem.innerHTML = `
+          <div class="order-edit-item-info">
+            <div class="order-edit-item-name">${itemName}</div>
+            ${sizeDisplay}
+            <div class="order-edit-item-note">
+              <input type="text"
+                     class="item-note-input"
+                     placeholder="Ghi chú"
+                     style="width: 100%; padding: 4px 8px; margin-top: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
+            </div>
+          </div>
+          <div class="order-edit-item-controls">
+            <button class="btn-quantity" onclick="updateQuantityNew(this, -1)">−</button>
+            <span class="quantity">1</span>
+            <button class="btn-quantity" onclick="updateQuantityNew(this, 1)">+</button>
+            <button class="btn-remove-item" onclick="removeItemNew(this)">🗑️</button>
+          </div>
+          <div class="order-edit-item-price">${priceHTML}</div>
+        `;
+
+        orderItemsContainer.appendChild(newItem);
 
         updateTotalPrice();
         const displayName = itemName + (sizeName ? ' (' + sizeName + ')' : '');
         showToast('Đã thêm ' + displayName + ' vào order', 'success');
-      }
+    }
 
-      // Update quantity for new items
-      function updateQuantityNew(button, change) {
+    // Update quantity for new items
+    function updateQuantityNew(button, change) {
         const item = button.closest('.order-edit-item');
         const quantityEl = item.querySelector('.quantity');
         let currentQty = parseInt(quantityEl.textContent);
         currentQty += change;
 
         if (currentQty < 1) {
-          currentQty = 1;
+            currentQty = 1;
         }
 
         quantityEl.textContent = currentQty;
@@ -2458,111 +2446,92 @@
         priceEl.textContent = formatCurrency(itemPrice * currentQty);
 
         updateTotalPrice();
-      }
+    }
 
-      // Remove new item
-      function removeItemNew(button) {
+    // Remove new item
+    function removeItemNew(button) {
         if (confirm('Bạn có chắc muốn xóa món này?')) {
-          const item = button.closest('.order-edit-item');
-          item.remove();
+            const item = button.closest('.order-edit-item');
+            item.remove();
+            const quantityEl = item.querySelector('.quantity');
+            quantityEl.textContent = 0;
 
-          // Check if order is empty
-          const orderItemsContainer = document.getElementById('current-order-items');
-          if (orderItemsContainer.querySelectorAll('.order-edit-item').length === 0) {
-            orderItemsContainer.innerHTML = `
+            // Check if order is empty
+            const orderItemsContainer = document.getElementById('current-order-items');
+            if (orderItemsContainer.querySelectorAll('.order-edit-item').length === 0) {
+                orderItemsContainer.innerHTML = `
               <div style="text-align: center; padding: 40px; color: #999;">
                 <p>Chưa có món nào trong order</p>
                 <p style="font-size: 14px;">Nhấn nút + để thêm món</p>
               </div>
             `;
-          }
+            }
 
-          updateTotalPrice();
-          showToast('Đã xóa món khỏi order', 'info');
+            updateTotalPrice();
+            showToast('Đã xóa món khỏi order', 'info');
         }
-      }
+    }
 
-      // Update quantity for existing items from DB (in panel)
-      function updateQuantityInPanel(button, change) {
-        const item = button.closest('.order-edit-item');
-        const quantityEl = item.querySelector('.quantity');
-        let currentQty = parseInt(quantityEl.textContent) || 0;
-        currentQty += change;
-
-        if (currentQty < 1) {
-          currentQty = 1;
-        }
-
-        quantityEl.textContent = currentQty;
-
-        // Update price
-        const itemPrice = parseFloat(item.getAttribute('data-price'));
-        const priceEl = item.querySelector('.order-edit-item-price');
-        priceEl.textContent = formatCurrency(itemPrice * currentQty);
-
-        updateTotalPrice();
-      }
-
-      // Remove existing item from panel
-      function removeItemFromPanel(button) {
+    // Remove existing item from panel
+    function removeItemFromPanel(button) {
         if (confirm('Bạn có chắc muốn xóa món này?')) {
-          const item = button.closest('.order-edit-item');
+            const item = button.closest('.order-edit-item');
 
-          // Set quantity to 0 instead of removing (to tell backend to delete it)
-          const quantityEl = item.querySelector('.quantity');
-          quantityEl.textContent = '0';
+            // Set quantity to 0 instead of removing (to tell backend to delete it)
+            const quantityEl = item.querySelector('.quantity');
+            quantityEl.textContent = '0';
 
-          // Hide the item visually
-          item.style.display = 'none';
+            // Hide the item visually
+            item.style.display = 'none';
 
-          // Check if all visible items are hidden
-          const orderItemsContainer = document.getElementById('current-order-items');
-          const visibleItems = Array.from(orderItemsContainer.querySelectorAll('.order-edit-item'))
-            .filter(i => i.style.display !== 'none');
+            // Check if all visible items are hidden
+            const orderItemsContainer = document.getElementById('current-order-items');
+            const visibleItems = Array.from(orderItemsContainer.querySelectorAll('.order-edit-item'))
+                .filter(i => i.style.display !== 'none');
 
-          if (visibleItems.length === 0) {
-            const existingEmpty = orderItemsContainer.querySelector('.empty-order-message');
-            if (!existingEmpty) {
-              const emptyDiv = document.createElement('div');
-              emptyDiv.className = 'empty-order-message';
-              emptyDiv.style.cssText = 'text-align: center; padding: 40px; color: #999;';
-              emptyDiv.innerHTML = `
+            if (visibleItems.length === 0) {
+                const existingEmpty = orderItemsContainer.querySelector('.empty-order-message');
+                if (!existingEmpty) {
+                    const emptyDiv = document.createElement('div');
+                    emptyDiv.className = 'empty-order-message';
+                    emptyDiv.style.cssText = 'text-align: center; padding: 40px; color: #999;';
+                    emptyDiv.innerHTML = `
                 <p>Chưa có món nào trong order</p>
                 <p style="font-size: 14px;">Nhấn nút + để thêm món</p>
               `;
-              orderItemsContainer.appendChild(emptyDiv);
+                    orderItemsContainer.appendChild(emptyDiv);
+                }
             }
-          }
 
-          updateTotalPrice();
-          showToast('Đã xóa món khỏi order', 'info');
+            updateTotalPrice();
+            showToast('Đã xóa món khỏi order', 'info');
         }
-      }
+    }
 
-      // Update total price
-      function updateTotalPrice() {
+    // Update total price
+    function updateTotalPrice() {
         const orderItems = document.querySelectorAll('.order-edit-item');
         let total = 0;
 
         orderItems.forEach(item => {
-          const quantity = parseInt(item.querySelector('.quantity').textContent);
-          const price = parseFloat(item.getAttribute('data-price'));
-          total += quantity * price;
+            const quantity = parseInt(item.querySelector('.quantity').textContent);
+            const price = parseFloat(item.getAttribute('data-price'));
+            total += quantity * price;
         });
 
         document.getElementById('edit-total').textContent = formatCurrency(total);
-      }
+    }
 
-      // Format currency helper
-      function formatCurrency(amount) {
+    // Format currency helper
+    function formatCurrency(amount) {
         return new Intl.NumberFormat('vi-VN', {
-          style: 'currency',
-          currency: 'VND'
+            style: 'currency',
+            currency: 'VND'
         }).format(amount);
-      }
+    }
 
-      // Open size selection modal
-      function openSizeModal(button) {
+    // Open size selection modal
+    function openSizeModal(button) {
         const menuItem = button.closest('.menu-item');
         const productId = menuItem.getAttribute('data-product-id');
         const productName = menuItem.getAttribute('data-product-name');
@@ -2572,10 +2541,10 @@
         const sizeSpans = sizesDataDiv ? sizesDataDiv.querySelectorAll('span[data-size-id]') : [];
 
         if (sizeSpans.length === 0) {
-          // No sizes available, use default price
-          const productPrice = parseFloat(menuItem.getAttribute('data-product-price'));
-          addItemToOrder(productId, productName, productPrice, null, null);
-          return;
+            // No sizes available, use default price
+            const productPrice = parseFloat(menuItem.getAttribute('data-product-price'));
+            addItemToOrder(productId, productName, productPrice, null, null);
+            return;
         }
 
         // Populate modal with sizes
@@ -2588,19 +2557,19 @@
         modalBody.innerHTML = '';
 
         sizeSpans.forEach(sizeSpan => {
-          const sizeId = sizeSpan.getAttribute('data-size-id');
-          const sizeName = sizeSpan.getAttribute('data-size-name');
-          const sizePrice = parseFloat(sizeSpan.getAttribute('data-size-price'));
-          const basePrice = parseFloat(sizeSpan.getAttribute('data-base-price'));
-          const isOnSale = sizeSpan.getAttribute('data-is-on-sale') === 'true';
+            const sizeId = sizeSpan.getAttribute('data-size-id');
+            const sizeName = sizeSpan.getAttribute('data-size-name');
+            const sizePrice = parseFloat(sizeSpan.getAttribute('data-size-price'));
+            const basePrice = parseFloat(sizeSpan.getAttribute('data-base-price'));
+            const isOnSale = sizeSpan.getAttribute('data-is-on-sale') === 'true';
 
-          const sizeOption = document.createElement('div');
-          sizeOption.className = 'size-option';
+            const sizeOption = document.createElement('div');
+            sizeOption.className = 'size-option';
 
-          // Build price display HTML
-          let priceHTML = '';
-          if (isOnSale && basePrice > sizePrice) {
-            priceHTML = `
+            // Build price display HTML
+            let priceHTML = '';
+            if (isOnSale && basePrice > sizePrice) {
+                priceHTML = `
               <span style="text-decoration: line-through; color: #999; font-size: 13px; margin-right: 8px;">
                 ${formatCurrency(basePrice)}
               </span>
@@ -2608,11 +2577,11 @@
                 ${formatCurrency(sizePrice)}
               </span>
             `;
-          } else {
-            priceHTML = formatCurrency(sizePrice);
-          }
+            } else {
+                priceHTML = formatCurrency(sizePrice);
+            }
 
-          sizeOption.innerHTML = `
+            sizeOption.innerHTML = `
             <div class="size-option-info">
               <div class="size-option-name">${sizeName}</div>
               <div class="size-option-price">${priceHTML}</div>
@@ -2621,47 +2590,47 @@
               Chọn
             </button>
           `;
-          modalBody.appendChild(sizeOption);
+            modalBody.appendChild(sizeOption);
         });
 
         // Show modal
         overlay.classList.add('show');
         modal.classList.add('show');
-      }
+    }
 
-      // Close size modal
-      function closeSizeModal() {
+    // Close size modal
+    function closeSizeModal() {
         const modal = document.getElementById('size-modal');
         const overlay = document.getElementById('size-modal-overlay');
         overlay.classList.remove('show');
         modal.classList.remove('show');
-      }
+    }
 
-      // Select size and add to order
-      function selectSize(productId, productName, price, sizeId, sizeName, basePrice, isOnSale) {
+    // Select size and add to order
+    function selectSize(productId, productName, price, sizeId, sizeName, basePrice, isOnSale) {
         addItemToOrder(productId, productName, price, sizeId, sizeName, basePrice, isOnSale);
         closeSizeModal();
-      }
+    }
 
-      // Update quantity
-      function updateQuantity(itemId, change) {
+    // Update quantity
+    function updateQuantity(itemId, change) {
         const quantityElement = event.target.parentElement.querySelector('.quantity');
         let currentQty = parseInt(quantityElement.textContent);
         currentQty += change;
 
         if (currentQty < 1) {
-          currentQty = 1;
+            currentQty = 1;
         }
 
         quantityElement.textContent = currentQty;
         // TODO: Update total calculation
         console.log('Updated quantity for item:', itemId, 'to:', currentQty);
-      }
+    }
 
-      // Save order changes
-      function saveOrderChanges() {
+    // Save order changes
+    function saveOrderChanges() {
         if (!confirm('Xác nhận cập nhật order?')) {
-          return;
+            return;
         }
 
         // Get all order items
@@ -2669,50 +2638,71 @@
         const items = document.querySelectorAll('.order-edit-item');
 
         items.forEach(item => {
-          const productId = item.getAttribute('data-product-id');
-          const productName = item.querySelector('.order-edit-item-name').textContent;
-          const quantity = parseInt(item.querySelector('.quantity').textContent);
-          const price = parseFloat(item.getAttribute('data-price'));
-          const sizeId = item.getAttribute('data-size-id');
-          const noteInput = item.querySelector('.item-note-input');
-          const note = noteInput ? noteInput.value.trim() : '';
+            const productId = item.getAttribute('data-product-id');
+            const productName = item.querySelector('.order-edit-item-name').textContent;
+            const quantityElement = item.querySelector('.quantity');
+            const quantity = quantityElement ? parseInt(quantityElement.textContent) : 0;
+            const price = parseFloat(item.getAttribute('data-price'));
+            const sizeId = item.getAttribute('data-size-id');
+            const noteInput = item.querySelector('.item-note-input');
+            const note = noteInput ? noteInput.value.trim() : '';
 
-          // Include all items, even quantity = 0 (backend will delete those)
-          if (productId) {
-            const orderItem = {
-              productId: productId,
-              productName: productName,
-              quantity: quantity,
-              price: price
-            };
-            if (sizeId) {
-              orderItem.sizeId = sizeId;
+            // Kiểm tra xem là món cũ hay món mới
+            const isOldItem = item.hasAttribute('data-item-id');
+            const isNewItem = item.hasAttribute('data-temp-id');
+
+            // Check nếu note thay đổi (cho món cũ)
+            const originalNote = item.getAttribute('data-original-note') || '';
+            const noteChanged = isOldItem && (note !== originalNote);
+
+            // Món MỚI (có data-temp-id) với quantity > 0
+            // Món CŨ bị XÓA (có data-item-id và quantity = 0)
+            // Món CŨ có NOTE THAY ĐỔI (để cập nhật note)
+            const shouldSend = (isNewItem && quantity > 0) || (isOldItem && quantity === 0) || noteChanged;
+
+            if (productId && !isNaN(quantity) && shouldSend) {
+                const orderItem = {
+                    productId: productId,
+                    productName: productName,
+                    quantity: quantity,
+                    price: price,
+                    note: note || ''  // Luôn gửi note (kể cả khi rỗng)
+                };
+
+                // Thêm orderItemId nếu là món cũ (để backend xóa đúng món)
+                if (isOldItem) {
+                    const itemId = item.getAttribute('data-item-id');
+                    if (itemId) {
+                        orderItem.orderItemId = parseInt(itemId);
+                    }
+                }
+
+                if (sizeId) {
+                    orderItem.sizeId = sizeId;
+                }
+
+                orderItems.push(orderItem);
             }
-            if (note) {
-              orderItem.note = note;
-            }
-            orderItems.push(orderItem);
-          }
         });
 
         // Get table ID from URL or hidden field
         const tableId = [[${selectedTableId}]];
 
         if (!tableId) {
-          showToast('Lỗi: Không tìm thấy thông tin bàn', 'error');
-          return;
+            showToast('Lỗi: Không tìm thấy thông tin bàn', 'error');
+            return;
         }
 
         // Create form and submit
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = '/pizzario/cashier/tables/' + tableId + '/order/update';
-        
+
         const csrfInput = document.createElement('input');
         csrfInput.type = 'hidden';
         csrfInput.name = /*[[@{${_csrf.parameterName}}]]*/ '_csrf';
         csrfInput.value = /*[[@{${_csrf.token}}]]*/ '';
-        
+
         form.appendChild(csrfInput);
 
         // Add items as JSON
@@ -2723,19 +2713,18 @@
         form.appendChild(itemsInput);
 
         document.body.appendChild(form);
-        showToast('Đang cập nhật order...', 'info');
         form.submit();
-      }
+    }
 
-      // Close panel on ESC key
-      document.addEventListener('keydown', function(event) {
+    // Close panel on ESC key
+    document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape') {
-          const panel = document.getElementById('edit-order-panel');
-          if (panel && panel.classList.contains('show')) {
-            closeEditOrderPanel();
-          }
+            const panel = document.getElementById('edit-order-panel');
+            if (panel && panel.classList.contains('show')) {
+                closeEditOrderPanel();
+            }
         }
-      });
-    </script>
-  </body>
+    });
+</script>
+</body>
 </html>

@@ -26,6 +26,7 @@ public class UpdateOrderItemsDTO {
     @FieldDefaults(level = AccessLevel.PRIVATE)
     public static class OrderItemUpdate {
         Long productId;
+        Long orderItemId;
         String productName;
         Integer quantity;
         Double price;
