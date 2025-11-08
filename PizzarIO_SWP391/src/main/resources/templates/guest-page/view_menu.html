@@ -52,7 +52,7 @@
           <div
                   class="product-card"
                   th:each="p : ${products}"
-                  th:attr="data-category-id=${p.categoryId}"
+                  th:attr="data-category-id=${p.categoryId}, data-product-id=${p.id}"
                   th:classappend="${!p.active ? 'inactive' : ''}"
                   th:onclick="'showProductDetail(' + ${p.id} + ',' + ${sessionId} + ',' + ${tableId} + ')'"
                   style="cursor:pointer;"

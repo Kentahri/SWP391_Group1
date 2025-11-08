@@ -135,6 +135,12 @@ function onConnected(frame) {
     handleOrderUpdate
   );
 
+  // Subscribe vào topic products-status để nhận product active status updates từ manager
+  stompClient.subscribe(
+    "/topic/products-status",
+    handleProductStatusUpdate
+  );
+
   console.log("[Guest] Subscribed to WebSocket topics");
 
   // Subscribe kênh nhận order update từ cashier
@@ -500,6 +506,120 @@ function handleOrderUpdateMessage(message) {
 
   } catch (error) {
     console.error("Error parsing order update message:", error);
+  }
+}
+
+/**
+ * Xử lý cập nhật trạng thái active của sản phẩm từ manager
+ * Manager có thể bật/tắt món ăn, và guest sẽ nhận được thông báo real-time
+ */
+function handleProductStatusUpdate(message) {
+  try {
+    const data = JSON.parse(message.body);
+    console.log("[Guest] Product status update received:", data);
+
+    // Xử lý các loại message: PRODUCT_TOGGLED, PRODUCT_UPDATED, PRODUCT_CREATED
+    if (data.type === "PRODUCT_TOGGLED" || 
+        data.type === "PRODUCT_UPDATED" || 
+        data.type === "PRODUCT_CREATED") {
+      
+      if (data.product && data.product.id) {
+        const productId = data.product.id;
+        const isActive = data.product.active === true;
+        
+        console.log(`[Guest] Product ${productId} active status: ${isActive}`);
+        
+        // Cập nhật UI: Ẩn/hiện món ăn trong menu
+        updateProductVisibility(productId, isActive);
+        
+        // Hiển thị thông báo cho người dùng
+        const productName = data.product.name || "Món ăn";
+        if (isActive) {
+          showToast(`${productName} đã được thêm vào thực đơn`, "success");
+        } else {
+          showToast(`${productName} đã được ẩn khỏi thực đơn`, "success");
+        }
+      }
+    }
+  } catch (error) {
+    console.error("[Guest] Error handling product status update:", error);
+  }
+}
+
+/**
+ * Cập nhật hiển thị của product card trong menu dựa trên trạng thái active
+ * @param {number} productId - ID của sản phẩm
+ * @param {boolean} isActive - Trạng thái active (true = hiển thị, false = ẩn)
+ */
+function updateProductVisibility(productId, isActive) {
+  const productGrid = document.getElementById("productGrid");
+  if (!productGrid) {
+    console.warn("[Guest] productGrid not found");
+    return;
+  }
+
+  // Tìm product card bằng data-product-id attribute (ưu tiên)
+  // Hoặc fallback: tìm form có input với productId
+  let productCard = productGrid.querySelector(`[data-product-id="${productId}"]`);
+  
+  // Fallback: nếu không tìm thấy bằng data-product-id, tìm bằng form input
+  if (!productCard) {
+    const productCards = productGrid.querySelectorAll(".product-card");
+    for (const card of productCards) {
+      const form = card.querySelector('form[action*="/guest/cart/add"]');
+      if (form) {
+        const productIdInput = form.querySelector('input[name="productId"]');
+        if (productIdInput && productIdInput.value == productId) {
+          productCard = card;
+          break;
+        }
+      }
+    }
+  }
+
+  if (productCard) {
+    if (isActive) {
+      // Hiển thị món ăn: xóa class inactive và hiển thị
+      productCard.classList.remove("inactive");
+      productCard.style.display = "";
+      productCard.style.opacity = "0";
+      
+      // Animation fade in
+      setTimeout(() => {
+        productCard.style.transition = "opacity 0.5s ease";
+        productCard.style.opacity = "1";
+      }, 10);
+    } else {
+      // Ẩn món ăn: thêm class inactive và ẩn
+      productCard.classList.add("inactive");
+      productCard.style.opacity = "1";
+      
+      // Animation fade out
+      setTimeout(() => {
+        productCard.style.transition = "opacity 0.5s ease";
+        productCard.style.opacity = "0";
+        setTimeout(() => {
+          productCard.style.display = "none";
+        }, 500);
+      }, 10);
+    }
+
+    // Thêm animation pulse để người dùng thấy thay đổi
+    productCard.style.animation = "none";
+    setTimeout(() => {
+      productCard.style.animation = "pulse 0.5s ease";
+    }, 10);
+
+    console.log(`[Guest] Product ${productId} visibility updated: ${isActive ? "visible" : "hidden"}`);
+  } else {
+    // Nếu không tìm thấy product card (có thể là product mới được tạo)
+    // Reload trang để hiển thị product mới
+    if (isActive) {
+      console.log(`[Guest] Product ${productId} not found in DOM, reloading page to show new product`);
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    }
   }
 }
 
