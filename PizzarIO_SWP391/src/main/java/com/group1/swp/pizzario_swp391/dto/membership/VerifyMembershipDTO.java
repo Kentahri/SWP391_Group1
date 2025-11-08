@@ -8,10 +8,6 @@ public class VerifyMembershipDTO {
 
     public VerifyMembershipDTO() {}
 
-    public VerifyMembershipDTO(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
     public String getPhoneNumber() {
         return phoneNumber;
     }
