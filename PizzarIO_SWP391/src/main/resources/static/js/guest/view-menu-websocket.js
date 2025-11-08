@@ -121,7 +121,6 @@ function connectWebSocket() {
 
 function onConnected(frame) {
   console.log("WebSocket connected:", frame);
-  showToast("Đã kết nối WebSocket thành công.", "success");
   reconnectAttempts = 0;
 
   // Subscribe kênh cá nhân cho table release
@@ -151,16 +150,16 @@ function onConnected(frame) {
 }
 
 function onError(error) {
-  showToast("Lỗi kết nối WebSocket.", "error");
+  console.error("WebSocket error:", error);
   if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
     const delay = Math.pow(2, reconnectAttempts) * 1000;
-    showToast(`Mất kết nối, sẽ thử lại sau ${delay / 1000} giây...`, "warning");
+    console.log(`Reconnecting in ${delay / 1000} seconds...`);
     setTimeout(() => {
       reconnectAttempts++;
       connectWebSocket();
     }, delay);
   } else {
-    alert("Mất kết nối tới máy chủ. Vui lòng tải lại trang.");
+    console.error("Max reconnection attempts reached. Please refresh the page.");
   }
 }
 
@@ -251,11 +250,12 @@ function handleOrderUpdated(orderData) {
   // Nếu có items trong message, cập nhật UI trực tiếp
   if (orderData.items && orderData.items.length > 0) {
     updateOrderItemsUI(orderData.items);
-    showToast("Đơn hàng của bạn đã được cập nhật", "info");
+    // Chỉ hiển thị toast khi có món được cập nhật trạng thái
+    showToast("Món ăn của bạn đã được cập nhật", "success");
   } else {
     // Nếu không có items, reload từ server
     reloadOrderedItems();
-    showToast("Đơn hàng của bạn đã được cập nhật", "info");
+    showToast("Món ăn của bạn đã được cập nhật", "success");
   }
 }
 
@@ -286,7 +286,7 @@ function handleOrderCompleted(orderData) {
   console.log("[Guest] Order completed:", orderData);
 
   reloadOrderedItems();
-  showToast("Đơn hàng của bạn đã hoàn thành!", "success");
+  // Không hiển thị toast cho order completed
 }
 
 /**
@@ -491,43 +491,34 @@ function handleTableReleaseSuccess(data) {
 function handleOrderUpdateMessage(message) {
   try {
     const data = JSON.parse(message.body);
-    console.log("[Guest] Order update received:", data);
-    console.log("[Guest] Full data object:", JSON.stringify(data, null, 2));
+    console.log("[Guest] Order update received from cashier:", data);
 
-    // Hiển thị thông báo cho guest với message cụ thể
-    let displayMessage = "Order của bạn đã được cập nhật bởi cashier";
-
-    if (data.message && data.message.trim() !== "") {
-      displayMessage = data.message;
-    }
-
-    console.log("[Guest] Displaying toast with message:", displayMessage);
-
-    // Đảm bảo showToast function tồn tại
-    if (typeof showToast === "function") {
-      showToast(displayMessage, "success");
-    } else {
-      console.error("showToast function not found!");
-      alert(displayMessage); // Fallback to alert
-    }
-
+    // Reload trang để cập nhật order, không hiển thị toast
     setTimeout(() => {
       location.reload();
-    }, 1000);
+    }, 500);
 
   } catch (error) {
     console.error("Error parsing order update message:", error);
-    if (typeof showToast === "function") {
-      showToast("Có lỗi khi nhận cập nhật order", "error");
-    } else {
-      alert("Có lỗi khi nhận cập nhật order");
-    }
   }
 }
 
 window.releaseTable = function (tableId) {
   if (!stompClient || !stompClient.connected) {
-    showToast("Chưa kết nối tới máy chủ. Vui lòng đợi...", "warning");
+    console.warn("WebSocket not connected. Retrying...");
+    // Thử kết nối lại
+    connectWebSocket();
+    setTimeout(() => {
+      if (stompClient && stompClient.connected) {
+        const request = {
+          tableId: tableId,
+          sessionId: guestSessionId,
+        };
+        stompClient.send("/app/guest/table/release", {}, JSON.stringify(request));
+      } else {
+        alert("Không thể kết nối tới máy chủ. Vui lòng thử lại.");
+      }
+    }, 1000);
     return;
   }
 
@@ -536,19 +527,16 @@ window.releaseTable = function (tableId) {
     sessionId: guestSessionId,
   };
 
-  showToast("Đang gửi yêu cầu thanh toán...", "success");
   try {
     stompClient.send("/app/guest/table/release", {}, JSON.stringify(request));
   } catch (error) {
-    showToast("Không thể gửi yêu cầu thanh toán.", "error");
+    console.error("Error sending payment request:", error);
     alert("Không thể gửi yêu cầu. Vui lòng thử lại.");
   }
 };
 
 window.addEventListener("beforeunload", function () {
   if (stompClient && stompClient.connected) {
-    stompClient.disconnect(() =>
-      showToast("Đã ngắt kết nối WebSocket.", "warning")
-    );
+    stompClient.disconnect();
   }
 });

@@ -92,6 +92,9 @@ public class OrderService {
 
         // Gửi thông báo đến kitchen: NEW_ORDER nếu là order mới, ORDER_UPDATED nếu là order đã tồn tại
         notifyKitchenOrderChange(order, isNewOrder);
+
+        // Gửi thông báo đến cashier khi guest đặt order
+        notifyCashierOrderUpdate(order, isNewOrder);
     }
 
     @Transactional
@@ -208,6 +211,78 @@ public class OrderService {
         } catch (Exception e) {
             // Log error nhưng không làm fail transaction
             System.err.println("Error notifying kitchen of order change: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Gửi thông báo order update đến cashier
+     * Gửi thông báo đến cashier khi order được cập nhật bởi guest
+     *
+     * @param order Order đã được cập nhật
+     * @param isNewOrder true nếu là order mới, false nếu là order đã tồn tại được cập nhật
+     */
+    private void notifyCashierOrderUpdate(Order order, boolean isNewOrder) {
+        try {
+            // Chỉ gửi notification nếu order có session (DINE_IN order)
+            if (order.getSession() == null) {
+                return;
+            }
+
+            KitchenOrderMessage.MessageType messageType = isNewOrder
+                    ? KitchenOrderMessage.MessageType.NEW_ORDER
+                    : KitchenOrderMessage.MessageType.ORDER_UPDATED;
+
+            String notificationMessage = isNewOrder
+                    ? "Guest đã đặt order mới"
+                    : "Guest đã cập nhật order";
+
+            // Lấy danh sách items để tính toán
+            List<OrderItem> orderItems = order.getOrderItems();
+            int totalItems = orderItems != null ? orderItems.size() : 0;
+            int completedItems = orderItems != null
+                    ? (int) orderItems.stream()
+                    .filter(item -> item.getOrderItemStatus() == OrderItem.OrderItemStatus.SERVED)
+                    .count()
+                    : 0;
+
+            // Convert OrderItems to OrderItemInfo list
+            List<KitchenOrderMessage.OrderItemInfo> itemInfos = new ArrayList<>();
+            if (orderItems != null) {
+                itemInfos = orderItems.stream()
+                        .map(item -> KitchenOrderMessage.OrderItemInfo.builder()
+                                .itemId(item.getId())
+                                .productName(item.getProductSize() != null && item.getProductSize().getProduct() != null
+                                        ? item.getProductSize().getProduct().getName()
+                                        : "Unknown Product")
+                                .quantity(item.getQuantity())
+                                .status(item.getOrderItemStatus() != null ? item.getOrderItemStatus().toString() : "PENDING")
+                                .note(item.getNote())
+                                .price(item.getTotalPrice())
+                                .build())
+                        .collect(java.util.stream.Collectors.toList());
+            }
+
+            KitchenOrderMessage orderMessage = KitchenOrderMessage.builder()
+                    .type(messageType)
+                    .orderId(order.getId())
+                    .code(String.format("ORD-%05d", order.getId()))
+                    .tableName(order.getSession().getTable() != null ?
+                            "Bàn " + order.getSession().getTable().getId() : "")
+                    .orderType(order.getOrderType() != null ? order.getOrderType().toString() : "DINE_IN")
+                    .status(order.getOrderStatus() != null ? order.getOrderStatus().toString() : "PREPARING")
+                    .totalPrice(order.getTotalPrice())
+                    .totalItems(totalItems)
+                    .completedItems(completedItems)
+                    .message(notificationMessage)
+                    .items(itemInfos)
+                    .build();
+
+            System.out.println("Sending order update to cashier - OrderId: " + order.getId() + ", Message: " + notificationMessage);
+            System.out.println("Order message object: " + orderMessage);
+
+            webSocketService.broadcastOrderUpdateToCashier(orderMessage);
+        } catch (Exception e) {
+            System.err.println("Error notifying cashier of order update: " + e.getMessage());
         }
     }
 

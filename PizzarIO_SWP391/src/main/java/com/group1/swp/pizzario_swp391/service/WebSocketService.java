@@ -174,4 +174,28 @@ public class WebSocketService {
         log.info("Successfully broadcasted order update to guest session {}", sessionId);
     }
 
+    /**
+     * Broadcast order update to cashier
+     * Gửi thông báo đến cashier khi order được cập nhật bởi guest
+     */
+    public void broadcastOrderUpdateToCashier(KitchenOrderMessage orderMessage) {
+        if (orderMessage == null) {
+            log.warn("Cannot broadcast order update to cashier: orderMessage is null");
+            return;
+        }
+
+        orderMessage.setTimestamp(LocalDateTime.now());
+        String destination = "/topic/order-updates-cashier";
+
+        log.info("Broadcasting order update to cashier:");
+        log.info("  - Destination: {}", destination);
+        log.info("  - Order Code: {}", orderMessage.getCode());
+        log.info("  - Table Name: {}", orderMessage.getTableName());
+        log.info("  - Message: {}", orderMessage.getMessage());
+        log.info("  - Full message object: {}", orderMessage);
+
+        messagingTemplate.convertAndSend(destination, orderMessage);
+        log.info("Successfully broadcasted order update to cashier for order {}", orderMessage.getCode());
+    }
+
 }
