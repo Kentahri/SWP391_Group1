@@ -2,6 +2,7 @@ package com.group1.swp.pizzario_swp391.controller.guest;
 
 import com.group1.swp.pizzario_swp391.dto.websocket.TableReleaseRequest;
 import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
+import com.group1.swp.pizzario_swp391.entity.Order;
 import com.group1.swp.pizzario_swp391.entity.ProductSize;
 import com.group1.swp.pizzario_swp391.entity.Session;
 import com.group1.swp.pizzario_swp391.repository.SessionRepository;
@@ -17,7 +18,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -178,5 +181,50 @@ public class GuestController{
     public void releaseTable(TableReleaseRequest request) {
         log.info("Guest {} requesting to release table {}", request.getSessionId(), request.getTableId());
         tableService.handleTableRelease(request);
+    }
+
+    /**
+     * API để lấy orderId hiện tại của session (cho WebSocket filtering)
+     */
+    @GetMapping("/order/current-order-id")
+    @ResponseBody
+    public Map<String, Object> getCurrentOrderId(@RequestParam("sessionId") Long sessionId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Order order = orderService.getOrderForSession(sessionId);
+            if (order != null) {
+                response.put("orderId", order.getId());
+                response.put("success", true);
+            } else {
+                response.put("success", false);
+                response.put("message", "No order found");
+            }
+        } catch (Exception e) {
+            log.error("Error getting order ID for session {}", sessionId, e);
+            response.put("success", false);
+            response.put("message", "Error: " + e.getMessage());
+        }
+        return response;
+    }
+
+    /**
+     * API để lấy ordered items HTML fragment (cho real-time update)
+     */
+    @GetMapping("/order/ordered-items")
+    public String getOrderedItemsFragment(@RequestParam("sessionId") Long sessionId,
+                                         HttpSession session,
+                                         Model model) {
+        model.addAttribute("orderedItems", orderService.getOrderedItemsForView(sessionId));
+        model.addAttribute("sessionId", sessionId);
+        // Lấy tableId từ session attribute hoặc từ order
+        Integer tableId = (Integer) session.getAttribute("tableId");
+        if (tableId == null) {
+            Order order = orderService.getOrderForSession(sessionId);
+            if (order != null && order.getSession() != null && order.getSession().getTable() != null) {
+                tableId = order.getSession().getTable().getId();
+            }
+        }
+        model.addAttribute("tableId", tableId);
+        return "guest-page/fragments/view_order :: order-view";
     }
 }

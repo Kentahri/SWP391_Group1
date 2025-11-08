@@ -54,6 +54,9 @@ public class OrderItemService {
             
             // Gửi thông báo đến kitchen qua websocket
             notifyKitchenItemCancelled(order, item, productName);
+            
+            // Gửi thông báo đến cashier khi guest hủy món
+            notifyCashierItemCancelled(order, item, productName);
         }
     }
     
@@ -97,6 +100,53 @@ public class OrderItemService {
             webSocketService.broadcastNewOrderToKitchen(cancelMessage);
         } catch (Exception e) {
             System.err.println("Error notifying kitchen of cancelled item: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Gửi thông báo khi có item bị hủy đến cashier
+     */
+    private void notifyCashierItemCancelled(Order order, OrderItem cancelledItem, String productName) {
+        try {
+            // Chỉ gửi notification nếu order có session (DINE_IN order)
+            if (order.getSession() == null) {
+                return;
+            }
+
+            // Lấy danh sách items còn lại sau khi hủy
+            List<OrderItem> remainingItems = orderItemRepository.findByOrderId(order.getId());
+            
+            KitchenOrderMessage cancelMessage = KitchenOrderMessage.builder()
+                    .type(KitchenOrderMessage.MessageType.ORDER_ITEM_CANCELLED)
+                    .orderId(order.getId())
+                    .code(String.format("ORD-%05d", order.getId()))
+                    .tableName(order.getSession().getTable() != null 
+                            ? "Bàn " + order.getSession().getTable().getId() 
+                            : "")
+                    .orderType(order.getOrderType() != null ? order.getOrderType().toString() : "DINE_IN")
+                    .status(order.getOrderStatus() != null ? order.getOrderStatus().toString() : "PREPARING")
+                    .totalPrice(order.getTotalPrice())
+                    .totalItems(remainingItems.size())
+                    .completedItems((int) remainingItems.stream()
+                            .filter(oi -> oi.getOrderItemStatus() == OrderItem.OrderItemStatus.SERVED)
+                            .count())
+                    .message("Guest đã hủy món: " + productName + " (x" + cancelledItem.getQuantity() + ")")
+                    .items(List.of(
+                            KitchenOrderMessage.OrderItemInfo.builder()
+                                    .itemId(cancelledItem.getId())
+                                    .productName(productName)
+                                    .quantity(cancelledItem.getQuantity())
+                                    .status("CANCELLED")
+                                    .note(cancelledItem.getNote())
+                                    .price(cancelledItem.getTotalPrice())
+                                    .build()
+                    ))
+                    .build();
+
+            System.out.println("Sending order item cancellation to cashier - OrderId: " + order.getId() + ", Item: " + productName);
+            webSocketService.broadcastOrderUpdateToCashier(cancelMessage);
+        } catch (Exception e) {
+            System.err.println("Error notifying cashier of cancelled item: " + e.getMessage());
         }
     }
 }

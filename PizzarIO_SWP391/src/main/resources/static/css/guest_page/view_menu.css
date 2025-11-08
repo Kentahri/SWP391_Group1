@@ -56,8 +56,8 @@ body {
 /* ==================== Container Layout ==================== */
 .container {
   display: flex;
-  padding: 24px;
-  gap: 24px;
+  padding: 18px;
+  gap: 20px;
   height: 100vh;
   overflow: hidden;
   max-width: 1920px;
@@ -69,11 +69,11 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
   overflow: hidden;
   background: var(--bg-surface);
-  border-radius: 20px;
-  padding: 24px;
+  border-radius: 18px;
+  padding: 20px;
   box-shadow: var(--shadow-md);
   border: 2px solid var(--border-color);
 }
@@ -185,9 +185,10 @@ body {
 .product-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 16px;
-  padding-right: 12px;
+  grid-template-columns: repeat(auto-fit, 180px);
+  justify-content: center;
+  gap: 12px;
+  padding-right: 8px;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--primary-orange) transparent;
@@ -214,8 +215,8 @@ body {
 /* ==================== Product Card ==================== */
 .product-card {
   background: var(--bg-surface);
-  border-radius: 14px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -226,7 +227,8 @@ body {
   position: relative;
   overflow: visible;
   box-shadow: var(--shadow-sm);
-  min-height: 320px;
+  width: 180px;
+  height: 260px;
 }
 
 .product-card::before {
@@ -246,7 +248,7 @@ body {
 }
 
 .product-card:hover {
-  transform: translateY(-8px) scale(1.02);
+  transform: translateY(-6px) scale(1.02);
   box-shadow: var(--shadow-hover);
   border-color: var(--primary-orange);
 }
@@ -258,13 +260,13 @@ body {
 }
 
 .product-card .thumb {
-  width: 130px;
-  height: 130px;
-  margin-bottom: 12px;
+  width: 108px;
+  height: 108px;
+  margin-bottom: 10px;
   position: relative;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid var(--border-color);
+  border: 2px solid var(--border-color);
   box-shadow: var(--shadow-sm);
   transition: all 0.3s ease;
   flex-shrink: 0;
@@ -288,10 +290,10 @@ body {
 
 .product-card .name {
   font-weight: 700;
-  font-size: 15px;
-  min-height: 42px;
+  font-size: 13px;
+  min-height: 32px;
   color: var(--text-dark);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -300,15 +302,15 @@ body {
 }
 
 .product-card .price {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--primary-darker);
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 .product-card form {
   width: 100%;
-  margin-top: 10px;
+  margin-top: 8px;
   display: flex;
   flex-direction: column;
 }
@@ -612,12 +614,13 @@ body {
   align-items: flex-start;
   gap: 14px;
   padding: 16px;
-  border-bottom: 2px solid var(--border-color);
-  background: var(--bg-hover);
   border-radius: 12px;
   margin-bottom: 12px;
   transition: all 0.3s ease;
-  border-left: 4px solid var(--success-color);
+  border: 2px solid transparent;
+  border-left-width: 4px;
+  border-left-style: solid;
+  background: var(--bg-surface);
   box-shadow: var(--shadow-sm);
 }
 
@@ -652,6 +655,74 @@ body {
   font-weight: 600;
   color: var(--text-primary);
   border: 1px solid var(--border-color);
+}
+
+
+.order-item.order-status-pending {
+  background: #fff1e6;
+  border-color: #ffb07c;
+  border-left-color: #ff7a1a;
+}
+
+.order-item.order-status-preparing {
+  background: #f4e8ff;
+  border-color: #d6b4ff;
+  border-left-color: #a855f7;
+}
+
+.order-item.order-status-ready {
+  background: #e5f4ff;
+  border-color: #9cd6ff;
+  border-left-color: #1d9bf0;
+}
+
+.order-item.order-status-served {
+  background: #e7fff3;
+  border-color: #8be5b2;
+  border-left-color: #16a34a;
+}
+
+.order-item.order-status-cancelled {
+  background: #fef2f2;
+  border-color: #fecaca;
+  border-left-color: #ef4444;
+}
+
+.order-item.order-status-unknown {
+  background: var(--bg-hover);
+  border-color: var(--border-color);
+  border-left-color: var(--border-color);
+}
+
+
+.status.status-pending {
+  background: #ffe0c7;
+  border-color: #ff9a57;
+  color: #9a3412;
+}
+
+.status.status-preparing {
+  background: #efe0ff;
+  border-color: #c084fc;
+  color: #6b21a8;
+}
+
+.status.status-ready {
+  background: #d7ecff;
+  border-color: #60a5fa;
+  color: #1d4ed8;
+}
+
+.status.status-served {
+  background: #d1fbe6;
+  border-color: #4ade80;
+  color: #057a38;
+}
+
+.status.status-cancelled {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
 }
 
 /* ==================== Summary ==================== */
