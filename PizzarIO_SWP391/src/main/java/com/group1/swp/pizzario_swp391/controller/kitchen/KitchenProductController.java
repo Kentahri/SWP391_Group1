@@ -16,7 +16,8 @@ public class KitchenProductController {
     
     @PostMapping("/active/{id}")
     public String updateActive(@PathVariable Long id, Boolean active) {
-        productService.updateProductActive(id, active != null ? active : false);
+        // Kitchen cập nhật trạng thái active và broadcast qua WebSocket
+        productService.updateProductActive(id, active != null ? active : false, "Kitchen");
         return "redirect:/kitchen/outstock";
     }
 }
