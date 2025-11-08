@@ -426,15 +426,9 @@
 							</div>
 							<div th:each="item : ${orderDetail.items}" class="order-item">
 								<div class="order-item-info">
-									<div class="item-name" th:text="${item.productName}">
+									<div class="item-name" 
+										th:text="${item.sizeName != null && !#strings.isEmpty(item.sizeName) ? item.productName + ' (' + item.sizeName + ')' : item.productName}">
 										—
-									</div>
-									<div
-											th:if="${item.sizeName != null && !#strings.isEmpty(item.sizeName)}"
-											class="item-size"
-											style="color: #6c757d; font-size: 13px; margin-top: 2px;"
-									>
-										Size: <span th:text="${item.sizeName}"></span>
 									</div>
 									<div class="item-detail">
                         <span class="item-quantity"
@@ -804,74 +798,52 @@
 					th:if="${paymentHistory != null && showHistory == true}"
 					class="reservation-list"
 			>
+                <div class="section-title">
+                    📋 Lịch sử hóa đơn
+                </div>
+
 				<div class="reservation-header">
 					<a th:href="@{/cashier}" class="btn-back-styled">← Quay lại</a>
 				</div>
-				
-				<h2
-						style="
-                font-size: 24px;
-                font-weight: 700;
-                color: #2c3e50;
-                margin-bottom: 20px;
-                padding: 20px 0;
-              "
-            >
-              📋 Lịch sử hóa đơn
-            </h2>
 
             <!-- Search Bar and Filter -->
             <div
               th:if="${!#lists.isEmpty(paymentHistory)}"
-              style="
-                margin-bottom: 16px;
-                display: flex;
-                justify-content: flex-end;
-                gap: 12px;
-                align-items: center;
-              "
+              class="search-container"
+              style="margin-bottom: 16px"
             >
-              <select
-                id="orderTypeFilter"
-                style="
-                  padding: 10px 14px;
-                  border: 2px solid #ffe5cc;
-                  border-radius: 10px;
-                  background: #fffaf0;
-                  color: #4a3528;
-                  font-size: 14px;
-                  width: 140px;
-                  transition: all 0.2s ease;
-                  margin: 0;
-                  cursor: pointer;
-                "
-                onchange="applyFilters()"
-                onfocus="this.style.borderColor='#ff9933'; this.style.boxShadow='0 0 0 4px rgba(255, 153, 51, 0.1)'; this.style.background='#ffffff'"
-                onblur="this.style.borderColor='#ffe5cc'; this.style.boxShadow='none'; this.style.background='#fffaf0'"
-              >
-                <option value="ALL">Tất cả</option>
-                <option value="DINE_IN">Tại bàn</option>
-                <option value="TAKE_AWAY">Mang về</option>
-              </select>
-              <input
-                type="text"
-                id="invoice-search"
-                placeholder="🔍 Tìm kiếm"
-                style="
-                  padding: 10px 14px;
-                  border: 2px solid #ffe5cc;
-                  border-radius: 10px;
-                  background: #fffaf0;
-                  color: #4a3528;
-                  font-size: 14px;
-                  width: 200px;
-                  transition: all 0.2s ease;
-                  margin: 0;
-                "
-                oninput="applyFilters()"
-                onfocus="this.style.borderColor='#ff9933'; this.style.boxShadow='0 0 0 4px rgba(255, 153, 51, 0.1)'; this.style.background='#ffffff'"
-                onblur="this.style.borderColor='#ffe5cc'; this.style.boxShadow='none'; this.style.background='#fffaf0'"
-              />
+              <div style="display: flex; gap: 12px; align-items: center; justify-content: flex-end">
+                <select
+                  id="orderTypeFilter"
+                  class="search-input"
+                  style="width: 140px; cursor: pointer"
+                  onchange="applyFilters()"
+                >
+                  <option value="ALL">Tất cả</option>
+                  <option value="DINE_IN">Tại bàn</option>
+                  <option value="TAKE_AWAY">Mang về</option>
+                </select>
+                <input
+                  type="text"
+                  id="invoice-search"
+                  class="search-input"
+                  placeholder="🔍 Tìm theo mã đơn"
+                  style="width: 200px"
+                  oninput="applyFilters()"
+                />
+              </div>
+            </div>
+
+            <div
+              th:if="${!#lists.isEmpty(paymentHistory)}"
+              id="history-no-results"
+              class="no-reservations-card"
+              style="display: none"
+            >
+              <div class="no-reservations-content">
+                <div class="no-reservations-icon">🔎</div>
+                <div class="no-reservations-text">Không tìm thấy hóa đơn phù hợp</div>
+              </div>
             </div>
 
             <div
@@ -889,73 +861,35 @@
               class="reservation-card invoice-card"
               th:data-order-id="${order.orderId}"
               th:data-order-type="${order.orderType != null ? order.orderType.toString() : ''}"
-              style="max-width: 100%"
             >
               <!-- Order Header -->
-              <div class="reservation-card-header" style="margin-bottom: 16px">
+              <div class="reservation-card-header">
                 <div>
-                  <div
-                    style="
-                      font-size: 18px;
-                      font-weight: 700;
-                      color: #2c3e50;
-                      margin-bottom: 4px;
-                    "
-							>
-								Đơn hàng #<span th:text="${order.orderId}">—</span>
-							</div>
-							<div style="font-size: 12px; color: #6c757d">
-								📅
-								<span
-										th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"
-								>—</span
-								>
-							</div>
-						</div>
-						<span
-								th:style="${order.orderStatus != null && order.orderStatus.toString() == 'PREPARING' ? 'background: #fff3cd; color: #856404;' : (order.orderStatus != null && order.orderStatus.toString() == 'COMPLETED' ? 'background: #d4edda; color: #155724;' : (order.orderStatus != null && order.orderStatus.toString() == 'CANCELLED' ? 'background: #f8d7da; color: #721c24;' : 'background: #d1ecf1; color: #0c5460;'))}"
-								style="
-                    padding: 4px 12px;
-                    border-radius: 20px;
-                    font-size: 12px;
-                    font-weight: 600;
-                    text-transform: uppercase;
-                  "
-						>
+                  <div class="reservation-table-name">
+                    <span style="font-weight: 700; color: #2c3e50; font-size: 18px">
+                      Đơn hàng #<span th:text="${order.orderId}">—</span>
+                    </span>
+                  </div>
+                  <div class="reservation-time" style="margin-top: 4px; margin-bottom: 0">
+                    📅
+                    <span th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">—</span>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center">
                   <span
-		                  th:text="${order.orderStatus != null && order.orderStatus.toString() == 'PREPARING' ? 'Đang chuẩn bị' : (order.orderStatus != null && order.orderStatus.toString() == 'COMPLETED' ? 'Hoàn thành' : (order.orderStatus != null && order.orderStatus.toString() == 'CANCELLED' ? 'Đã hủy' : 'Đang xử lý'))}"
-                  >—</span
-                  >
-                </span>
-						<span
-								th:if="${order.paymentStatus != null}"
-								th:style="${order.paymentStatus.toString() == 'PAID' ? 'background: #d4edda; color: #155724;' : (order.paymentStatus.toString() == 'PENDING' ? 'background: #fff3cd; color: #856404;' : 'background: #f8d7da; color: #721c24;')}"
-								style="
-                    padding: 4px 12px;
-                    border-radius: 20px;
-                    font-size: 12px;
-                    font-weight: 600;
-                    text-transform: uppercase;
-                    margin-left: 8px;
-                  "
-						>
+                    th:class="'order-status ' + ${order.orderStatus != null ? order.orderStatus.toString().toLowerCase() : ''}"
+                    th:text="${order.orderStatus != null && order.orderStatus.toString() == 'PREPARING' ? 'Đang chuẩn bị' : (order.orderStatus != null && order.orderStatus.toString() == 'COMPLETED' ? 'Hoàn thành' : (order.orderStatus != null && order.orderStatus.toString() == 'CANCELLED' ? 'Đã hủy' : 'Đang xử lý'))}"
+                  >—</span>
                   <span
-		                  th:text="${order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : (order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý' : 'Chưa thanh toán')}"
-                  >—</span
-                  >
-                </span>
-					</div>
+                    th:if="${order.paymentStatus != null}"
+                    th:class="'payment-status ' + ${order.paymentStatus.toString().toLowerCase()}"
+                    th:text="${order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : (order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý' : 'Chưa thanh toán')}"
+                  >—</span>
+                </div>
+              </div>
 					
 					<!-- Order Details Section -->
-					<div
-							class="reservation-info"
-							style="
-                  background: #f8f9fa;
-                  padding: 12px;
-                  border-radius: 8px;
-                  margin-bottom: 12px;
-                "
-					>
+					<div class="reservation-info">
 						<div class="reservation-info-row">
 							<span class="reservation-info-label">🪑 Bàn:</span>
 							<span
@@ -996,51 +930,20 @@
 					</div>
 					
 					<!-- Order Summary -->
-					<div
-							style="
-                  margin-top: 16px;
-                  padding-top: 12px;
-                  border-top: 2px solid #e8e8e8;
-                "
-					>
-						<div
-								class="summary-row total"
-								style="
-                    display: flex;
-                    justify-content: space-between;
-                    font-weight: 700;
-                    font-size: 16px;
-                    color: #2c3e50;
-                  "
-						>
+					<div class="order-summary" style="margin-top: 16px; padding-top: 12px; border-top: 2px solid #FFE5CC">
+						<div class="summary-row total">
 							<span>Tổng cộng:</span>
-							<span
-									style="color: #e74c3c; font-size: 18px"
-									th:text="${#numbers.formatCurrency(order.totalPrice)}"
-							>0đ</span
-							>
+							<span class="total-amount" th:text="${#numbers.formatCurrency(order.totalPrice)}">0đ</span>
 						</div>
 					</div>
 					
 					<!-- Action Button -->
-					<div style="margin-top: 12px; text-align: center">
+					<div style="margin-top: 16px; text-align: center">
 						<button
-								th:onclick="'toggleOrderDetail(' + ${order.orderId} + ')'"
-								th:id="'toggle-btn-' + ${order.orderId}"
-								class="btn-detail-order"
-								style="
-                    padding: 8px 16px;
-                    background-color: #007bff;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                    font-size: 14px;
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: background-color 0.2s;
-                  "
-								onmouseover="this.style.backgroundColor='#0056b3'"
-								onmouseout="this.style.backgroundColor='#007bff'"
+							th:onclick="'toggleOrderDetail(' + ${order.orderId} + ')'"
+							th:id="'toggle-btn-' + ${order.orderId}"
+							class="btn btn-primary"
+							style="padding: 10px 20px"
 						>
 							📋 Xem chi tiết
 						</button>
@@ -1048,36 +951,16 @@
 					
 					<!-- Order Detail Section (Hidden by default) -->
 					<div
-							th:id="'order-detail-' + ${order.orderId}"
-							class="order-detail-section"
-							style="
-                  display: none;
-                  margin-top: 16px;
-                  padding: 16px;
-                  background: #f8f9fa;
-                  border-radius: 8px;
-                  border: 1px solid #e9ecef;
-                "
+						th:id="'order-detail-' + ${order.orderId}"
+						class="order-detail-section detail-card"
+						style="display: none; margin-top: 16px"
 					>
 						<!-- Receipt Header -->
 						<div style="text-align: center; margin-bottom: 20px">
-							<div
-									style="
-                      font-size: 18px;
-                      font-weight: bold;
-                      margin-bottom: 8px;
-                      text-transform: uppercase;
-                    "
-							>
+							<div style="font-size: 18px; font-weight: bold; margin-bottom: 8px; text-transform: uppercase">
 								CHI TIẾT ĐƠN HÀNG
 							</div>
-							<div
-									style="
-                      font-size: 16px;
-                      font-weight: bold;
-                      margin-bottom: 4px;
-                    "
-							>
+							<div style="font-size: 16px; font-weight: bold; margin-bottom: 4px">
 								PizzarIO
 							</div>
 							<div style="font-size: 12px; margin-bottom: 4px">
@@ -1086,40 +969,22 @@
 							<div style="font-size: 12px; margin-bottom: 10px">
 								ĐT: 0123456678-0987654321
 							</div>
-							<div
-									style="text-align: center; margin: 10px 0; font-size: 12px"
-							>
+							<div style="text-align: center; margin: 10px 0; font-size: 12px">
 								*****************
 							</div>
 						</div>
 						
 						<!-- Order Status -->
 						<div style="text-align: center; margin-bottom: 15px">
-                  <span
-		                  th:class="'order-status ' + ${order.orderStatus != null ? order.orderStatus.toString().toLowerCase() : ''}"
-		                  th:text="${order.orderStatus != null && order.orderStatus.toString() == 'PREPARING' ? 'Đang chuẩn bị' : (order.orderStatus != null && order.orderStatus.toString() == 'COMPLETED' ? 'Hoàn thành' : (order.orderStatus != null && order.orderStatus.toString() == 'CANCELLED' ? 'Đã hủy' : 'Đang xử lý'))}"
-		                  style="
-                      padding: 4px 12px;
-                      border-radius: 20px;
-                      font-size: 12px;
-                      font-weight: 600;
-                      text-transform: uppercase;
-                      margin-right: 8px;
-                    "
-                  >
-                  </span>
 							<span
-									th:class="'payment-status ' + ${order.paymentStatus.toString().toLowerCase()}"
-									th:text="${order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : (order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý' : 'Chưa thanh toán')}"
-									style="
-                      padding: 4px 12px;
-                      border-radius: 20px;
-                      font-size: 12px;
-                      font-weight: 600;
-                      text-transform: uppercase;
-                    "
-							>
-                  </span>
+								th:class="'order-status ' + ${order.orderStatus != null ? order.orderStatus.toString().toLowerCase() : ''}"
+								th:text="${order.orderStatus != null && order.orderStatus.toString() == 'PREPARING' ? 'Đang chuẩn bị' : (order.orderStatus != null && order.orderStatus.toString() == 'COMPLETED' ? 'Hoàn thành' : (order.orderStatus != null && order.orderStatus.toString() == 'CANCELLED' ? 'Đã hủy' : 'Đang xử lý'))}"
+								style="margin-right: 8px"
+							></span>
+							<span
+								th:class="'payment-status ' + ${order.paymentStatus.toString().toLowerCase()}"
+								th:text="${order.paymentStatus.toString() == 'PAID' ? 'Đã thanh toán' : (order.paymentStatus.toString() == 'PENDING' ? 'Đang xử lý' : 'Chưa thanh toán')}"
+							></span>
 						</div>
 						
 						<!-- Transaction Information -->
@@ -1202,7 +1067,7 @@
                     margin-bottom: 4px;
                   "
 						>
-							<div th:text="${item.productName}">Pizza Bò</div>
+							<div th:text="${item.sizeName != null && !#strings.isEmpty(item.sizeName) ? item.productName + ' (' + item.sizeName + ')' : item.productName}">Pizza Bò</div>
 							<div style="text-align: center" th:text="${item.quantity}">
 								1
 							</div>
@@ -1436,21 +1301,12 @@
                 <div style="text-align: center; margin-top: 20px">
                   <button
                     th:onclick="'printReceipt(' + ${order.orderId} + ')'"
-                    style="
-                      padding: 10px 20px;
-                      margin: 5px;
-                      background-color: #007bff;
-                      color: white;
-                      border: none;
-                      border-radius: 4px;
-                      cursor: pointer;
-                      font-size: 14px;
-                      font-weight: bold;
-                    "
-							>
-								In hóa đơn
-							</button>
-						</div>
+                    class="btn btn-primary"
+                    style="padding: 10px 20px"
+                  >
+                    🖨️ In hóa đơn
+                  </button>
+                </div>
 					</div>
 				</div>
 			</div>
@@ -2051,10 +1907,8 @@
                             data-base-price=${item.productSize.basePrice},
                             data-is-on-sale=${item.productSize.onFlashSale}">
 						<div class="order-edit-item-info">
-							<div class="order-edit-item-name" th:text="${item.productName}">Product Name</div>
-							<div class="order-edit-item-size" th:if="${item.sizeName != null}"
-							     th:text="'Size: ' + ${item.sizeName}">Size
-							</div>
+							<div class="order-edit-item-name" 
+								th:text="${item.sizeName != null && !#strings.isEmpty(item.sizeName) ? item.productName + ' (' + item.sizeName + ')' : item.productName}">Product Name</div>
 							<div class="order-edit-item-note">
 								<input type="text"
 								       class="item-note-input"
@@ -2166,11 +2020,54 @@
                 }, 300);
             }, 5000);
         });
+
+        applyFilters();
     });
 
     // Custom logout confirmation
     function confirmLogout() {
         return confirm("Bạn có muốn đăng xuất không?");
+    }
+
+    function applyFilters() {
+        const searchInput = document.getElementById('invoice-search');
+        const orderTypeSelect = document.getElementById('orderTypeFilter');
+        const invoiceCards = document.querySelectorAll('.invoice-card');
+
+        if (!searchInput && !orderTypeSelect) {
+            return;
+        }
+
+        const selectedType = orderTypeSelect ? orderTypeSelect.value : 'ALL';
+        const rawSearch = searchInput ? searchInput.value.trim() : '';
+        const normalizedSearch = rawSearch.toLowerCase();
+
+        let visibleCount = 0;
+
+        invoiceCards.forEach((card) => {
+            if (!(card instanceof HTMLElement)) {
+                return;
+            }
+
+            const cardType = (card.getAttribute('data-order-type') || '').toUpperCase();
+            const cardIdRaw = card.getAttribute('data-order-id') || '';
+            const normalizedId = cardIdRaw.toString().toLowerCase();
+
+            const matchesType = selectedType === 'ALL' || cardType === selectedType;
+            const matchesSearch = !normalizedSearch || normalizedId.includes(normalizedSearch);
+
+            if (matchesType && matchesSearch) {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        const noResults = document.getElementById('history-no-results');
+        if (noResults) {
+            noResults.style.display = visibleCount === 0 ? '' : 'none';
+        }
     }
 
     // Toggle order detail functionality
@@ -2741,7 +2638,7 @@
         });
 
         // Get table ID from URL or hidden field
-        const tableId = [[${selectedTableId}]];
+        const tableId = /*[[${selectedTableId}]]*/ null;
 
         if (!tableId) {
             showToast('Lỗi: Không tìm thấy thông tin bàn', 'error');

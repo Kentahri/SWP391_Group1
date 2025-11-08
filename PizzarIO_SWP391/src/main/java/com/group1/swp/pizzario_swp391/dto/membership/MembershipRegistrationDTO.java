@@ -19,12 +19,6 @@ public class MembershipRegistrationDTO {
 
     public MembershipRegistrationDTO() {}
 
-    public MembershipRegistrationDTO(String fullName, String phoneNumber, Integer points) {
-        this.fullName = fullName;
-        this.phoneNumber = phoneNumber;
-        this.points = points;
-    }
-
     public String getFullName() {
         return fullName;
     }
