@@ -43,6 +43,20 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+    public List<ProductResponseDTO> getActiveProducts() {
+        List<Product> products = productRepository.findByActiveTrue();
+        return products.stream()
+                .map(productMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<ProductResponseDTO> getActiveProductsWithActiveCategory() {
+        List<Product> products = productRepository.findByActiveTrueAndCategoryActiveTrue();
+        return products.stream()
+                .map(productMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
     public ProductResponseDTO getProductById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(PRODUCT_NOT_FOUND));
@@ -134,7 +148,13 @@ public class ProductService {
 
     }
     //=============
-    public void updateProductActive(Long id, Boolean active) {
+    /**
+     * Cập nhật trạng thái active của sản phẩm
+     * @param id ID của sản phẩm
+     * @param active Trạng thái active mới
+     * @param updatedBy Người cập nhật (Manager hoặc Kitchen)
+     */
+    public void updateProductActive(Long id, Boolean active, String updatedBy) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(PRODUCT_NOT_FOUND));
         product.setActive(active != null && active);
@@ -142,7 +162,20 @@ public class ProductService {
 
         Product savedProduct = productRepository.save(product);
 
-        productRepository.save(product);
+        // Broadcast WebSocket message to all guests và kitchen
+        webSocketService.broadcastProductChange(
+                ProductStatusMessage.MessageType.PRODUCT_TOGGLED,
+                savedProduct,
+                updatedBy != null ? updatedBy : "System"
+        );
+    }
+
+    /**
+     * Overload method để backward compatibility
+     * Mặc định updatedBy = "System"
+     */
+    public void updateProductActive(Long id, Boolean active) {
+        updateProductActive(id, active, "System");
     }
 
     public void deleteProduct(Long id) {
@@ -153,7 +186,12 @@ public class ProductService {
     }
 
     // Cập nhật method toggleProductActive()
-    public void toggleProductActive(Long id) {
+    /**
+     * Toggle trạng thái active của sản phẩm
+     * @param id ID của sản phẩm
+     * @param updatedBy Người cập nhật (Manager hoặc Kitchen)
+     */
+    public void toggleProductActive(Long id, String updatedBy) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(PRODUCT_NOT_FOUND));
 
@@ -161,15 +199,22 @@ public class ProductService {
 
         product.setActive(newStatus);
         product.setUpdatedAt(LocalDateTime.now());
-        productRepository.save(product);
+        Product savedProduct = productRepository.save(product);
 
-        // Broadcast WebSocket message to all guests
-
+        // Broadcast WebSocket message to all guests và kitchen
         webSocketService.broadcastProductChange(
                 ProductStatusMessage.MessageType.PRODUCT_TOGGLED,
-                product,
-                "Manager"
+                savedProduct,
+                updatedBy != null ? updatedBy : "Manager"
         );
+    }
+
+    /**
+     * Overload method để backward compatibility
+     * Mặc định updatedBy = "Manager"
+     */
+    public void toggleProductActive(Long id) {
+        toggleProductActive(id, "Manager");
     }
 
     public List<ProductResponseDTO> searchProducts(String query) {

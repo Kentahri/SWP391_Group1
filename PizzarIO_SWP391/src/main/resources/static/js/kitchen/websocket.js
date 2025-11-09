@@ -77,6 +77,9 @@ function subscribeToTopics() {
     // KÊNH 2: Nhận thông báo cá nhân cho kitchen
     stompClient.subscribe('/queue/kitchen-notifications', handleKitchenNotification);
 
+    // KÊNH 3: Nhận cập nhật trạng thái active của sản phẩm từ Manager hoặc Kitchen khác
+    stompClient.subscribe('/topic/products-status', handleProductStatusUpdate);
+
     console.log('Kitchen subscribed to WebSocket topics');
 }
 
@@ -228,6 +231,122 @@ function handleKitchenNotification(message) {
 
     } catch (error) {
         console.error('Error parsing kitchen notification:', error);
+    }
+}
+
+/**
+ * Xử lý cập nhật trạng thái active của sản phẩm từ Manager hoặc Kitchen khác
+ * Để đồng bộ UI real-time khi có người khác toggle product active
+ */
+function handleProductStatusUpdate(message) {
+    try {
+        const data = JSON.parse(message.body);
+        console.log('[Kitchen] Product status update received:', data);
+
+        // Xử lý các loại message: PRODUCT_TOGGLED, PRODUCT_UPDATED, PRODUCT_CREATED
+        if (data.type === 'PRODUCT_TOGGLED' || 
+            data.type === 'PRODUCT_UPDATED' || 
+            data.type === 'PRODUCT_CREATED') {
+            
+            if (data.product && data.product.id) {
+                const productId = data.product.id;
+                const isActive = data.product.active === true;
+                const updatedBy = data.updatedBy || 'Unknown';
+                
+                console.log(`[Kitchen] Product ${productId} active status updated to ${isActive} by ${updatedBy}`);
+                
+                // Cập nhật UI trên trang outstock management nếu đang ở đó
+                updateProductStatusInUI(productId, isActive);
+                
+                // Hiển thị thông báo nếu không phải do chính kitchen này update
+                // (tránh duplicate notification khi kitchen tự toggle)
+                const isOnOutstockPage = window.location.pathname.includes('/kitchen/outstock');
+                if (isOnOutstockPage && updatedBy !== 'Kitchen') {
+                    const productName = data.product.name || 'Món ăn';
+                    showNotification(
+                        `${productName} đã được ${isActive ? 'bật' : 'tắt'} bởi ${updatedBy}`,
+                        'info'
+                    );
+                }
+            }
+        }
+    } catch (error) {
+        console.error('[Kitchen] Error handling product status update:', error);
+    }
+}
+
+/**
+ * Cập nhật UI của product card trong trang outstock management
+ * @param {number} productId - ID của sản phẩm
+ * @param {boolean} isActive - Trạng thái active mới
+ */
+function updateProductStatusInUI(productId, isActive) {
+    // Chỉ cập nhật nếu đang ở trang outstock management
+    if (!window.location.pathname.includes('/kitchen/outstock')) {
+        return;
+    }
+
+    // Tìm product card trong DOM
+    const productCards = document.querySelectorAll('.product-card');
+    let productCard = null;
+
+    for (const card of productCards) {
+        // Tìm product card có chứa product ID trong text hoặc attribute
+        const productIdElement = card.querySelector('.attr-value');
+        if (productIdElement && productIdElement.textContent.trim() == productId) {
+            productCard = card;
+            break;
+        }
+    }
+
+    if (productCard) {
+        // Cập nhật badge status
+        const activeBadge = productCard.querySelector('.badge.active');
+        const inactiveBadge = productCard.querySelector('.badge.inactive');
+        
+        if (isActive) {
+            if (inactiveBadge) inactiveBadge.style.display = 'none';
+            if (activeBadge) {
+                activeBadge.style.display = 'inline-block';
+            } else {
+                // Tạo badge mới nếu chưa có
+                const badge = document.createElement('span');
+                badge.className = 'badge status-badge active';
+                badge.textContent = 'ACTIVE';
+                const header = productCard.querySelector('.card-header');
+                if (header) {
+                    header.appendChild(badge);
+                }
+            }
+        } else {
+            if (activeBadge) activeBadge.style.display = 'none';
+            if (inactiveBadge) {
+                inactiveBadge.style.display = 'inline-block';
+            } else {
+                // Tạo badge mới nếu chưa có
+                const badge = document.createElement('span');
+                badge.className = 'badge status-badge inactive';
+                badge.textContent = 'INACTIVE';
+                const header = productCard.querySelector('.card-header');
+                if (header) {
+                    header.appendChild(badge);
+                }
+            }
+        }
+
+        // Cập nhật checkbox
+        const checkbox = productCard.querySelector('input[type="checkbox"][name="active"]');
+        if (checkbox) {
+            checkbox.checked = isActive;
+        }
+
+        // Animation để người dùng thấy thay đổi
+        productCard.style.animation = 'none';
+        setTimeout(() => {
+            productCard.style.animation = 'pulse 0.5s ease';
+        }, 10);
+
+        console.log(`[Kitchen] Product ${productId} UI updated: ${isActive ? 'ACTIVE' : 'INACTIVE'}`);
     }
 }
 

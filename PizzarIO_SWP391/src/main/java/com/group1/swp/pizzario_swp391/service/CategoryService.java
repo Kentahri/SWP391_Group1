@@ -34,9 +34,7 @@ public class CategoryService {
     }
 
     public List<CategoryResponseDTO> getAllActiveCategories() {
-        List<Category> categories = categoryRepository.findAll().stream()
-                .filter(Category::isActive)
-                .collect(Collectors.toList());
+        List<Category> categories = categoryRepository.findByActiveTrue();
         return categories.stream()
                 .map(categoryMapper::toResponseDTO)
                 .collect(Collectors.toList());

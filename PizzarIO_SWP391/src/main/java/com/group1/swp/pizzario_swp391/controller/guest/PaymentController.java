@@ -4,7 +4,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -131,6 +130,10 @@ public class PaymentController {
             // Get context path for template use
             String contextPath = request.getContextPath();
             model.addAttribute("contextPath", contextPath);
+
+            String registerReturnPath = "/guest/payment/session/" + sessionId;
+            String membershipRegisterUrl = buildMembershipRegisterUrl(contextPath, sessionId, registerReturnPath);
+            model.addAttribute("membershipRegisterUrl", membershipRegisterUrl);
             
             // Thêm error message nếu có
             if (error != null && !error.isEmpty()) {
@@ -336,5 +339,11 @@ public class PaymentController {
             model.addAttribute("error", "Không thể tải thông tin xác nhận: " + e.getMessage());
             return "error-page";
         }
+    }
+
+    private String buildMembershipRegisterUrl(String contextPath, Long sessionId, String returnPath) {
+        String encodedReturnPath = URLEncoder.encode(returnPath, StandardCharsets.UTF_8);
+        String basePath = (contextPath != null ? contextPath : "") + "/guest/membership/register";
+        return basePath + "?sessionId=" + sessionId + "&returnUrl=" + encodedReturnPath;
     }
 }

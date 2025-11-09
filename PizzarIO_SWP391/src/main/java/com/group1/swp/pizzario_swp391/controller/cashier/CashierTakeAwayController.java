@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.List;
 
@@ -192,6 +194,13 @@ public class CashierTakeAwayController {
 
         // Add context path to model for template use
         model.addAttribute("contextPath", contextPath);
+
+        String registerReturnPath = "/cashier/takeaway/order/" + orderId + "/payment";
+        String encodedRegisterReturnPath = URLEncoder.encode(registerReturnPath, StandardCharsets.UTF_8);
+        String membershipRegisterUrl = (contextPath != null ? contextPath : "")
+            + "/guest/membership/register?sessionId=" + sessionId
+            + "&returnUrl=" + encodedRegisterReturnPath;
+        model.addAttribute("membershipRegisterUrl", membershipRegisterUrl);
 
         // Confirm URL - sử dụng orderId cho cashier flow (không cần sessionId)
         String paymentConfirmUrl = contextPath + "/cashier/takeaway/order/" + orderId + "/payment/confirm";
@@ -391,6 +400,7 @@ public class CashierTakeAwayController {
             return "redirect:/cashier/takeaway/order/" + orderId + "/payment";
         }
     }
+
 }
 
 

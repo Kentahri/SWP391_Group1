@@ -150,4 +150,52 @@ public class WebSocketService {
         messagingTemplate.convertAndSend("/queue/payment-" + sessionId, message);
     }
 
+    /**
+     * Broadcast order update to guest
+     * Gửi thông báo đến guest khi order được cập nhật bởi cashier
+     */
+    public void broadcastOrderUpdateToGuest(Long sessionId, KitchenOrderMessage orderMessage) {
+        if (sessionId == null) {
+            log.warn("Cannot broadcast order update to guest: sessionId is null");
+            return;
+        }
+
+        orderMessage.setTimestamp(LocalDateTime.now());
+        String destination = "/queue/order-update-" + sessionId;
+
+        log.info("Broadcasting order update to guest:");
+        log.info("  - Destination: {}", destination);
+        log.info("  - Session ID: {}", sessionId);
+        log.info("  - Order Code: {}", orderMessage.getCode());
+        log.info("  - Message: {}", orderMessage.getMessage());
+        log.info("  - Full message object: {}", orderMessage);
+
+        messagingTemplate.convertAndSend(destination, orderMessage);
+        log.info("Successfully broadcasted order update to guest session {}", sessionId);
+    }
+
+    /**
+     * Broadcast order update to cashier
+     * Gửi thông báo đến cashier khi order được cập nhật bởi guest
+     */
+    public void broadcastOrderUpdateToCashier(KitchenOrderMessage orderMessage) {
+        if (orderMessage == null) {
+            log.warn("Cannot broadcast order update to cashier: orderMessage is null");
+            return;
+        }
+
+        orderMessage.setTimestamp(LocalDateTime.now());
+        String destination = "/topic/order-updates-cashier";
+
+        log.info("Broadcasting order update to cashier:");
+        log.info("  - Destination: {}", destination);
+        log.info("  - Order Code: {}", orderMessage.getCode());
+        log.info("  - Table Name: {}", orderMessage.getTableName());
+        log.info("  - Message: {}", orderMessage.getMessage());
+        log.info("  - Full message object: {}", orderMessage);
+
+        messagingTemplate.convertAndSend(destination, orderMessage);
+        log.info("Successfully broadcasted order update to cashier for order {}", orderMessage.getCode());
+    }
+
 }

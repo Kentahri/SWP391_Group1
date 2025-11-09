@@ -64,9 +64,8 @@
                 <div class="order-item-info">
                   <span
                     class="item-name"
-                    th:text="${item.productSize.product.name}"
-                    >Product Name</span
-                  >
+                    th:text="${item.productSize.product.name} + ' (' + ${item.productSize.size.sizeName} + ')'"
+                  ></span>
                   <span class="item-quantity" th:text="'x' + ${item.quantity}"
                     >x1</span
                   >
@@ -438,7 +437,7 @@
                         Chưa có tài khoản thành viên?
                       </p>
                       <a
-                        th:href="@{'/guest/membership/register?sessionId=' + ${sessionId}}"
+                        th:href="${membershipRegisterUrl != null} ? ${membershipRegisterUrl} : @{'/guest/membership/register'(sessionId=${sessionId})}"
                         class="btn btn-outline-success btn-sm"
                       >
                         <i class="fas fa-user-plus"></i> Đăng ký thành viên

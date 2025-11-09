@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,28 +51,28 @@ public class PaymentService {
         }
 
         Order order = sessionService.getOrderBySessionId(sessionId);
-        
+
         PaymentDTO paymentDTO = paymentMapper.toDTO(order);
-        
+
         // Set customer name (có thể lấy từ membership hoặc để mặc định)
         if (order.getMembership() != null) {
             paymentDTO.setCustomerName(order.getMembership().getName());
         } else {
             paymentDTO.setCustomerName("Khách vãng lai");
         }
-        
+
         // Tính và set các giá trị tài chính
         double originalTotal = calculateOriginalOrderTotal(sessionId);
         double discountAmount = calculateDiscountAmount(sessionId);
         double finalTotal = originalTotal - discountAmount;
-        
+
         paymentDTO.setOriginalTotal(originalTotal);
         paymentDTO.setDiscountAmount(discountAmount);
         paymentDTO.setOrderTotal(finalTotal);
-        
+
         // Load available vouchers
         paymentDTO.setAvailableVouchers(getAvailableVouchersBySessionId(sessionId));
-        
+
         // Set pointsUsed
         int pointsUsed = getPointsUsed(sessionId);
         System.out.println("=== PaymentService.getPaymentBySessionId Debug ===");
@@ -81,7 +82,7 @@ public class PaymentService {
         System.out.println("getPointsUsed(sessionId) returns: " + pointsUsed);
         paymentDTO.setPointsUsed(pointsUsed);
         System.out.println("paymentDTO.getPointsUsed() after set: " + paymentDTO.getPointsUsed());
-        
+
         return paymentDTO;
     }
 
@@ -91,25 +92,25 @@ public class PaymentService {
     public PaymentDTO getPaymentConfirmationBySessionId(Long sessionId) {
         // Lấy order từ session (không cần kiểm tra session mở vì đã thanh toán)
         Order order = sessionService.getOrderBySessionId(sessionId);
-        
+
         PaymentDTO paymentDTO = paymentMapper.toDTO(order);
-        
+
         // Set customer name (có thể lấy từ membership hoặc để mặc định)
         if (order.getMembership() != null) {
             paymentDTO.setCustomerName(order.getMembership().getName());
         } else {
             paymentDTO.setCustomerName("Khách vãng lai");
         }
-        
+
         // Tính và set các giá trị tài chính
         double originalTotal = calculateOriginalOrderTotal(sessionId);
         double discountAmount = calculateDiscountAmount(sessionId);
         double finalTotal = originalTotal - discountAmount;
-        
+
         paymentDTO.setOriginalTotal(originalTotal);
         paymentDTO.setDiscountAmount(discountAmount);
         paymentDTO.setOrderTotal(finalTotal);
-        
+
         return paymentDTO;
     }
 
@@ -127,7 +128,7 @@ public class PaymentService {
     public List<VoucherDTO> getAvailableVouchersBySessionId(Long sessionId) {
         // Sử dụng tổng gốc để kiểm tra điều kiện voucher
         double originalOrderTotal = calculateOriginalOrderTotal(sessionId);
-        
+
         return voucherRepository.findAll().stream()
                 .filter(voucher -> voucher.isActive())
                 .filter(voucher -> voucher.getValidFrom().isBefore(LocalDateTime.now()))
@@ -156,50 +157,50 @@ public class PaymentService {
     @Transactional(rollbackFor = Exception.class)
     public PaymentDTO applyVoucherBySessionId(Long sessionId, Long voucherId) {
         Order order = sessionService.getOrderBySessionId(sessionId);
-        
+
         Voucher voucher = voucherRepository.findById(voucherId)
                 .orElseThrow(() -> new RuntimeException("Voucher not found with id: " + voucherId));
-        
+
         // Tính tổng giá trị order gốc (trước khi áp dụng voucher)
         double originalTotal = calculateOriginalOrderTotal(sessionId);
-        
+
         // Kiểm tra điều kiện áp dụng voucher dựa trên tổng gốc
-        if (!voucher.isActive() || 
-            voucher.getValidFrom().isAfter(LocalDateTime.now()) ||
-            voucher.getValidTo().isBefore(LocalDateTime.now()) ||
-            voucher.getTimesUsed() >= voucher.getMaxUses() ||
-            voucher.getMinOrderAmount() > originalTotal) {
+        if (!voucher.isActive() ||
+                voucher.getValidFrom().isAfter(LocalDateTime.now()) ||
+                voucher.getValidTo().isBefore(LocalDateTime.now()) ||
+                voucher.getTimesUsed() >= voucher.getMaxUses() ||
+                voucher.getMinOrderAmount() > originalTotal) {
             throw new RuntimeException("Voucher không thể áp dụng");
         }
-        
+
         // Khi áp dụng voucher, ghi đè trạng thái sử dụng điểm (chỉ 1 phương thức giảm giá)
         pointsUsedBySession.remove(sessionId);
         // Ghi đè voucher cũ (nếu có) bằng voucher mới
         order.setVoucher(voucher);
-        
+
         // KHÔNG thay đổi totalPrice của order - giữ nguyên giá gốc từ order items
         // Discount sẽ được tính riêng trong DTO
-        
+
         orderRepository.save(order);
-        
+
         PaymentDTO paymentDTO = paymentMapper.toDTO(order);
-        
+
         // Set customer name
         if (order.getMembership() != null) {
             paymentDTO.setCustomerName(order.getMembership().getName());
         } else {
             paymentDTO.setCustomerName("Khách vãng lai");
         }
-        
+
         // Tính và set các giá trị tài chính
         double newOriginalTotal = calculateOriginalOrderTotal(sessionId);
         double newDiscountAmount = calculateDiscountAmount(sessionId);
         double newFinalTotal = newOriginalTotal - newDiscountAmount;
-        
+
         paymentDTO.setOriginalTotal(newOriginalTotal);
         paymentDTO.setDiscountAmount(newDiscountAmount);
         paymentDTO.setOrderTotal(newFinalTotal);
-        
+
         return paymentDTO;
     }
 
@@ -209,36 +210,36 @@ public class PaymentService {
     @Transactional(rollbackFor = Exception.class)
     public PaymentDTO removeVoucherBySessionId(Long sessionId) {
         Order order = sessionService.getOrderBySessionId(sessionId);
-        
+
         if (order.getVoucher() != null) {
             // Chỉ hủy voucher, không thay đổi totalPrice
             order.setVoucher(null);
             orderRepository.save(order);
         }
-        
+
         PaymentDTO paymentDTO = paymentMapper.toDTO(order);
-        
+
         // Set customer name
         if (order.getMembership() != null) {
             paymentDTO.setCustomerName(order.getMembership().getName());
         } else {
             paymentDTO.setCustomerName("Khách vãng lai");
         }
-        
+
         // Tính và set các giá trị tài chính
         double newOriginalTotal = calculateOriginalOrderTotal(sessionId);
         double newDiscountAmount = calculateDiscountAmount(sessionId);
         double newFinalTotal = newOriginalTotal - newDiscountAmount;
-        
+
         paymentDTO.setOriginalTotal(newOriginalTotal);
         paymentDTO.setDiscountAmount(newDiscountAmount);
         paymentDTO.setOrderTotal(newFinalTotal);
-        
+
         return paymentDTO;
     }
 
     @Transactional
-    public void waitingConfirmPayment(Long sessionId, Order.PaymentMethod paymentMethod){
+    public void waitingConfirmPayment(Long sessionId, Order.PaymentMethod paymentMethod) {
         Order order = sessionService.getOrderBySessionId(sessionId);
         DiningTable table = order.getSession().getTable();
         DiningTable.TableStatus currentTableStatus = table.getTableStatus();
@@ -262,7 +263,8 @@ public class PaymentService {
                 table.setTableStatus(DiningTable.TableStatus.WAITING_PAYMENT);
                 tableRepository.save(table);
             }
-        } catch (Exception ignored) { }
+        } catch (Exception ignored) {
+        }
 
         PaymentPendingMessage message = PaymentPendingMessage.builder()
                 .sessionId(sessionId)
@@ -278,6 +280,13 @@ public class PaymentService {
                 .build();
 
         webSocketService.broadcastPaymentPendingToCashier(message);
+        webSocketService.broadcastTableStatusToCashier(
+                TableStatusMessage.MessageType.TABLE_RELEASED,
+                table.getId(),
+                currentTableStatus,
+                DiningTable.TableStatus.WAITING_PAYMENT,
+                "GUEST",
+                "Bàn " + table.getId() + " đang chờ thanh toán");
     }
 
     /**
@@ -285,25 +294,25 @@ public class PaymentService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void confirmPaymentBySessionId(Long sessionId, Order.PaymentMethod paymentMethod) {
-        
+
         try {
             Order order = sessionService.getOrderBySessionId(sessionId);
-            
+
             double finalOriginalTotal = calculateOriginalOrderTotal(sessionId);
             double finalDiscountAmount = calculateDiscountAmount(sessionId);
             double finalFinalTotal = finalOriginalTotal - finalDiscountAmount;
-            
+
             if (paymentMethod == null) {
                 throw new IllegalArgumentException("PaymentMethod cannot be null");
             }
-            
+
             // Cập nhật trạng thái thanh toán
             // Lưu payment method thực tế vào database
             order.setPaymentMethod(paymentMethod);
             order.setPaymentStatus(Order.PaymentStatus.PAID);
             order.setOrderStatus(Order.OrderStatus.COMPLETED);
             order.setUpdatedAt(LocalDateTime.now());
-            
+
             // Cập nhật số lần sử dụng voucher nếu có (không quan trọng, không làm fail transaction chính)
             if (order.getVoucher() != null) {
                 try {
@@ -312,7 +321,7 @@ public class PaymentService {
                     System.err.println("Error updating voucher usage: " + e.getMessage());
                 }
             }
-            
+
             // Cập nhật điểm thành viên nếu có (không quan trọng, không làm fail transaction chính)
             if (order.getMembership() != null) {
                 try {
@@ -330,7 +339,7 @@ public class PaymentService {
                     System.err.println("Error updating membership points: " + e.getMessage());
                 }
             }
-            
+
             orderRepository.save(order);
 
             // Gửi thông báo đến kitchen khi order đã hoàn thành (để dashboard refresh)
@@ -411,7 +420,7 @@ public class PaymentService {
 
             orderRepository.save(order);
 
-        } catch (Exception e){
+        } catch (Exception e) {
             System.err.println("Error in confirmPaymentTakeawayBySessionId: " + e.getMessage());
             e.printStackTrace();
             throw e;
@@ -452,18 +461,18 @@ public class PaymentService {
      */
     public double calculateOriginalOrderTotal(Long sessionId) {
         Order order = sessionService.getOrderBySessionId(sessionId);
-        
+
         // Luôn tính tổng từ order items để đảm bảo giá trị chính xác
         double totalFromItems = order.getOrderItems().stream()
                 .mapToDouble(OrderItem::getTotalPrice)
                 .sum();
-        
+
         // Cập nhật totalPrice của order nếu cần
         if (order.getTotalPrice() != totalFromItems) {
             order.setTotalPrice(totalFromItems);
             orderRepository.save(order);
         }
-        
+
         return totalFromItems;
     }
 
@@ -472,7 +481,7 @@ public class PaymentService {
      */
     public double calculateDiscountAmount(Long sessionId) {
         Order order = sessionService.getOrderBySessionId(sessionId);
-        
+
         // Points discount takes precedence if used (and vouchers are mutually exclusive via validation)
         int usedPoints = getPointsUsed(sessionId);
         if (usedPoints > 0) {
@@ -481,12 +490,12 @@ public class PaymentService {
             double pointsDiscount = usedPoints * 10000.0;
             return Math.min(pointsDiscount, maxDiscount);
         }
-        
+
         if (order.getVoucher() != null) {
             double originalTotal = calculateOriginalOrderTotal(sessionId);
             return calculateDiscountAmount(originalTotal, order.getVoucher());
         }
-        
+
         return 0.0;
     }
 
@@ -561,7 +570,7 @@ public class PaymentService {
     public void removePoints(Long sessionId) {
         pointsUsedBySession.remove(sessionId);
     }
-    
+
     /**
      * Gửi thông báo đến kitchen khi order đã hoàn thành
      * Kitchen-dashboard sẽ tự động refresh để order này biến mất khỏi danh sách
@@ -571,18 +580,18 @@ public class PaymentService {
             // Lấy danh sách items để tính toán
             List<OrderItem> orderItems = order.getOrderItems();
             int totalItems = orderItems != null ? orderItems.size() : 0;
-            int completedItems = orderItems != null 
+            int completedItems = orderItems != null
                     ? (int) orderItems.stream()
-                            .filter(item -> item.getOrderItemStatus() == OrderItem.OrderItemStatus.SERVED)
-                            .count()
+                    .filter(item -> item.getOrderItemStatus() == OrderItem.OrderItemStatus.SERVED)
+                    .count()
                     : 0;
-            
+
             KitchenOrderMessage completedMessage = KitchenOrderMessage.builder()
                     .type(KitchenOrderMessage.MessageType.ORDER_COMPLETED)
                     .orderId(order.getId())
                     .code(String.format("ORD-%05d", order.getId()))
-                    .tableName(order.getSession() != null && order.getSession().getTable() != null 
-                            ? "Bàn " + order.getSession().getTable().getId() 
+                    .tableName(order.getSession() != null && order.getSession().getTable() != null
+                            ? "Bàn " + order.getSession().getTable().getId()
                             : "Take away")
                     .orderType(order.getOrderType() != null ? order.getOrderType().toString() : "DINE_IN")
                     .status(order.getOrderStatus() != null ? order.getOrderStatus().toString() : "COMPLETED")

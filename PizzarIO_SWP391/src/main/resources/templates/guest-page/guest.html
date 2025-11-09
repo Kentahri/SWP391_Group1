@@ -5,8 +5,14 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>GUEST</title>
+    <title>PizzarIO - Chọn bàn</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" th:href="@{/css/guest_page/guest-toast.css}">
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
@@ -15,125 +21,202 @@
 
     <style>
         :root {
-            --primary: #2e7d32;
-            --primary-light: #e8f5e9;
-            --disabled: #ccc;
-            --text-color: #333;
-            --bg: #f8f9fa;
-            --shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            /* Màu chủ đạo Pizza theme */
+            --primary-orange: #FF9933;
+            --primary-dark: #FF8000;
+            --primary-darker: #FF6600;
+            --secondary-cream: #FFF5E6;
+            --secondary-light: #FFF8F0;
+            --secondary-peach: #FFCC99;
+
+            /* Màu text */
+            --text-primary: #4A3528;
+            --text-secondary: #664C3D;
+            --text-muted: #6c757d;
+
+            /* Màu trạng thái */
+            --success-color: #28a745;
+            --danger-color: #e74c3c;
+            --warning-color: #ffc107;
+
+            /* Border & Shadow */
+            --border-color: #FFE5CC;
+            --shadow-sm: 0 2px 6px rgba(255, 153, 51, 0.15);
+            --shadow-md: 0 4px 12px rgba(255, 153, 51, 0.2);
+            --shadow-lg: 0 6px 18px rgba(255, 153, 51, 0.35);
+            --shadow-hover: 0 8px 24px rgba(255, 153, 51, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            font-family: "Segoe UI", sans-serif;
-            background: var(--bg);
-            margin: 0;
+            font-family: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: linear-gradient(135deg, #FFF5E6 0%, #FFE5CC 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
             padding: 40px 20px;
-            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
         }
 
         h2 {
             text-align: center;
-            color: var(--primary);
-            letter-spacing: 1px;
-            font-weight: 600;
-            margin-bottom: 24px;
+            color: var(--text-primary);
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        h2::before {
+            content: "🍕";
+            font-size: 40px;
         }
 
         .tables {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 20px;
-            max-width: 700px;
-            margin: 0 auto;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 24px;
         }
 
         .t {
             background: white;
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 16px;
+            padding: 28px 20px;
             text-align: center;
-            box-shadow: var(--shadow);
+            box-shadow: var(--shadow-md);
             cursor: pointer;
-            transition: all 0.25s ease;
-            border: 2px solid transparent;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .t::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-orange);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
         }
 
         .t:hover {
-            transform: translateY(-4px);
-            border-color: var(--primary);
-            box-shadow: 0 6px 14px rgba(46, 125, 50, 0.15);
+            transform: translateY(-6px);
+            border-color: var(--primary-orange);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .t:hover::before {
+            transform: scaleX(1);
         }
 
         .t.suggest {
-            outline: 2px dashed var(--primary);
-            background: var(--primary-light);
-            box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.1) inset;
+            border: 2px dashed var(--primary-orange);
+            background: var(--secondary-light);
+            box-shadow: 0 0 0 3px rgba(255, 153, 51, 0.1) inset;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 3px rgba(255, 153, 51, 0.1) inset, var(--shadow-md);
+            }
+            50% {
+                box-shadow: 0 0 0 3px rgba(255, 153, 51, 0.2) inset, var(--shadow-lg);
+            }
         }
 
         .t.disabled {
-            opacity: 0.6;
+            opacity: 0.5;
             pointer-events: none;
-            filter: grayscale(0.5);
+            filter: grayscale(0.7);
+            cursor: not-allowed;
+        }
+
+        .t.disabled::before {
+            display: none;
         }
 
         .t span {
             display: block;
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--primary);
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-orange);
+            margin-bottom: 8px;
+        }
+
+        .t.disabled span {
+            color: var(--text-muted);
         }
 
         .status {
             font-size: 14px;
             margin-top: 8px;
-            color: #666;
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .t.disabled .status {
+            color: var(--text-muted);
         }
 
         #toast-container {
             position: fixed;
             top: 20px;
             right: 20px;
-            z-index: 999;
+            z-index: 9999;
         }
 
         /* Animation */
         @keyframes fadeInUp {
-            from {opacity: 0; transform: translateY(20px);}
-            to {opacity: 1; transform: translateY(0);}
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .t {
-            animation: fadeInUp 0.3s ease;
-        }
-
-        .guest-result {
-            text-align: center;
-            margin-top: 16px;
-            font-weight: 500;
-        }
-
-        .guest-result.success {
-            color: var(--primary);
-        }
-
-        .guest-result.error {
-            color: #c62828;
+            animation: fadeInUp 0.4s ease backwards;
         }
     </style>
 </head>
 <body>
 <div id="toast-container" class="toast-container"></div>
-<h2>Chọn bàn của bạn</h2>
 
-<div class="tables">
-    <div th:each="t : ${tables}"
-         th:id="${'table-' + t.id}"
-         class="t"
-         th:classappend="${t.tableStatus.name() == 'AVAILABLE'} ? '' : ' disabled'"
-         th:title="${'Sức chứa: ' + t.capacity + ' - Trạng thái: ' + t.tableStatus}"
-         th:onclick="|selectTable(${t.id})|">
-        <span th:text="${'Bàn ' + t.id}">Bàn</span>
-        <div class="status" th:text="${t.tableStatus}">AVAILABLE</div>
+<div class="container">
+    <h2>Chọn bàn của bạn</h2>
+
+    <div class="tables">
+        <div th:each="t : ${tables}"
+             th:id="${'table-' + t.id}"
+             class="t"
+             th:classappend="${t.tableStatus.name() == 'AVAILABLE'} ? '' : ' disabled'"
+             th:title="${'Sức chứa: ' + t.capacity + ' - Trạng thái: ' + t.tableStatus}"
+             th:onclick="|selectTable(${t.id})|">
+            <span th:text="${'Bàn ' + t.id}">Bàn</span>
+            <div class="status" th:text="${t.tableStatus}">AVAILABLE</div>
+        </div>
     </div>
 </div>
 

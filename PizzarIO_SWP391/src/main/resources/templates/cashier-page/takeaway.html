@@ -44,12 +44,12 @@
 
         <section class="product-grid" id="productGrid">
           <div
-                  class="product-card"
-                  th:each="p : ${products}"
-                  th:attr="data-category-id=${p.categoryId}"
-                  th:classappend="${!p.active ? 'inactive' : ''}"
-                  th:onclick="'showProductDetail(' + ${p.id} + ')'"
-                  style="cursor:pointer;"
+            class="product-card"
+            th:each="p : ${products}"
+            th:attr="data-category-id=${p.categoryId}"
+            th:classappend="${!p.active ? 'inactive' : ''}"
+            th:onclick="'showProductDetail(' + ${p.id} + ')'"
+            style="cursor: pointer"
           >
             <div class="thumb">
               <img
@@ -68,13 +68,8 @@
               <input type="hidden" name="productId" th:value="${p.id}" />
               <input type="hidden" name="quantity" value="1" />
               <input type="hidden" name="note" value="" />
-              <input type="hidden" name="productSizeId" value=""/>
-              <button
-                type="submit"
-                class="add-btn"
-              >
-                Thêm vào giỏ
-              </button>
+              <input type="hidden" name="productSizeId" value="" />
+              <button type="submit" class="add-btn">Thêm vào giỏ</button>
             </form>
           </div>
         </section>
@@ -95,60 +90,151 @@
               >
                 0đ
               </div>
-              <form class="ajax-form" th:action="@{/cashier/takeaway/cart/update}" method="post">
-                <input type="hidden" name="productId" th:value="${item.productId}"/>
-                <input type="hidden" name="quantity" th:value="${item.quantity}"/>
-                <input type="hidden" name="note" th:value="${item.note}"/>
-                  <input type="hidden" name="oldProductSizeId" th:value="${item.productSize.id}"/>
+              <form
+                class="ajax-form"
+                th:action="@{/cashier/takeaway/cart/update}"
+                method="post"
+              >
+                <input
+                  type="hidden"
+                  name="productId"
+                  th:value="${item.productId}"
+                />
+                <input
+                  type="hidden"
+                  name="quantity"
+                  th:value="${item.quantity}"
+                />
+                <input type="hidden" name="note" th:value="${item.note}" />
+                <input
+                  type="hidden"
+                  name="oldProductSizeId"
+                  th:value="${item.productSize.id}"
+                />
 
-                <select name="newProductSizeId"
-                        style="display:block; margin-top:6px; padding:6px; border-radius:4px; width:100%;"
-                        onchange="this.form.requestSubmit()">
-                    <option th:each="ps : ${item.productSizes}"
-                            th:value="${ps.id}"
-                            th:selected="${ps.id == item.productSize.id}"
-                            th:text="${ps.size.sizeName}">
-                    </option>
+                <select
+                  name="newProductSizeId"
+                  style="
+                    display: block;
+                    margin-top: 6px;
+                    padding: 6px;
+                    border-radius: 4px;
+                    width: 100%;
+                  "
+                  onchange="this.form.requestSubmit()"
+                >
+                  <option
+                    th:each="ps : ${item.productSizes}"
+                    th:value="${ps.id}"
+                    th:selected="${ps.id == item.productSize.id}"
+                    th:text="${ps.size.sizeName}"
+                  ></option>
                 </select>
+              </form>
 
-            </form>
-
-              <form class="ajax-form" th:action="@{/cashier/takeaway/cart/update}" method="post">
-                <input type="hidden" name="productId" th:value="${item.productId}"/>
-                <input type="hidden" name="quantity" th:value="${item.quantity}"/>
-                <input type="hidden" name="newProductSizeId" th:value="${item.productSize.id}">
-                  <input type="hidden" name="oldProductSizeId" th:value="${item.productSize.id}"/>
-
+              <form
+                class="ajax-form"
+                th:action="@{/cashier/takeaway/cart/update}"
+                method="post"
+              >
+                <input
+                  type="hidden"
+                  name="productId"
+                  th:value="${item.productId}"
+                />
+                <input
+                  type="hidden"
+                  name="quantity"
+                  th:value="${item.quantity}"
+                />
+                <input
+                  type="hidden"
+                  name="newProductSizeId"
+                  th:value="${item.productSize.id}"
+                />
+                <input
+                  type="hidden"
+                  name="oldProductSizeId"
+                  th:value="${item.productSize.id}"
+                />
 
                 <div class="note-section">
-                  <input type="text" name="note"
-                         th:value="${item.note}"
-                         placeholder="Thêm ghi chú..."
-                         onblur="this.form.requestSubmit()"
-                         style="width:100%;padding:6px;border-radius:4px;border:1px solid #ccc;margin-top:5px;"/>
+                  <input
+                    type="text"
+                    name="note"
+                    th:value="${item.note}"
+                    placeholder="Thêm ghi chú..."
+                    onblur="this.form.requestSubmit()"
+                    style="
+                      width: 100%;
+                      padding: 6px;
+                      border-radius: 4px;
+                      border: 1px solid #ccc;
+                      margin-top: 5px;
+                    "
+                  />
                 </div>
               </form>
-
             </div>
             <div class="item-qty">
-              <form class="ajax-form" th:action="@{/cashier/takeaway/cart/update}" method="post">
-                <input type="hidden" name="productId" th:value="${item.productId}"/>
-                <input type="hidden" name="quantity" th:value="${item.quantity - 1}"/>
-                <input type="hidden" name="note" th:value="${item.note}"/>
-                <input type="hidden" name="newProductSizeId" th:value="${item.productSize.id}"/>
-                  <input type="hidden" name="oldProductSizeId" th:value="${item.productSize.id}"/>
+              <form
+                class="ajax-form"
+                th:action="@{/cashier/takeaway/cart/update}"
+                method="post"
+              >
+                <input
+                  type="hidden"
+                  name="productId"
+                  th:value="${item.productId}"
+                />
+                <input
+                  type="hidden"
+                  name="quantity"
+                  th:value="${item.quantity - 1}"
+                />
+                <input type="hidden" name="note" th:value="${item.note}" />
+                <input
+                  type="hidden"
+                  name="newProductSizeId"
+                  th:value="${item.productSize.id}"
+                />
+                <input
+                  type="hidden"
+                  name="oldProductSizeId"
+                  th:value="${item.productSize.id}"
+                />
 
-                  <button type="submit">-</button>
+                <button type="submit">-</button>
               </form>
               <span th:text="${item.quantity}">1</span>
-              <form class="ajax-form" th:action="@{/cashier/takeaway/cart/update}" method="post">
-                <input type="hidden" name="productId" th:value="${item.productId}"/>
-                <input type="hidden" name="quantity" th:value="${item.quantity + 1}"/>
-                <input type="hidden" name="note" th:value="${item.note}"/>
-                <input type="hidden" name="newProductSizeId" th:value="${item.productSize.id}"/>
-                  <input type="hidden" name="oldProductSizeId" th:value="${item.productSize.id}"/>
+              <form
+                class="ajax-form"
+                th:action="@{/cashier/takeaway/cart/update}"
+                method="post"
+              >
+                <input
+                  type="hidden"
+                  name="productId"
+                  th:value="${item.productId}"
+                />
+                <input
+                  type="hidden"
+                  name="quantity"
+                  th:value="${item.quantity + 1}"
+                />
+                <input type="hidden" name="note" th:value="${item.note}" />
+                <input
+                  type="hidden"
+                  name="newProductSizeId"
+                  th:value="${item.productSize.id}"
+                />
+                <input
+                  type="hidden"
+                  name="oldProductSizeId"
+                  th:value="${item.productSize.id}"
+                />
 
-                  <button type="submit">+</button>
+                <button type="submit">+</button>
               </form>
             </div>
             <form
@@ -156,10 +242,22 @@
               th:action="@{/cashier/takeaway/cart/remove}"
               method="post"
             >
-              <input type="hidden" name="productId" th:value="${item.productId}"/>
-              <input type="hidden" name="quantity" th:value="${item.quantity + 1}"/>
-              <input type="hidden" name="note" th:value="${item.note}"/>
-              <input type="hidden" name="productSizeId" th:value="${item.productSize.id}"/>
+              <input
+                type="hidden"
+                name="productId"
+                th:value="${item.productId}"
+              />
+              <input
+                type="hidden"
+                name="quantity"
+                th:value="${item.quantity + 1}"
+              />
+              <input type="hidden" name="note" th:value="${item.note}" />
+              <input
+                type="hidden"
+                name="productSizeId"
+                th:value="${item.productSize.id}"
+              />
               <button class="remove-btn" type="submit">✕</button>
             </form>
           </div>
@@ -201,18 +299,76 @@
             💳 Thanh toán
           </button>
         </form>
-        <form th:action="@{'/cashier/takeaway/rollback'}" method="post">
-          <button
-          type="submit"
-          class="btn btn-secondary"
-          style="margin-top: 12px"
-          >← Quay lại Dashboard</button
+        <form
+          th:action="@{'/cashier/takeaway/rollback'}"
+          method="post"
+          id="backToDashboardForm"
         >
+          <input
+            type="hidden"
+            th:if="${_csrf != null}"
+            th:name="${_csrf.parameterName}"
+            th:value="${_csrf.token}"
+          />
+          <button
+            type="button"
+            class="btn btn-secondary"
+            style="margin-top: 12px"
+            onclick="backToDashboard(event)"
+          >
+            ← Quay lại Dashboard
+          </button>
         </form>
-
       </aside>
     </div>
 
+    <script th:inline="javascript">
+      function backToDashboard(event) {
+        if (event) {
+          event.preventDefault();
+        }
+
+        const form = document.getElementById("backToDashboardForm");
+        if (form) {
+          const formData = new FormData(form);
+          const params = new URLSearchParams();
+          formData.forEach((value, key) => {
+            params.append(key, value);
+          });
+
+          try {
+            fetch(form.action, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-Requested-With": "XMLHttpRequest",
+              },
+              body: params,
+              keepalive: true,
+            }).catch((error) => {
+              console.error(
+                "Failed to rollback take-away session before closing tab:",
+                error
+              );
+            });
+          } catch (error) {
+            console.error("Failed to initiate rollback request:", error);
+          }
+        }
+
+        attemptCloseTab();
+      }
+
+      function attemptCloseTab() {
+        window.open("", "_self");
+        window.close();
+        setTimeout(function () {
+          if (!document.hidden && !window.closed) {
+            window.location.href = "about:blank";
+          }
+        }, 200);
+      }
+    </script>
     <script th:src="@{/js/cashier/view-menu-takeaway.js}"></script>
   </body>
 </html>
