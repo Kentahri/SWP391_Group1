@@ -88,8 +88,8 @@ public class GuestController{
         session.setAttribute("tableId", tableId);
         model.addAttribute("sessionId", sessionId);
         model.addAttribute("tableId", tableId);
-        model.addAttribute("categories", categoryService.getAllCategories());
-        model.addAttribute("products", productService.getAllProducts());
+        model.addAttribute("categories", categoryService.getAllActiveCategories());
+        model.addAttribute("products", productService.getActiveProductsWithActiveCategory());
         model.addAttribute("cartItems", cartService.getCartForView(session));
         model.addAttribute("orderedItems", orderService.getOrderedItemsForView(sessionId));
 

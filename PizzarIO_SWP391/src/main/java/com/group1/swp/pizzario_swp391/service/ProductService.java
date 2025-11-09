@@ -43,6 +43,20 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+    public List<ProductResponseDTO> getActiveProducts() {
+        List<Product> products = productRepository.findByActiveTrue();
+        return products.stream()
+                .map(productMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<ProductResponseDTO> getActiveProductsWithActiveCategory() {
+        List<Product> products = productRepository.findByActiveTrueAndCategoryActiveTrue();
+        return products.stream()
+                .map(productMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
     public ProductResponseDTO getProductById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(PRODUCT_NOT_FOUND));

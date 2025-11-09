@@ -13,6 +13,8 @@
     <!-- Guest View Menu CSS - Pizza Theme 🍕 -->
     <link rel="stylesheet" th:href="@{/css/guest_page/guest-toast.css}"/>
     <link rel="stylesheet" th:href="@{/css/guest_page/view_menu.css}"/>
+    <!-- Chatbot Widget CSS -->
+    <link rel="stylesheet" th:href="@{/css/chatbot-widget.css}"/>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <script th:src="@{/js/guest/view-menu-websocket.js}"></script>
@@ -25,7 +27,13 @@
     <div class="container">
       <main class="menu-section">
         <header class="menu-header">
-          <h1>Thực đơn</h1>
+          <div class="header-left">
+            <a th:href="@{/guest}" class="back-btn" title="Quay lại chọn bàn">
+              <span class="back-icon">←</span>
+              <span class="back-text">Quay lại</span>
+            </a>
+            <h1>Thực đơn</h1>
+          </div>
           <input
             id="searchBox"
             class="search-box"
@@ -53,7 +61,6 @@
                   class="product-card"
                   th:each="p : ${products}"
                   th:attr="data-category-id=${p.categoryId}, data-product-id=${p.id}"
-                  th:classappend="${!p.active ? 'inactive' : ''}"
                   th:onclick="'showProductDetail(' + ${p.id} + ',' + ${sessionId} + ',' + ${tableId} + ')'"
                   style="cursor:pointer;"
           >
@@ -97,5 +104,8 @@
         <div th:replace="~{guest-page/fragments/view_order :: order-view}"></div>
       </aside>
     </div>
+
+    <!-- Chatbot Widget -->
+    <script th:src="@{/js/chatbot-widget.js}"></script>
   </body>
 </html>
