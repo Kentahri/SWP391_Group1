@@ -161,7 +161,6 @@ public class DashBoardController {
                 return ResponseEntity.badRequest().body(response);
             }
 
-            // Call service
             List<ProductStatsDTO> products = dataAnalyticsReportService.getTopProductsWithFilters(
                     dateRange, fromDate, toDate, categoryId, limit);
 
