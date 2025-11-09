@@ -40,9 +40,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         """)
     List<Product> findHighestPriceProducts(Pageable pageable);
 
-    // Tìm sản phẩm theo tên category (giữ nguyên)
+    // Tìm sản phẩm theo tên category
     @Query("""
-        select distinct p from Product p
+        select p from Product p
         where p.active = true
         and lower(p.category.name) like lower(concat('%', :categoryName, '%'))
         """)
@@ -50,20 +50,27 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     // Sản phẩm đang có flash sale
     @Query("""
-        select distinct p from Product p
-        join p.productSizes ps
+        select p from Product p
         where p.active = true
-        and ps.flashSalePrice > 0
-        and ps.flashSaleStart <= CURRENT_TIMESTAMP
-        and ps.flashSaleEnd >= CURRENT_TIMESTAMP
-        order by (
-            select max(ps2.basePrice - ps2.flashSalePrice)
-            from ProductSize ps2
-            where ps2.product.id = p.id
-            and ps2.flashSalePrice > 0
-            and ps2.flashSaleStart <= CURRENT_TIMESTAMP
-            and ps2.flashSaleEnd >= CURRENT_TIMESTAMP
-        ) desc
+        and exists (
+            select 1 from ProductSize ps
+            where ps.product.id = p.id
+            and ps.flashSalePrice > 0
+            and ps.flashSaleStart <= CURRENT_TIMESTAMP
+            and ps.flashSaleEnd >= CURRENT_TIMESTAMP
+        )
         """)
     List<Product> findPromotionProducts();
+
+    // Lấy tất cả sản phẩm đang active
+    List<Product> findByActiveTrue();
+
+    // Lấy sản phẩm active và category của nó cũng phải active
+    @Query("""
+        select p from Product p
+        where p.active = true
+        and p.category is not null
+        and p.category.active = true
+        """)
+    List<Product> findByActiveTrueAndCategoryActiveTrue();
 }

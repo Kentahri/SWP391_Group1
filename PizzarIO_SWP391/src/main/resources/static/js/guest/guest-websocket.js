@@ -57,7 +57,7 @@ function onConnected(frame) {
     console.log('WebSocket connected:', frame);
     reconnectAttempts = 0;
     subscribeToTopics();
-    showToast('Kết nối thành công! Bạn có thể chọn bàn.', 'success');
+    // Không hiển thị toast kết nối thành công
 }
 
 /**
@@ -70,14 +70,12 @@ function onError(error) {
         const delay = Math.pow(2, reconnectAttempts) * 1000;
         console.log(`Reconnecting in ${delay}ms... (Attempt ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
 
-        showToast(`Mất kết nối. Đang thử kết nối lại... (${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`, 'warning');
-
         setTimeout(function () {
             reconnectAttempts++;
             connectWebSocket();
         }, delay);
     } else {
-        showToast('Mất kết nối. Vui lòng tải lại trang.', 'error');
+        console.error('Max reconnection attempts reached. Please refresh the page.');
     }
 }
 
@@ -119,7 +117,7 @@ function handlePersonalMessage(message) {
         }
     } catch (error) {
         console.error('Error parsing personal message:', error);
-        showToast('Có lỗi xảy ra khi xử lý phản hồi từ server', 'error');
+        // Không hiển thị toast cho lỗi parse, chỉ log
     }
 }
 
@@ -237,7 +235,21 @@ function highlightSuggestedTables(tableIds) {
  */
 window.selectTable = function (tableId, guestCount = 1) {
     if (!stompClient || !stompClient.connected) {
-        showToast('Chưa kết nối đến server. Vui lòng đợi...', 'warning');
+        console.warn('WebSocket not connected. Retrying...');
+        // Thử kết nối lại
+        connectWebSocket();
+        setTimeout(() => {
+            if (stompClient && stompClient.connected) {
+                const request = {
+                    tableId: tableId,
+                    sessionId: guestSessionId,
+                    guestCount: guestCount
+                };
+                stompClient.send('/app/guest/table/select', {}, JSON.stringify(request));
+            } else {
+                showToast('Không thể kết nối tới máy chủ. Vui lòng thử lại.', 'error');
+            }
+        }, 1000);
         return;
     }
 
@@ -256,7 +268,7 @@ window.selectTable = function (tableId, guestCount = 1) {
 
     try {
         stompClient.send('/app/guest/table/select', {}, JSON.stringify(request));
-        showToast('Đang xử lý yêu cầu...', 'info');
+        // Không hiển thị toast "Đang xử lý..."
     } catch (error) {
         console.error('Error sending table selection:', error);
         showToast('Không thể gửi yêu cầu. Vui lòng thử lại.', 'error');

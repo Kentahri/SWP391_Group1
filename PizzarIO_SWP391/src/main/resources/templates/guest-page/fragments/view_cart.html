@@ -6,14 +6,14 @@
 <!-- FRAGMENT CHO GIỎ HÀNG (CART)                                     -->
 <!-- =============================================================== -->
 <div th:fragment="cart-view" class="cart-section">
-    <h2>My Cart 🛒</h2>
+    <h2>Giỏ hàng 🛒</h2>
     <div class="items-list" id="cartList">
         <th:block th:if="${#lists.isEmpty(cartItems)}">
-            <p class="empty-message">Your cart is empty.</p>
+            <p class="empty-message">Giỏ hàng trống.</p>
         </th:block>
         <div class="cart-item" th:each="item : ${cartItems}">
             <div class="item-details">
-                <div class="name" th:text="${item.productName}">Product Name</div>
+                <div class="name" th:text="${item.productName}">Tên món</div>
                 <div class="price" th:text="${#numbers.formatCurrency(item.totalPrice)}">0đ</div>
                 <form class="ajax-form" th:action="@{/guest/cart/update}" method="post" id="sizeForm">
                     <input type="hidden" name="sessionId" th:value="${sessionId}"/>
@@ -84,7 +84,7 @@
     <div class="summary">
         <th:block th:with="cartTotalSum=${#aggregates.sum(cartItems.![totalPrice])}">
             <div class="row" th:if="${!#lists.isEmpty(cartItems)}">
-                <span>Total</span>
+                <span>Tổng cộng</span>
                 <span class="total" id="cartTotal" th:text="${#numbers.formatCurrency(cartTotalSum)}">0₫</span>
             </div>
         </th:block>
@@ -93,7 +93,7 @@
         <input type="hidden" name="sessionId" th:value="${sessionId}"/>
         <input type="hidden" name="tableId" th:value="${tableId}"/>
         <button class="btn btn-primary" type="submit" th:disabled="${#lists.isEmpty(cartItems)}">
-            Place my Order 🧾
+            Gửi đơn hàng 🧾
         </button>
     </form>
 </div>

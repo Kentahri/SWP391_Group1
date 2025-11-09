@@ -194,7 +194,7 @@ function initNotificationSystem() {
     updateNotificationBadge();
 
     // Click outside modal to close
-    document.addEventListener('click', function(event) {
+    document.addEventListener('click', function (event) {
         const modal = document.getElementById('notification-modal');
         if (event.target === modal) {
             closeNotificationModal();
@@ -262,7 +262,7 @@ function formatDateTimeLocal(date) {
 function updateServerStatus(status, message = '') {
     const statusElement = document.getElementById('server-status');
     if (!statusElement) return;
-    
+
     const statusConfig = {
         connecting: {
             icon: '🔄',
@@ -285,9 +285,9 @@ function updateServerStatus(status, message = '') {
             class: 'status-error'
         }
     };
-    
+
     const config = statusConfig[status] || statusConfig.disconnected;
-    
+
     statusElement.innerHTML = `
         <span class="status-label">Trạng thái kết nối đến server:</span>
         <span class="status-indicator ${config.class}">
@@ -296,7 +296,7 @@ function updateServerStatus(status, message = '') {
             ${message ? `<span class="status-message">${message}</span>` : ''}
         </span>
     `;
-    
+
     // Thêm class vào element
     statusElement.className = 'server-status ' + config.class;
 }

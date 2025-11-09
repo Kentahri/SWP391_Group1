@@ -52,8 +52,10 @@
 
         <!-- Order Items -->
         <div th:each="item : ${orderItems}" class="order-item">
-          <div th:text="${item.productSize.product.name}">Pizza Bò</div>
-          <div th:text="${item.quantity}">1</div>
+          <div
+            th:text="${item.productSize.product.name} + ' (' + ${item.productSize.size.sizeName} + ')'"
+          ></div>
+          <div th:text="${item.quantity}"></div>
           <div
             th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT')}"
           >

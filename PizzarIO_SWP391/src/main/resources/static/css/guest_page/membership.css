@@ -1,0 +1,474 @@
+/* Membership Registration Page Styles */
+body {
+  background: #fff5e6;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Ensure Font Awesome icons are properly displayed */
+.fas,
+.far,
+.fab,
+.fal,
+.fa {
+  font-family: "Font Awesome 6 Free" !important;
+  font-weight: 900 !important;
+  font-style: normal !important;
+  font-variant: normal !important;
+  text-rendering: auto !important;
+  line-height: 1 !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+.payment-page {
+  background-color: transparent;
+  padding: 0;
+}
+
+/* Container wrapper aligned with waiting theme */
+.payment-container {
+  background: #ffffff;
+  border: 2px solid #ffe5cc;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(255, 153, 51, 0.15);
+  max-width: 600px;
+  width: 100%;
+  padding: 28px;
+  margin: 40px auto;
+  animation: fadeInUp 0.4s ease;
+}
+
+.section-title {
+  color: #4a3528;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  background: linear-gradient(135deg, #ffe5cc 0%, #ffdab3 100%);
+  padding: 10px 14px;
+  border-radius: 8px;
+  border-left: 4px solid #ff9933;
+  box-shadow: 0 2px 6px rgba(255, 153, 51, 0.2);
+}
+
+.section-title i {
+  margin-right: 0.5rem;
+  font-size: 1.2rem !important;
+  color: #8d6e63 !important;
+}
+
+/* Membership Section */
+.membership-section {
+  margin-bottom: 0;
+}
+
+/* Fixed Membership Info Display */
+.membership-fixed-info {
+  margin-bottom: 0;
+}
+
+.membership-fixed-info .card {
+  background: #fffaf0;
+  border: 2px solid #ffe5cc;
+  box-shadow: 0 4px 12px rgba(255, 153, 51, 0.15);
+  border-radius: 12px;
+}
+
+.membership-fixed-info .card-header {
+  background: linear-gradient(135deg, #ff9933 0%, #ff8000 100%);
+  color: #ffffff;
+  border-radius: 12px 12px 0 0 !important;
+  border: none;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.membership-fixed-info .card-body {
+  padding: 1.25rem;
+}
+
+.membership-fixed-info .row {
+  margin-bottom: 0.5rem;
+}
+
+.membership-fixed-info .row:last-child {
+  margin-bottom: 0;
+}
+
+.membership-fixed-info .text-muted i {
+  margin-right: 0.25rem;
+  font-size: 0.9rem !important;
+  color: #6c757d !important;
+}
+
+.membership-info {
+  margin-bottom: 1rem;
+}
+
+.membership-info .alert i {
+  margin-right: 0.5rem;
+  font-size: 1rem !important;
+}
+
+.membership-verify {
+  background: white;
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 0;
+}
+
+.membership-form {
+  margin-bottom: 1rem;
+}
+
+.membership-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.membership-form label {
+  color: #8d6e63;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.membership-form .input-group,
+.membership-section form.mb-2 .input-group {
+  display: flex;
+  gap: 0;
+}
+
+.membership-form .form-control {
+  border-radius: 10px;
+  border: 2px solid #ffe5cc;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: #fffaf0;
+  color: #4a3528;
+}
+
+/* Apply template styles to the points form input as well */
+.membership-section form.mb-2 .form-control {
+  border: 2px solid #ffe5cc;
+  background: #fffaf0;
+  color: #4a3528;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.membership-section form.mb-2 .form-control:hover {
+  border-color: #ffcc99;
+  background: #ffffff;
+}
+
+.membership-section form.mb-2 .form-control:focus {
+  border-color: #ff9933;
+  box-shadow: 0 0 0 0.2rem rgba(255, 153, 51, 0.15);
+  background: #ffffff;
+  outline: none;
+}
+
+.membership-section form.mb-2 .form-control::placeholder {
+  color: #8a6a59;
+  opacity: 0.8;
+}
+
+/* Orange theme for points label and helper note */
+.membership-section form.mb-2 .form-label {
+  color: #ff8000;
+  font-weight: 700;
+}
+
+.membership-section form.mb-2 .text-muted {
+  color: #ff8000 !important;
+  font-weight: 600;
+}
+
+/* Points input specifically: visually connect with the apply button */
+.membership-form .input-group .form-control,
+.membership-section form.mb-2 .input-group .form-control {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: 0;
+}
+
+.membership-form .form-control:focus {
+  border-color: #ff9933;
+  box-shadow: 0 0 0 0.2rem rgba(255, 153, 51, 0.15);
+  background: #ffffff;
+}
+
+.membership-form .btn-outline-primary,
+.membership-section form.mb-2 .btn-outline-primary {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  background: linear-gradient(135deg, #ff9933 0%, #ff8000 100%);
+  border: none;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(255, 153, 51, 0.25);
+}
+
+.membership-form .btn-outline-primary:hover,
+.membership-section form.mb-2 .btn-outline-primary:hover {
+  transform: translateY(-2px);
+  filter: brightness(0.95);
+}
+
+.membership-form .btn-outline-primary:active,
+.membership-section form.mb-2 .btn-outline-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(255, 153, 51, 0.25);
+}
+
+.membership-form .btn-outline-primary i {
+  margin-right: 0.25rem;
+  font-size: 0.9rem !important;
+}
+
+.membership-options {
+  text-align: center;
+  padding-top: 1rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.membership-options .btn-outline-success {
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.membership-options .btn-outline-success:hover {
+  transform: scale(1.05);
+}
+
+.membership-options .btn-outline-success i {
+  margin-right: 0.25rem;
+  font-size: 0.9rem !important;
+}
+
+/* Card Styles */
+.card {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 15px 15px 0 0 !important;
+  border: none;
+  padding: 1rem 1.5rem;
+}
+
+.card-header i {
+  margin-right: 0.5rem;
+  font-size: 1.1rem !important;
+  color: white !important;
+}
+
+.card-header h5 {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Success/Error Messages */
+.alert {
+  border-radius: 10px;
+  border: none;
+  font-weight: 500;
+}
+
+.alert i {
+  margin-right: 0.5rem;
+  font-size: 1rem !important;
+}
+
+.alert-success {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  color: #155724;
+}
+
+.alert-success i {
+  color: #155724 !important;
+}
+
+.alert-danger {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  color: #721c24;
+}
+
+.alert-danger i {
+  color: #721c24 !important;
+}
+
+/* Applied points alert (info) – match spacing and original palette */
+.membership-section .alert.alert-info {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  color: #155724;
+  border: none;
+  box-shadow: none;
+  margin-top: 1rem;
+}
+
+.membership-section .alert.alert-info strong {
+  color: inherit;
+}
+
+/* Button Styles */
+.btn-primary {
+  background: linear-gradient(135deg, #ff9933 0%, #ff8000 100%);
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(255, 153, 51, 0.25);
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  filter: brightness(0.95);
+  box-shadow: 0 6px 16px rgba(255, 153, 51, 0.35);
+}
+
+.btn-primary i {
+  margin-right: 0.5rem;
+  font-size: 0.9rem !important;
+}
+
+.btn-outline-secondary {
+  background: transparent;
+  color: #6c757d;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-secondary:hover {
+  background: #f8f9fa;
+  border-color: #dee2e6;
+  transform: translateY(-1px);
+}
+
+.btn-outline-secondary i {
+  margin-right: 0.25rem;
+  font-size: 0.9rem !important;
+}
+
+/* Animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.card:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .payment-container {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+  }
+
+  .membership-verify {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .payment-container {
+    padding: 1rem;
+    margin: 0.5rem;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+    padding: 8px 12px;
+  }
+
+  .membership-verify {
+    padding: 0.75rem;
+  }
+
+  .membership-form .form-control {
+    font-size: 0.9rem;
+    padding: 0.6rem 0.8rem;
+  }
+
+  .membership-form .btn-outline-primary {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Additional icon fixes */
+.fa-user-plus::before {
+  content: "\f234" !important;
+}
+
+.fa-check-circle::before {
+  content: "\f058" !important;
+}
+
+.fa-exclamation-triangle::before {
+  content: "\f071" !important;
+}
+
+.fa-arrow-left::before {
+  content: "\f060" !important;
+}
+
+.fa-calendar::before {
+  content: "\f073" !important;
+}
+
+.fa-user-circle::before {
+  content: "\f2bd" !important;
+}
