@@ -272,29 +272,50 @@ public class StaffShiftController {
             }
         }
 
-        // Validation 4: Check duplicate - Same staff + same date + same shift
+        // Validation 4: Check duplicate - Prevent same staff from being assigned to shifts with the same shift type on the same date
+        // Logic: Staff CAN have multiple different shift types on the same day (e.g., SANG + TOI)
+        //        But CANNOT have multiple shifts of the same type (e.g., two TOI shifts) on the same day
         if (staffShiftDTO.getWorkDate() != null && staffShiftDTO.getStaffId() != null
                 && staffShiftDTO.getShiftId() != null) {
+
+            // Get all existing shifts for this staff on this date
             List<StaffShift> existingShifts = staffShiftService.findAllShiftsByStaffIdAndDate(
                     staffShiftDTO.getStaffId(),
                     staffShiftDTO.getWorkDate());
 
-            boolean hasDuplicate;
-            if (isCreateMode) {
-                // For CREATE: Check if any shift with same staff, date, and shift type exists
-                hasDuplicate = existingShifts.stream()
-                        .anyMatch(ss -> ss.getShift().getId() == staffShiftDTO.getShiftId());
-            } else {
-                // For EDIT: Check if any OTHER shift (not the current one being edited) with
-                // same staff, date, and shift type exists
-                hasDuplicate = existingShifts.stream()
-                        .anyMatch(ss -> ss.getShift().getId() == staffShiftDTO.getShiftId()
-                                && ss.getId() != staffShiftDTO.getId());
-            }
+            // Get the shift type (SANG/CHIEU/TOI) of the shift being assigned
+            ShiftDTO currentShiftDTO = shiftService.getShiftById(staffShiftDTO.getShiftId());
 
-            if (hasDuplicate) {
-                bindingResult.rejectValue("shiftId", "error.duplicate",
-                        "Nhân viên này đã có ca làm việc này trong ngày đã chọn");
+            if (currentShiftDTO != null && currentShiftDTO.getShiftName() != null) {
+                // Convert String to uppercase for comparison
+                String currentShiftName = currentShiftDTO.getShiftName().toUpperCase();
+                boolean hasDuplicate;
+
+                if (isCreateMode) {
+                    // For CREATE: Check if any existing shift has the same shift type (SANG/CHIEU/TOI)
+                    // Compare enum.name() with String
+                    hasDuplicate = existingShifts.stream()
+                            .anyMatch(ss -> ss.getShift().getShiftName().name().equals(currentShiftName));
+                } else {
+                    // For EDIT: Check if any OTHER shift (not the current one being edited)
+                    // has the same shift type (SANG/CHIEU/TOI)
+                    hasDuplicate = existingShifts.stream()
+                            .anyMatch(ss -> ss.getShift().getShiftName().name().equals(currentShiftName)
+                                    && ss.getId() != staffShiftDTO.getId());
+                }
+
+                if (hasDuplicate) {
+                    // Convert shift name to Vietnamese for error message
+                    String shiftTypeName = switch (currentShiftName) {
+                        case "SANG" -> "SÁNG";
+                        case "CHIEU" -> "CHIỀU";
+                        case "TOI" -> "TỐI";
+                        default -> currentShiftName;
+                    };
+                    bindingResult.rejectValue("shiftId", "error.duplicate",
+                            "Nhân viên này đã được phân công ca " + shiftTypeName + " trong ngày đã chọn. " +
+                            "Không thể phân công nhiều ca " + shiftTypeName + " cho cùng một nhân viên trong một ngày.");
+                }
             }
         }
 

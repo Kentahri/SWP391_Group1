@@ -97,7 +97,11 @@ public class StaffScheduleService {
 
         LocalDateTime shiftStart = staffShift.getWorkDate()
                 .atTime(staffShift.getShift().getStartTime().toLocalTime());
-        LocalDateTime checkTime = shiftStart.plusMinutes(1);
+//        LocalDateTime checkTime = shiftStart.plusMinutes(1);
+//        LocalDateTime checkTime = shiftStart.plusMinutes(10);
+        LocalDateTime checkTime = shiftStart.plusHours(1);
+
+
 
         if (checkTime.isBefore(LocalDateTime.now())) {
             log.warn("Skip scheduling absent check for shift {} - deadline already passed: {}",
@@ -142,6 +146,7 @@ public class StaffScheduleService {
         LocalDateTime shiftEnd = staffShift.getWorkDate()
                 .atTime(staffShift.getShift().getEndTime().toLocalTime());
         LocalDateTime autoCompleteTime = shiftEnd.plusMinutes(1);
+
 
         if (autoCompleteTime.isBefore(now)) {
             log.warn("⚠️ Skip scheduling auto-complete check for shift {} - time already passed. ShiftEnd: {}, Scheduled: {}, Now: {}",
