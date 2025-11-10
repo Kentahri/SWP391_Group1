@@ -206,17 +206,22 @@
               <article class="card">
                 <div class="card-title">Thời gian thực</div>
                 <div class="list">
-                  <!-- TODO bind: đơn hôm nay -->
+                  <!-- Đơn hàng hôm nay -->
                   <div class="row">
-                    <span class="muted">Đơn hàng hôm nay</span
-                    ><strong class="big" id="todayOrders">—</strong>
+                    <span class="muted">Đơn hàng hôm nay</span>
+                    <strong class="big"
+                            id="todayOrders"
+                            th:text="${analytics.todayOrders != null ? analytics.todayOrders : '—'}">—</strong>
                   </div>
-                  <!-- TODO bind: doanh thu hôm nay -->
+                  <!-- Doanh thu hôm nay -->
                   <div class="row">
-                    <span class="muted">Doanh thu hôm nay</span
-                    ><strong class="big green revenue-amount" id="todayRevenue"
-                      >—</strong
-                    >
+                    <span class="muted">Doanh thu hôm nay</span>
+                    <strong class="big green revenue-amount"
+                            id="todayRevenue"
+                            th:attr="data-value=${analytics.todayRevenue ?: 0}"
+                            th:text="${analytics.todayRevenue != null ?
+                                     (#numbers.formatDecimal(analytics.todayRevenue, 0, 'COMMA', 0, 'POINT') + ' đ') :
+                                     '—'}">—</strong>
                   </div>
                 </div>
               </article>
@@ -737,6 +742,9 @@
     <script th:src="@{/js/admin/analytics-date-filter.js}"></script>
     <script th:src="@{/js/admin/analytics-charts.js}" defer></script>
     <script th:src="@{/js/admin/product-dropdown.js}"></script>
+
+    <!-- Real-time Stats Auto-refresh -->
+    <script th:src="@{/js/admin/analytics-realtime.js}" defer></script>
 
   </body>
 </html>

@@ -50,4 +50,28 @@ public record AnalyticsDTO(
                 "-" // avgDeliveryTime
         );
     }
+
+    /**
+     * Constructor với todayOrders và todayRevenue
+     * Dùng khi muốn hiển thị số liệu real-time của hôm nay
+     */
+    public AnalyticsDTO(
+            Long totalRevenue, Double revenueDelta,
+            Long totalOrders, Double ordersDelta,
+            Long newCustomers, Double newCustomersDelta,
+            Double aov, Double aovDelta,
+            Long todayOrders, Long todayRevenue,
+            Long oldCustomer, Double retentionRate) {
+        this(
+                totalRevenue, revenueDelta,
+                totalOrders, ordersDelta,
+                newCustomers, newCustomersDelta,
+                aov, aovDelta,
+                todayOrders, todayRevenue, // Sử dụng params thay vì 0L
+                oldCustomer,
+                retentionRate,
+                0.0, 0.0, // completedRate, cancelRate
+                "-" // avgDeliveryTime
+        );
+    }
 }

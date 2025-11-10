@@ -216,4 +216,45 @@ public class DashBoardController {
         }
     }
 
+    /**
+     * API endpoint: Get today's real-time stats (AJAX)
+     * Dùng để cập nhật số liệu trong ngày - auto-refresh mỗi 30 giây
+     *
+     * @return JSON response với todayOrders và todayRevenue
+     */
+    @GetMapping("/analytics/api/today-stats")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getTodayStatsAPI() {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Lấy analytics data với today stats
+            LocalDate end = LocalDate.now();
+            LocalDate start = end.minusDays(28);
+            AnalyticsDTO analytics = dataAnalyticsReportService.getAnalyticsData(start, end);
+
+            // Tạo response data
+            response.put("success", true);
+            response.put("data", Map.of(
+                "todayOrders", analytics.todayOrders() != null ? analytics.todayOrders() : 0L,
+                "todayRevenue", analytics.todayRevenue() != null ? analytics.todayRevenue() : 0L
+            ));
+            response.put("message", "Lấy dữ liệu thành công");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error in getTodayStatsAPI: " + e.getMessage());
+            e.printStackTrace();
+
+            response.put("success", false);
+            response.put("message", "Có lỗi xảy ra khi xử lý yêu cầu");
+            response.put("data", Map.of(
+                "todayOrders", 0L,
+                "todayRevenue", 0L
+            ));
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
 }
