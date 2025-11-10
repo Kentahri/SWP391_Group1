@@ -1031,3 +1031,121 @@ body {
 }
 
 /* ==================== Animations ==================== */
+
+/* ==================== WebSocket Product Update Animations ==================== */
+
+/* Animation cho product card khi update */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(255, 153, 51, 0.6);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Product inactive state - Món ăn bị ẩn */
+.product-card.inactive,
+.product-card.product-inactive {
+  opacity: 0.4 !important;
+  pointer-events: none;
+  filter: grayscale(100%);
+  position: relative;
+}
+
+/* Overlay "Hết hàng" trên product inactive */
+.product-card.inactive::after,
+.product-card.product-inactive::after {
+  content: "Hết hàng";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  z-index: 10;
+}
+
+/* Disable buttons trong product inactive */
+.product-card.inactive .add-btn,
+.product-card.product-inactive .add-btn {
+  background: #ccc !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+/* ==================== Toast Notification Animations ==================== */
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Toast container styles */
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+  font-weight: 500;
+  color: white;
+  min-width: 250px;
+  max-width: 400px;
+  animation: slideInRight 0.3s ease;
+}
+
+/* Toast types */
+.toast.toast-success {
+  background: var(--success-color);
+}
+
+.toast.toast-error {
+  background: var(--danger-color);
+}
+
+.toast.toast-warning {
+  background: var(--warning-color);
+  color: var(--text-dark);
+}
+
+.toast.toast-info {
+  background: #17a2b8;
+}
+
+/* Fade transition cho product visibility */
+.product-card {
+  transition: opacity 0.5s ease, transform 0.3s ease;
+}
+
+.product-card:hover:not(.inactive) {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}

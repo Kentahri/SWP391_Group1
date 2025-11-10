@@ -108,4 +108,34 @@ public interface OrderRepository extends JpaRepository<Order, Long>{
 
     @Query("SELECT o FROM Order o WHERE o.session.id = :sessionId")
     Order findBySessionId(@Param("sessionId") Long sessionId);
+
+    /**
+     * ========== ANALYTICS - TODAY STATS ==========
+     */
+
+    /**
+     * Đếm số đơn hàng hoàn thành + đã thanh toán trong ngày hôm nay
+     * @return Số lượng đơn hàng
+     */
+    @Query("""
+        SELECT COUNT(o)
+        FROM Order o
+        WHERE o.orderStatus = 'COMPLETED'
+          AND o.paymentStatus = 'PAID'
+          AND CAST(o.createdAt AS date) = CURRENT_DATE
+    """)
+    Long countTodayOrders();
+
+    /**
+     * Tính tổng doanh thu trong ngày hôm nay
+     * @return Tổng doanh thu (VNĐ)
+     */
+    @Query("""
+        SELECT COALESCE(SUM(o.totalPrice), 0.0)
+        FROM Order o
+        WHERE o.orderStatus = 'COMPLETED'
+          AND o.paymentStatus = 'PAID'
+          AND CAST(o.createdAt AS date) = CURRENT_DATE
+    """)
+    Double calculateTodayRevenue();
 }

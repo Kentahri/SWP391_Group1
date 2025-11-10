@@ -114,3 +114,4 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initial filter call
     filterProducts();
 });
+
