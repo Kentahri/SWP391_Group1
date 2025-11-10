@@ -65,7 +65,8 @@ public class StaffShiftController {
         model.addAttribute("weekStartDate", weekStart);
         model.addAttribute("weekEndDate", weekEnd);
 
-        List<StaffResponseDTO> allStaff = staffService.getAllStaff();
+        // Lấy staff không bao gồm MANAGER role
+        List<StaffResponseDTO> allStaff = staffService.getStaffWithoutManager();
         List<ShiftDTO> allShifts = shiftService.getAllShift();
         model.addAttribute("allStaff", allStaff);
         model.addAttribute("allShifts", allShifts);
