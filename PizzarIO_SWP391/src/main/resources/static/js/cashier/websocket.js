@@ -212,10 +212,17 @@ function handleOrderUpdateFromGuest(orderData) {
             message = orderData.message;
         }
 
-        // Hiển thị toast notification
+        // Hiển thị toast notification tổng quát
         if (typeof showToast === 'function') {
-            const tableName = orderData.tableName || 'N/A';
-            showToast(`📦 ${tableName}: ${message}`, 'info');
+            // Chỉ hiển thị toast cho các loại update quan trọng
+            if (orderData.type === 'NEW_ORDER') {
+                const tableName = orderData.tableName || 'N/A';
+                showToast(`📦 ${tableName}: Có order mới`, 'info');
+            } else if (orderData.type === 'ORDER_COMPLETED') {
+                const tableName = orderData.tableName || 'N/A';
+                showToast(`✅ ${tableName}: Order đã hoàn thành`, 'success');
+            }
+            // Bỏ toast cho ORDER_UPDATED và ORDER_ITEM_CANCELLED để tránh spam
         } else {
             console.log('Order update notification:', message);
         }
