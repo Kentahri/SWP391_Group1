@@ -1,5 +1,14 @@
 package com.group1.swp.pizzario_swp391.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.group1.swp.pizzario_swp391.entity.*;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.group1.swp.pizzario_swp391.config.Setting;
 import com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO;
 import com.group1.swp.pizzario_swp391.dto.order.OrderItemDTO;
@@ -7,6 +16,11 @@ import com.group1.swp.pizzario_swp391.dto.table.TableCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.table.TableDTO;
 import com.group1.swp.pizzario_swp391.dto.table.TableForCashierDTO;
 import com.group1.swp.pizzario_swp391.dto.table.TableManagementDTO;
+import com.group1.swp.pizzario_swp391.dto.websocket.TableReleaseRequest;
+import com.group1.swp.pizzario_swp391.dto.websocket.TableReleaseResponse;
+import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
+import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionResponse;
+import com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage;
 import com.group1.swp.pizzario_swp391.dto.websocket.*;
 import com.group1.swp.pizzario_swp391.entity.DiningTable;
 import com.group1.swp.pizzario_swp391.entity.Order;
@@ -23,14 +37,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
-
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -46,6 +52,7 @@ public class TableService{
     SimpMessagingTemplate simpMessagingTemplate;
     Setting setting;
     PendingReservationTracker pendingReservationTracker;
+    PaymentService paymentService;
     ReservationService reservationService;
 
     /**
@@ -96,6 +103,7 @@ public class TableService{
                         "Bàn đã được chọn bởi khách khác", TableSelectionResponse.ResponseType.CONFLICT);
                 return;
             }
+
 
 
             // Broadcast to cashier
@@ -368,10 +376,26 @@ public class TableService{
                 .items(itemDTOs)
                 .createdByStaffName(order.getStaff() != null ? order.getStaff().getName() : null)
                 .voucherCode(order.getVoucher() != null ? order.getVoucher().getCode() : null)
-                .discountAmount(order.getVoucher() != null ? order.getVoucher().getValue() : null)
+                .discountAmount(calculateDiscountAmount(order, activeSession.getId()))
                 .customerName(order.getMembership() != null ? order.getMembership().getName() : "Khách vãng lai")
                 .customerPhone(order.getMembership() != null ? order.getMembership().getPhoneNumber() : null)
                 .build();
+    }
+
+    private Double calculateDiscountAmount(Order order, Long sessionId) {
+        // Nếu có voucher, lấy giá trị voucher
+        if (order.getVoucher() != null) {
+            if(order.getVoucher().getType() == Voucher.VoucherType.PERCENTAGE){
+                return (order.getVoucher().getValue() * order.getTotalPrice()) / 100;
+            }
+            return order.getVoucher().getValue();
+        }
+        // Nếu không có voucher, kiểm tra points đã sử dụng
+        int pointsUsed = paymentService.getPointsUsed(sessionId);
+        if (pointsUsed > 0) {
+            return (double) (pointsUsed * 10000); // 1 điểm = 10,000 VND
+        }
+        return 0.0;
     }
 
     public void releaseTable(Integer tableId, HttpSession session) {
