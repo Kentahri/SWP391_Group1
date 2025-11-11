@@ -1,8 +1,8 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Tạo mới nhân viên</title>
     <link rel="stylesheet" th:href="@{/css/admin_page/staff-create.css}"/>
 </head>
@@ -13,65 +13,104 @@
 
         <div th:if="${error}" class="error" th:text="${error}"></div>
 
-        <form th:action="@{/manager/staff/create}" th:object="${staff}" method="post">
-
+        <form
+                th:action="@{/manager/staff/create}"
+                th:object="${staff}"
+                method="post"
+        >
             <div class="form-row">
                 <label>Tên</label>
                 <input type="text" th:field="*{name}"/>
-                <div class="error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                <div
+                        class="error"
+                        th:if="${#fields.hasErrors('name')}"
+                        th:errors="*{name}"
+                ></div>
             </div>
 
             <div class="form-row">
                 <label>Ngày sinh</label>
                 <input type="date" th:field="*{dateOfBirth}"/>
-                <div class="error" th:if="${#fields.hasErrors('dateOfBirth')}" th:errors="*{dateOfBirth}"></div>
+                <div
+                        class="error"
+                        th:if="${#fields.hasErrors('dateOfBirth')}"
+                        th:errors="*{dateOfBirth}"
+                ></div>
             </div>
 
             <div class="form-row">
                 <label>Số điện thoại</label>
                 <input type="text" th:field="*{phone}"/>
-                <div class="error" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></div>
+                <div
+                        class="error"
+                        th:if="${#fields.hasErrors('phone')}"
+                        th:errors="*{phone}"
+                ></div>
             </div>
 
             <div class="form-row">
                 <label>Địa chỉ</label>
                 <input type="text" th:field="*{address}"/>
-                <div class="error" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></div>
+                <div
+                        class="error"
+                        th:if="${#fields.hasErrors('address')}"
+                        th:errors="*{address}"
+                ></div>
             </div>
 
             <div class="form-row">
                 <label>Mật khẩu</label>
                 <input type="password" th:field="*{password}"/>
-                <div class="error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+                <div
+                        class="error"
+                        th:if="${#fields.hasErrors('password')}"
+                        th:errors="*{password}"
+                ></div>
             </div>
 
             <div class="form-row">
                 <label>Email</label>
                 <input type="text" th:field="*{email}"/>
-                <div class="error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                <div
+                        class="error"
+                        th:if="${#fields.hasErrors('email')}"
+                        th:errors="*{email}"
+                ></div>
             </div>
 
             <div class="form-row">
                 <label>Vai trò</label>
                 <select th:field="*{role}">
-                    <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"></option>
+                    <option
+                            th:each="r : ${roles}"
+                            th:value="${r}"
+                            th:text="${r}"
+                    ></option>
                 </select>
-                <div class="error" th:if="${#fields.hasErrors('role')}" th:errors="*{role}"></div>
+                <div
+                        class="error"
+                        th:if="${#fields.hasErrors('role')}"
+                        th:errors="*{role}"
+                ></div>
             </div>
 
             <div class="form-row">
-                <label><input type="checkbox" th:field="*{active}"/> Hoạt động</label>
-                <div class="error" th:if="${#fields.hasErrors('active')}" th:errors="*{active}"></div>
+                <label
+                ><input type="checkbox" th:field="*{active}"/> Hoạt động</label
+                >
+                <div
+                        class="error"
+                        th:if="${#fields.hasErrors('active')}"
+                        th:errors="*{active}"
+                ></div>
             </div>
 
             <button type="submit">Lưu</button>
         </form>
 
-
         <a class="back-link" th:href="@{/manager/staff}">⬅ Quay lại</a>
     </div>
 </div>
 <script th:src="@{/js/admin/product-dropdown.js}"></script>
-
 </body>
 </html>

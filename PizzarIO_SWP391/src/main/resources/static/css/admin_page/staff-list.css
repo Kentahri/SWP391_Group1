@@ -1,11 +1,11 @@
 :root {
-  --bg: #fff5e6;
+  --bg: #f6f7fb;
   --card: #ffffff;
-  --muted: #6c757d;
-  --text: #4a3528;
-  --accent: #ff9933;
-  --accent-strong: #ff8000;
-  --border: #ffe5cc;
+  --muted: #6b7280;
+  --text: #0f172a;
+  --accent: #2563eb;
+  --accent-strong: #1d4ed8;
+  --border: #e5e7eb;
 }
 body {
   margin: 0;
@@ -42,11 +42,11 @@ h1 {
 .card h1,
 h1.page-title {
   color: var(--text);
-  background: linear-gradient(135deg, #ffe5cc 0%, #ffdab3 100%);
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
   padding: 16px 20px;
   border-radius: 8px;
   border-left: 4px solid var(--accent);
-  box-shadow: 0 2px 6px rgba(255, 153, 51, 0.2);
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.12);
 }
 .primary-btn {
   display: inline-block;
@@ -60,12 +60,12 @@ h1.page-title {
   padding: 10px 14px;
   border-radius: 10px;
   text-decoration: none;
-  box-shadow: 0 4px 12px rgba(255, 153, 51, 0.3);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 .primary-btn:hover {
   filter: none;
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(255, 153, 51, 0.4);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
 }
 table {
   width: 100%;
@@ -80,14 +80,14 @@ table {
 th,
 td {
   padding: 10px;
-  border-bottom: 1px solid #ffeddb;
+  border-bottom: 1px solid var(--border);
   text-align: left;
   vertical-align: middle;
 }
 
 th {
-  background: #fff5e6;
-  color: #664c3d;
+  background: #f3f4f6;
+  color: var(--text);
   border-top: none;
   border-bottom: 2px solid var(--border);
 }
@@ -120,7 +120,7 @@ tbody tr {
   background: #ffffff;
 }
 tbody tr:hover {
-  background: #fff8f0;
+  background: #f9fafb;
   transform: translateX(2px);
   transition: all 0.2s ease;
 }
@@ -133,9 +133,9 @@ tbody tr:hover {
 .actions button {
   padding: 8px 12px;
   border-radius: 8px;
-  border: 2px solid transparent;
-  background: #ffe5cc;
-  color: #664c3d;
+  border: 1px solid var(--border);
+  background: #eef4ff;
+  color: var(--accent);
   text-decoration: none;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -143,9 +143,9 @@ tbody tr:hover {
 .actions .btn:hover,
 .actions a:hover,
 .actions button:hover {
-  background: #ffdab3;
-  color: #ff8000;
-  box-shadow: 0 3px 8px rgba(255, 153, 51, 0.25);
+  background: #dbeafe;
+  color: #1d4ed8;
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.2);
 }
 .delete-btn {
   background: #ef4444;
@@ -172,7 +172,7 @@ tbody tr:hover {
   border: 2px solid var(--border);
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 4px 12px rgba(255, 153, 51, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   transition: transform 0.2s ease;
 }
 
@@ -254,17 +254,17 @@ tbody tr:hover {
 }
 
 .shift-item {
-  border: 2px solid var(--accent);
-  border-left: 4px solid var(--accent-strong);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
   border-radius: 10px;
   padding: 12px 16px;
-  background: linear-gradient(135deg, #fffaf0 0%, #ffe5cc 100%);
-  box-shadow: 0 2px 6px rgba(255, 153, 51, 0.15);
+  background: linear-gradient(135deg, #eef4ff 0%, #ffffff 100%);
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.1);
   transition: all 0.2s ease;
 }
 
 .shift-item:hover {
-  box-shadow: 0 4px 8px rgba(255, 153, 51, 0.25);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2);
   transform: translateY(-1px);
 }
 .shift-row {
@@ -401,9 +401,9 @@ tbody tr:hover {
 
 .search-input {
   padding: 10px 14px;
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: #fffaf0;
+  background: #ffffff;
   color: var(--text);
   transition: all 0.2s ease;
   width: 200px;
@@ -414,9 +414,9 @@ tbody tr:hover {
 
 .filter-select {
   padding: 10px 14px;
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: #fffaf0;
+  background: #ffffff;
   color: var(--text);
   transition: all 0.2s ease;
   width: 140px;
@@ -428,7 +428,7 @@ tbody tr:hover {
 .search-input:focus,
 .filter-select:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 4px rgba(255, 153, 51, 0.1);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
   background: #ffffff;
 }
 
@@ -439,9 +439,9 @@ tbody tr:hover {
   border-radius: 14px;
   font-size: 12px;
   font-weight: 600;
-  background: #fff3cd;
-  color: #7a5200;
-  border: 1px solid #ffe8a1;
+  background: #eef4ff;
+  color: var(--accent);
+  border: 1px solid #c7d2fe;
 }
 
 /* ======= Pagination ======= */
@@ -455,19 +455,19 @@ tbody tr:hover {
 .pagination a,
 .pagination button {
   padding: 8px 12px;
-  background: #ffe5cc;
-  color: #664c3d;
+  background: #eef4ff;
+  color: var(--accent);
   border-radius: 8px;
-  border: 2px solid transparent;
+  border: 1px solid var(--border);
   text-decoration: none;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 .pagination a:hover,
 .pagination button:hover {
-  background: #ffdab3;
-  color: #ff8000;
-  box-shadow: 0 2px 8px rgba(255, 153, 51, 0.25);
+  background: #dbeafe;
+  color: #1d4ed8;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
 }
 .pagination .active {
   background: linear-gradient(
@@ -476,19 +476,22 @@ tbody tr:hover {
     var(--accent-strong) 100%
   );
   color: #ffffff;
-  box-shadow: 0 3px 10px rgba(255, 153, 51, 0.35);
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.3);
 }
 
-.alert .alert-success {
-  background-color: #d1fae5;
-  color: #065f46;
+.alert.alert-success {
+  background-color: #dbeafe;
+  color: #1e40af;
+  font-weight: bold;
   padding: 12px;
   border-radius: 8px;
   margin-bottom: 16px;
+  border: 1px solid #93c5fd;
 }
 
-.alert .alert-error {
+.alert.alert-error {
   background-color: #fee2e2;
+  font-weight: bold;
   color: #991b1b;
   padding: 12px;
   border-radius: 8px;
