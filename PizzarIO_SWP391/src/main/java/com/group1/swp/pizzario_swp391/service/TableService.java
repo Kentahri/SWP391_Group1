@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.group1.swp.pizzario_swp391.entity.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ import com.group1.swp.pizzario_swp391.dto.websocket.TableReleaseResponse;
 import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
 import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionResponse;
 import com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage;
+import com.group1.swp.pizzario_swp391.dto.websocket.*;
 import com.group1.swp.pizzario_swp391.entity.DiningTable;
 import com.group1.swp.pizzario_swp391.entity.Order;
 import com.group1.swp.pizzario_swp391.entity.Reservation;
@@ -29,14 +31,12 @@ import com.group1.swp.pizzario_swp391.repository.OrderRepository;
 import com.group1.swp.pizzario_swp391.repository.ReservationRepository;
 import com.group1.swp.pizzario_swp391.repository.SessionRepository;
 import com.group1.swp.pizzario_swp391.repository.TableRepository;
-
 import jakarta.persistence.OptimisticLockException;
 import jakarta.servlet.http.HttpSession;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -52,6 +52,7 @@ public class TableService{
     SimpMessagingTemplate simpMessagingTemplate;
     Setting setting;
     PendingReservationTracker pendingReservationTracker;
+    PaymentService paymentService;
     ReservationService reservationService;
 
     /**
@@ -228,7 +229,7 @@ public class TableService{
         DiningTable table = tableRepository.findById(tableId)
                 .orElseThrow(() -> new RuntimeException("Table not found"));
 
-        if(table.getTableStatus() != DiningTable.TableStatus.AVAILABLE) {
+        if (table.getTableStatus() != DiningTable.TableStatus.AVAILABLE) {
             throw new RuntimeException("Chỉ có thể cập nhật trạng thái bàn khi bàn đang trống (AVAILABLE)");
         }
 
@@ -244,13 +245,18 @@ public class TableService{
                 "Cashier",
                 "Trạng thái bàn " + tableId + " đã được cập nhật."
         );
+
+        webSocketService.broadcastTableStatusToGuests(
+                tableId,
+                DiningTable.TableStatus.AVAILABLE
+        );
     }
 
     public void unlockTableFromMerge(int tableId) {
         DiningTable table = tableRepository.findById(tableId)
                 .orElseThrow(() -> new RuntimeException("Table not found"));
 
-        if(table.getTableStatus() != DiningTable.TableStatus.LOCKED) {
+        if (table.getTableStatus() != DiningTable.TableStatus.LOCKED) {
             throw new RuntimeException("Chỉ có thể mở khóa bàn khi bàn đang ở trạng thái LOCKED");
         }
 
@@ -265,6 +271,10 @@ public class TableService{
                 DiningTable.TableStatus.AVAILABLE,
                 "Cashier",
                 "Trạng thái bàn " + tableId + " đã được cập nhật."
+        );
+        webSocketService.broadcastTableStatusToGuests(
+                tableId,
+                DiningTable.TableStatus.AVAILABLE
         );
     }
 
@@ -366,10 +376,26 @@ public class TableService{
                 .items(itemDTOs)
                 .createdByStaffName(order.getStaff() != null ? order.getStaff().getName() : null)
                 .voucherCode(order.getVoucher() != null ? order.getVoucher().getCode() : null)
-                .discountAmount(order.getVoucher() != null ? order.getVoucher().getValue() : null)
+                .discountAmount(calculateDiscountAmount(order, activeSession.getId()))
                 .customerName(order.getMembership() != null ? order.getMembership().getName() : "Khách vãng lai")
                 .customerPhone(order.getMembership() != null ? order.getMembership().getPhoneNumber() : null)
                 .build();
+    }
+
+    private Double calculateDiscountAmount(Order order, Long sessionId) {
+        // Nếu có voucher, lấy giá trị voucher
+        if (order.getVoucher() != null) {
+            if(order.getVoucher().getType() == Voucher.VoucherType.PERCENTAGE){
+                return (order.getVoucher().getValue() * order.getTotalPrice()) / 100;
+            }
+            return order.getVoucher().getValue();
+        }
+        // Nếu không có voucher, kiểm tra points đã sử dụng
+        int pointsUsed = paymentService.getPointsUsed(sessionId);
+        if (pointsUsed > 0) {
+            return (double) (pointsUsed * 10000); // 1 điểm = 10,000 VND
+        }
+        return 0.0;
     }
 
     public void releaseTable(Integer tableId, HttpSession session) {

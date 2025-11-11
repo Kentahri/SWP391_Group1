@@ -61,4 +61,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         )
         """)
     List<Product> findPromotionProducts();
+
+    // Lấy tất cả sản phẩm đang active
+    List<Product> findByActiveTrue();
+
+    // Lấy sản phẩm active và category của nó cũng phải active
+    @Query("""
+        select p from Product p
+        where p.active = true
+        and p.category is not null
+        and p.category.active = true
+        """)
+    List<Product> findByActiveTrueAndCategoryActiveTrue();
 }

@@ -192,7 +192,8 @@ public class ProductController{
 
     @PostMapping("/products/toggle/{id}")
     public String toggleActive(@PathVariable Long id) {
-        productService.toggleProductActive(id);
+        // Manager toggle trạng thái active và broadcast qua WebSocket
+        productService.toggleProductActive(id, "Manager");
         return "redirect:/manager/products";
     }
 

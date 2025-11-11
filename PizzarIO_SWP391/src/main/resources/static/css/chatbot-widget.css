@@ -1,28 +1,36 @@
-/* Chatbot Widget - Floating Button */
+/* Chatbot Widget - Draggable Chat Bubble */
 .chatbot-widget {
     position: fixed;
     bottom: 20px;
     right: 20px;
     z-index: 1000;
+    user-select: none;
+    /* Will be positioned by JavaScript using left/top during drag */
 }
 
 .chatbot-toggle {
-    width: 60px;
-    height: 60px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
     border: none;
     color: white;
-    cursor: pointer;
+    cursor: grab;
     box-shadow: 0 4px 20px rgba(229, 57, 53, 0.4);
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+}
+
+.chatbot-toggle:active {
+    cursor: grabbing;
+    transform: scale(0.95);
 }
 
 .chatbot-toggle:hover {
-    transform: scale(1.1);
+    transform: scale(1.05);
     box-shadow: 0 6px 25px rgba(229, 57, 53, 0.6);
 }
 
@@ -30,13 +38,40 @@
     background: linear-gradient(135deg, #c62828 0%, #b71c1c 100%);
 }
 
+/* Bubble is always visible, even when window is open */
+
+/* Chat bubble tail effect */
+.chatbot-toggle::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    right: 12px;
+    width: 0;
+    height: 0;
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    border-top: 12px solid #c62828;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.chatbot-toggle.dragging {
+    cursor: grabbing;
+    transform: scale(1.1);
+    box-shadow: 0 8px 30px rgba(229, 57, 53, 0.7);
+    z-index: 1001;
+}
+
+.chatbot-toggle.dragging::after {
+    opacity: 1;
+}
+
 /* Chatbot Window */
 .chatbot-window {
     position: fixed;
-    bottom: 100px;
-    right: 20px;
     width: 400px;
     max-height: 600px;
+    height: 600px;
     background: white;
     border-radius: 16px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
@@ -44,11 +79,24 @@
     flex-direction: column;
     overflow: hidden;
     font-family: 'Be Vietnam Pro', sans-serif;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    z-index: 1001;
+    /* Will be positioned by JavaScript using left/top during drag */
 }
 
 .chatbot-window.open {
     display: flex;
     animation: slideUp 0.3s ease-out;
+}
+
+.chatbot-window.dragging {
+    transition: none;
+    cursor: grabbing;
+}
+
+/* Remove tail when window is open (bubble is hidden) */
+.chatbot-window.open::before {
+    display: none;
 }
 
 @keyframes slideUp {
@@ -70,16 +118,53 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    cursor: default;
+}
+
+.chatbot-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.chatbot-avatar-draggable {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.chatbot-avatar-draggable:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.05);
+}
+
+.chatbot-avatar-draggable:active,
+.chatbot-avatar-draggable.dragging {
+    cursor: grabbing;
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(0.95);
+}
+
+.chatbot-avatar-icon {
+    font-size: 24px;
+    user-select: none;
+    pointer-events: none;
 }
 
 .chatbot-title {
     display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.chatbot-icon {
-    font-size: 32px;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .chatbot-title h3 {
@@ -332,18 +417,41 @@
     background: #555;
 }
 
+/* Prevent text selection while dragging */
+.chatbot-widget * {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.chatbot-widget input,
+.chatbot-widget textarea {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .chatbot-window {
         width: calc(100vw - 40px);
-        right: 20px;
-        left: 20px;
         max-width: 400px;
+    }
+    
+    .chatbot-window.open::before {
+        display: none; /* Hide tail on mobile */
     }
     
     .quick-btn {
         font-size: 11px;
         padding: 5px 10px;
+    }
+    
+    .chatbot-toggle {
+        width: 56px;
+        height: 56px;
     }
 }
 

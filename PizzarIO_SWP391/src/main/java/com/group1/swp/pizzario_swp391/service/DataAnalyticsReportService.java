@@ -138,8 +138,22 @@ public class DataAnalyticsReportService {
         // Tính retention rate chính xác
         Double retentionRate = totalCustomers > 0 ? (oldCustomers * 100.0) / totalCustomers : 0.0;
 
-        return new AnalyticsDTO(totalRevenue, revenueDelta, totalOrders, ordersDelta, newCustomers, newCustomersDelta,
-                aov, aovDelta, oldCustomers, retentionRate);
+        // ========== THÊM: LẤY SỐ LIỆU HÔM NAY ==========
+        Long todayOrders = orderRepository.countTodayOrders();
+        Double todayRevenueDouble = orderRepository.calculateTodayRevenue();
+        Long todayRevenue = todayRevenueDouble != null ? todayRevenueDouble.longValue() : 0L;
+
+        // Đảm bảo không null
+        if (todayOrders == null) todayOrders = 0L;
+        // ===============================================
+
+        return new AnalyticsDTO(
+                totalRevenue, revenueDelta,
+                totalOrders, ordersDelta,
+                newCustomers, newCustomersDelta,
+                aov, aovDelta,
+                todayOrders, todayRevenue, // ← TRUYỀN VÀO CONSTRUCTOR MỚI
+                oldCustomers, retentionRate);
     }
 
     private Long countNewCustomers(List<Order> orders, LocalDate startDate, LocalDate endDate) {
