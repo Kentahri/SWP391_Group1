@@ -7,8 +7,8 @@
 
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: #fff5e6;
-  color: #4a3528;
+  background: #f6f7fb;
+  color: #0f172a;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -19,9 +19,9 @@ body {
 /* ==================== Container ==================== */
 .container {
   background: white;
-  border: 2px solid #ffe5cc;
+  border: 1px solid #e5e7eb;
   border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(255, 153, 51, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
   max-width: 500px;
   width: 100%;
   padding: 28px;
@@ -38,12 +38,12 @@ h1 {
   text-align: center;
   font-size: 1.6rem;
   font-weight: 700;
-  color: #4a3528;
-  background: linear-gradient(135deg, #ffe5cc 0%, #ffdab3 100%);
+  color: #0f172a;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
   padding: 16px 20px;
   border-radius: 8px;
-  border-left: 4px solid #ff9933;
-  box-shadow: 0 2px 6px rgba(255, 153, 51, 0.2);
+  border-left: 4px solid #2563eb;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.12);
 }
 
 /* ==================== Form Styles ==================== */
@@ -62,7 +62,7 @@ form {
 label {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #664c3d;
+  color: #6b7280;
   display: block;
   margin-bottom: 4px;
 }
@@ -80,25 +80,25 @@ input[type="email"],
 select {
   width: 100%;
   padding: 12px 14px;
-  border: 2px solid #ffe5cc;
+  border: 1px solid #e5e7eb;
   border-radius: 10px;
   font-size: 0.95rem;
   outline: none;
-  background: #fffaf0;
-  color: #4a3528;
+  background: #ffffff;
+  color: #0f172a;
   transition: all 0.2s ease;
 }
 
 input:hover,
 select:hover {
-  border-color: #ffcc99;
+  border-color: #2563eb;
   background: #ffffff;
 }
 
 input:focus,
 select:focus {
-  border-color: #ff9933;
-  box-shadow: 0 0 0 4px rgba(255, 153, 51, 0.1);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
   background: #ffffff;
 }
 
@@ -109,7 +109,7 @@ input[type="checkbox"] {
 
 /* ==================== Button Styles ==================== */
 button[type="submit"] {
-  background: linear-gradient(135deg, #ff9933 0%, #ff8000 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: white;
   padding: 12px;
   border: none;
@@ -117,15 +117,15 @@ button[type="submit"] {
   font-weight: 700;
   cursor: pointer;
   margin-top: 10px;
-  box-shadow: 0 4px 12px rgba(255, 153, 51, 0.3);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
   transition: all 0.3s ease;
   width: 100%;
 }
 
 button[type="submit"]:hover {
-  background: linear-gradient(135deg, #ff8000 0%, #ff6600 100%);
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(255, 153, 51, 0.4);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
 }
 
 button[type="submit"]:active {
@@ -134,14 +134,14 @@ button[type="submit"]:active {
 
 /* ==================== Error Styles ==================== */
 .error {
-  color: #e74c3c;
-  font-weight: 600;
-  margin-bottom: 12px;
-  font-size: 0.9rem;
-  padding: 8px 12px;
-  background: #fef5f5;
-  border-left: 4px solid #e74c3c;
-  border-radius: 6px;
+  color: #dc2626;
+  font-weight: 500;
+  margin-bottom: 4px;
+  font-size: 0.875rem;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
 }
 
 /* ==================== Back Link ==================== */
@@ -149,19 +149,19 @@ button[type="submit"]:active {
   display: inline-block;
   margin-top: 16px;
   text-decoration: none;
-  color: #ff9933;
+  color: #2563eb;
   font-weight: 600;
   padding: 10px 12px;
   border-radius: 8px;
-  background: #ffe5cc;
-  border: 2px solid transparent;
+  background: #eef4ff;
+  border: 1px solid #e5e7eb;
   transition: all 0.2s ease;
 }
 
 .back-link:hover {
-  background: #ffdab3;
-  color: #ff8000;
-  box-shadow: 0 2px 8px rgba(255, 153, 51, 0.25);
+  background: #dbeafe;
+  color: #1d4ed8;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
   text-decoration: none;
 }
 
