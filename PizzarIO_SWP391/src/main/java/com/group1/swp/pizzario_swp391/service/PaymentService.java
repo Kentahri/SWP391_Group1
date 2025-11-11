@@ -407,7 +407,7 @@ public class PaymentService {
                     int usedPoints = getPointsUsed(sessionId);
                     if (usedPoints > 0) {
                         Membership m = order.getMembership();
-                        int current = m.getPoints() != null ? m.getPoints() : 0;
+                            int current = m.getPoints() != null ? m.getPoints() : 0;
                         m.setPoints(Math.max(0, current - usedPoints));
                         // Persist via membershipService
                         membershipService.save(m);
