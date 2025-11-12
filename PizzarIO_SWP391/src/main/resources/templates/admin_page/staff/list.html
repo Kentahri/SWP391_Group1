@@ -42,7 +42,7 @@
             <div class="stat-card">
                 <p class="label">Tổng chi phí lương</p>
                 <h2
-                        th:text="${totalSalary != null ? (#numbers.formatDecimal(totalSalary / 1000000, 1, 'POINT', 1, 'POINT') + 'M VNĐ') : '0 VNĐ'}"
+                        th:text="${totalSalary != null ? (#numbers.formatDecimal(totalSalary , 1, 'POINT', 0, 'POINT') + ' VNĐ') : '0 VNĐ'}"
                 ></h2>
                 <p class="note">tháng này</p>
             </div>

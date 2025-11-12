@@ -18,7 +18,9 @@ import com.group1.swp.pizzario_swp391.dto.staff.StaffCreateDTO;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffResponseDTO;
 import com.group1.swp.pizzario_swp391.dto.staff.StaffUpdateDTO;
 import com.group1.swp.pizzario_swp391.entity.Staff;
+import com.group1.swp.pizzario_swp391.dto.staffshift.StaffShiftResponseDTO;
 import com.group1.swp.pizzario_swp391.mapper.StaffResponseMapper;
+import com.group1.swp.pizzario_swp391.mapper.StaffShiftMapper;
 import com.group1.swp.pizzario_swp391.repository.LoginRepository;
 import com.group1.swp.pizzario_swp391.repository.StaffRepository;
 import com.group1.swp.pizzario_swp391.repository.StaffShiftRepository;
@@ -37,6 +39,8 @@ public class StaffService {
     @Qualifier("staffResponseMapper")
     StaffResponseMapper staffMapper;
     StaffShiftRepository staffShiftRepository;
+    StaffShiftMapper staffShiftMapper;
+    StaffShiftExcelExportService staffShiftExcelExportService;
 
     PasswordEncoder passwordEncoder;
 
@@ -254,10 +258,16 @@ public class StaffService {
      */
     public Double getTotalMonthlySalary() {
         LocalDate now = LocalDate.now();
-        int year = now.getYear();
-        int month = now.getMonthValue();
-        Double total = staffShiftRepository.totalMonthlyWage(year, month);
-        return total != null ? total : 0.0;
+        LocalDate monthStart = now.withDayOfMonth(1);
+        LocalDate monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
+
+        var staffShifts = staffShiftRepository.findByMonthRange(monthStart, monthEnd);
+        double total = 0.0;
+        for (var ss : staffShifts) {
+            StaffShiftResponseDTO dto = staffShiftMapper.toResponseDTO(ss);
+            total += staffShiftExcelExportService.calculateActualWage(dto);
+        }
+        return total;
     }
 
     /**

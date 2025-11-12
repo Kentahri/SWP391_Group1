@@ -3,7 +3,9 @@ package com.group1.swp.pizzario_swp391.service;
 import com.group1.swp.pizzario_swp391.dto.ShiftDTO;
 import com.group1.swp.pizzario_swp391.entity.Shift;
 import com.group1.swp.pizzario_swp391.entity.StaffShift;
+import com.group1.swp.pizzario_swp391.dto.staffshift.StaffShiftResponseDTO;
 import com.group1.swp.pizzario_swp391.mapper.ShiftMapper;
+import com.group1.swp.pizzario_swp391.mapper.StaffShiftMapper;
 import com.group1.swp.pizzario_swp391.repository.ShiftRepository;
 import com.group1.swp.pizzario_swp391.repository.StaffShiftRepository;
 import jakarta.transaction.Transactional;
@@ -22,6 +24,8 @@ public class ShiftService {
     private final ShiftRepository shiftRepository;
     private final ShiftMapper shiftMapper;
     private final StaffShiftRepository staffShiftRepository;
+    private final StaffShiftMapper staffShiftMapper;
+    private final StaffShiftExcelExportService staffShiftExcelExportService;
 
     // default salary per assignment (per shift type) — chỉnh theo thực tế
     private final Map<String, Long> defaultSalaryPerShift = Map.of(
@@ -100,21 +104,23 @@ public class ShiftService {
         List<StaffShift> assignments = staffShiftRepository.findByWorkDateBetween(start, today);
 
         // initialize totals
-        Map<LocalDate, Long> totals = days.stream()
-                .collect(Collectors.toMap(d -> d, d -> 0L, (a, b) -> a, LinkedHashMap::new));
+        Map<LocalDate, Double> totals = days.stream()
+                .collect(Collectors.toMap(d -> d, d -> 0.0, (a, b) -> a, LinkedHashMap::new));
 
         for (StaffShift ss : assignments) {
             LocalDate d = ss.getWorkDate();
             if (d == null)
                 continue;
             if (ss.getShift() == null) continue;
-            long salary = (long) ss.getShift().getSalaryPerShift();
-            if (totals.containsKey(d)) totals.put(d, totals.get(d) + salary);
+            StaffShiftResponseDTO responseDTO = staffShiftMapper.toResponseDTO(ss);
+            double actualWage = staffShiftExcelExportService.calculateActualWage(responseDTO);
+            if (totals.containsKey(d)) totals.put(d, totals.get(d) + actualWage);
         }
 
         for (LocalDate d : days) {
             String label = d.getDayOfWeek().getValue() == 7 ? "Chủ Nhật" : "Thứ " + (d.getDayOfWeek().getValue()+1);
-            result.put(label, totals.getOrDefault(d, 0L));
+            long roundedTotal = Math.round(totals.getOrDefault(d, 0.0));
+            result.put(label, roundedTotal);
         }
         return result;
     }
