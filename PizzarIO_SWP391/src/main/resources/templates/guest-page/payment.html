@@ -25,7 +25,6 @@
       window.APP_CTX = contextPathMeta
         ? contextPathMeta.getAttribute("content")
         : "/pizzario";
-      console.log("Context path (APP_CTX):", window.APP_CTX);
 
       // Initialize window.paymentData with default values immediately
       // This will be overwritten by the script at the bottom of the page with real Thymeleaf values
@@ -40,10 +39,6 @@
         availableVouchers: [],
         paymentConfirmUrl: null,
       };
-      console.log(
-        "Early initialization of window.paymentData:",
-        window.paymentData
-      );
     </script>
   </head>
   <body>
@@ -380,7 +375,7 @@
                     >
                     <div class="input-group">
                       <input
-                        type="text"
+                        type="number"
                         name="points"
                         class="form-control"
                         inputmode="numeric"
@@ -540,29 +535,6 @@
         const rawAvailableVouchers = /*[[${availableVouchers}]]*/ [];
         const rawPaymentConfirmUrl = /*[[${paymentConfirmUrl}]]*/ null;
 
-        // Debug: Log raw values BEFORE processing
-        console.log("=== RAW VALUES FROM THYMELEAF ===");
-        console.log(
-          "rawSessionId:",
-          rawSessionId,
-          "type:",
-          typeof rawSessionId
-        );
-        console.log(
-          "rawPaymentConfirmUrl:",
-          rawPaymentConfirmUrl,
-          "type:",
-          typeof rawPaymentConfirmUrl
-        );
-        console.log(
-          "rawPaymentConfirmUrl === null:",
-          rawPaymentConfirmUrl === null
-        );
-        console.log(
-          "rawPaymentConfirmUrl === undefined:",
-          rawPaymentConfirmUrl === undefined
-        );
-
         // Update window.paymentData with real values from Thymeleaf
         // Ensure window.paymentData exists (initialized in head)
         if (!window.paymentData) {
@@ -601,25 +573,6 @@
         } else {
           window.paymentData.sessionId = null;
         }
-
-        // Debug: Check if sessionId is valid
-        console.log("=== TEMPLATE DEBUG ===");
-        console.log("Raw sessionId from Thymeleaf:", rawSessionId);
-        console.log(
-          "Raw paymentConfirmUrl from Thymeleaf:",
-          rawPaymentConfirmUrl
-        );
-        console.log("SessionId from template:", window.paymentData.sessionId);
-        console.log("SessionId type:", typeof window.paymentData.sessionId);
-        console.log(
-          "paymentConfirmUrl from template:",
-          window.paymentData.paymentConfirmUrl
-        );
-        console.log(
-          "paymentConfirmUrl type:",
-          typeof window.paymentData.paymentConfirmUrl
-        );
-        console.log("Full window.paymentData:", window.paymentData);
       })();
     </script>
     <script th:src="@{/js/payment.js}"></script>
