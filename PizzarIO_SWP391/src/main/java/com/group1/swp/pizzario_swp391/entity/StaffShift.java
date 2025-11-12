@@ -47,7 +47,7 @@ public class StaffShift {
     @Column(name = "hourly_wage")
     private int hourlyWage;
 
-    @Column(name = "note", length = 500)
+    @Column(name = "note", columnDefinition = "nvarchar(500)")
     private String note;
 
     @Column(name = "penalty_percent")

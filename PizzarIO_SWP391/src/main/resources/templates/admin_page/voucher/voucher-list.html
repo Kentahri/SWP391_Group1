@@ -71,16 +71,6 @@
               </p>
               <p class="subtitle">lần đã được sử dụng</p>
             </div>
-            <div class="stat-card">
-              <h3>Tổng tiết kiệm</h3>
-              <p
-                class="value"
-                th:text="${stats != null && stats.totalSavings() != null ? (#numbers.formatDecimal(stats.totalSavings(), 1, 'COMMA', 2, 'POINT') + ' VND') : '0 VND'}"
-              >
-                0 VND
-              </p>
-              <p class="subtitle">VND đã giảm cho khách</p>
-            </div>
           </div>
 
             <!-- 🔍 Thanh tìm kiếm -->

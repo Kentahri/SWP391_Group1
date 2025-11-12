@@ -32,7 +32,7 @@ activePage values: 'analytics', 'staff', 'staff_shifts', 'vouchers', 'categories
         </a>
         <a
                 th:href="@{/manager/staff_shifts}"
-                th:classappend="${activePage == 'staff_shifts'} ? 'active' : ''"
+                th:classappend="${activePage == 'staff_shifts' || activePage == 'shifts'} ? 'active' : ''"
                 class="nav-link"
         >
             📅 Ca làm việc
