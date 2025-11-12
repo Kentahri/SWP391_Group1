@@ -220,7 +220,7 @@
                             id="todayRevenue"
                             th:attr="data-value=${analytics.todayRevenue ?: 0}"
                             th:text="${analytics.todayRevenue != null ?
-                                     (#numbers.formatDecimal(analytics.todayRevenue, 0, 'COMMA', 0, 'POINT') + ' đ') :
+                                     #numbers.formatDecimal(analytics.todayRevenue, 0, 'COMMA', 0, 'POINT') :
                                      '—'}">—</strong>
                   </div>
                 </div>

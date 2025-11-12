@@ -39,21 +39,13 @@
                 </p>
             </div>
 
-            <div class="stat-card">
-                <p class="label">Tổng chi phí lương</p>
-                <h2
-                        th:text="${totalSalary != null ? (#numbers.formatDecimal(totalSalary , 1, 'POINT', 0, 'POINT') + ' VNĐ') : '0 VNĐ'}"
-                ></h2>
-                <p class="note">tháng này</p>
-            </div>
-
-            <div class="stat-card">
-                <p class="label">Lương TB/nhân viên</p>
-                <h2
-                        th:text="${avgSalary != null ? (#numbers.formatDecimal(avgSalary / 1000, 1, 'POINT', 0, 'POINT') + 'K VNĐ') : '0 VNĐ'}"
-                ></h2>
-                <p class="note purple">trung bình</p>
-            </div>
+          <div class="stat-card">
+            <p class="label">Tổng chi phí lương</p>
+            <h2
+              th:text="${totalSalary != null ? (#numbers.formatDecimal(totalSalary / 1000000, 1, 'POINT', 1, 'POINT') + 'M VNĐ') : '0 VNĐ'}"
+            ></h2>
+            <p class="note">tháng này</p>
+          </div>
         </div>
 
         <!-- MAIN LAYOUT: trái = bảng lương theo ca (từ DB), phải = biểu đồ chi trả lương -->

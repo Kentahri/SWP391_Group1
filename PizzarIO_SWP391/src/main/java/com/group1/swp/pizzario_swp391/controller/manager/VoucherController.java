@@ -85,9 +85,10 @@ public class VoucherController {
         if(voucherForm.getType() == Voucher.VoucherType.PERCENTAGE && voucherForm.getValue() > 100) {
             bindingResult.rejectValue("value", "value.invalid", "Giá trị voucher phải nhỏ hơn hoặc bằng 100");
         }
-
-        if(voucherForm.getValue() >= voucherForm.getMinOrderAmount()){
-            bindingResult.rejectValue("value", "value.invalid","Số tiền giảm giá không được vượt quá giá trị đơn hàng tối thiểu");
+        if(voucherForm.getType() != Voucher.VoucherType.PERCENTAGE){
+            if(voucherForm.getValue() >= voucherForm.getMinOrderAmount()){
+                bindingResult.rejectValue("value", "value.invalid","Số tiền giảm giá không được vượt quá giá trị đơn hàng tối thiểu");
+            }
         }
 
         if (bindingResult.hasErrors()) {
