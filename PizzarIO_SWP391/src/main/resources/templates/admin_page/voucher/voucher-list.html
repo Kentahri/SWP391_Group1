@@ -156,6 +156,7 @@
                     th:field="*{code}"
                     th:class="${#fields.hasErrors('code')} ? 'error-field' : ''"
                     placeholder="VD: WELCOME20"
+                    required
                   />
                   <small style="color: var(--muted); font-size: 12px"
                     >Chỉ chữ hoa, số, gạch ngang và gạch dưới</small
@@ -207,6 +208,7 @@
                       th:field="*{value}"
                       th:class="${#fields.hasErrors('value')} ? 'error-field' : ''"
                       placeholder="VD: 20 hoặc 50000"
+                      required
                     />
                     <small style="color: var(--muted); font-size: 12px"
                       >% (0-100) hoặc VND</small
@@ -254,6 +256,7 @@
                       th:field="*{maxUses}"
                       th:class="${#fields.hasErrors('maxUses')} ? 'error-field' : ''"
                       placeholder="VD: 100"
+                      required
                     />
                     <span
                       th:if="${#fields.hasErrors('maxUses')}"
@@ -275,6 +278,7 @@
                       th:field="*{minOrderAmount}"
                       th:class="${#fields.hasErrors('minOrderAmount')} ? 'error-field' : ''"
                       placeholder="VD: 100000"
+                      required
                     />
                     <span
                       th:if="${#fields.hasErrors('minOrderAmount')}"
