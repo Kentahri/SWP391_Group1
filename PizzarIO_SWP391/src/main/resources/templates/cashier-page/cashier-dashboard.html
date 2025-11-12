@@ -472,6 +472,20 @@
 							>—</span
 							>
 						</div>
+
+						<div
+								th:if="${orderDetail.discountAmount != null && orderDetail.discountAmount > 0}"
+								class="summary-row"
+								style="background: #d4edda; padding: 8px; border-radius: 4px; margin-bottom: 8px;"
+						>
+<!--							<span style="font-weight: 600; color: #155724;">🎁 Sử dụng điểm tích lũy</span>-->
+<!--							<span-->
+<!--									style="color: #155724; font-weight: 600;"-->
+<!--									th:text="'-' + ${#numbers.formatCurrency(orderDetail.discountAmount)}"-->
+<!--							>-0đ</span-->
+<!--							>-->
+						</div>
+
 						<div class="summary-row">
 							<span>Tạm tính:</span>
 							<span
@@ -2375,8 +2389,7 @@
         orderItemsContainer.appendChild(newItem);
 
         updateTotalPrice();
-        const displayName = itemName + (sizeName ? ' (' + sizeName + ')' : '');
-        showToast('Đã thêm ' + displayName + ' vào order', 'success');
+        // Toast đã được bỏ để tránh spam thông báo
     }
 
     // Update quantity for new items
@@ -2420,7 +2433,7 @@
             }
 
             updateTotalPrice();
-            showToast('Đã xóa món khỏi order', 'info');
+            // Toast đã được bỏ để tránh spam thông báo
         }
     }
 
@@ -2456,7 +2469,7 @@
             }
 
             updateTotalPrice();
-            showToast('Đã xóa món khỏi order', 'info');
+            // Toast đã được bỏ để tránh spam thông báo
         }
     }
 

@@ -22,6 +22,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 public class StaffUpdateDTO {
     @NotBlank(message = "Tên nhân viên không được để trống")
     @Size(max = 100, message = "Tên nhân viên không được vượt quá 100 ký tự")
+    @Pattern(regexp = "^[\\p{L}\\s]+$", message = "Tên nhân viên chỉ được chứa chữ cái và khoảng trắng, không được chứa số và ký tự đặc biệt")
     String name;
 
     @NotNull(message = "Ngày sinh không được để trống")

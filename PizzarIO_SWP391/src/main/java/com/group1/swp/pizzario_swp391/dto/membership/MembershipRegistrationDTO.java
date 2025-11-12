@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
 public class MembershipRegistrationDTO {
     @NotBlank(message = "Họ và tên không được để trống")
     @Size(max = 200, message = "Họ và tên quá dài")
+    @Pattern(regexp = "^[\\p{L}\\s]+$", message = "Họ và tên chỉ được chứa chữ cái và khoảng trắng, không được chứa số và ký tự đặc biệt")
     private String fullName;
 
     @NotBlank(message = "Số điện thoại không được để trống")
