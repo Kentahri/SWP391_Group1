@@ -3,3 +3,5 @@ pizzario:
     conflict-reservation-minutes: 15
     auto-lock-reservation-minutes: 5
     no-show-wait-minutes: 1
+    no-absent-check-minutes: 1
+    no-checkout-check-minutes: 1

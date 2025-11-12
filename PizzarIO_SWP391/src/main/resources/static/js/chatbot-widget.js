@@ -128,10 +128,12 @@ class ChatbotWidget {
                             </button>
                         </div>
                         <div class="quick-buttons">
-                            <button class="quick-btn" data-msg="món giá rẻ nhất">💰 Giá rẻ</button>
+                            <button class="quick-btn" data-msg="pizza giá rẻ">🍕 Pizza Giá rẻ</button>
                             <button class="quick-btn" data-msg="món đắt nhất">💎 Cao cấp</button>
                             <button class="quick-btn" data-msg="khuyến mãi">🎉 Khuyến mãi</button>
                             <button class="quick-btn" data-msg="bán chạy">🔥 Bán chạy</button>
+                            <button class="quick-btn" data-msg="combo">🥗 Combo</button>
+                            <button class="quick-btn" data-msg="Món giá rẻ">💰 món giá rẻ</button>
                         </div>
                     </div>
                 </div>

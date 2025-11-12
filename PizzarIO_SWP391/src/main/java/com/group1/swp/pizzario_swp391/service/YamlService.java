@@ -31,6 +31,8 @@ public class YamlService {
         leaf.put("conflict-reservation-minutes", setting.getConflictReservationMinutes());
         leaf.put("auto-lock-reservation-minutes", setting.getAutoLockReservationMinutes());
         leaf.put("no-show-wait-minutes", setting.getNoShowWaitMinutes());
+        leaf.put("no-absent-check-minutes", setting.getNoAbsentCheckMinutes());
+        leaf.put("no-checkout-check-minutes", setting.getNoCheckoutCheckMinutes());
         return leaf;
     }
 

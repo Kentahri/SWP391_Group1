@@ -36,6 +36,8 @@ public class SettingController {
             setting.setConflictReservationMinutes(settingForm.getConflictReservationMinutes());
             setting.setAutoLockReservationMinutes(settingForm.getAutoLockReservationMinutes());
             setting.setNoShowWaitMinutes(settingForm.getNoShowWaitMinutes());
+            setting.setNoAbsentCheckMinutes(settingForm.getNoAbsentCheckMinutes());
+            setting.setNoCheckoutCheckMinutes(settingForm.getNoCheckoutCheckMinutes());
             
             yamlService.persit();
             
