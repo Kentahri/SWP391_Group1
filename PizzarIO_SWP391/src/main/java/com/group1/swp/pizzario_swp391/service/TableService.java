@@ -21,19 +21,22 @@ import com.group1.swp.pizzario_swp391.dto.websocket.TableReleaseResponse;
 import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionRequest;
 import com.group1.swp.pizzario_swp391.dto.websocket.TableSelectionResponse;
 import com.group1.swp.pizzario_swp391.dto.websocket.TableStatusMessage;
+import com.group1.swp.pizzario_swp391.dto.websocket.*;
+import com.group1.swp.pizzario_swp391.entity.DiningTable;
+import com.group1.swp.pizzario_swp391.entity.Order;
+import com.group1.swp.pizzario_swp391.entity.Reservation;
+import com.group1.swp.pizzario_swp391.entity.Session;
 import com.group1.swp.pizzario_swp391.mapper.TableMapper;
 import com.group1.swp.pizzario_swp391.repository.OrderRepository;
 import com.group1.swp.pizzario_swp391.repository.ReservationRepository;
 import com.group1.swp.pizzario_swp391.repository.SessionRepository;
 import com.group1.swp.pizzario_swp391.repository.TableRepository;
-
 import jakarta.persistence.OptimisticLockException;
 import jakarta.servlet.http.HttpSession;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -226,7 +229,7 @@ public class TableService{
         DiningTable table = tableRepository.findById(tableId)
                 .orElseThrow(() -> new RuntimeException("Table not found"));
 
-        if(table.getTableStatus() != DiningTable.TableStatus.AVAILABLE) {
+        if (table.getTableStatus() != DiningTable.TableStatus.AVAILABLE) {
             throw new RuntimeException("Chỉ có thể cập nhật trạng thái bàn khi bàn đang trống (AVAILABLE)");
         }
 
@@ -242,13 +245,18 @@ public class TableService{
                 "Cashier",
                 "Trạng thái bàn " + tableId + " đã được cập nhật."
         );
+
+        webSocketService.broadcastTableStatusToGuests(
+                tableId,
+                DiningTable.TableStatus.AVAILABLE
+        );
     }
 
     public void unlockTableFromMerge(int tableId) {
         DiningTable table = tableRepository.findById(tableId)
                 .orElseThrow(() -> new RuntimeException("Table not found"));
 
-        if(table.getTableStatus() != DiningTable.TableStatus.LOCKED) {
+        if (table.getTableStatus() != DiningTable.TableStatus.LOCKED) {
             throw new RuntimeException("Chỉ có thể mở khóa bàn khi bàn đang ở trạng thái LOCKED");
         }
 
@@ -263,6 +271,10 @@ public class TableService{
                 DiningTable.TableStatus.AVAILABLE,
                 "Cashier",
                 "Trạng thái bàn " + tableId + " đã được cập nhật."
+        );
+        webSocketService.broadcastTableStatusToGuests(
+                tableId,
+                DiningTable.TableStatus.AVAILABLE
         );
     }
 

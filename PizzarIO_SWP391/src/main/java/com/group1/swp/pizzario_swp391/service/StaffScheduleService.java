@@ -158,8 +158,11 @@ public class StaffScheduleService {
 
         Instant scheduledInstant = autoCompleteTime.atZone(zoneId).toInstant();
 
+        Integer staffShiftId = staffShift.getId();  // Capture ngay
+        String staffName = staffShift.getStaff().getName();
+
         ScheduledFuture<?> task = taskScheduler.schedule(
-                () -> handleAutoComplete(staffShift.getId()),
+                () -> handleAutoComplete(staffShiftId),
                 scheduledInstant);
 
         autoCompleteTasks.put(staffShift.getId(), task);
@@ -201,11 +204,11 @@ public class StaffScheduleService {
                 log.info("✅ Conditions met - marking as NOT_CHECKOUT");
                 ss.setStatus(StaffShift.Status.NOT_CHECKOUT);
                 ss.setPenaltyPercent(0); // No penalty, but requires explanation later
-                String noteDetail = "NOT_CHECKOUT - Quên checkout sau 2 phút (Test mode)\n";
+                String noteDetail = "NOT_CHECKOUT - Quên checkout sau 45 phút\n";
                 ss.setNote((ss.getNote() != null ? ss.getNote() : "") + noteDetail);
                 staffShiftRepository.save(ss);
 
-                log.warn("✅✅✅ Successfully marked NOT_CHECKOUT for staff {} - shift ID: {} ✅✅✅",
+                log.warn("✅ Successfully marked NOT_CHECKOUT for staff {} - shift ID: {}",
                         ss.getStaff().getName(), staffShiftId);
             } else {
                 log.info("⏭️ Skipping NOT_CHECKOUT - checkIn: {}, checkOut: {}",
@@ -214,7 +217,7 @@ public class StaffScheduleService {
 
             autoCompleteTasks.remove(staffShiftId);
         } catch (Exception e) {
-            log.error("❌❌❌ Error executing NOT_CHECKOUT check for shift {}: {}",
+            log.error(" Error executing NOT_CHECKOUT check for shift {}: {}",
                     staffShiftId, e.getMessage(), e);
             e.printStackTrace();
         }

@@ -1,43 +1,43 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Staff List</title>
-    <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
-    <link rel="stylesheet" th:href="@{/css/admin_page/staff-list.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}"/>
+    <link rel="stylesheet" th:href="@{/css/admin_page/staff-list.css}"/>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  </head>
-  <body>
-    <div class="app">
-      <!-- SIDEBAR -->
-      <div th:insert="~{fragments/sidebar :: sidebar('staff')}"></div>
+</head>
+<body>
+<div class="app">
+    <!-- SIDEBAR -->
+    <div th:insert="~{fragments/sidebar :: sidebar('staff')}"></div>
 
-      <!-- MAIN -->
-      <main class="main">
+    <!-- MAIN -->
+    <main class="main">
         <header class="page-header">
-          <div>
-            <h1>Quản lý Nhân viên</h1>
-            <p class="muted">Quản lí ca làm việc và tính lương</p>
-          </div>
-          <div class="userbox">
-            <div class="avatar">M</div>
-            <div class="who">
-              <strong>Manager</strong>
-              <span class="muted">Quản lý</span>
+            <div>
+                <h1>Quản lý Nhân viên</h1>
+                <p class="muted">Quản lí ca làm việc và tính lương</p>
             </div>
-          </div>
+            <div class="userbox">
+                <div class="avatar">M</div>
+                <div class="who">
+                    <strong>Manager</strong>
+                    <span class="muted">Quản lý</span>
+                </div>
+            </div>
         </header>
 
         <div class="stats-grid">
-          <div class="stat-card">
-            <p class="label">Tổng nhân viên</p>
-            <h2 id="totalStaffDisplay" th:text="${totalStaff}">7</h2>
-            <p class="note active">
-              <span id="activeStaffDisplay" th:text="${activeStaff}">0</span>
-              đang hoạt động
-            </p>
-          </div>
+            <div class="stat-card">
+                <p class="label">Tổng nhân viên</p>
+                <h2 id="totalStaffDisplay" th:text="${totalStaff}">7</h2>
+                <p class="note active">
+                    <span id="activeStaffDisplay" th:text="${activeStaff}">0</span>
+                    đang hoạt động
+                </p>
+            </div>
 
           <div class="stat-card">
             <p class="label">Tổng chi phí lương</p>
@@ -46,278 +46,270 @@
             ></h2>
             <p class="note">tháng này</p>
           </div>
-
-          <div class="stat-card">
-            <p class="label">Lương TB/nhân viên</p>
-            <h2
-              th:text="${avgSalary != null ? (#numbers.formatDecimal(avgSalary / 1000, 1, 'POINT', 0, 'POINT') + 'K VNĐ') : '0 VNĐ'}"
-            ></h2>
-            <p class="note purple">trung bình</p>
-          </div>
         </div>
 
         <!-- MAIN LAYOUT: trái = bảng lương theo ca (từ DB), phải = biểu đồ chi trả lương -->
         <div class="container">
-          <div class="dashboard-grid">
-            <!-- LEFT: Bảng lương theo ca (dữ liệu lấy từ model 'shifts') -->
-            <div class="card salary-card">
-              <h3 class="salary">Bảng lương theo ca</h3>
+            <div class="dashboard-grid">
+                <!-- LEFT: Bảng lương theo ca (dữ liệu lấy từ model 'shifts') -->
+                <div class="card salary-card">
+                    <h3 class="salary">Bảng lương theo ca</h3>
 
-              <div
-                class="shifts-container"
-                th:if="${shifts != null and !shifts.isEmpty()}"
-              >
-                <div class="shift-item" th:each="s : ${shifts}">
-                  <div class="shift-row">
-                    <span class="shift-name" th:text="${s.shiftName}"></span>
-                    <span
-                      class="shift-salary"
-                      th:text="${s.salaryPerShift != null ? #numbers.formatDecimal(s.salaryPerShift, 1, 'COMMA', 0, 'POINT') + ' VND' : '—'}"
-                    ></span>
-                  </div>
+                    <div
+                            class="shifts-container"
+                            th:if="${shifts != null and !shifts.isEmpty()}"
+                    >
+                        <div class="shift-item" th:each="s : ${shifts}">
+                            <div class="shift-row">
+                                <span class="shift-name" th:text="${s.shiftName}"></span>
+                                <span
+                                        class="shift-salary"
+                                        th:text="${s.salaryPerShift != null ? #numbers.formatDecimal(s.salaryPerShift, 1, 'COMMA', 0, 'POINT') + ' VND' : '—'}"
+                                ></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
+
+                <!-- RIGHT: Biểu đồ chi trả lương hàng ngày (dựa trên StaffShift dữ liệu) -->
+                <div class="card chart-card">
+                    <h3 class="chart">Biểu đồ chi trả lương hàng ngày</h3>
+                    <p class="muted">Tổng chi phí nhân sự trong tuần</p>
+
+                    <div class="chart-container">
+                        <canvas id="payrollChart" height="160"></canvas>
+                    </div>
+
+                    <!-- inject Thymeleaf data into JS -->
+                    <script th:inline="javascript">
+                        /*<![CDATA[*/
+                        let chartLabels = [[${chartLabels}]];
+                        let chartData = [[${chartData}]];
+                        /*]]>*/
+                    </script>
+
+                    <script>
+                        const ctx = document
+                            .getElementById("payrollChart")
+                            .getContext("2d");
+                        const payrollChart = new Chart(ctx, {
+                            type: "bar",
+                            data: {
+                                labels: chartLabels,
+                                datasets: [
+                                    {
+                                        label: "Chi trả (VND)",
+                                        data: chartData,
+                                        backgroundColor: "rgba(37, 99, 235, 0.8)",
+                                        borderRadius: 6,
+                                    },
+                                ],
+                            },
+                            options: {
+                                scales: {
+                                    y: {
+                                        ticks: {
+                                            callback: function (value) {
+                                                // format display: 1.2M / 2.4M etc
+                                                if (value >= 1000000)
+                                                    return (value / 1000000).toFixed(1) + "M";
+                                                if (value >= 1000)
+                                                    return (value / 1000).toFixed(0) + "k";
+                                                return value;
+                                            },
+                                        },
+                                    },
+                                },
+                                plugins: {
+                                    legend: {display: false},
+                                },
+                            },
+                        });
+                    </script>
+                </div>
             </div>
-
-            <!-- RIGHT: Biểu đồ chi trả lương hàng ngày (dựa trên StaffShift dữ liệu) -->
-            <div class="card chart-card">
-              <h3 class="chart">Biểu đồ chi trả lương hàng ngày</h3>
-              <p class="muted">Tổng chi phí nhân sự trong tuần</p>
-
-              <div class="chart-container">
-                <canvas id="payrollChart" height="160"></canvas>
-              </div>
-
-              <!-- inject Thymeleaf data into JS -->
-              <script th:inline="javascript">
-                /*<![CDATA[*/
-                let chartLabels = [[${chartLabels}]];
-                let chartData = [[${chartData}]];
-                /*]]>*/
-              </script>
-
-              <script>
-                const ctx = document
-                  .getElementById("payrollChart")
-                  .getContext("2d");
-                const payrollChart = new Chart(ctx, {
-                  type: "bar",
-                  data: {
-                    labels: chartLabels,
-                    datasets: [
-                      {
-                        label: "Chi trả (VND)",
-                        data: chartData,
-                        backgroundColor: "rgba(255, 153, 51, 0.8)",
-                        borderRadius: 6,
-                      },
-                    ],
-                  },
-                  options: {
-                    scales: {
-                      y: {
-                        ticks: {
-                          callback: function (value) {
-                            // format display: 1.2M / 2.4M etc
-                            if (value >= 1000000)
-                              return (value / 1000000).toFixed(1) + "M";
-                            if (value >= 1000)
-                              return (value / 1000).toFixed(0) + "k";
-                            return value;
-                          },
-                        },
-                      },
-                    },
-                    plugins: {
-                      legend: { display: false },
-                    },
-                  },
-                });
-              </script>
-            </div>
-          </div>
         </div>
 
         <div class="container">
-          <div class="card">
-            <h1>Danh sách nhân viên</h1>
+            <div class="card">
+                <h1>Danh sách nhân viên</h1>
 
-            <!-- Success/Error Messages -->
-            <div th:if="${success}" class="alert alert-success">
-              <span th:text="${success}"></span>
-            </div>
-            <div th:if="${error}" class="alert alert-error">
-              <span th:text="${error}"></span>
-            </div>
+                <!-- Success/Error Messages -->
+                <div th:if="${success}" class="alert alert-success">
+                    <span th:text="${success}"></span>
+                </div>
+                <div th:if="${error}" class="alert alert-error">
+                    <span th:text="${error}"></span>
+                </div>
 
-            <div class="toolbar">
-              <a th:href="@{/manager/staff/create}" class="primary-btn"
-                >➕ Thêm nhân viên</a
-              >
+                <div class="toolbar">
+                    <a th:href="@{/manager/staff/create}" class="primary-btn"
+                    >➕ Thêm nhân viên</a
+                    >
 
-              <div class="filter-group">
-                <input
-                  type="text"
-                  id="phoneSearch"
-                  class="search-input"
-                  placeholder="Tìm kiếm số điện thoại..."
-                />
-                <select id="roleFilter" class="filter-select">
-                  <option value="ALL">Tất cả</option>
-                  <option value="CASHIER">Thu ngân</option>
-                  <option value="MANAGER">Quản lý</option>
-                  <option value="KITCHEN">Bếp</option>
-                </select>
-              </div>
-            </div>
-
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Tên</th>
-                  <th>Ngày sinh</th>
-                  <th>Số điện thoại</th>
-                  <th>Địa chỉ</th>
-                  <th>Email</th>
-                  <th>Vai trò</th>
-                  <th>Hoạt động</th>
-                  <th>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody id="staffTableBody">
-                <tr
-                  th:each="staff : ${staffs}"
-                  th:data-role="${staff.role}"
-                  th:data-active="${staff.active}"
-                  th:data-phone="${staff.phone}"
-                  th:class="${!staff.active} ? 'inactive-staff' : ''"
-                >
-                  <td th:text="${staff.id}"></td>
-                  <td>
-                    <div class="staff name">
-                      <span th:text="${staff.name}"></span>
-                      <span th:if="${!staff.active}" class="resigned-badge"
-                        >Đã nghỉ việc</span
-                      >
+                    <div class="filter-group">
+                        <input
+                                type="text"
+                                id="phoneSearch"
+                                class="search-input"
+                                placeholder="Tìm kiếm số điện thoại..."
+                        />
+                        <select id="roleFilter" class="filter-select">
+                            <option value="ALL">Tất cả</option>
+                            <option value="CASHIER">Thu ngân</option>
+                            <option value="MANAGER">Quản lý</option>
+                            <option value="KITCHEN">Bếp</option>
+                        </select>
                     </div>
-                  </td>
-                  <td th:text="${staff.dateOfBirth}"></td>
-                  <td th:text="${staff.phone}"></td>
-                  <td th:text="${staff.address}"></td>
-                  <td th:text="${staff.email}"></td>
-                  <td th:text="${staff.role}"></td>
-                  <td>
+                </div>
+
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên</th>
+                        <th>Ngày sinh</th>
+                        <th>Số điện thoại</th>
+                        <th>Địa chỉ</th>
+                        <th>Email</th>
+                        <th>Vai trò</th>
+                        <th>Hoạt động</th>
+                        <th>Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody id="staffTableBody">
+                    <tr
+                            th:each="staff : ${staffs}"
+                            th:data-role="${staff.role}"
+                            th:data-active="${staff.active}"
+                            th:data-phone="${staff.phone}"
+                            th:class="${!staff.active} ? 'inactive-staff' : ''"
+                    >
+                        <td th:text="${staff.id}"></td>
+                        <td>
+                            <div class="staff name">
+                                <span th:text="${staff.name}"></span>
+                                <span th:if="${!staff.active}" class="resigned-badge"
+                                >Đã nghỉ việc</span
+                                >
+                            </div>
+                        </td>
+                        <td th:text="${staff.dateOfBirth}"></td>
+                        <td th:text="${staff.phone}"></td>
+                        <td th:text="${staff.address}"></td>
+                        <td th:text="${staff.email}"></td>
+                        <td th:text="${staff.role}"></td>
+                        <td>
                     <span th:if="${staff.active}" class="status-active"
-                      >Hoạt động</span
+                    >Hoạt động</span
                     >
-                    <span th:if="${!staff.active}" class="status-inactive"
-                      >Không hoạt động</span
-                    >
-                  </td>
-                  <td class="actions">
-                    <a
-                      th:href="@{'/manager/staff/edit/' + ${staff.id}}"
-                      class="primary-btn"
-                      >Chỉnh sửa</a
-                    >
-                    <button
-                      th:onclick="'toggleActive(' + ${staff.id} + ', ' + ${staff.active} + ')'"
-                      th:class="${staff.active} ? 'toggle-btn deactivate-btn' : 'toggle-btn activate-btn'"
-                      th:text="${staff.active} ? 'Vô hiệu hóa' : 'Kích hoạt'"
-                    ></button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                            <span th:if="${!staff.active}" class="status-inactive"
+                            >Không hoạt động</span
+                            >
+                        </td>
+                        <td class="actions">
+                            <a
+                                    th:href="@{'/manager/staff/edit/' + ${staff.id}}"
+                                    class="primary-btn"
+                            >Chỉnh sửa</a
+                            >
+                            <button
+                                    th:onclick="'toggleActive(' + ${staff.id} + ', ' + ${staff.active} + ')'"
+                                    th:class="${staff.active} ? 'toggle-btn deactivate-btn' : 'toggle-btn activate-btn'"
+                                    th:text="${staff.active} ? 'Vô hiệu hóa' : 'Kích hoạt'"
+                            ></button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-      </main>
-    </div>
+    </main>
+</div>
 
-    <script>
-      function toggleActive(staffId, currentActive) {
+<script>
+    function toggleActive(staffId, currentActive) {
         if (
-          confirm(
-            currentActive
-              ? "Bạn có chắc chắn muốn vô hiệu hóa nhân viên này?"
-              : "Bạn có chắc chắn muốn kích hoạt nhân viên này?"
-          )
+            confirm(
+                currentActive
+                    ? "Bạn có chắc chắn muốn vô hiệu hóa nhân viên này?"
+                    : "Bạn có chắc chắn muốn kích hoạt nhân viên này?"
+            )
         ) {
-          // Use GET request to avoid CSRF issues
-          window.location.href =
-            "/pizzario/manager/staff/toggle-active/" + staffId;
+            // Use GET request to avoid CSRF issues
+            window.location.href =
+                "/pizzario/manager/staff/toggle-active/" + staffId;
         }
-      }
+    }
 
-      // Handle role filter and phone search - client-side filtering
-      document.addEventListener("DOMContentLoaded", function () {
+    // Handle role filter and phone search - client-side filtering
+    document.addEventListener("DOMContentLoaded", function () {
         const roleFilter = document.getElementById("roleFilter");
         const phoneSearch = document.getElementById("phoneSearch");
         const staffTableBody = document.getElementById("staffTableBody");
         const totalStaffDisplay = document.getElementById("totalStaffDisplay");
         const activeStaffDisplay =
-          document.getElementById("activeStaffDisplay");
+            document.getElementById("activeStaffDisplay");
 
         // Function to apply filters (role + phone search)
         function applyFilters() {
-          if (!staffTableBody) return;
+            if (!staffTableBody) return;
 
-          const selectedRole = roleFilter ? roleFilter.value : "ALL";
-          const searchPhone = phoneSearch
-            ? phoneSearch.value.trim().toLowerCase()
-            : "";
+            const selectedRole = roleFilter ? roleFilter.value : "ALL";
+            const searchPhone = phoneSearch
+                ? phoneSearch.value.trim().toLowerCase()
+                : "";
 
-          const rows = staffTableBody.querySelectorAll("tr");
-          let visibleCount = 0;
-          let activeCount = 0;
+            const rows = staffTableBody.querySelectorAll("tr");
+            let visibleCount = 0;
+            let activeCount = 0;
 
-          rows.forEach((row) => {
-            const rowRole = row.getAttribute("data-role");
-            const rowPhone = row.getAttribute("data-phone") || "";
-            const isActive = row.getAttribute("data-active") === "true";
+            rows.forEach((row) => {
+                const rowRole = row.getAttribute("data-role");
+                const rowPhone = row.getAttribute("data-phone") || "";
+                const isActive = row.getAttribute("data-active") === "true";
 
-            // Check role filter
-            const matchesRole =
-              selectedRole === "ALL" || rowRole === selectedRole;
+                // Check role filter
+                const matchesRole =
+                    selectedRole === "ALL" || rowRole === selectedRole;
 
-            // Check phone search (substring matching, case-insensitive)
-            const matchesPhone =
-              searchPhone === "" ||
-              rowPhone.toLowerCase().includes(searchPhone);
+                // Check phone search (substring matching, case-insensitive)
+                const matchesPhone =
+                    searchPhone === "" ||
+                    rowPhone.toLowerCase().includes(searchPhone);
 
-            // Show/hide row based on both filters
-            if (matchesRole && matchesPhone) {
-              row.style.display = "";
-              visibleCount++;
-              if (isActive) {
-                activeCount++;
-              }
-            } else {
-              row.style.display = "none";
+                // Show/hide row based on both filters
+                if (matchesRole && matchesPhone) {
+                    row.style.display = "";
+                    visibleCount++;
+                    if (isActive) {
+                        activeCount++;
+                    }
+                } else {
+                    row.style.display = "none";
+                }
+            });
+
+            // Update stats display
+            if (totalStaffDisplay) {
+                totalStaffDisplay.textContent = visibleCount;
             }
-          });
-
-          // Update stats display
-          if (totalStaffDisplay) {
-            totalStaffDisplay.textContent = visibleCount;
-          }
-          if (activeStaffDisplay) {
-            activeStaffDisplay.textContent = activeCount;
-          }
+            if (activeStaffDisplay) {
+                activeStaffDisplay.textContent = activeCount;
+            }
         }
 
         // Listen to role filter changes
         if (roleFilter) {
-          roleFilter.addEventListener("change", applyFilters);
+            roleFilter.addEventListener("change", applyFilters);
         }
 
         // Listen to phone search input
         if (phoneSearch) {
-          phoneSearch.addEventListener("input", applyFilters);
+            phoneSearch.addEventListener("input", applyFilters);
         }
-      });
-    </script>
-    <script th:src="@{/js/admin/product-dropdown.js}"></script>
-  </body>
+    });
+</script>
+<script th:src="@{/js/admin/product-dropdown.js}"></script>
+</body>
 </html>

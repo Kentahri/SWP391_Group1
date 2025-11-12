@@ -216,7 +216,7 @@ public class StaffShiftExcelExportService {
                 totalPenalty / data.size(), actualWage);
     }
 
-    private double calculateActualWage(StaffShiftResponseDTO dto) {
+    public double calculateActualWage(StaffShiftResponseDTO dto) {
         if (dto.getShiftStatus() == null || dto.getHourlyWage() == null) {
             return 0.0;
         }

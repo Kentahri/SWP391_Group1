@@ -98,7 +98,7 @@
       const newValue = data.todayRevenue;
 
       // Cập nhật text (format số)
-      todayRevenueEl.textContent = numberFormatter.format(newValue) + ' đ';
+      todayRevenueEl.textContent = numberFormatter.format(newValue);
 
       // Cập nhật data-value để lần sau so sánh
       todayRevenueEl.dataset.value = newValue;
