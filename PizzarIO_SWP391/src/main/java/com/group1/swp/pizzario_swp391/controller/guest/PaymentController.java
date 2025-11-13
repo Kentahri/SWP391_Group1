@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.group1.swp.pizzario_swp391.dto.payment.PaymentDTO;
 import com.group1.swp.pizzario_swp391.dto.voucher.VoucherDTO;
@@ -135,13 +136,13 @@ public class PaymentController {
             String membershipRegisterUrl = buildMembershipRegisterUrl(contextPath, sessionId, registerReturnPath);
             model.addAttribute("membershipRegisterUrl", membershipRegisterUrl);
             
-            // Thêm error message nếu có
-            if (error != null && !error.isEmpty()) {
+            // Flash attributes are automatically added to model by Spring
+            // Only add URL params to model if flash attributes don't exist (for backward compatibility)
+            if (!model.containsAttribute("errorMessage") && error != null && !error.isEmpty()) {
                 model.addAttribute("errorMessage", error);
             }
             
-            // Thêm success message nếu có
-            if (success != null && !success.isEmpty()) {
+            if (!model.containsAttribute("successMessage") && success != null && !success.isEmpty()) {
                 model.addAttribute("successMessage", success);
             }
             
@@ -170,43 +171,39 @@ public class PaymentController {
                                     @RequestParam String action,
                                     @RequestParam(required = false) Long voucherId,
                                     @RequestParam(required = false) String phoneNumber,
-                                    @RequestParam(required = false) Integer points) {
+                                    @RequestParam(required = false) Integer points,
+                                    RedirectAttributes redirectAttributes) {
         try {
             if ("apply-voucher".equals(action) && voucherId != null) {
                 paymentService.applyVoucherBySessionId(sessionId, voucherId);
-                return "redirect:/guest/payment/session/" + sessionId + "?success=" + 
-                       URLEncoder.encode("Voucher đã được áp dụng thành công!", StandardCharsets.UTF_8);
+                redirectAttributes.addFlashAttribute("successMessage", "Voucher đã được áp dụng thành công!");
             } else if ("remove-voucher".equals(action)) {
                 paymentService.removeVoucherBySessionId(sessionId);
-                return "redirect:/guest/payment/session/" + sessionId + "?success=" + 
-                       URLEncoder.encode("Voucher đã được hủy áp dụng!", StandardCharsets.UTF_8);
+                redirectAttributes.addFlashAttribute("successMessage", "Voucher đã được hủy áp dụng!");
             } else if ("verify-membership".equals(action) && phoneNumber != null && !phoneNumber.trim().isEmpty()) {
                 // Verify membership và gán vào session
                 Membership membership = paymentService.findMembershipByPhoneNumber(phoneNumber.trim());
                 if (membership != null) {
                     paymentService.assignMembershipToSession(sessionId, membership.getId());
-                    return "redirect:/guest/payment/session/" + sessionId + "?success=" + 
-                           URLEncoder.encode("Đã xác nhận thành viên thành công!", StandardCharsets.UTF_8);
+                    redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận thành viên thành công!");
                 } else {
-                    return "redirect:/guest/payment/session/" + sessionId + "?error=" + 
-                           URLEncoder.encode("Không tìm thấy thành viên với số điện thoại này. Vui lòng đăng ký thành viên.", StandardCharsets.UTF_8);
+                    redirectAttributes.addFlashAttribute("errorMessage", 
+                        "Không tìm thấy thành viên với số điện thoại này. Vui lòng đăng ký thành viên.");
                 }
             } else if ("apply-points".equals(action) && points != null) {
                 paymentService.applyPoints(sessionId, points);
-                return "redirect:/guest/payment/session/" + sessionId + "?success=" +
-                        URLEncoder.encode("Đã áp dụng điểm thành công!", StandardCharsets.UTF_8);
+                redirectAttributes.addFlashAttribute("successMessage", "Đã áp dụng điểm thành công!");
             } else if ("remove-points".equals(action)) {
                 paymentService.removePoints(sessionId);
-                return "redirect:/guest/payment/session/" + sessionId + "?success=" +
-                        URLEncoder.encode("Đã hủy sử dụng điểm!", StandardCharsets.UTF_8);
+                redirectAttributes.addFlashAttribute("successMessage", "Đã hủy sử dụng điểm!");
             } else {
-                return "redirect:/guest/payment/session/" + sessionId + "?error=" + 
-                       URLEncoder.encode("Hành động không hợp lệ", StandardCharsets.UTF_8);
+                redirectAttributes.addFlashAttribute("errorMessage", "Hành động không hợp lệ");
             }
+            return "redirect:/guest/payment/session/" + sessionId;
         } catch (Exception e) {
             e.printStackTrace(); // Log error for debugging
-            return "redirect:/guest/payment/session/" + sessionId + "?error=" + 
-                   URLEncoder.encode("Lỗi: " + e.getMessage(), StandardCharsets.UTF_8);
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
+            return "redirect:/guest/payment/session/" + sessionId;
         }
     }
 
