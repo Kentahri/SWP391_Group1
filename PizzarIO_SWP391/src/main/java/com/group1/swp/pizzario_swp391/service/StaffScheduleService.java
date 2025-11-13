@@ -1,5 +1,6 @@
 package com.group1.swp.pizzario_swp391.service;
 
+import com.group1.swp.pizzario_swp391.config.Setting;
 import com.group1.swp.pizzario_swp391.entity.StaffShift;
 import com.group1.swp.pizzario_swp391.event.staff.StaffAbsentEvent;
 import com.group1.swp.pizzario_swp391.event.staff.StaffShiftCreatedEvent;
@@ -30,6 +31,7 @@ import java.util.concurrent.ScheduledFuture;
 public class StaffScheduleService {
 
     private final StaffShiftRepository staffShiftRepository;
+    private final Setting setting;
 
     // ✅ FIX: Inject TaskScheduler riêng với @Qualifier
     @Qualifier("staffTaskScheduler")
@@ -98,8 +100,8 @@ public class StaffScheduleService {
         LocalDateTime shiftStart = staffShift.getWorkDate()
                 .atTime(staffShift.getShift().getStartTime().toLocalTime());
 //        LocalDateTime checkTime = shiftStart.plusMinutes(1);
-//        LocalDateTime checkTime = shiftStart.plusMinutes(61);
-        LocalDateTime checkTime = shiftStart.plusHours(1);
+//        LocalDateTime checkTime = shiftStart.plusMinutes(10);
+        LocalDateTime checkTime = shiftStart.plusMinutes(setting.getNoAbsentCheckMinutes());
 
 
 
@@ -145,8 +147,7 @@ public class StaffScheduleService {
 
         LocalDateTime shiftEnd = staffShift.getWorkDate()
                 .atTime(staffShift.getShift().getEndTime().toLocalTime());
-//        LocalDateTime autoCompleteTime = shiftEnd.plusMinutes(1);
-        LocalDateTime autoCompleteTime = shiftEnd.plusMinutes(45);
+        LocalDateTime autoCompleteTime = shiftEnd.plusMinutes(setting.getNoCheckoutCheckMinutes());
 
 
         if (autoCompleteTime.isBefore(now)) {

@@ -64,6 +64,14 @@
 										<strong>Thời gian chờ trước khi hủy khách không đến:</strong>
 										<span th:text="${setting.noShowWaitMinutes} + ' phút'"></span>
 									</div>
+									<div class="setting-item">
+										<strong>Thời gian tự động kiểm tra vắng mặt của nhân viên:</strong>
+										<span th:text="${setting.noAbsentCheckMinutes} + ' phút'"></span>
+									</div>
+									<div class="setting-item">
+										<strong>Thời gian tối thiểu để nhân viên checkout khi kết thúc ca:</strong>
+										<span th:text="${setting.noCheckoutCheckMinutes} + ' phút'"></span>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -121,6 +129,36 @@
 										/>
 										<small class="form-text">Thời gian chờ sau giờ đặt bàn trước khi hủy do khách
 											không đến</small>
+									</div>
+
+									<div class="form-group">
+										<label for="noAbsentCheckMinutes">Thời gian tự động kiểm tra vắng mặt của nhân viên
+											(phút)</label>
+										<input
+												type="number"
+												id="noAbsentCheckMinutes"
+												th:field="*{noAbsentCheckMinutes}"
+												class="form-control"
+												min="1"
+												max="1440"
+												required
+										/>
+										<small class="form-text">Thời gian tự động kiểm tra vắng mặt của nhân viên</small>
+									</div>
+									
+									<div class="form-group">
+										<label for="noCheckoutCheckMinutes">Thời gian tối thiểu để nhân viên checkout khi kết thúc ca
+											(phút)</label>
+										<input
+												type="number"
+												id="noCheckoutCheckMinutes"
+												th:field="*{noCheckoutCheckMinutes}"
+												class="form-control"
+												min="1"
+												max="1440"
+												required
+										/>
+										<small class="form-text">Thời gian tối thiểu để nhân viên checkout khi kết thúc ca</small>
 									</div>
 									
 									<div class="form-actions">
