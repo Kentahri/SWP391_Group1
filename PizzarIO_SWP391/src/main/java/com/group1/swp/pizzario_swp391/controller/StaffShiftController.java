@@ -233,16 +233,12 @@ public class StaffShiftController {
             redirectUrl.append(hasParam ? "&" : "?").append("shiftId=").append(filterShiftId);
         }
 
-        // Custom validation for both CREATE and EDIT modes
         boolean isCreateMode = (staffShiftDTO.getId() == null || staffShiftDTO.getId() <= 0);
 
-        // Validation 1: Prevent past dates (for both CREATE and EDIT)
         if (staffShiftDTO.getWorkDate() != null && staffShiftDTO.getWorkDate().isBefore(LocalDate.now())) {
             bindingResult.rejectValue("workDate", "error.workDate", "Ngày làm không được trước ngày hiện tại");
         }
 
-        // Validation 2: Check if shift time is appropriate for current time (for both
-        // CREATE and EDIT)
         if (staffShiftDTO.getWorkDate() != null && staffShiftDTO.getShiftId() != null) {
             ShiftDTO shiftDTO = shiftService.getShiftById(staffShiftDTO.getShiftId());
             if (staffShiftDTO.getWorkDate().isEqual(LocalDate.now())
@@ -251,16 +247,13 @@ public class StaffShiftController {
             }
         }
 
-        // Validation 3: For EDIT mode, check if the staff shift exists and belongs to
-        // the current user's scope
         if (!isCreateMode && staffShiftDTO.getId() != null) {
             try {
                 StaffShiftDTO existingShift = staffShiftService.getById(staffShiftDTO.getId());
                 if (existingShift == null) {
                     bindingResult.rejectValue("id", "error.notFound", "Ca làm việc không tồn tại");
                 } else {
-                    // Additional validation for EDIT: Check if the shift is in a state that allows
-                    // editing
+
                     if ("COMPLETED".equals(existingShift.getStatus())
                             || "CANCELLED".equals(existingShift.getStatus())) {
                         bindingResult.rejectValue("status", "error.status",
@@ -272,9 +265,7 @@ public class StaffShiftController {
             }
         }
 
-        // Validation 4: Check duplicate - Prevent same staff from being assigned to shifts with the same shift type on the same date
-        // Logic: Staff CAN have multiple different shift types on the same day (e.g., SANG + TOI)
-        //        But CANNOT have multiple shifts of the same type (e.g., two TOI shifts) on the same day
+
         if (staffShiftDTO.getWorkDate() != null && staffShiftDTO.getStaffId() != null
                 && staffShiftDTO.getShiftId() != null) {
 
@@ -292,13 +283,11 @@ public class StaffShiftController {
                 boolean hasDuplicate;
 
                 if (isCreateMode) {
-                    // For CREATE: Check if any existing shift has the same shift type (SANG/CHIEU/TOI)
-                    // Compare enum.name() with String
+
                     hasDuplicate = existingShifts.stream()
                             .anyMatch(ss -> ss.getShift().getShiftName().name().equals(currentShiftName));
                 } else {
-                    // For EDIT: Check if any OTHER shift (not the current one being edited)
-                    // has the same shift type (SANG/CHIEU/TOI)
+
                     hasDuplicate = existingShifts.stream()
                             .anyMatch(ss -> ss.getShift().getShiftName().name().equals(currentShiftName)
                                     && ss.getId() != staffShiftDTO.getId());

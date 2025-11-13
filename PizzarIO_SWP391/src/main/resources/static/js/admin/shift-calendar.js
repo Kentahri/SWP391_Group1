@@ -68,12 +68,20 @@
     const staffSelect = form.querySelector("#ssStaffId");
     const wageInput = form.querySelector("#hourlyWage");
     const statusSelect = form.querySelector("#ssStatus");
+    const noteTextarea = form.querySelector("#ssNote");
 
-    if (workDateInput) workDateInput.value = "";
+    if (workDateInput) {
+      workDateInput.value = "";
+      workDateInput.removeAttribute("readonly");
+    }
     if (shiftSelect) shiftSelect.selectedIndex = 0;
     if (staffSelect) staffSelect.selectedIndex = 0;
     if (wageInput) wageInput.value = "";
     if (statusSelect) statusSelect.selectedIndex = 0;
+    if (noteTextarea) {
+      noteTextarea.value = "";
+      noteTextarea.removeAttribute("readonly");
+    }
 
     // Dọn lỗi validation cũ (nếu bạn render lỗi client)
     form
@@ -186,6 +194,12 @@
     resetStaffShiftForm(form, { clearId: true });
     setModalTitle("staffShiftModalTitle", "Thêm ca làm việc");
     injectCsrfIntoAllForms(); // đảm bảo vẫn còn _csrf nếu form vừa được render lại
+
+    // Ensure readonly attributes are removed for create mode
+    const workDateInput = form.querySelector("#workDate");
+    const noteTextarea = form.querySelector("#ssNote");
+    if (workDateInput) workDateInput.removeAttribute("readonly");
+    if (noteTextarea) noteTextarea.removeAttribute("readonly");
 
     // Set status mặc định
     const statusSelect = form.querySelector("#ssStatus");

@@ -1,932 +1,1505 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quản lý ca làm việc</title>
-    <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}"/>
-    <link rel="stylesheet" th:href="@{/css/admin_page/shift-management.css}"/>
+    <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin_page/shift-management.css}" />
     <!-- Đảm bảo trong <head> có 3 meta này -->
-    <meta name="_csrf" content="[[${_csrf.token}]]"/>
-    <meta name="_csrf_parameter" content="[[${_csrf.parameterName}]]"/>
-    <meta name="_csrf_header" content="[[${_csrf.headerName}]]"/>
+    <meta name="_csrf" content="[[${_csrf.token}]]" />
+    <meta name="_csrf_parameter" content="[[${_csrf.parameterName}]]" />
+    <meta name="_csrf_header" content="[[${_csrf.headerName}]]" />
 
     <style>
-        /* Enhanced Modal Styles */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            animation: modalFadeIn 0.3s ease-out;
-        }
+      /* Enhanced Modal Styles */
+      .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        animation: modalFadeIn 0.3s ease-out;
+      }
 
-        @keyframes modalFadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
+      @keyframes modalFadeIn {
+        from {
+          opacity: 0;
         }
+        to {
+          opacity: 1;
+        }
+      }
 
-        .modal-content {
-            animation: modalSlideIn 0.3s ease-out;
-            position: relative;
-        }
+      .modal-content {
+        animation: modalSlideIn 0.3s ease-out;
+        position: relative;
+      }
 
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-30px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+      @keyframes modalSlideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-30px) scale(0.95);
         }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
 
-        /* Form Input Focus Effects */
-        #exportYear:focus, #exportMonth:focus,
-        #completeCheckoutTime:focus, #completePenalty:focus, #completeNote:focus {
-            border-color: #2196f3 !important;
-            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1) !important;
-            outline: none;
-        }
+      /* Form Input Focus Effects */
+      #exportYear:focus,
+      #exportMonth:focus,
+      #completeCheckoutTime:focus,
+      #completePenalty:focus,
+      #completeNote:focus {
+        border-color: #2196f3 !important;
+        box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1) !important;
+        outline: none;
+      }
 
-        /* Button Hover Effects */
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-        }
+      /* Button Hover Effects */
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+      }
 
-        .btn-secondary:hover {
-            background: #5a6268 !important;
-            transform: translateY(-1px);
-        }
+      .btn-secondary:hover {
+        background: #5a6268 !important;
+        transform: translateY(-1px);
+      }
 
-        .btn-primary:active, .btn-secondary:active {
-            transform: translateY(0);
-        }
+      .btn-primary:active,
+      .btn-secondary:active {
+        transform: translateY(0);
+      }
 
-        /* Status Preview Animation */
-        #statusPreview {
-            transition: all 0.3s ease;
-        }
+      /* Status Preview Animation */
+      #statusPreview {
+        transition: all 0.3s ease;
+      }
 
-        /* Enhanced Close Button */
-        .close {
-            font-size: 32px;
-            font-weight: 300;
-            line-height: 1;
-            opacity: 0.8;
-            transition: all 0.2s;
-        }
+      /* Enhanced Close Button */
+      .close {
+        font-size: 32px;
+        font-weight: 300;
+        line-height: 1;
+        opacity: 0.8;
+        transition: all 0.2s;
+      }
 
-        .close:hover {
-            opacity: 1;
-            transform: rotate(90deg);
-        }
+      .close:hover {
+        opacity: 1;
+        transform: rotate(90deg);
+      }
 
-        /* Input Error Animation */
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
+      /* Input Error Animation */
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
         }
+        25% {
+          transform: translateX(-10px);
+        }
+        75% {
+          transform: translateX(10px);
+        }
+      }
 
-        .form-control.error {
-            animation: shake 0.5s;
-        }
+      .form-control.error {
+        animation: shake 0.5s;
+      }
 
-        /* Loading State */
-        .btn-primary:disabled {
-            cursor: not-allowed;
-            background: #ccc !important;
-        }
+      /* Loading State */
+      .btn-primary:disabled {
+        cursor: not-allowed;
+        background: #ccc !important;
+      }
 
-        /* Info Box Animations */
-        .modal-body > div[style*="background: linear-gradient"] {
-            animation: slideInUp 0.4s ease-out;
-        }
+      /* Info Box Animations */
+      .modal-body > div[style*="background: linear-gradient"] {
+        animation: slideInUp 0.4s ease-out;
+      }
 
-        @keyframes slideInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+      @keyframes slideInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
         }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
 
-        /* Select Dropdown Styling */
-        select.form-control, select[name="year"], select[name="month"] {
-            cursor: pointer;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            padding-right: 35px;
-        }
+      /* Select Dropdown Styling */
+      select.form-control,
+      select[name="year"],
+      select[name="month"] {
+        cursor: pointer;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 35px;
+      }
 
-        select.form-control:hover, select[name="year"]:hover, select[name="month"]:hover {
-            border-color: #2196f3;
-        }
+      select.form-control:hover,
+      select[name="year"]:hover,
+      select[name="month"]:hover {
+        border-color: #2196f3;
+      }
 
-        /* Textarea Styling */
-        textarea.form-control {
-            font-family: inherit;
-        }
+      /* Textarea Styling */
+      textarea.form-control {
+        font-family: inherit;
+      }
 
-        textarea.form-control::placeholder {
-            color: #999;
-            font-style: italic;
-        }
+      textarea.form-control::placeholder {
+        color: #999;
+        font-style: italic;
+      }
 
-        /* Number Input Styling */
-        input[type="number"].form-control {
-            -moz-appearance: textfield;
-        }
+      /* Number Input Styling */
+      input[type="number"].form-control {
+        -moz-appearance: textfield;
+      }
 
-        input[type="number"].form-control::-webkit-outer-spin-button,
-        input[type="number"].form-control::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
+      input[type="number"].form-control::-webkit-outer-spin-button,
+      input[type="number"].form-control::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
 
-        /* Smooth Transitions */
-        .modal-content {
-            transition: all 0.3s ease;
-        }
+      /* Smooth Transitions */
+      .modal-content {
+        transition: all 0.3s ease;
+      }
 
-        .modal-header h2 svg {
-            animation: iconPulse 2s infinite;
-        }
+      .modal-header h2 svg {
+        animation: iconPulse 2s infinite;
+      }
 
-        @keyframes iconPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+      @keyframes iconPulse {
+        0%,
+        100% {
+          transform: scale(1);
         }
+        50% {
+          transform: scale(1.1);
+        }
+      }
     </style>
-</head>
-<body>
-<div class="app">
-    <!-- SIDEBAR -->
-    <div th:insert="~{fragments/sidebar :: sidebar('staff_shifts')}"></div>
+  </head>
+  <body>
+    <div class="app">
+      <!-- SIDEBAR -->
+      <div th:insert="~{fragments/sidebar :: sidebar('staff_shifts')}"></div>
 
-    <!-- MAIN -->
-    <main class="main">
+      <!-- MAIN -->
+      <main class="main">
         <header class="page-header">
-            <div>
-                <h1>Quản lý ca làm việc</h1>
-                <p class="muted">Phân ca và theo dõi thời gian làm việc</p>
+          <div>
+            <h1>Quản lý ca làm việc</h1>
+            <p class="muted">Phân ca và theo dõi thời gian làm việc</p>
+          </div>
+          <div class="userbox">
+            <div class="avatar">M</div>
+            <div class="who">
+              <strong>Manager</strong>
+              <span class="muted">Quản lý</span>
             </div>
-            <div class="userbox">
-                <div class="avatar">M</div>
-                <div class="who">
-                    <strong>Manager</strong>
-                    <span class="muted">Quản lý</span>
-                </div>
-            </div>
+          </div>
         </header>
 
         <div class="container">
-            <!-- Success/Error Messages -->
-            <div
-                    th:if="${message}"
-                    class="alert alert-success"
-                    th:text="${message}"
-            ></div>
-            <div
-                    th:if="${success}"
-                    class="alert alert-success"
-                    th:text="${success}"
-            ></div>
-            <div
-                    th:if="${error}"
-                    class="alert alert-error"
-                    th:text="${error}"
-            ></div>
+          <!-- Success/Error Messages -->
+          <div
+            th:if="${message}"
+            class="alert alert-success"
+            th:text="${message}"
+          ></div>
+          <div
+            th:if="${success}"
+            class="alert alert-success"
+            th:text="${success}"
+          ></div>
+          <div
+            th:if="${error}"
+            class="alert alert-error"
+            th:text="${error}"
+          ></div>
 
-            <!-- Tabs Navigation -->
-            <div class="tabs-nav">
-                <a th:href="@{/manager/staff_shifts}" class="tab-btn active">
-                    📅 Lịch phân công ca
-                </a>
-                <a th:href="@{/manager/shifts}" class="tab-btn">
-                    ⚙️ Quản lý loại ca
-                </a>
+          <!-- Tabs Navigation -->
+          <div class="tabs-nav">
+            <a th:href="@{/manager/staff_shifts}" class="tab-btn active">
+              📅 Lịch phân công ca
+            </a>
+            <a th:href="@{/manager/shifts}" class="tab-btn">
+              ⚙️ Quản lý loại ca
+            </a>
+          </div>
+
+          <!-- Tab: Calendar View -->
+          <div id="tab-calendar" class="tab-content active">
+            <div class="stats-grid">
+              <div class="stat-card blue">
+                <div class="stat-content">
+                  <h3>Tổng ca làm việc</h3>
+                  <div
+                    class="stat-value"
+                    th:text="${stats != null ? stats.totalShifts : 0}"
+                  >
+                    14
+                  </div>
+                </div>
+                <div class="stat-icon blue">📅</div>
+              </div>
+
+              <div class="stat-card green">
+                <div class="stat-content">
+                  <h3>Tổng giờ làm</h3>
+                  <div
+                    class="stat-value"
+                    th:text="${stats != null ? stats.totalHours + 'h' : '0h'}"
+                  >
+                    109h
+                  </div>
+                </div>
+                <div class="stat-icon green">🕐</div>
+              </div>
+
+              <div class="stat-card orange">
+                <div class="stat-content">
+                  <h3>Ca hoàn thành</h3>
+                  <div class="stat-value">
+                    <span th:text="${stats != null ? stats.completedShifts : 0}"
+                      >11</span
+                    >/<span th:text="${stats != null ? stats.totalShifts : 0}"
+                      >14</span
+                    >
+                  </div>
+                </div>
+                <div class="stat-icon orange">⚠️</div>
+              </div>
             </div>
 
-            <!-- Tab: Calendar View -->
-            <div id="tab-calendar" class="tab-content active">
-                <div class="stats-grid">
-                    <div class="stat-card blue">
-                        <div class="stat-content">
-                            <h3>Tổng ca làm việc</h3>
-                            <div
-                                    class="stat-value"
-                                    th:text="${stats != null ? stats.totalShifts : 0}"
-                            >
-                                14
-                            </div>
-                        </div>
-                        <div class="stat-icon blue">📅</div>
-                    </div>
-
-                    <div class="stat-card green">
-                        <div class="stat-content">
-                            <h3>Tổng giờ làm</h3>
-                            <div
-                                    class="stat-value"
-                                    th:text="${stats != null ? stats.totalHours + 'h' : '0h'}"
-                            >
-                                109h
-                            </div>
-                        </div>
-                        <div class="stat-icon green">🕐</div>
-                    </div>
-
-                    <div class="stat-card orange">
-                        <div class="stat-content">
-                            <h3>Ca hoàn thành</h3>
-                            <div class="stat-value">
-                    <span th:text="${stats != null ? stats.completedShifts : 0}"
-                    >11</span
-                    >/<span th:text="${stats != null ? stats.totalShifts : 0}"
-                            >14</span
-                            >
-                            </div>
-                        </div>
-                        <div class="stat-icon orange">⚠️</div>
-                    </div>
+            <!-- Main Calendar Card -->
+            <div class="main-card">
+              <!-- Calendar Header with Filters -->
+              <div class="calendar-header">
+                <div class="calendar-title">
+                  <span>📅</span>
+                  <span>Lịch ca làm việc</span>
                 </div>
 
-                <!-- Main Calendar Card -->
-                <div class="main-card">
-                    <!-- Calendar Header with Filters -->
-                    <div class="calendar-header">
-                        <div class="calendar-title">
-                            <span>📅</span>
-                            <span>Lịch ca làm việc</span>
-                        </div>
+                <div class="calendar-controls">
+                  <div class="filter-group">
+                    <select
+                      class="filter-select"
+                      id="staffFilter"
+                      onchange="filterByStaff()"
+                    >
+                      <option value="">Tất cả nhân viên</option>
+                      <option
+                        th:each="staff : ${allStaff}"
+                        th:value="${staff.id}"
+                        th:text="${staff.name}"
+                        th:selected="${selectedStaffId != null && selectedStaffId == staff.id}"
+                      ></option>
+                    </select>
+                  </div>
 
-                        <div class="calendar-controls">
+                  <div class="filter-group">
+                    <select
+                      class="filter-select"
+                      id="shiftFilter"
+                      onchange="filterByShift()"
+                    >
+                      <option value="">Tất cả ca</option>
+                      <option
+                        th:each="shift : ${allShifts}"
+                        th:value="${shift.id}"
+                        th:text="${shift.shiftName + ' (' + #temporals.format(shift.startTime,'HH:mm') + '-' + #temporals.format(shift.endTime,'HH:mm') + ')'}"
+                        th:selected="${selectedShiftId != null && selectedShiftId == shift.id}"
+                      ></option>
+                    </select>
+                  </div>
 
+                  <button class="add-btn" onclick="openStaffShiftModal()">
+                    + Thêm ca làm việc
+                  </button>
 
-                            <div class="filter-group">
-                                <select
-                                        class="filter-select"
-                                        id="staffFilter"
-                                        onchange="filterByStaff()"
-                                >
-                                    <option value="">Tất cả nhân viên</option>
-                                    <option
-                                            th:each="staff : ${allStaff}"
-                                            th:value="${staff.id}"
-                                            th:text="${staff.name}"
-                                            th:selected="${selectedStaffId != null && selectedStaffId == staff.id}"
-                                    ></option>
-                                </select>
-                            </div>
+                  <button
+                    class="add-btn"
+                    style="margin-left: 10px"
+                    onclick="exportMonthlySalary()"
+                  >
+                    📊 Xuất Excel
+                  </button>
+                </div>
+              </div>
 
-                            <div class="filter-group">
-                                <select
-                                        class="filter-select"
-                                        id="shiftFilter"
-                                        onchange="filterByShift()"
-                                >
-                                    <option value="">Tất cả ca</option>
-                                    <option
-                                            th:each="shift : ${allShifts}"
-                                            th:value="${shift.id}"
-                                            th:text="${shift.shiftName}"
-                                            th:selected="${selectedShiftId != null && selectedShiftId == shift.id}"
-                                    ></option>
-                                </select>
-                            </div>
+              <!-- Staff Shift Assignment Modal -->
+              <div id="staffShiftModal" class="modal">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h2 id="staffShiftModalTitle">Thêm ca làm việc</h2>
+                    <span class="close" onclick="closeStaffShiftModal()"
+                      >&times;</span
+                    >
+                  </div>
 
-                            <button class="add-btn" onclick="openStaffShiftModal()">
-                                + Thêm ca làm việc
-                            </button>
+                  <form
+                    id="staffShiftForm"
+                    method="post"
+                    th:object="${staffShiftForm}"
+                    th:action="@{/manager/staff_shifts/save}"
+                  >
+                    <input type="hidden" th:field="*{id}" />
+                    <input
+                      type="hidden"
+                      th:if="${_csrf != null}"
+                      th:name="${_csrf.parameterName}"
+                      th:value="${_csrf.token}"
+                    />
 
-                            <button class="add-btn" style="margin-left: 10px;" onclick="exportMonthlySalary()">
-                                📊 Xuất Excel
-                            </button>
-                        </div>
-                    </div>
+                    <!-- Preserve URL parameters when submitting form (use different names to avoid conflict) -->
+                    <input
+                      type="hidden"
+                      name="weekOffset"
+                      th:value="${param.weekOffset}"
+                    />
+                    <input
+                      type="hidden"
+                      name="filterStaffId"
+                      th:value="${selectedStaffId}"
+                    />
+                    <input
+                      type="hidden"
+                      name="filterShiftId"
+                      th:value="${selectedShiftId}"
+                    />
 
-                    <!-- Staff Shift Assignment Modal -->
-                    <div id="staffShiftModal" class="modal">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h2 id="staffShiftModalTitle">Thêm ca làm việc</h2>
-                                <span class="close" onclick="closeStaffShiftModal()"
-                                >&times;</span
-                                >
-                            </div>
-
-                            <form
-                                    id="staffShiftForm"
-                                    method="post"
-                                    th:object="${staffShiftForm}"
-                                    th:action="@{/manager/staff_shifts/save}"
-                            >
-                                <input type="hidden" th:field="*{id}"/>
-                                <input
-                                        type="hidden"
-                                        th:if="${_csrf != null}"
-                                        th:name="${_csrf.parameterName}"
-                                        th:value="${_csrf.token}"
-                                />
-
-                                <!-- Preserve URL parameters when submitting form (use different names to avoid conflict) -->
-                                <input
-                                        type="hidden"
-                                        name="weekOffset"
-                                        th:value="${param.weekOffset}"
-                                />
-                                <input
-                                        type="hidden"
-                                        name="filterStaffId"
-                                        th:value="${selectedStaffId}"
-                                />
-                                <input
-                                        type="hidden"
-                                        name="filterShiftId"
-                                        th:value="${selectedShiftId}"
-                                />
-
-                                <!-- Display validation errors -->
-                                <div
-                                        th:if="${#fields.hasErrors('*')}"
-                                        class="alert alert-error"
-                                        style="
+                    <!-- Display validation errors -->
+                    <div
+                      th:if="${#fields.hasErrors('*')}"
+                      class="alert alert-error"
+                      style="
                         margin-bottom: 15px;
                         padding: 10px;
                         background-color: #fee;
                         border: 1px solid #fcc;
                         border-radius: 4px;
                       "
-                                >
-                                    <strong>⚠️ Lỗi nhập liệu:</strong>
-                                    <ul style="margin: 5px 0 0 20px">
-                                        <li
-                                                th:each="err : ${#fields.errors('*')}"
-                                                th:text="${err}"
-                                        ></li>
-                                    </ul>
-                                </div>
+                    >
+                      <strong>⚠️ Lỗi nhập liệu:</strong>
+                      <ul style="margin: 5px 0 0 20px">
+                        <li
+                          th:each="err : ${#fields.errors('*')}"
+                          th:text="${err}"
+                        ></li>
+                      </ul>
+                    </div>
 
-                                <div class="mb-3">
-                                    <label for="workDate">Ngày làm</label>
-                                    <input
-                                            id="workDate"
-                                            type="date"
-                                            th:field="*{workDate}"
-                                            th:readonly="${staffShiftForm.id != null && staffShiftForm.id > 0}"
-                                    />
-                                    <span
-                                            class="error-message"
-                                            th:if="${#fields.hasErrors('workDate')}"
-                                            th:errors="*{workDate}"
-                                    ></span>
-                                </div>
+                    <div class="mb-3">
+                      <label for="workDate">Ngày làm</label>
+                      <input
+                        id="workDate"
+                        type="date"
+                        th:field="*{workDate}"
+                        th:readonly="${staffShiftForm.id != null && staffShiftForm.id > 0}"
+                      />
+                      <span
+                        class="error-message"
+                        th:if="${#fields.hasErrors('workDate')}"
+                        th:errors="*{workDate}"
+                      ></span>
+                    </div>
 
-                                <div class="mb-3">
-                                    <label for="ssShiftId">Loại ca</label>
-                                    <select
-                                            id="ssShiftId"
-                                            th:field="*{shiftId}"
-                                            onchange="updateSalaryFromShift()"
-                                    >
-                                        <option value="" disabled>-- Chọn ca --</option>
-                                        <option
-                                                th:each="sh : ${allShifts}"
-                                                th:value="${sh.id}"
-                                                th:text="${sh.shiftName + ' (' + #temporals.format(sh.startTime,'HH:mm') + '-' + #temporals.format(sh.endTime,'HH:mm') + ')'}"
-                                                th:data-salary="${sh.salaryPerShift}"
-                                        ></option>
-                                    </select>
-                                    <span
-                                            class="error-message"
-                                            th:if="${#fields.hasErrors('shiftId')}"
-                                            th:errors="*{shiftId}"
-                                    ></span>
-                                </div>
+                    <div class="mb-3">
+                      <label for="ssShiftId">Loại ca</label>
+                      <select
+                        id="ssShiftId"
+                        th:field="*{shiftId}"
+                        onchange="updateSalaryFromShift()"
+                      >
+                        <option value="" disabled>-- Chọn ca --</option>
+                        <option
+                          th:each="sh : ${allShifts}"
+                          th:value="${sh.id}"
+                          th:text="${sh.shiftName + ' (' + #temporals.format(sh.startTime,'HH:mm') + '-' + #temporals.format(sh.endTime,'HH:mm') + ')'}"
+                          th:data-salary="${sh.salaryPerShift}"
+                        ></option>
+                      </select>
+                      <span
+                        class="error-message"
+                        th:if="${#fields.hasErrors('shiftId')}"
+                        th:errors="*{shiftId}"
+                      ></span>
+                    </div>
 
-                                <div class="mb-3">
-                                    <label for="ssStaffId">Nhân viên</label>
-                                    <select id="ssStaffId" th:field="*{staffId}">
-                                        <option value="" disabled>-- Chọn nhân viên --</option>
-                                        <option
-                                                th:each="s : ${allStaff}"
-                                                th:value="${s.id}"
-                                                th:text="${s.name}"
-                                        ></option>
-                                    </select>
-                                    <span
-                                            class="error-message"
-                                            th:if="${#fields.hasErrors('staffId')}"
-                                            th:errors="*{staffId}"
-                                    ></span>
-                                </div>
+                    <div class="mb-3">
+                      <label for="ssStaffId">Nhân viên</label>
+                      <select id="ssStaffId" th:field="*{staffId}">
+                        <option value="" disabled>-- Chọn nhân viên --</option>
+                        <option
+                          th:each="s : ${allStaff}"
+                          th:value="${s.id}"
+                          th:text="${s.name}"
+                        ></option>
+                      </select>
+                      <span
+                        class="error-message"
+                        th:if="${#fields.hasErrors('staffId')}"
+                        th:errors="*{staffId}"
+                      ></span>
+                    </div>
 
-                                <div class="mb-3">
-                                    <label for="hourlyWage">Lương/ca (VNĐ) - Tự động</label>
-                                    <input
-                                            id="hourlyWage"
-                                            type="number"
-                                            step="1000"
-                                            th:field="*{hourlyWage}"
-                                            placeholder="Lương sẽ tự động cập nhật"
-                                            readonly
-                                            style="background-color: #f5f5f5"
-                                    />
-                                    <small class="text-muted"
-                                    >Lương được tự động tính từ loại ca đã chọn</small
-                                    >
-                                </div>
+                    <div class="mb-3">
+                      <label for="hourlyWage">Lương/ca (VNĐ) - Tự động</label>
+                      <input
+                        id="hourlyWage"
+                        type="number"
+                        step="1000"
+                        th:field="*{hourlyWage}"
+                        placeholder="Lương sẽ tự động cập nhật"
+                        readonly
+                        style="background-color: #f5f5f5"
+                      />
+                      <small class="text-muted"
+                        >Lương được tự động tính từ loại ca đã chọn</small
+                      >
+                    </div>
 
-                                <div class="mb-3">
-                                    <label for="ssStatus">Trạng thái</label>
-                                    <select id="ssStatus" th:field="*{status}" disabled>
-                                        <option value="SCHEDULED" selected>SCHEDULED</option>
-                                    </select>
-                                    <small class="text-muted"
-                                    >Trạng thái mặc định là SCHEDULED</small
-                                    >
-                                </div>
+                    <div class="mb-3">
+                      <label for="ssStatus">Trạng thái</label>
+                      <select id="ssStatus" th:field="*{status}" disabled>
+                        <option value="SCHEDULED" selected>SCHEDULED</option>
+                      </select>
+                      <small class="text-muted"
+                        >Trạng thái mặc định là SCHEDULED</small
+                      >
+                    </div>
 
-                                <div class="mb-3">
-                                    <label for="ssNote">Ghi chú</label>
-                                    <textarea
-                                            id="ssNote"
-                                            th:field="*{note}"
-                                            rows="3"
-                                            maxlength="500"
-                                            style="
+                    <div class="mb-3">
+                      <label for="ssNote">Ghi chú</label>
+                      <textarea
+                        id="ssNote"
+                        th:field="*{note}"
+                        rows="3"
+                        maxlength="500"
+                        style="
                           width: 100%;
                           padding: 8px;
                           border: 1px solid #ddd;
                           border-radius: 4px;
                         "
-                                            readonly
-                                    ></textarea>
-                                    <span
-                                            class="error-message"
-                                            th:if="${#fields.hasErrors('note')}"
-                                            th:errors="*{note}"
-                                    ></span>
-                                </div>
-
-                                <div class="modal-footer">
-                                    <button type="submit" class="btn btn-primary">Lưu</button>
-                                    <button
-                                            type="button"
-                                            class="btn btn-secondary"
-                                            onclick="closeStaffShiftModal()"
-                                    >
-                                        Hủy
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                        readonly
+                      ></textarea>
+                      <span
+                        class="error-message"
+                        th:if="${#fields.hasErrors('note')}"
+                        th:errors="*{note}"
+                      ></span>
                     </div>
 
-                    <!-- Export Excel Modal -->
-                    <div id="exportModal" class="modal">
-                        <div class="modal-content" style="max-width: 550px;">
-                            <div class="modal-header" style="background: linear-gradient(135deg, #1e7e34 0%, #28a745 100%); color: white;">
-                                <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
-                                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
-                                        <path d="M4.603 14.087a.81.81 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.68 7.68 0 0 1 1.482-.645 19.697 19.697 0 0 0 1.062-2.227 7.269 7.269 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a10.954 10.954 0 0 0 .98 1.686 5.753 5.753 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.856.856 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.712 5.712 0 0 1-.911-.95 11.651 11.651 0 0 0-1.997.406 11.307 11.307 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.793.793 0 0 1-.58.029zm1.379-1.901c-.166.076-.32.156-.459.238-.328.194-.541.383-.647.547-.094.145-.096.25-.04.361.01.022.02.036.026.044a.266.266 0 0 0 .035-.012c.137-.056.355-.235.635-.572a8.18 8.18 0 0 0 .45-.606zm1.64-1.33a12.71 12.71 0 0 1 1.01-.193 11.744 11.744 0 0 1-.51-.858 20.801 20.801 0 0 1-.5 1.05zm2.446.45c.15.163.296.3.435.41.24.19.407.253.498.256a.107.107 0 0 0 .07-.015.307.307 0 0 0 .094-.125.436.436 0 0 0 .059-.2.095.095 0 0 0-.026-.063c-.052-.062-.2-.152-.518-.209a3.876 3.876 0 0 0-.612-.053zM8.078 7.8a6.7 6.7 0 0 0 .2-.828c.031-.188.043-.343.038-.465a.613.613 0 0 0-.032-.198.517.517 0 0 0-.145.04c-.087.035-.158.106-.196.283-.04.192-.03.469.046.822.024.111.054.227.09.346z"/>
-                                    </svg>
-                                    Xuất Báo Cáo Excel
-                                </h2>
-                                <span class="close" onclick="closeExportModal()" style="color: white;">&times;</span>
-                            </div>
-                            <div class="modal-body" style="padding: 24px;">
-                                <!-- Info Box -->
-                                <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 16px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2196f3;">
-                                    <p style="margin: 0; font-size: 14px; color: #1565c0; display: flex; align-items: start; gap: 8px;">
-                                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16" style="flex-shrink: 0; margin-top: 2px;">
-                                            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-                                        </svg>
-                                        <span><strong>Báo cáo bao gồm:</strong> Tổng hợp lương, chi tiết ca làm việc, giờ công, phạt và trạng thái của tất cả nhân viên</span>
-                                    </p>
-                                </div>
-
-                                <form id="exportForm">
-                                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
-                                           th:value="${_csrf.token}"/>
-
-                                    <div class="mb-3" style="margin-bottom: 20px;">
-                                        <label for="exportYear" style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">
-                                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 6px;">
-                                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
-                                            </svg>
-                                            Năm:
-                                        </label>
-                                        <select id="exportYear" name="year" required style="width: 100%; padding: 10px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 15px; transition: all 0.3s;">
-                                            <option th:each="y : ${exportYears}"
-                                                    th:value="${y}"
-                                                    th:text="${y}"
-                                                    th:selected="${y == T(java.time.Year).now().getValue()}"></option>
-                                        </select>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label for="exportMonth" style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">
-                                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 6px;">
-                                                <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"/>
-                                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
-                                            </svg>
-                                            Tháng:
-                                        </label>
-                                        <select id="exportMonth" name="month" required style="width: 100%; padding: 10px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 15px; transition: all 0.3s;">
-                                            <option th:each="m : ${exportMonths}" th:value="${m}"
-                                                    th:text="${'Tháng ' + m}"
-                                                    th:selected="${m == T(java.time.LocalDate).now().getMonthValue()}"></option>
-                                        </select>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="modal-footer" style="padding: 16px 24px; background: #f8f9fa; display: flex; gap: 10px; justify-content: flex-end;">
-                                <button type="button" class="btn btn-secondary" onclick="closeExportModal()" style="padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; background: #6c757d; color: white; transition: all 0.3s;">
-                                    Hủy
-                                </button>
-                                <button type="button" class="btn btn-primary" onclick="confirmExport()" style="padding: 10px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; background: linear-gradient(135deg, #1e7e34 0%, #28a745 100%); color: white; transition: all 0.3s; display: flex; align-items: center; gap: 8px;">
-                                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                                    </svg>
-                                    Xuất Excel
-                                </button>
-                            </div>
-                        </div>
+                    <div class="modal-footer">
+                      <button type="submit" class="btn btn-primary">Lưu</button>
+                      <button
+                        type="button"
+                        class="btn btn-secondary"
+                        onclick="closeStaffShiftModal()"
+                      >
+                        Hủy
+                      </button>
                     </div>
-
-                    <!-- Complete Shift Modal -->
-                    <div id="completeShiftModal" class="modal">
-                        <div class="modal-content" style="max-width: 650px;">
-                            <div class="modal-header" style="background: linear-gradient(135deg, #d32f2f 0%, #f44336 100%); color: white;">
-                                <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
-                                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022l-.074.997zm2.004.45a7.003 7.003 0 0 0-.985-.299l.219-.976c.383.086.76.2 1.126.342l-.36.933zm1.37.71a7.01 7.01 0 0 0-.439-.27l.493-.87a8.025 8.025 0 0 1 .979.654l-.615.789a6.996 6.996 0 0 0-.418-.302zm1.834 1.79a6.99 6.99 0 0 0-.653-.796l.724-.69c.27.285.52.59.747.91l-.818.576zm.744 1.352a7.08 7.08 0 0 0-.214-.468l.893-.45a7.976 7.976 0 0 1 .45 1.088l-.95.313a7.023 7.023 0 0 0-.179-.483zm.53 2.507a6.991 6.991 0 0 0-.1-1.025l.985-.17c.067.386.106.778.116 1.17l-1 .025zm-.131 1.538c.033-.17.06-.339.081-.51l.993.123a7.957 7.957 0 0 1-.23 1.155l-.964-.267c.046-.165.086-.332.12-.501zm-.952 2.379c.184-.29.346-.594.486-.908l.914.405c-.16.36-.345.706-.555 1.038l-.845-.535zm-.964 1.205c.122-.122.239-.248.35-.378l.758.653a8.073 8.073 0 0 1-.401.432l-.707-.707z"/>
-                                        <path d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0v1z"/>
-                                        <path d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5z"/>
-                                    </svg>
-                                    Hoàn Thành Ca Làm Việc Thủ Công
-                                </h2>
-                                <span class="close" onclick="closeCompleteShiftModal()" style="color: white;">&times;</span>
-                            </div>
-                            <div class="modal-body" style="padding: 24px;">
-                                <!-- Warning Box -->
-                                <div style="background: linear-gradient(135deg, #fff3cd 0%, #fff8dc 100%); padding: 14px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
-                                    <p style="margin: 0; font-size: 13px; color: #856404; display: flex; align-items: start; gap: 8px;">
-                                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16" style="flex-shrink: 0; margin-top: 2px;">
-                                            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
-                                        </svg>
-                                        <span><strong>Lưu ý:</strong> Chức năng này dùng khi nhân viên quên checkout. Vui lòng kiểm tra kỹ thông tin trước khi xác nhận.</span>
-                                    </p>
-                                </div>
-
-                                <form id="completeShiftForm"
-                                      th:action="@{/manager/staff_shifts/manual-complete/{id}(id=${0})}" method="post">
-                                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
-                                           th:value="${_csrf.token}"/>
-
-                                    <!-- Shift Info Display -->
-                                    <div style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); padding: 16px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #4caf50;">
-                                        <p style="margin: 6px 0; display: flex; align-items: center; gap: 8px; font-size: 14px;">
-                                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
-                                                <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
-                                            </svg>
-                                            <strong>Nhân viên:</strong> <span id="completeStaffName" style="color: #2e7d32; font-weight: 600;"></span>
-                                        </p>
-                                        <p style="margin: 6px 0; display: flex; align-items: center; gap: 8px; font-size: 14px;">
-                                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                <path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z"/>
-                                                <path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5L9.5 0zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
-                                            </svg>
-                                            <strong>Ca làm việc:</strong> <span id="completeShiftName" style="color: #2e7d32; font-weight: 600;"></span>
-                                        </p>
-                                        <p style="margin: 6px 0; display: flex; align-items: center; gap: 8px; font-size: 14px;">
-                                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"/>
-                                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
-                                            </svg>
-                                            <strong>Ngày làm việc:</strong> <span id="completeWorkDate" style="color: #2e7d32; font-weight: 600;"></span>
-                                        </p>
-                                    </div>
-
-                                    <!-- Checkout Time Input -->
-                                    <div class="mb-3" style="margin-bottom: 20px;">
-                                        <label for="completeCheckoutTime" style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">
-                                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 6px;">
-                                                <path d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5z"/>
-                                                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
-                                            </svg>
-                                            Thời gian checkout <span style="color: #d32f2f;">*</span>
-                                        </label>
-                                        <input
-                                                type="datetime-local"
-                                                id="completeCheckoutTime"
-                                                name="checkoutTime"
-                                                class="form-control"
-                                                required
-                                                style="width: 100%; padding: 10px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 15px; transition: all 0.3s;"
-                                        />
-                                        <small class="form-text" style="color: #666; display: block; margin-top: 6px;">
-                                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 4px;">
-                                                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-                                            </svg>
-                                            Mặc định là thời gian kết thúc ca. Có thể điều chỉnh nếu cần.
-                                        </small>
-                                    </div>
-
-                                    <!-- Status Preview -->
-                                    <div class="mb-3" style="margin-bottom: 20px;">
-                                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">
-                                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 6px;">
-                                                <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
-                                                <path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5z"/>
-                                            </svg>
-                                            Trạng thái dự kiến:
-                                        </label>
-                                        <div id="statusPreview"
-                                             style="padding: 12px; border-radius: 6px; font-weight: 600; text-align: center; font-size: 15px; border: 2px solid #28a745; background: #28a745; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                            COMPLETED (Hoàn thành)
-                                        </div>
-                                        <small class="form-text" style="color: #666; display: block; margin-top: 6px;">
-                                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 4px;">
-                                                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-                                            </svg>
-                                            Trạng thái sẽ là <strong>LEFT_EARLY</strong> nếu checkout sớm hơn giờ kết thúc ca
-                                        </small>
-                                    </div>
-
-                                    <!-- Penalty Input -->
-                                    <div class="mb-3" style="margin-bottom: 20px;">
-                                        <label for="completePenalty" style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">
-                                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 6px;">
-                                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                                                <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"/>
-                                            </svg>
-                                            Mức phạt (%) <span style="color: #d32f2f;">*</span>
-                                        </label>
-                                        <input
-                                                type="number"
-                                                id="completePenalty"
-                                                name="penaltyPercent"
-                                                class="form-control"
-                                                min="0"
-                                                max="100"
-                                                value="0"
-                                                required
-                                                style="width: 100%; padding: 10px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 15px; transition: all 0.3s;"
-                                        />
-                                        <small class="form-text" style="color: #666; display: block; margin-top: 6px;">
-                                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 4px;">
-                                                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-                                            </svg>
-                                            Nhập số từ 0-100 (0% = không phạt, 100% = phạt toàn bộ)
-                                        </small>
-                                    </div>
-
-                                    <!-- Note Input -->
-                                    <div class="mb-3">
-                                        <label for="completeNote" style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">
-                                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 6px;">
-                                                <path d="M5 0h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2 2 2 0 0 1-2 2H3a2 2 0 0 1-2-2h1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1H1a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1H3a2 2 0 0 1 2-2z"/>
-                                                <path d="M1 6v-.5a.5.5 0 0 1 1 0V6h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0V9h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 2.5v.5H.5a.5.5 0 0 0 0 1h2a.5.5 0 0 0 0-1H2v-.5a.5.5 0 0 0-1 0z"/>
-                                            </svg>
-                                            Lý do hoàn thành thủ công <span style="color: #d32f2f;">*</span>
-                                        </label>
-                                        <textarea
-                                                id="completeNote"
-                                                name="note"
-                                                class="form-control"
-                                                rows="4"
-                                                required
-                                                placeholder="Ví dụ: Nhân viên quên checkout, đã xác nhận với giám sát viên ca tối hôm nay"
-                                                style="width: 100%; padding: 10px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; resize: vertical; transition: all 0.3s;"
-                                        ></textarea>
-                                        <small class="form-text" style="color: #666; display: block; margin-top: 6px;">
-                                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 4px;">
-                                                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-                                            </svg>
-                                            Ghi chú này sẽ được lưu vào lịch sử ca làm việc và hiển thị trong báo cáo
-                                        </small>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="modal-footer" style="padding: 16px 24px; background: #f8f9fa; display: flex; gap: 10px; justify-content: flex-end;">
-                                <button type="button" class="btn btn-secondary" onclick="closeCompleteShiftModal()" style="padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; background: #6c757d; color: white; transition: all 0.3s;">
-                                    Hủy
-                                </button>
-                                <button type="button" class="btn btn-primary" onclick="submitCompleteShift()" style="padding: 10px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; background: linear-gradient(135deg, #d32f2f 0%, #f44336 100%); color: white; transition: all 0.3s; display: flex; align-items: center; gap: 8px;">
-                                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
-                                        <path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5zM2 5h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5z"/>
-                                    </svg>
-                                    Xác nhận hoàn thành
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Week Navigation -->
-                    <div class="week-navigation">
-                        <button class="week-nav-btn" onclick="navigateWeek(-1)">
-                            ◀ Tuần trước
-                        </button>
-
-                        <div style="text-align: center">
-                            <div class="week-range">
-                    <span
-                            th:text="${#temporals.format(weekStartDate, 'dd/MM/yyyy')}"
-                    >5/10/2025</span
-                    >
-                                -
-                                <span
-                                        th:text="${#temporals.format(weekEndDate, 'dd/MM/yyyy')}"
-                                >11/10/2025</span
-                                >
-                            </div>
-                            <div class="week-current">Tuần hiện tại</div>
-                        </div>
-
-                        <button class="week-nav-btn" onclick="navigateWeek(1)">
-                            Tuần sau ▶
-                        </button>
-                    </div>
-
-                    <!-- Calendar Grid -->
-                    <div class="calendar-grid">
-                        <!-- Loop qua 7 ngày trong tuần -->
-                        <div
-                                class="day-column"
-                                th:each="day : ${weekDays}"
-                                th:classappend="${day.isToday} ? 'today' : ''"
-                        >
-                            <div class="day-header">
-                                <div class="day-name" th:text="${day.dayName}">CN</div>
-                                <div
-                                        class="day-number"
-                                        th:text="${#temporals.format(day.date, 'dd')}"
-                                >
-                                    5
-                                </div>
-                            </div>
-
-                            <div class="shift-cards">
-                                <!-- Loop qua các ca trong ngày -->
-                                <div
-                                        class="shift-card"
-                                        th:each="shift : ${day.shifts}"
-                                        th:classappend="${shift.shiftType}"
-                                        th:onclick="${shift.status == 'NOT_CHECKOUT'} ? null : |editShift(${shift.id})| "
-                                        th:style="${shift.status == 'NOT_CHECKOUT'} ? 'cursor: default;' : 'cursor: pointer;'"
-                                >
-                                    <div class="shift-type">
-                                        <span class="icon">✏️</span>
-                                        <span th:text="${shift.shiftName}">Sáng</span>
-                                    </div>
-
-                                    <div
-                                            class="shift-staff"
-                                            th:text="${shift.staffName}"
-                                    ></div>
-
-                                    <div
-                                            class="shift-time"
-                                            th:text="${shift.timeRange}"
-                                    ></div>
-
-                                    <div
-                                            class="shift-status"
-                                            th:classappend="${shift.statusClass}"
-                                            th:text="${shift.statusText}"
-                                    ></div>
-
-                                    <div
-                                            class="shift-wage"
-                                            th:text="${#numbers.formatDecimal(shift.totalWage, 0, 'POINT', 0, 'COMMA') + 'đ'}"
-                                    ></div>
-
-                                    <!-- Complete Shift Button for NOT_CHECKOUT status -->
-                                    <div th:if="${shift.status == 'NOT_CHECKOUT'}" style="margin-top: 8px;">
-                                        <button
-                                                type="button"
-                                                class="complete-shift-btn"
-                                                th:data-shift-id="${shift.id}"
-                                                th:data-staff-name="${shift.staffName}"
-                                                th:data-shift-name="${shift.shiftName}"
-                                                th:data-end-time="${shift.endTime}"
-                                                th:data-work-date="${shift.workDate}"
-                                                onclick="event.stopPropagation(); openCompleteShiftModalFromButton(this);"
-                                                style="width: 100%; padding: 6px 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px;"
-                                        >
-                                            ✓ Hoàn thành ca
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                  </form>
                 </div>
+              </div>
+
+              <!-- Export Excel Modal -->
+              <div id="exportModal" class="modal">
+                <div class="modal-content" style="max-width: 550px">
+                  <div
+                    class="modal-header"
+                    style="
+                      background: linear-gradient(
+                        135deg,
+                        #1e7e34 0%,
+                        #28a745 100%
+                      );
+                      color: white;
+                    "
+                  >
+                    <h2
+                      style="
+                        margin: 0;
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                      "
+                    >
+                      <svg
+                        width="24"
+                        height="24"
+                        fill="currentColor"
+                        viewBox="0 0 16 16"
+                      >
+                        <path
+                          d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"
+                        />
+                        <path
+                          d="M4.603 14.087a.81.81 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.68 7.68 0 0 1 1.482-.645 19.697 19.697 0 0 0 1.062-2.227 7.269 7.269 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a10.954 10.954 0 0 0 .98 1.686 5.753 5.753 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.856.856 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.712 5.712 0 0 1-.911-.95 11.651 11.651 0 0 0-1.997.406 11.307 11.307 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.793.793 0 0 1-.58.029zm1.379-1.901c-.166.076-.32.156-.459.238-.328.194-.541.383-.647.547-.094.145-.096.25-.04.361.01.022.02.036.026.044a.266.266 0 0 0 .035-.012c.137-.056.355-.235.635-.572a8.18 8.18 0 0 0 .45-.606zm1.64-1.33a12.71 12.71 0 0 1 1.01-.193 11.744 11.744 0 0 1-.51-.858 20.801 20.801 0 0 1-.5 1.05zm2.446.45c.15.163.296.3.435.41.24.19.407.253.498.256a.107.107 0 0 0 .07-.015.307.307 0 0 0 .094-.125.436.436 0 0 0 .059-.2.095.095 0 0 0-.026-.063c-.052-.062-.2-.152-.518-.209a3.876 3.876 0 0 0-.612-.053zM8.078 7.8a6.7 6.7 0 0 0 .2-.828c.031-.188.043-.343.038-.465a.613.613 0 0 0-.032-.198.517.517 0 0 0-.145.04c-.087.035-.158.106-.196.283-.04.192-.03.469.046.822.024.111.054.227.09.346z"
+                        />
+                      </svg>
+                      Xuất Báo Cáo Excel
+                    </h2>
+                    <span
+                      class="close"
+                      onclick="closeExportModal()"
+                      style="color: white"
+                      >&times;</span
+                    >
+                  </div>
+                  <div class="modal-body" style="padding: 24px">
+                    <!-- Info Box -->
+                    <div
+                      style="
+                        background: linear-gradient(
+                          135deg,
+                          #e3f2fd 0%,
+                          #bbdefb 100%
+                        );
+                        padding: 16px;
+                        border-radius: 8px;
+                        margin-bottom: 20px;
+                        border-left: 4px solid #2196f3;
+                      "
+                    >
+                      <p
+                        style="
+                          margin: 0;
+                          font-size: 14px;
+                          color: #1565c0;
+                          display: flex;
+                          align-items: start;
+                          gap: 8px;
+                        "
+                      >
+                        <svg
+                          width="20"
+                          height="20"
+                          fill="currentColor"
+                          viewBox="0 0 16 16"
+                          style="flex-shrink: 0; margin-top: 2px"
+                        >
+                          <path
+                            d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"
+                          />
+                        </svg>
+                        <span
+                          ><strong>Báo cáo bao gồm:</strong> Tổng hợp lương, chi
+                          tiết ca làm việc, giờ công, phạt và trạng thái của tất
+                          cả nhân viên</span
+                        >
+                      </p>
+                    </div>
+
+                    <form id="exportForm">
+                      <input
+                        type="hidden"
+                        th:if="${_csrf != null}"
+                        th:name="${_csrf.parameterName}"
+                        th:value="${_csrf.token}"
+                      />
+
+                      <div class="mb-3" style="margin-bottom: 20px">
+                        <label
+                          for="exportYear"
+                          style="
+                            display: block;
+                            font-weight: 600;
+                            margin-bottom: 8px;
+                            color: #333;
+                          "
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            fill="currentColor"
+                            viewBox="0 0 16 16"
+                            style="margin-right: 6px"
+                          >
+                            <path
+                              d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"
+                            />
+                          </svg>
+                          Năm:
+                        </label>
+                        <select
+                          id="exportYear"
+                          name="year"
+                          required
+                          style="
+                            width: 100%;
+                            padding: 10px 12px;
+                            border: 2px solid #ddd;
+                            border-radius: 6px;
+                            font-size: 15px;
+                            transition: all 0.3s;
+                          "
+                        >
+                          <option
+                            th:each="y : ${exportYears}"
+                            th:value="${y}"
+                            th:text="${y}"
+                            th:selected="${y == T(java.time.Year).now().getValue()}"
+                          ></option>
+                        </select>
+                      </div>
+
+                      <div class="mb-3">
+                        <label
+                          for="exportMonth"
+                          style="
+                            display: block;
+                            font-weight: 600;
+                            margin-bottom: 8px;
+                            color: #333;
+                          "
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            fill="currentColor"
+                            viewBox="0 0 16 16"
+                            style="margin-right: 6px"
+                          >
+                            <path
+                              d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"
+                            />
+                            <path
+                              d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"
+                            />
+                          </svg>
+                          Tháng:
+                        </label>
+                        <select
+                          id="exportMonth"
+                          name="month"
+                          required
+                          style="
+                            width: 100%;
+                            padding: 10px 12px;
+                            border: 2px solid #ddd;
+                            border-radius: 6px;
+                            font-size: 15px;
+                            transition: all 0.3s;
+                          "
+                        >
+                          <option
+                            th:each="m : ${exportMonths}"
+                            th:value="${m}"
+                            th:text="${'Tháng ' + m}"
+                            th:selected="${m == T(java.time.LocalDate).now().getMonthValue()}"
+                          ></option>
+                        </select>
+                      </div>
+                    </form>
+                  </div>
+                  <div
+                    class="modal-footer"
+                    style="
+                      padding: 16px 24px;
+                      background: #f8f9fa;
+                      display: flex;
+                      gap: 10px;
+                      justify-content: flex-end;
+                    "
+                  >
+                    <button
+                      type="button"
+                      class="btn btn-secondary"
+                      onclick="closeExportModal()"
+                      style="
+                        padding: 10px 20px;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-weight: 500;
+                        background: #6c757d;
+                        color: white;
+                        transition: all 0.3s;
+                      "
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-primary"
+                      onclick="confirmExport()"
+                      style="
+                        padding: 10px 24px;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-weight: 500;
+                        background: linear-gradient(
+                          135deg,
+                          #1e7e34 0%,
+                          #28a745 100%
+                        );
+                        color: white;
+                        transition: all 0.3s;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                      "
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        fill="currentColor"
+                        viewBox="0 0 16 16"
+                      >
+                        <path
+                          d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"
+                        />
+                        <path
+                          d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"
+                        />
+                      </svg>
+                      Xuất Excel
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Complete Shift Modal -->
+              <div id="completeShiftModal" class="modal">
+                <div class="modal-content" style="max-width: 650px">
+                  <div
+                    class="modal-header"
+                    style="
+                      background: linear-gradient(
+                        135deg,
+                        #d32f2f 0%,
+                        #f44336 100%
+                      );
+                      color: white;
+                    "
+                  >
+                    <h2
+                      style="
+                        margin: 0;
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                      "
+                    >
+                      <svg
+                        width="24"
+                        height="24"
+                        fill="currentColor"
+                        viewBox="0 0 16 16"
+                      >
+                        <path
+                          d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022l-.074.997zm2.004.45a7.003 7.003 0 0 0-.985-.299l.219-.976c.383.086.76.2 1.126.342l-.36.933zm1.37.71a7.01 7.01 0 0 0-.439-.27l.493-.87a8.025 8.025 0 0 1 .979.654l-.615.789a6.996 6.996 0 0 0-.418-.302zm1.834 1.79a6.99 6.99 0 0 0-.653-.796l.724-.69c.27.285.52.59.747.91l-.818.576zm.744 1.352a7.08 7.08 0 0 0-.214-.468l.893-.45a7.976 7.976 0 0 1 .45 1.088l-.95.313a7.023 7.023 0 0 0-.179-.483zm.53 2.507a6.991 6.991 0 0 0-.1-1.025l.985-.17c.067.386.106.778.116 1.17l-1 .025zm-.131 1.538c.033-.17.06-.339.081-.51l.993.123a7.957 7.957 0 0 1-.23 1.155l-.964-.267c.046-.165.086-.332.12-.501zm-.952 2.379c.184-.29.346-.594.486-.908l.914.405c-.16.36-.345.706-.555 1.038l-.845-.535zm-.964 1.205c.122-.122.239-.248.35-.378l.758.653a8.073 8.073 0 0 1-.401.432l-.707-.707z"
+                        />
+                        <path
+                          d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0v1z"
+                        />
+                        <path
+                          d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5z"
+                        />
+                      </svg>
+                      Hoàn Thành Ca Làm Việc Thủ Công
+                    </h2>
+                    <span
+                      class="close"
+                      onclick="closeCompleteShiftModal()"
+                      style="color: white"
+                      >&times;</span
+                    >
+                  </div>
+                  <div class="modal-body" style="padding: 24px">
+                    <!-- Warning Box -->
+                    <div
+                      style="
+                        background: linear-gradient(
+                          135deg,
+                          #fff3cd 0%,
+                          #fff8dc 100%
+                        );
+                        padding: 14px;
+                        border-radius: 8px;
+                        margin-bottom: 20px;
+                        border-left: 4px solid #ffc107;
+                      "
+                    >
+                      <p
+                        style="
+                          margin: 0;
+                          font-size: 13px;
+                          color: #856404;
+                          display: flex;
+                          align-items: start;
+                          gap: 8px;
+                        "
+                      >
+                        <svg
+                          width="20"
+                          height="20"
+                          fill="currentColor"
+                          viewBox="0 0 16 16"
+                          style="flex-shrink: 0; margin-top: 2px"
+                        >
+                          <path
+                            d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"
+                          />
+                        </svg>
+                        <span
+                          ><strong>Lưu ý:</strong> Chức năng này dùng khi nhân
+                          viên quên checkout. Vui lòng kiểm tra kỹ thông tin
+                          trước khi xác nhận.</span
+                        >
+                      </p>
+                    </div>
+
+                    <form
+                      id="completeShiftForm"
+                      th:action="@{/manager/staff_shifts/manual-complete/{id}(id=${0})}"
+                      method="post"
+                    >
+                      <input
+                        type="hidden"
+                        th:if="${_csrf != null}"
+                        th:name="${_csrf.parameterName}"
+                        th:value="${_csrf.token}"
+                      />
+
+                      <!-- Shift Info Display -->
+                      <div
+                        style="
+                          background: linear-gradient(
+                            135deg,
+                            #e8f5e9 0%,
+                            #c8e6c9 100%
+                          );
+                          padding: 16px;
+                          border-radius: 8px;
+                          margin-bottom: 20px;
+                          border-left: 4px solid #4caf50;
+                        "
+                      >
+                        <p
+                          style="
+                            margin: 6px 0;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            font-size: 14px;
+                          "
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            fill="currentColor"
+                            viewBox="0 0 16 16"
+                          >
+                            <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
+                            <path
+                              fill-rule="evenodd"
+                              d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"
+                            />
+                          </svg>
+                          <strong>Nhân viên:</strong>
+                          <span
+                            id="completeStaffName"
+                            style="color: #2e7d32; font-weight: 600"
+                          ></span>
+                        </p>
+                        <p
+                          style="
+                            margin: 6px 0;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            font-size: 14px;
+                          "
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            fill="currentColor"
+                            viewBox="0 0 16 16"
+                          >
+                            <path
+                              d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5z"
+                            />
+                            <path
+                              d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5L9.5 0zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"
+                            />
+                          </svg>
+                          <strong>Ca làm việc:</strong>
+                          <span
+                            id="completeShiftName"
+                            style="color: #2e7d32; font-weight: 600"
+                          ></span>
+                        </p>
+                        <p
+                          style="
+                            margin: 6px 0;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            font-size: 14px;
+                          "
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            fill="currentColor"
+                            viewBox="0 0 16 16"
+                          >
+                            <path
+                              d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"
+                            />
+                            <path
+                              d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"
+                            />
+                          </svg>
+                          <strong>Ngày làm việc:</strong>
+                          <span
+                            id="completeWorkDate"
+                            style="color: #2e7d32; font-weight: 600"
+                          ></span>
+                        </p>
+                      </div>
+
+                      <!-- Checkout Time Input -->
+                      <div class="mb-3" style="margin-bottom: 20px">
+                        <label
+                          for="completeCheckoutTime"
+                          style="
+                            display: block;
+                            font-weight: 600;
+                            margin-bottom: 8px;
+                            color: #333;
+                          "
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            fill="currentColor"
+                            viewBox="0 0 16 16"
+                            style="margin-right: 6px"
+                          >
+                            <path
+                              d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5z"
+                            />
+                            <path
+                              d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"
+                            />
+                          </svg>
+                          Thời gian checkout
+                          <span style="color: #d32f2f">*</span>
+                        </label>
+                        <input
+                          type="datetime-local"
+                          id="completeCheckoutTime"
+                          name="checkoutTime"
+                          class="form-control"
+                          required
+                          style="
+                            width: 100%;
+                            padding: 10px 12px;
+                            border: 2px solid #ddd;
+                            border-radius: 6px;
+                            font-size: 15px;
+                            transition: all 0.3s;
+                          "
+                        />
+                        <small
+                          class="form-text"
+                          style="color: #666; display: block; margin-top: 6px"
+                        >
+                          <svg
+                            width="12"
+                            height="12"
+                            fill="currentColor"
+                            viewBox="0 0 16 16"
+                            style="margin-right: 4px"
+                          >
+                            <path
+                              d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"
+                            />
+                          </svg>
+                          Mặc định là thời gian kết thúc ca. Có thể điều chỉnh
+                          nếu cần.
+                        </small>
+                      </div>
+
+                      <!-- Status Preview -->
+                      <div class="mb-3" style="margin-bottom: 20px">
+                        <label
+                          style="
+                            display: block;
+                            font-weight: 600;
+                            margin-bottom: 8px;
+                            color: #333;
+                          "
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            fill="currentColor"
+                            viewBox="0 0 16 16"
+                            style="margin-right: 6px"
+                          >
+                            <path
+                              d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"
+                            />
+                            <path
+                              d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5z"
+                            />
+                          </svg>
+                          Trạng thái dự kiến:
+                        </label>
+                        <div
+                          id="statusPreview"
+                          style="
+                            padding: 12px;
+                            border-radius: 6px;
+                            font-weight: 600;
+                            text-align: center;
+                            font-size: 15px;
+                            border: 2px solid #28a745;
+                            background: #28a745;
+                            color: white;
+                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                          "
+                        >
+                          COMPLETED (Hoàn thành)
+                        </div>
+                        <small
+                          class="form-text"
+                          style="color: #666; display: block; margin-top: 6px"
+                        >
+                          <svg
+                            width="12"
+                            height="12"
+                            fill="currentColor"
+                            viewBox="0 0 16 16"
+                            style="margin-right: 4px"
+                          >
+                            <path
+                              d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"
+                            />
+                          </svg>
+                          Trạng thái sẽ là <strong>LEFT_EARLY</strong> nếu
+                          checkout sớm hơn giờ kết thúc ca
+                        </small>
+                      </div>
+
+                      <!-- Penalty Input -->
+                      <div class="mb-3" style="margin-bottom: 20px">
+                        <label
+                          for="completePenalty"
+                          style="
+                            display: block;
+                            font-weight: 600;
+                            margin-bottom: 8px;
+                            color: #333;
+                          "
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            fill="currentColor"
+                            viewBox="0 0 16 16"
+                            style="margin-right: 6px"
+                          >
+                            <path
+                              d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"
+                            />
+                            <path
+                              d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z"
+                            />
+                          </svg>
+                          Mức phạt (%) <span style="color: #d32f2f">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          id="completePenalty"
+                          name="penaltyPercent"
+                          class="form-control"
+                          min="0"
+                          max="100"
+                          value="0"
+                          required
+                          style="
+                            width: 100%;
+                            padding: 10px 12px;
+                            border: 2px solid #ddd;
+                            border-radius: 6px;
+                            font-size: 15px;
+                            transition: all 0.3s;
+                          "
+                        />
+                        <small
+                          class="form-text"
+                          style="color: #666; display: block; margin-top: 6px"
+                        >
+                          <svg
+                            width="12"
+                            height="12"
+                            fill="currentColor"
+                            viewBox="0 0 16 16"
+                            style="margin-right: 4px"
+                          >
+                            <path
+                              d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"
+                            />
+                          </svg>
+                          Nhập số từ 0-100 (0% = không phạt, 100% = phạt toàn
+                          bộ)
+                        </small>
+                      </div>
+
+                      <!-- Note Input -->
+                      <div class="mb-3">
+                        <label
+                          for="completeNote"
+                          style="
+                            display: block;
+                            font-weight: 600;
+                            margin-bottom: 8px;
+                            color: #333;
+                          "
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            fill="currentColor"
+                            viewBox="0 0 16 16"
+                            style="margin-right: 6px"
+                          >
+                            <path
+                              d="M5 0h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2 2 2 0 0 1-2 2H3a2 2 0 0 1-2-2h1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1H1a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1H3a2 2 0 0 1 2-2z"
+                            />
+                            <path
+                              d="M1 6v-.5a.5.5 0 0 1 1 0V6h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0V9h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 2.5v.5H.5a.5.5 0 0 0 0 1h2a.5.5 0 0 0 0-1H2v-.5a.5.5 0 0 0-1 0z"
+                            />
+                          </svg>
+                          Lý do hoàn thành thủ công
+                          <span style="color: #d32f2f">*</span>
+                        </label>
+                        <textarea
+                          id="completeNote"
+                          name="note"
+                          class="form-control"
+                          rows="4"
+                          required
+                          placeholder="Ví dụ: Nhân viên quên checkout, đã xác nhận với giám sát viên ca tối hôm nay"
+                          style="
+                            width: 100%;
+                            padding: 10px 12px;
+                            border: 2px solid #ddd;
+                            border-radius: 6px;
+                            font-size: 14px;
+                            resize: vertical;
+                            transition: all 0.3s;
+                          "
+                        ></textarea>
+                        <small
+                          class="form-text"
+                          style="color: #666; display: block; margin-top: 6px"
+                        >
+                          <svg
+                            width="12"
+                            height="12"
+                            fill="currentColor"
+                            viewBox="0 0 16 16"
+                            style="margin-right: 4px"
+                          >
+                            <path
+                              d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"
+                            />
+                          </svg>
+                          Ghi chú này sẽ được lưu vào lịch sử ca làm việc và
+                          hiển thị trong báo cáo
+                        </small>
+                      </div>
+                    </form>
+                  </div>
+                  <div
+                    class="modal-footer"
+                    style="
+                      padding: 16px 24px;
+                      background: #f8f9fa;
+                      display: flex;
+                      gap: 10px;
+                      justify-content: flex-end;
+                    "
+                  >
+                    <button
+                      type="button"
+                      class="btn btn-secondary"
+                      onclick="closeCompleteShiftModal()"
+                      style="
+                        padding: 10px 20px;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-weight: 500;
+                        background: #6c757d;
+                        color: white;
+                        transition: all 0.3s;
+                      "
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-primary"
+                      onclick="submitCompleteShift()"
+                      style="
+                        padding: 10px 24px;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-weight: 500;
+                        background: linear-gradient(
+                          135deg,
+                          #d32f2f 0%,
+                          #f44336 100%
+                        );
+                        color: white;
+                        transition: all 0.3s;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                      "
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        fill="currentColor"
+                        viewBox="0 0 16 16"
+                      >
+                        <path
+                          d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"
+                        />
+                        <path
+                          d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5zM2 5h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5z"
+                        />
+                      </svg>
+                      Xác nhận hoàn thành
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Week Navigation -->
+              <div class="week-navigation">
+                <button class="week-nav-btn" onclick="navigateWeek(-1)">
+                  ◀ Tuần trước
+                </button>
+
+                <div style="text-align: center">
+                  <div class="week-range">
+                    <span
+                      th:text="${#temporals.format(weekStartDate, 'dd/MM/yyyy')}"
+                      >5/10/2025</span
+                    >
+                    -
+                    <span
+                      th:text="${#temporals.format(weekEndDate, 'dd/MM/yyyy')}"
+                      >11/10/2025</span
+                    >
+                  </div>
+                  <div class="week-current">Tuần hiện tại</div>
+                </div>
+
+                <button class="week-nav-btn" onclick="navigateWeek(1)">
+                  Tuần sau ▶
+                </button>
+              </div>
+
+              <!-- Calendar Grid -->
+              <div class="calendar-grid">
+                <!-- Loop qua 7 ngày trong tuần -->
+                <div
+                  class="day-column"
+                  th:each="day : ${weekDays}"
+                  th:classappend="${day.isToday} ? 'today' : ''"
+                >
+                  <div class="day-header">
+                    <div class="day-name" th:text="${day.dayName}">CN</div>
+                    <div
+                      class="day-number"
+                      th:text="${#temporals.format(day.date, 'dd')}"
+                    >
+                      5
+                    </div>
+                  </div>
+
+                  <div class="shift-cards">
+                    <!-- Loop qua các ca trong ngày -->
+                    <div
+                      class="shift-card"
+                      th:each="shift : ${day.shifts}"
+                      th:classappend="${shift.shiftType}"
+                      th:onclick="${shift.status == 'NOT_CHECKOUT'} ? null : |editShift(${shift.id})| "
+                      th:style="${shift.status == 'NOT_CHECKOUT'} ? 'cursor: default;' : 'cursor: pointer;'"
+                    >
+                      <div class="shift-type">
+                        <span class="icon">✏️</span>
+                        <span th:text="${shift.shiftName}">Sáng</span>
+                      </div>
+
+                      <div
+                        class="shift-staff"
+                        th:text="${shift.staffName}"
+                      ></div>
+
+                      <div
+                        class="shift-time"
+                        th:text="${shift.timeRange}"
+                      ></div>
+
+                      <div
+                        class="shift-status"
+                        th:classappend="${shift.statusClass}"
+                        th:text="${shift.statusText}"
+                      ></div>
+
+                      <div
+                        class="shift-wage"
+                        th:text="${#numbers.formatDecimal(shift.totalWage, 0, 'POINT', 0, 'COMMA') + 'đ'}"
+                      ></div>
+
+                      <!-- Complete Shift Button for NOT_CHECKOUT status -->
+                      <div
+                        th:if="${shift.status == 'NOT_CHECKOUT'}"
+                        style="margin-top: 8px"
+                      >
+                        <button
+                          type="button"
+                          class="complete-shift-btn"
+                          th:data-shift-id="${shift.id}"
+                          th:data-staff-name="${shift.staffName}"
+                          th:data-shift-name="${shift.shiftName}"
+                          th:data-end-time="${shift.endTime}"
+                          th:data-work-date="${shift.workDate}"
+                          onclick="event.stopPropagation(); openCompleteShiftModalFromButton(this);"
+                          style="
+                            width: 100%;
+                            padding: 6px 12px;
+                            background: #28a745;
+                            color: white;
+                            border: none;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            font-size: 13px;
+                          "
+                        >
+                          ✓ Hoàn thành ca
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
+          </div>
         </div>
         <!-- End Tab: Calendar View -->
 
         <!-- Tab: Shift Types Management -->
         <div id="tab-shifts" class="tab-content">
-            <div class="shift-management-card">
-                <div class="shift-header">
-                    <h2>Quản lý loại ca làm việc</h2>
-                    <button class="add-btn" onclick="openShiftModal()">
-                        + Thêm loại ca mới
-                    </button>
-                </div>
-
-                <table class="shift-table">
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Tên ca làm việc</th>
-                        <th>Giờ bắt đầu</th>
-                        <th>Giờ kết thúc</th>
-                        <th>Hành động</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="shift : ${shifts}">
-                        <td th:text="${shift.id}">1</td>
-                        <td th:text="${shift.shiftName}">Ca sáng</td>
-                        <td th:text="${shift.startTime}">08:00</td>
-                        <td th:text="${shift.endTime}">12:00</td>
-                        <td class="actions">
-                            <button
-                                    type="button"
-                                    class="primary-btn"
-                                    th:onclick="|editShiftType(${shift.id})|"
-                            >
-                                Sửa
-                            </button>
-                            <a
-                                    class="delete-btn"
-                                    th:href="@{'/manager/shift/delete/' + ${shift.id}}"
-                                    th:onclick="|return confirm('Bạn có chắc chắn muốn xóa ca #${shift.id}?');|"
-                            >Xóa</a
-                            >
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+          <div class="shift-management-card">
+            <div class="shift-header">
+              <h2>Quản lý loại ca làm việc</h2>
+              <button class="add-btn" onclick="openShiftModal()">
+                + Thêm loại ca mới
+              </button>
             </div>
+
+            <table class="shift-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Tên ca làm việc</th>
+                  <th>Giờ bắt đầu</th>
+                  <th>Giờ kết thúc</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="shift : ${shifts}">
+                  <td th:text="${shift.id}">1</td>
+                  <td th:text="${shift.shiftName}">Ca sáng</td>
+                  <td th:text="${shift.startTime}">08:00</td>
+                  <td th:text="${shift.endTime}">12:00</td>
+                  <td class="actions">
+                    <button
+                      type="button"
+                      class="primary-btn"
+                      th:onclick="|editShiftType(${shift.id})|"
+                    >
+                      Sửa
+                    </button>
+                    <a
+                      class="delete-btn"
+                      th:href="@{'/manager/shift/delete/' + ${shift.id}}"
+                      th:onclick="|return confirm('Bạn có chắc chắn muốn xóa ca #${shift.id}?');|"
+                      >Xóa</a
+                    >
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
         <!-- End Tab: Shift Types Management -->
-    </main>
-</div>
+      </main>
+    </div>
 
-<script>
-    function exportMonthlySalary() {
-        document.getElementById('exportModal').style.display = 'flex';
-    }
+    <script>
+      function exportMonthlySalary() {
+        document.getElementById("exportModal").style.display = "flex";
+      }
 
-    function closeExportModal() {
-        document.getElementById('exportModal').style.display = 'none';
-    }
+      function closeExportModal() {
+        document.getElementById("exportModal").style.display = "none";
+      }
 
-    function confirmExport() {
-        const year = document.getElementById('exportYear').value;
-        const month = document.getElementById('exportMonth').value;
+      function confirmExport() {
+        const year = document.getElementById("exportYear").value;
+        const month = document.getElementById("exportMonth").value;
 
         // Tạo form để submit
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/pizzario/manager/staff_shifts/export';
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = "/pizzario/manager/staff_shifts/export";
 
-        const yearInput = document.createElement('input');
-        yearInput.type = 'hidden';
-        yearInput.name = 'year';
+        const yearInput = document.createElement("input");
+        yearInput.type = "hidden";
+        yearInput.name = "year";
         yearInput.value = year;
 
-        const monthInput = document.createElement('input');
-        monthInput.type = 'hidden';
-        monthInput.name = 'month';
+        const monthInput = document.createElement("input");
+        monthInput.type = "hidden";
+        monthInput.name = "month";
         monthInput.value = month;
 
         form.appendChild(yearInput);
@@ -934,9 +1507,11 @@
 
         // Thêm CSRF token
         const csrfToken = document.querySelector('meta[name="_csrf"]').content;
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = document.querySelector('meta[name="_csrf_parameter"]').content;
+        const csrfInput = document.createElement("input");
+        csrfInput.type = "hidden";
+        csrfInput.name = document.querySelector(
+          'meta[name="_csrf_parameter"]'
+        ).content;
         csrfInput.value = csrfToken;
         form.appendChild(csrfInput);
 
@@ -945,198 +1520,231 @@
         document.body.removeChild(form);
 
         closeExportModal();
-    }
+      }
 
-    // Complete Shift Modal Functions
-    let currentShiftId = null;
-    let currentShiftEndTime = null;
+      // Complete Shift Modal Functions
+      let currentShiftId = null;
+      let currentShiftEndTime = null;
 
-    // Wrapper function to read data from button attributes
-    function openCompleteShiftModalFromButton(button) {
-        const shiftId = button.getAttribute('data-shift-id');
-        const staffName = button.getAttribute('data-staff-name');
-        const shiftName = button.getAttribute('data-shift-name');
-        const endTime = button.getAttribute('data-end-time');
-        const workDate = button.getAttribute('data-work-date');
+      // Wrapper function to read data from button attributes
+      function openCompleteShiftModalFromButton(button) {
+        const shiftId = button.getAttribute("data-shift-id");
+        const staffName = button.getAttribute("data-staff-name");
+        const shiftName = button.getAttribute("data-shift-name");
+        const endTime = button.getAttribute("data-end-time");
+        const workDate = button.getAttribute("data-work-date");
 
-        openCompleteShiftModal(shiftId, staffName, shiftName, endTime, workDate);
-    }
+        openCompleteShiftModal(
+          shiftId,
+          staffName,
+          shiftName,
+          endTime,
+          workDate
+        );
+      }
 
-    function openCompleteShiftModal(shiftId, staffName, shiftName, endTime, workDate) {
+      function openCompleteShiftModal(
+        shiftId,
+        staffName,
+        shiftName,
+        endTime,
+        workDate
+      ) {
         currentShiftId = shiftId;
         currentShiftEndTime = endTime;
 
         // Set shift info
-        document.getElementById('completeStaffName').textContent = staffName;
-        document.getElementById('completeShiftName').textContent = shiftName;
-        document.getElementById('completeWorkDate').textContent = workDate;
+        document.getElementById("completeStaffName").textContent = staffName;
+        document.getElementById("completeShiftName").textContent = shiftName;
+        document.getElementById("completeWorkDate").textContent = workDate;
 
         // Set default checkout time to shift end time
         // Format: workDate + endTime -> datetime-local format (YYYY-MM-DDTHH:MM)
-        const defaultCheckoutTime = workDate + 'T' + endTime;
-        document.getElementById('completeCheckoutTime').value = defaultCheckoutTime;
+        const defaultCheckoutTime = workDate + "T" + endTime;
+        document.getElementById("completeCheckoutTime").value =
+          defaultCheckoutTime;
 
         // Reset form
-        document.getElementById('completePenalty').value = 0;
-        document.getElementById('completeNote').value = '';
+        document.getElementById("completePenalty").value = 0;
+        document.getElementById("completeNote").value = "";
 
         // Update status preview
         updateStatusPreview();
 
         // Add event listener for checkout time change
-        document.getElementById('completeCheckoutTime').addEventListener('input', updateStatusPreview);
+        document
+          .getElementById("completeCheckoutTime")
+          .addEventListener("input", updateStatusPreview);
 
         // Show modal
-        document.getElementById('completeShiftModal').style.display = 'flex';
-    }
+        document.getElementById("completeShiftModal").style.display = "flex";
+      }
 
-    function closeCompleteShiftModal() {
-        document.getElementById('completeShiftModal').style.display = 'none';
+      function closeCompleteShiftModal() {
+        document.getElementById("completeShiftModal").style.display = "none";
         currentShiftId = null;
         currentShiftEndTime = null;
-    }
+      }
 
-    function updateStatusPreview() {
-        const checkoutTimeInput = document.getElementById('completeCheckoutTime').value;
-        const statusPreview = document.getElementById('statusPreview');
+      function updateStatusPreview() {
+        const checkoutTimeInput = document.getElementById(
+          "completeCheckoutTime"
+        ).value;
+        const statusPreview = document.getElementById("statusPreview");
 
         if (!checkoutTimeInput || !currentShiftEndTime) {
-            statusPreview.textContent = 'COMPLETED';
-            statusPreview.style.background = '#28a745';
-            statusPreview.style.color = 'white';
-            return;
+          statusPreview.textContent = "COMPLETED";
+          statusPreview.style.background = "#28a745";
+          statusPreview.style.color = "white";
+          return;
         }
 
         // Extract time from datetime-local input (format: YYYY-MM-DDTHH:MM)
-        const checkoutTime = checkoutTimeInput.split('T')[1]; // Get HH:MM
+        const checkoutTime = checkoutTimeInput.split("T")[1]; // Get HH:MM
 
         // Compare times
         if (checkoutTime < currentShiftEndTime) {
-            statusPreview.textContent = 'LEFT_EARLY (Về sớm)';
-            statusPreview.style.background = '#ffc107';
-            statusPreview.style.color = '#000';
+          statusPreview.textContent = "LEFT_EARLY (Về sớm)";
+          statusPreview.style.background = "#ffc107";
+          statusPreview.style.color = "#000";
         } else {
-            statusPreview.textContent = 'COMPLETED (Hoàn thành)';
-            statusPreview.style.background = '#28a745';
-            statusPreview.style.color = 'white';
+          statusPreview.textContent = "COMPLETED (Hoàn thành)";
+          statusPreview.style.background = "#28a745";
+          statusPreview.style.color = "white";
         }
-    }
+      }
 
-    function submitCompleteShift() {
-        const form = document.getElementById('completeShiftForm');
+      function submitCompleteShift() {
+        const form = document.getElementById("completeShiftForm");
 
         // Validate required fields
-        const checkoutTime = document.getElementById('completeCheckoutTime').value;
-        const note = document.getElementById('completeNote').value;
-        const penalty = document.getElementById('completePenalty').value;
+        const checkoutTime = document.getElementById(
+          "completeCheckoutTime"
+        ).value;
+        const note = document.getElementById("completeNote").value;
+        const penalty = document.getElementById("completePenalty").value;
 
         // Validation messages with better UX
         if (!checkoutTime) {
-            showValidationError('completeCheckoutTime', 'Vui lòng chọn thời gian checkout');
-            return;
+          showValidationError(
+            "completeCheckoutTime",
+            "Vui lòng chọn thời gian checkout"
+          );
+          return;
         }
 
         // Validate checkout time is not in the future
         const checkoutDateTime = new Date(checkoutTime);
         const now = new Date();
         if (checkoutDateTime > now) {
-            showValidationError('completeCheckoutTime', 'Thời gian checkout không thể ở tương lai');
-            return;
+          showValidationError(
+            "completeCheckoutTime",
+            "Thời gian checkout không thể ở tương lai"
+          );
+          return;
         }
 
         if (!note.trim()) {
-            showValidationError('completeNote', 'Vui lòng nhập lý do hoàn thành ca');
-            return;
+          showValidationError(
+            "completeNote",
+            "Vui lòng nhập lý do hoàn thành ca"
+          );
+          return;
         }
 
         if (note.trim().length < 10) {
-            showValidationError('completeNote', 'Lý do phải có ít nhất 10 ký tự để đảm bảo rõ ràng');
-            return;
+          showValidationError(
+            "completeNote",
+            "Lý do phải có ít nhất 10 ký tự để đảm bảo rõ ràng"
+          );
+          return;
         }
 
-        if (penalty === '' || penalty < 0 || penalty > 100) {
-            showValidationError('completePenalty', 'Mức phạt phải từ 0-100%');
-            return;
+        if (penalty === "" || penalty < 0 || penalty > 100) {
+          showValidationError("completePenalty", "Mức phạt phải từ 0-100%");
+          return;
         }
 
         // Show confirmation dialog with details
-        const statusPreviewText = document.getElementById('statusPreview').textContent;
-        const confirmMessage = `Bạn có chắc chắn muốn hoàn thành ca này?\n\n` +
-            `Trạng thái: ${statusPreviewText}\n` +
-            `Thời gian checkout: ${formatDateTime(checkoutTime)}\n` +
-            `Mức phạt: ${penalty}%\n\n` +
-            `Lưu ý: Thao tác này không thể hoàn tác!`;
+        const statusPreviewText =
+          document.getElementById("statusPreview").textContent;
+        const confirmMessage =
+          `Bạn có chắc chắn muốn hoàn thành ca này?\n\n` +
+          `Trạng thái: ${statusPreviewText}\n` +
+          `Thời gian checkout: ${formatDateTime(checkoutTime)}\n` +
+          `Mức phạt: ${penalty}%\n\n` +
+          `Lưu ý: Thao tác này không thể hoàn tác!`;
 
         if (!confirm(confirmMessage)) {
-            return;
+          return;
         }
 
         // Update form action with current shift ID
-        form.action = '/pizzario/manager/staff_shifts/manual-complete/' + currentShiftId;
+        form.action =
+          "/pizzario/manager/staff_shifts/manual-complete/" + currentShiftId;
 
         // Disable submit button to prevent double submission
         const submitBtn = event.target;
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Đang xử lý...';
-        submitBtn.style.opacity = '0.6';
+        submitBtn.textContent = "Đang xử lý...";
+        submitBtn.style.opacity = "0.6";
 
         // Submit form
         form.submit();
-    }
+      }
 
-    // Helper function to show validation errors
-    function showValidationError(fieldId, message) {
+      // Helper function to show validation errors
+      function showValidationError(fieldId, message) {
         const field = document.getElementById(fieldId);
 
         // Highlight field with error
-        field.style.borderColor = '#f44336';
-        field.style.boxShadow = '0 0 0 3px rgba(244, 67, 54, 0.1)';
+        field.style.borderColor = "#f44336";
+        field.style.boxShadow = "0 0 0 3px rgba(244, 67, 54, 0.1)";
 
         // Show alert
-        alert('❌ ' + message);
+        alert("❌ " + message);
 
         // Focus on field
         field.focus();
 
         // Reset border after 3 seconds
         setTimeout(() => {
-            field.style.borderColor = '#ddd';
-            field.style.boxShadow = 'none';
+          field.style.borderColor = "#ddd";
+          field.style.boxShadow = "none";
         }, 3000);
-    }
+      }
 
-    // Helper function to format datetime for display
-    function formatDateTime(datetimeString) {
+      // Helper function to format datetime for display
+      function formatDateTime(datetimeString) {
         const date = new Date(datetimeString);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
         const year = date.getFullYear();
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
         return `${day}/${month}/${year} ${hours}:${minutes}`;
-    }
+      }
 
-    // Close modal when clicking outside
-    window.onclick = function (event) {
-        const completeModal = document.getElementById('completeShiftModal');
-        const exportModal = document.getElementById('exportModal');
+      // Close modal when clicking outside
+      window.onclick = function (event) {
+        const completeModal = document.getElementById("completeShiftModal");
+        const exportModal = document.getElementById("exportModal");
 
         if (event.target == completeModal) {
-            closeCompleteShiftModal();
+          closeCompleteShiftModal();
         }
         if (event.target == exportModal) {
-            closeExportModal();
+          closeExportModal();
         }
-    }
-</script>
+      };
+    </script>
 
-<script th:inline="javascript">
-    window.openShiftModalFlag = /*[[${openShiftModal}]]*/ null;
-    window.openStaffShiftModalFlag = /*[[${openStaffShiftModal}]]*/ null;
-    window.shiftTypes = /*[[${shiftTypes}]]*/ [];
-</script>
-<script th:src="@{/js/admin/shift-calendar.js}"></script>
-<script th:src="@{/js/admin/product-dropdown.js}"></script>
-
-</body>
+    <script th:inline="javascript">
+      window.openShiftModalFlag = /*[[${openShiftModal}]]*/ null;
+      window.openStaffShiftModalFlag = /*[[${openStaffShiftModal}]]*/ null;
+      window.shiftTypes = /*[[${shiftTypes}]]*/ [];
+    </script>
+    <script th:src="@{/js/admin/shift-calendar.js}"></script>
+    <script th:src="@{/js/admin/product-dropdown.js}"></script>
+  </body>
 </html>

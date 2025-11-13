@@ -90,6 +90,11 @@ public class StaffShiftService {
                 staffShiftMapper.updateStaffShift(staffShift, staffShiftDTO);
 
                 staffShiftRepository.save(staffShift);
+
+                // Publish event to reschedule tasks when shift is updated
+                log.info("🔄 Publishing StaffShiftUpdatedEvent for shift ID: {} to reschedule tasks", id);
+                eventPublisher.publishEvent(new StaffShiftUpdatedEvent(this, staffShift, true));
+                log.info("✅ StaffShiftUpdatedEvent published successfully for shift ID: {}", id);
         }
 
         public void delete(int id) {
