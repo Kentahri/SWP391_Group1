@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "[Category]")
+@Table(name = "[Category]", uniqueConstraints = {
+    @UniqueConstraint(columnNames = "name")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,7 +22,7 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Column(columnDefinition = "NVARCHAR(50)")
+    @Column(columnDefinition = "NVARCHAR(50)", unique = true)
     String name;
     @Column(columnDefinition = "NVARCHAR(256)")
     String description;

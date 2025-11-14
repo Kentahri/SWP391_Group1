@@ -156,6 +156,7 @@ public class ProductController{
         // === KIỂM TRA LỖI VALIDATION ===
         if (bindingResult.hasErrors()) {
             model.addAttribute("products", productService.getAllProducts());
+            model.addAttribute("categories", categoryService.getAllCategories());
             model.addAttribute("openModal", productForm.getId() == null ? "create" : "edit");
             model.addAttribute("hasErrors", true);
             return "admin_page/product/product-list";
@@ -177,6 +178,7 @@ public class ProductController{
             }
             return "redirect:/manager/products";
         } catch (Exception e) {
+            model.addAttribute("products", productService.getAllProducts());
             model.addAttribute("categories", categoryService.getAllCategories());
             model.addAttribute("openModal", productForm.getId() == null ? "create" : "edit");
             model.addAttribute("errorMessage", e.getMessage());

@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "[Size]")
+@Table(name = "[Size]", uniqueConstraints = {
+    @UniqueConstraint(columnNames = "size_name")
+})
 @Data
 @NoArgsConstructor
 @ToString(exclude = {"productSizes"})
@@ -19,7 +21,7 @@ public class Size {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "size_name", columnDefinition = "NVARCHAR(50)", nullable = false)
+    @Column(name = "size_name", columnDefinition = "NVARCHAR(50)", nullable = false, unique = true)
     private String sizeName;
 
     // Một size có thể áp dụng cho nhiều ProductSize
