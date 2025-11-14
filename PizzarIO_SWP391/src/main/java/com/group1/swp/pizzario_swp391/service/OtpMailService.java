@@ -54,15 +54,8 @@ public class OtpMailService {
 
     public String checkValid(String password){
 
-        if(password.length() < 8){
-            return "Password ít nhất 8 ký tự";
-        }
-
-        String REGEX = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d).+$";
-
-
-        if(!password.matches(REGEX)){
-            return "Password phải chứa ít nhất một chữ hoa, một chữ thường và một chữ số";
+        if(password.length() < 6){
+            return "Password ít nhất 6 ký tự";
         }
 
         return null;
