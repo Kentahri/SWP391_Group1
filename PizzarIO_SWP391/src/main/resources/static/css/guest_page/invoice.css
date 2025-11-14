@@ -1,0 +1,236 @@
+/* Invoice/Receipt Print Styles - Black and White Receipt Format */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Courier New", "Courier", monospace;
+  background: #ffffff;
+  color: #000000;
+  padding: 20px;
+  line-height: 1.4;
+}
+
+.invoice-container {
+  max-width: 400px;
+  margin: 0 auto;
+  background: #ffffff;
+}
+
+.receipt {
+  border: 1px solid #000000;
+  padding: 20px;
+  background: #ffffff;
+  font-size: 14px;
+}
+
+/* Receipt Header */
+.receipt-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.receipt-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.restaurant-name {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.restaurant-address {
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.restaurant-phone {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.separator {
+  text-align: center;
+  font-size: 12px;
+  margin: 8px 0;
+  letter-spacing: 2px;
+}
+
+/* Transaction Information */
+.transaction-info {
+  margin-bottom: 16px;
+  font-size: 12px;
+}
+
+.date-time {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.customer-info {
+  margin-bottom: 4px;
+}
+
+.table-info {
+  margin-bottom: 4px;
+}
+
+.staff-info {
+  margin-bottom: 4px;
+}
+
+/* Items Header */
+.items-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr;
+  column-gap: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #000000;
+}
+
+.items-header > div:nth-child(1) {
+  text-align: left;
+}
+
+.items-header > div:nth-child(2) {
+  text-align: center;
+}
+
+.items-header > div:nth-child(3) {
+  text-align: right;
+}
+
+/* Order Items */
+.order-item {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr;
+  column-gap: 8px;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.order-item > div:nth-child(1) {
+  text-align: left;
+}
+
+.order-item > div:nth-child(2) {
+  text-align: center;
+}
+
+.order-item > div:nth-child(3) {
+  text-align: right;
+}
+
+/* Total Section */
+.total-section {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #000000;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.total-text {
+  font-size: 11px;
+  font-style: italic;
+  text-align: center;
+  margin-top: 4px;
+  color: #333333;
+}
+
+/* Footer */
+.footer {
+  margin-top: 16px;
+  text-align: center;
+  padding-top: 12px;
+  border-top: 1px solid #000000;
+}
+
+.thank-you {
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Print Actions (hidden when printing) */
+.print-actions {
+  text-align: center;
+  margin-top: 20px;
+  padding: 20px;
+}
+
+.btn-print,
+.btn-close {
+  background: #000000;
+  color: #ffffff;
+  border: 1px solid #000000;
+  padding: 10px 20px;
+  margin: 0 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: "Courier New", "Courier", monospace;
+}
+
+.btn-print:hover,
+.btn-close:hover {
+  background: #333333;
+}
+
+/* Print Media Query */
+@media print {
+  body {
+    padding: 0;
+    background: #ffffff;
+  }
+
+  .invoice-container {
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .receipt {
+    border: 1px solid #000000;
+    padding: 20px;
+    page-break-inside: avoid;
+  }
+
+  .print-actions {
+    display: none;
+  }
+
+  @page {
+    margin: 10mm;
+    size: A4;
+  }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .receipt {
+    padding: 15px;
+    font-size: 12px;
+  }
+
+  .items-header,
+  .order-item {
+    grid-template-columns: 1.5fr 0.8fr 1.2fr;
+    column-gap: 4px;
+    font-size: 11px;
+  }
+}
