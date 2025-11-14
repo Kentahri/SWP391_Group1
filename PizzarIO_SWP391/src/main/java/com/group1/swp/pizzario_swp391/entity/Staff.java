@@ -28,25 +28,14 @@ public class Staff {
     @OneToMany(mappedBy = "staff")
     private List<StaffShift> shifts;
 
-    public void addShift(StaffShift shift) {
-        shifts.add(shift);
-        shift.setStaff(this);
-    }
 
     @OneToMany(mappedBy = "staff")
     private List<Order> orders;
 
-    public void addOrder(Order order) {
-        orders.add(order);
-        order.setStaff(this);
-    }
-
     public Staff() {
-        if (this.role == Role.CASHIER) {
-            orders = new ArrayList<>();
-        }
         shifts = new ArrayList<>();
         otpMails = new ArrayList<>();
+        orders = new ArrayList<>();
     }
 
     public Staff(String name, LocalDate dateOfBirth, String phone, String address, String password, String email,

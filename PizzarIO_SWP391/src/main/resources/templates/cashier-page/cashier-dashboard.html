@@ -1296,30 +1296,28 @@
 								</div>
 							</div>
 						</div>
-						
-						<!-- Order Note -->
-						<div
-								th:if="${order.note != null && !#strings.isEmpty(order.note)}"
-								style="
-                    margin: 15px 0;
-                    padding: 10px;
-                    background: #f8f9fa;
-                    border-radius: 4px;
-                  "
-                >
-                  <strong>Ghi chú đơn hàng:</strong><br />
-                  <span th:text="${order.note}"></span>
-                </div>
 
                 <!-- Action Buttons -->
                 <div style="text-align: center; margin-top: 20px">
-                  <button
-                    th:onclick="'printReceipt(' + ${order.orderId} + ')'"
+                  <a
+                    th:href="@{/cashier/history/{orderId}/invoice(orderId=${order.orderId})}"
+                    target="_blank"
                     class="btn btn-primary"
-                    style="padding: 10px 20px"
+                    style="
+                      padding: 10px 20px;
+                      background: #ff9933;
+                      color: #fff;
+                      border: none;
+                      border-radius: 10px;
+                      text-decoration: none;
+                      display: inline-block;
+                      font-size: 14px;
+                      font-weight: 500;
+                      cursor: pointer;
+                    "
                   >
                     🖨️ In hóa đơn
-                  </button>
+                  </a>
                 </div>
 					</div>
 				</div>

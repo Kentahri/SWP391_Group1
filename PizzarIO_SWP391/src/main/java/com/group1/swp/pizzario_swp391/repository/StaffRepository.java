@@ -17,15 +17,7 @@ public interface StaffRepository extends JpaRepository<Staff, Integer> {
     boolean existsByPhone(String phone);
     boolean existsByRole(Staff.Role role);
 
-    boolean existsByEmailAndIdNot(String email, int id);
-    boolean existsByPhoneAndIdNot(String phone, int id);
-
     Optional<Staff> findByEmail(String email);
-
-//    List<Staff> findByRole(Staff.Role role);
-
-    // Đếm số nhân viên có isActive = true (tương ứng cột is_active)
-    int countByIsActiveTrue();
 
     @Query("SELECT s FROM Staff s ORDER BY s.name ASC")
     List<Staff> findTopNOrderByNameAsc(Pageable pageable);
