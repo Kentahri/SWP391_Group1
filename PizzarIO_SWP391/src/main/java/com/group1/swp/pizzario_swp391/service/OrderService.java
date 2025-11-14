@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -396,7 +397,7 @@ public class OrderService {
     /**
      * Lấy danh sách lịch sử hóa đơn (bao gồm cả đơn đã thanh toán và chưa hoàn thành)
      */
-    public List<com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO> getPaymentHistory() {
+    public List<OrderDetailDTO> getPaymentHistory() {
         List<Order> orders = orderRepository.findAll().stream()
                 .sorted((o1, o2) -> {
                     // Sắp xếp theo ID đơn hàng, order ID lớn hơn trước (mới hơn)
@@ -409,7 +410,7 @@ public class OrderService {
 
         return orders.stream()
                 .map(order -> {
-                    com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO dto = new com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO();
+                    OrderDetailDTO dto = new OrderDetailDTO();
                     dto.setOrderId(order.getId());
                     dto.setOrderStatus(order.getOrderStatus());
                     dto.setOrderType(order.getOrderType());
@@ -421,14 +422,38 @@ public class OrderService {
                     dto.setCreatedAt(order.getCreatedAt());
                     dto.setUpdatedAt(order.getUpdatedAt());
 
+                    // Parse usedPoints from note (format: "usedPoint: XX")
+                    if (order.getNote() != null && order.getNote().contains("usedPoint:")) {
+                        try {
+                            String[] lines = order.getNote().split("\n");
+                            for (String line : lines) {
+                                if (line.trim().startsWith("usedPoint:")) {
+                                    String pointsStr = line.trim().substring("usedPoint:".length()).trim();
+                                    dto.setUsedPoints(Integer.parseInt(pointsStr));
+                                    break;
+                                }
+                            }
+                        } catch (Exception e) {
+                            System.err.println("Error parsing usedPoints from note: " + e.getMessage());
+                        }
+                    }
+
                     // Calculate original total from order items
                     double originalTotal = order.getOrderItems().stream()
                             .mapToDouble(OrderItem::getTotalPrice)
                             .sum();
 
-                    // Calculate discount from voucher if exists
+                    // Calculate discount from points and voucher
                     double discountAmount = 0.0;
-                    if (order.getVoucher() != null) {
+
+                    // Points discount (1 point = 10,000 VND)
+                    if (dto.getUsedPoints() != null && dto.getUsedPoints() > 0) {
+                        double pointsDiscount = dto.getUsedPoints() * 10000.0;
+                        discountAmount = Math.min(pointsDiscount, originalTotal);
+                    }
+
+                    // Voucher discount (only if no points used, mutually exclusive)
+                    if (order.getVoucher() != null && (dto.getUsedPoints() == null || dto.getUsedPoints() == 0)) {
                         dto.setVoucherCode(order.getVoucher().getCode());
                         // Calculate discount based on voucher type
                         if (order.getVoucher().getType() == com.group1.swp.pizzario_swp391.entity.Voucher.VoucherType.FIXED_AMOUNT) {
@@ -436,8 +461,9 @@ public class OrderService {
                         } else if (order.getVoucher().getType() == com.group1.swp.pizzario_swp391.entity.Voucher.VoucherType.PERCENTAGE) {
                             discountAmount = originalTotal * order.getVoucher().getValue() / 100;
                         }
-                        dto.setDiscountAmount(discountAmount);
                     }
+
+                    dto.setDiscountAmount(discountAmount);
 
                     // Calculate final total with tax (finalTotal = (originalTotal - discount) * 1.1)
                     double finalTotal = (originalTotal - discountAmount) * 1.1;

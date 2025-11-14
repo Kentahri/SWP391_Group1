@@ -64,14 +64,25 @@
           </div>
         </div>
 
-        <!-- Discount Information -->
-        <div class="order-item">
+        <!-- Discount Information (Voucher) -->
+        <div class="order-item" th:if="${payment.pointsUsed == null || payment.pointsUsed == 0}">
           <div>Giảm giá:</div>
           <div>-</div>
           <div
             th:text="${discountAmount > 0 ? '-' + #numbers.formatDecimal(discountAmount, 0, 'COMMA', 0, 'POINT') : '0'}"
           >
             0
+          </div>
+        </div>
+
+        <!-- Discount Information (Points) -->
+        <div class="order-item" th:if="${payment.pointsUsed != null && payment.pointsUsed > 0}">
+          <div>⭐ Tiền giảm từ điểm:</div>
+          <div>-</div>
+          <div
+            th:text="'-' + ${#numbers.formatDecimal(payment.pointsUsed * 10000, 0, 'COMMA', 0, 'POINT')}"
+          >
+            -0
           </div>
         </div>
 

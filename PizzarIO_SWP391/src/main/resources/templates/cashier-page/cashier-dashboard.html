@@ -1296,20 +1296,6 @@
 								</div>
 							</div>
 						</div>
-						
-						<!-- Order Note -->
-						<div
-								th:if="${order.note != null && !#strings.isEmpty(order.note)}"
-								style="
-                    margin: 15px 0;
-                    padding: 10px;
-                    background: #f8f9fa;
-                    border-radius: 4px;
-                  "
-                >
-                  <strong>Ghi chú đơn hàng:</strong><br />
-                  <span th:text="${order.note}"></span>
-                </div>
 
                 <!-- Action Buttons -->
                 <div style="text-align: center; margin-top: 20px">

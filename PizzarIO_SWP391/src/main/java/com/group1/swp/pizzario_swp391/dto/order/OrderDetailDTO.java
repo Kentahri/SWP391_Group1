@@ -38,6 +38,7 @@ public class OrderDetailDTO {
     Double discountAmount;
     String customerName; // Tên khách hàng (từ membership hoặc "Khách vãng lai")
     String customerPhone; // Số điện thoại khách hàng (nếu có membership)
+    Integer usedPoints; // Số điểm đã sử dụng để giảm giá (parse từ note)
 }
 
 
