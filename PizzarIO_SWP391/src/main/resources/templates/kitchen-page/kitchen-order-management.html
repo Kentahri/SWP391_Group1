@@ -130,15 +130,6 @@
                         <span th:text="${order.timeAgo}">5 phút trước</span>
                     </span>
                 </div>
-                <div
-                    class="order-info"
-                    th:if="${order.note != null and !order.note.isEmpty()}"
-                >
-                    <span class="order-note">
-                        <i class="fa fa-sticky-note"></i>
-                        <span th:text="${order.note}">Ghi chú</span>
-                    </span>
-                </div>
                 <div class="order-total">
                     <span class="total-price">
                         Tổng:
