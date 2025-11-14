@@ -5,6 +5,7 @@ import com.group1.swp.pizzario_swp391.dto.data_analytics.ProductStatsDTO;
 import com.group1.swp.pizzario_swp391.dto.data_analytics.SalesDTO;
 import com.group1.swp.pizzario_swp391.entity.Membership;
 import com.group1.swp.pizzario_swp391.entity.Order;
+import com.group1.swp.pizzario_swp391.entity.Voucher;
 import com.group1.swp.pizzario_swp391.repository.OrderRepository;
 import com.group1.swp.pizzario_swp391.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -58,10 +59,39 @@ public class DataAnalyticsReportService {
         Long sum = 0L;
 
         for (Order order : orders) {
-            sum += Long.valueOf((long) order.getTotalPrice());
+            sum += calculateTotalPrice(order);
         }
         return sum;
     }
+
+    private Long calculateTotalPrice(Order order){
+
+        double totaPrice = order.getTotalPrice();
+
+        if(order.getVoucher() != null){
+
+            if(order.getVoucher().getType() == Voucher.VoucherType.PERCENTAGE){
+                totaPrice  *= (1 - order.getVoucher().getValue());
+            }
+            else {
+                totaPrice -= order.getVoucher().getValue();
+            }
+        }
+
+        String note = order.getNote();
+        try{
+            Long number = Long.parseLong(note);
+            System.out.println(number);
+            totaPrice = totaPrice -  (number * 10000);
+        }
+        catch(NumberFormatException e){
+            System.out.println("Note is not a number");
+        } catch(NullPointerException e){
+            System.out.println("Note is null");
+        }
+
+        return Math.round(totaPrice * (1 + order.getTaxRate()));
+    }   
 
     // Tính % thay đổi
     private Double calculateDelta(Double current, Double previous) {
