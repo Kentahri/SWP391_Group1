@@ -13,16 +13,18 @@ import org.springframework.web.multipart.MultipartFile;
 public class ProductUpdateDTO{
 
     @NotBlank(message = "Tên sản phẩm không được để trống")
-    @Size(max = 100, message = "Tên sản phẩm không được vượt quá 100 ký tự")
+    @Size(min = 1, max = 255, message = "Tên sản phẩm phải từ 1 đến 255 ký tự")
+    @Pattern(regexp = "^[^<>\"';&]*$", message = "Tên sản phẩm không được chứa ký tự đặc biệt nguy hiểm")
     String name;
 
-    @Size(max = 1000, message = "Mô tả không được vượt quá 1000 ký tự")
+    @Size(max = 500, message = "Mô tả không được vượt quá 500 ký tự")
+    @Pattern(regexp = "^[^<>\"';&]*$", message = "Mô tả không được chứa ký tự đặc biệt nguy hiểm")
     String description;
 
     @Pattern(
             regexp = "^(https?://.*\\.(jpg|jpeg|png|gif|webp))?$",
             flags = Pattern.Flag.CASE_INSENSITIVE,
-            message = "URL ảnh phải là URL hợp lệ và có đuôi ảnh hợp lệ"
+            message = "URL ảnh phải là URL hợp lệ (http/https) và có đuôi .jpg, .jpeg, .png, .gif hoặc .webp"
     )
     String imageURL;
 

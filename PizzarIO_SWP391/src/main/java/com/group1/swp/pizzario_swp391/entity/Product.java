@@ -10,7 +10,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "[Product]")
+@Table(name = "[Product]", uniqueConstraints = {
+    @UniqueConstraint(columnNames = "name")
+})
 @Data
 @ToString(exclude = {"orderItems", "productSizes"})
 @AllArgsConstructor
@@ -21,7 +23,7 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(columnDefinition = "NVARCHAR(255)")
+    @Column(columnDefinition = "NVARCHAR(255)", unique = true)
     private String name;
 
     @Column(columnDefinition = "NVARCHAR(500)")

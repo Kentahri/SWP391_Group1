@@ -5,6 +5,7 @@ import com.group1.swp.pizzario_swp391.dto.data_analytics.ProductStatsDTO;
 import com.group1.swp.pizzario_swp391.dto.data_analytics.SalesDTO;
 import com.group1.swp.pizzario_swp391.entity.Membership;
 import com.group1.swp.pizzario_swp391.entity.Order;
+import com.group1.swp.pizzario_swp391.entity.Voucher;
 import com.group1.swp.pizzario_swp391.repository.OrderRepository;
 import com.group1.swp.pizzario_swp391.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +42,7 @@ public class DataAnalyticsReportService {
         Map<LocalDate, Double> revenueByDate = new HashMap<>();
         for (Order o : orders) {
             LocalDate day = o.getCreatedAt().toLocalDate();
-            revenueByDate.merge(day, o.getTotalPrice(), Double::sum);
+            revenueByDate.merge(day, calculateTotalPrice(o).doubleValue(), Double::sum);
         }
 
         double[] data = new double[Integer.valueOf((int) days)];
@@ -58,10 +59,41 @@ public class DataAnalyticsReportService {
         Long sum = 0L;
 
         for (Order order : orders) {
-            sum += Long.valueOf((long) order.getTotalPrice());
+            sum += calculateTotalPrice(order);
         }
         return sum;
     }
+
+    private Long calculateTotalPrice(Order order){
+
+        double totaPrice = order.getTotalPrice();
+
+        if(order.getVoucher() != null){
+
+            if(order.getVoucher().getType() == Voucher.VoucherType.PERCENTAGE){
+                totaPrice  *= (1 - order.getVoucher().getValue()/100);
+            }
+            else {
+                totaPrice -= order.getVoucher().getValue();
+            }
+        }
+
+        if(order.getNote() != null && order.getNote().contains("usedPoint:")){
+            try{
+
+                String[] tokens = order.getNote().split(" ");
+
+                        Long number = Long.parseLong(tokens[tokens.length - 1]);
+                        System.out.println(number);
+                        totaPrice = totaPrice -  (number * 10000);
+
+            } catch (Exception e){
+                System.err.println("Error parsing usedPoint from note: " + e.getMessage());
+            }
+        }
+
+        return Math.round(totaPrice * (1 + order.getTaxRate()));
+    }   
 
     // Tính % thay đổi
     private Double calculateDelta(Double current, Double previous) {
@@ -139,11 +171,15 @@ public class DataAnalyticsReportService {
         Double retentionRate = totalCustomers > 0 ? (oldCustomers * 100.0) / totalCustomers : 0.0;
 
         // ========== THÊM: LẤY SỐ LIỆU HÔM NAY ==========
-        Long todayOrders = orderRepository.countTodayOrders();
-        Double todayRevenueDouble = orderRepository.calculateTodayRevenue();
-        Long todayRevenue = todayRevenueDouble != null ? todayRevenueDouble.longValue() : 0L;
+        LocalDate today = LocalDate.now();
+        List<Order> todayOrdersList = orderRepository.findInRangeAndPaid(
+                today.atStartOfDay(),
+                today.plusDays(1).atStartOfDay()
+        );
 
-        // Đảm bảo không null
+        Long todayOrders = (long) todayOrdersList.size();
+        Long todayRevenue = calculateTotalRevenue(todayOrdersList);
+
         if (todayOrders == null) todayOrders = 0L;
         // ===============================================
 

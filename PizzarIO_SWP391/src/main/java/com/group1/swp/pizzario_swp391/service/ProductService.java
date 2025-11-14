@@ -70,6 +70,7 @@ public class ProductService {
                 .name(product.getName())
                 .description(product.getDescription())
                 .imageURL(product.getImageURL())
+                .currentImageURL(product.getImageURL())
 //                .basePrice(product.getBasePrice())
 //                .flashSalePrice(product.getFlashSalePrice())
 //                .flashSaleStart(product.getFlashSaleStart())
@@ -81,6 +82,11 @@ public class ProductService {
 
     @Transactional
     public void createProduct(ProductCreateDTO createDTO) {
+        // Kiểm tra tên sản phẩm đã tồn tại chưa
+        if (productRepository.existsByNameIgnoreCase(createDTO.getName())) {
+            throw new RuntimeException("Tên sản phẩm '" + createDTO.getName() + "' đã tồn tại");
+        }
+        
         Product product = productMapper.toEntity(createDTO);
         LocalDateTime now = LocalDateTime.now();
         product.setCreatedAt(now);
@@ -126,6 +132,11 @@ public class ProductService {
     public void updateProduct(Long id, ProductUpdateDTO updateDTO) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(PRODUCT_NOT_FOUND));
+
+        // Kiểm tra tên sản phẩm đã tồn tại chưa (trừ chính nó)
+        if (productRepository.existsByNameIgnoreCaseAndIdNot(updateDTO.getName(), id)) {
+            throw new RuntimeException("Tên sản phẩm '" + updateDTO.getName() + "' đã tồn tại");
+        }
 
         productMapper.updateEntity(product, updateDTO);
         product.setUpdatedAt(LocalDateTime.now());
