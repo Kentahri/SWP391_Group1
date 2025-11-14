@@ -42,7 +42,7 @@ public class StaffService {
 
     PasswordEncoder passwordEncoder;
 
-    static final String STAFF_NOT_FOUND = "Staff not found";
+    static final String STAFF_NOT_FOUND = "Staff Không tìm thấy";
     static final String EMAIL_ALREADY_EXISTS = "Email đã được sử dụng";
     static final String PHONE_ALREADY_EXISTS = "Số điện thoại đã được sử dụng";
     static final String AGE_NOT_ELIGIBLE = "Nhân viên phải đủ 18 tuổi";
