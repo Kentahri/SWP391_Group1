@@ -31,6 +31,13 @@ import com.group1.swp.pizzario_swp391.service.StaffService;
 import com.group1.swp.pizzario_swp391.service.TableService;
 import com.group1.swp.pizzario_swp391.service.ProductService;
 import com.group1.swp.pizzario_swp391.service.CategoryService;
+import com.group1.swp.pizzario_swp391.service.PaymentService;
+import com.group1.swp.pizzario_swp391.service.SessionService;
+import com.group1.swp.pizzario_swp391.dto.payment.PaymentDTO;
+import com.group1.swp.pizzario_swp391.entity.Order;
+import com.group1.swp.pizzario_swp391.entity.OrderItem;
+import com.group1.swp.pizzario_swp391.entity.Membership;
+import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -53,6 +60,8 @@ public class CashierDashboardController {
     OrderService orderService;
     ProductService productService;
     CategoryService categoryService;
+    PaymentService paymentService;
+    SessionService sessionService;
 
     @GetMapping
     public String cashierDashboard(Model model, Principal principal) {
@@ -426,6 +435,83 @@ public class CashierDashboardController {
         } catch (Exception e) {
             model.addAttribute("error", "Không thể tải chi tiết đơn hàng. Vui lòng thử lại.");
             return "error-page";
+        }
+    }
+
+    /**
+     * Trang in hóa đơn cho order từ lịch sử - hiển thị hóa đơn theo format receipt đen trắng
+     */
+    @GetMapping("/history/{orderId}/invoice")
+    public String showHistoryOrderInvoice(@PathVariable Long orderId,
+                                         Model model,
+                                         Principal principal,
+                                         RedirectAttributes redirectAttributes,
+                                         HttpServletRequest request) {
+        try {
+            // Lấy order từ database
+            var order = orderService.getOrderById(orderId);
+            if (order == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy đơn hàng này.");
+                return "redirect:/cashier/history";
+            }
+
+            if (order.getPaymentStatus() != Order.PaymentStatus.PAID) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Đơn hàng này chưa được thanh toán.");
+                return "redirect:/cashier/history";
+            }
+
+            // Lấy session từ order
+            var session = sessionService.getSessionByOrder(order);
+            if (session == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy session cho đơn hàng này.");
+                return "redirect:/cashier/history";
+            }
+            Long sessionId = session.getId();
+
+            // Lấy PaymentDTO từ PaymentService để có đầy đủ thông tin
+            PaymentDTO paymentDTO = paymentService.getPaymentConfirmationBySessionId(sessionId);
+
+            // Lấy chi tiết order items
+            var orderItems = paymentService.getOrderItemsBySessionId(sessionId);
+
+            // Lấy thông tin membership
+            var membership = paymentService.getMembershipBySessionId(sessionId);
+
+            // Tính các giá trị
+            double originalTotal = paymentService.calculateOriginalOrderTotal(sessionId);
+            double discountAmount = paymentService.calculateDiscountAmount(sessionId);
+            double finalTotal = originalTotal - discountAmount;
+            double taxAmount = finalTotal * 0.1;
+            double totalWithTax = finalTotal + taxAmount;
+
+            // Điều chỉnh PaymentDTO cho order history
+            if (order.getOrderType() == Order.OrderType.TAKE_AWAY) {
+                paymentDTO.setTableNumber(null); // Take-away không có bàn
+            }
+
+            // Lấy thông tin nhân viên từ order
+            var staff = order.getStaff();
+
+            model.addAttribute("payment", paymentDTO);
+            model.addAttribute("orderItems", orderItems);
+            model.addAttribute("orderId", orderId);
+            model.addAttribute("sessionId", sessionId);
+            model.addAttribute("tableId", paymentDTO.getTableNumber());
+
+            model.addAttribute("originalTotal", originalTotal);
+            model.addAttribute("discountAmount", discountAmount);
+            model.addAttribute("finalTotal", finalTotal);
+            model.addAttribute("taxAmount", taxAmount);
+            model.addAttribute("totalWithTax", totalWithTax);
+
+            model.addAttribute("membership", membership);
+            model.addAttribute("staff", staff);
+
+            return "guest-page/invoice";
+        } catch (Exception e) {
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("errorMessage", "Không thể tải thông tin hóa đơn: " + e.getMessage());
+            return "redirect:/cashier/history";
         }
     }
 
