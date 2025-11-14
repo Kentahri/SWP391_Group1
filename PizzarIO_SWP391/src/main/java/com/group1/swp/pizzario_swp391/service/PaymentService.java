@@ -111,6 +111,22 @@ public class PaymentService {
         paymentDTO.setDiscountAmount(discountAmount);
         paymentDTO.setOrderTotal(finalTotal);
 
+        // Parse usedPoints from note (format: "usedPoint: XX")
+        if (order.getNote() != null && order.getNote().contains("usedPoint:")) {
+            try {
+                String[] lines = order.getNote().split("\n");
+                for (String line : lines) {
+                    if (line.trim().startsWith("usedPoint:")) {
+                        String pointsStr = line.trim().substring("usedPoint:".length()).trim();
+                        paymentDTO.setPointsUsed(Integer.parseInt(pointsStr));
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error parsing usedPoints from note: " + e.getMessage());
+            }
+        }
+
         return paymentDTO;
     }
 
@@ -340,6 +356,17 @@ public class PaymentService {
                 }
             }
 
+            // Lưu số điểm đã sử dụng vào note
+            int usedPoints = getPointsUsed(sessionId);
+            if (usedPoints > 0) {
+                String noteContent = order.getNote() != null ? order.getNote() : "";
+                if (!noteContent.isEmpty() && !noteContent.endsWith("\n")) {
+                    noteContent += "\n";
+                }
+                noteContent += "usedPoint: " + usedPoints;
+                order.setNote(noteContent);
+            }
+
             orderRepository.save(order);
 
             // Gửi thông báo đến kitchen khi order đã hoàn thành (để dashboard refresh)
@@ -416,6 +443,17 @@ public class PaymentService {
                 } catch (Exception e) {
                     System.err.println("Error updating membership points: " + e.getMessage());
                 }
+            }
+
+            // Lưu số điểm đã sử dụng vào note
+            int usedPoints = getPointsUsed(sessionId);
+            if (usedPoints > 0) {
+                String noteContent = order.getNote() != null ? order.getNote() : "";
+                if (!noteContent.isEmpty() && !noteContent.endsWith("\n")) {
+                    noteContent += "\n";
+                }
+                noteContent += "usedPoint: " + usedPoints;
+                order.setNote(noteContent);
             }
 
             orderRepository.save(order);
