@@ -6,8 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-// ...existing code...
-
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -51,30 +49,12 @@ public class StaffService {
     static final String MANAGER_ALREADY_EXISTS = "Hệ thống chỉ cho phép 1 manager";
     static final int MIN_AGE = 18;
 
-    public List<Staff> getAll() {
-        return staffRepository.findAll();
-    }
-
-    public Staff getById(int id) {
-        return staffRepository.findById(id).orElse(null);
-    }
-
     public List<StaffResponseDTO> getAllStaff() {
         List<Staff> staffList = staffRepository.findAll();
         return staffList.stream()
                 .map(staffMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
-
-//    public List<StaffResponseDTO> getAllStaffByRole(Staff.Role role) {
-//        if (role == null) {
-//            return getAllStaff();
-//        }
-//        List<Staff> staffList = staffRepository.findByRole(role);
-//        return staffList.stream()
-//                .map(staffMapper::toResponseDTO)
-//                .collect(Collectors.toList());
-//    }
 
     public List<StaffResponseDTO> getStaffWithoutManager() {
         List<Staff> staffList = staffRepository.findAll();
@@ -188,13 +168,6 @@ public class StaffService {
         return null;
     }
 
-    public void deleteStaffById(int id) {
-        if (!staffRepository.existsById(id)) {
-            throw new RuntimeException(STAFF_NOT_FOUND);
-        }
-        staffRepository.deleteById(id);
-    }
-
     public void add(Staff staff) {
         staffRepository.save(staff);
     }
@@ -218,10 +191,6 @@ public class StaffService {
     public Staff findByEmailValid(String email){
         Staff staff = loginRepository.findByEmail(email).orElse(null);
         return staff;
-    }
-
-    public void updateStaff(Staff staff) {
-        staffRepository.save(staff);
     }
 
     public void toggleStaffActive(int id) {

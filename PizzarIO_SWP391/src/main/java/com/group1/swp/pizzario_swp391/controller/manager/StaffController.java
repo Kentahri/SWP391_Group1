@@ -139,15 +139,9 @@ public class StaffController {
     @GetMapping("/staff/toggle-active/{id}")
     public String toggleActive(@PathVariable int id, RedirectAttributes redirectAttributes) {
         try {
-            System.out.println("=== TOGGLE ACTIVE CALLED ===");
-            System.out.println("Staff ID: " + id);
-            System.out.println("Endpoint: /pizzario/manager/staff/toggle-active/" + id);
-            
             staffService.toggleStaffActive(id);
             redirectAttributes.addFlashAttribute("success", "Cập nhật trạng thái nhân viên thành công");
-            System.out.println("Toggle successful");
         } catch (RuntimeException e) {
-            System.err.println("Error toggling staff active status: " + e.getMessage());
             redirectAttributes.addFlashAttribute("error", "Không thể cập nhật trạng thái nhân viên: " + e.getMessage());
         }
         return "redirect:/manager/staff";
