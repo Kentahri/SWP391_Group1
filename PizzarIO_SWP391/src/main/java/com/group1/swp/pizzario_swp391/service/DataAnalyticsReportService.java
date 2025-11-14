@@ -71,7 +71,7 @@ public class DataAnalyticsReportService {
         if(order.getVoucher() != null){
 
             if(order.getVoucher().getType() == Voucher.VoucherType.PERCENTAGE){
-                totaPrice  *= (1 - order.getVoucher().getValue());
+                totaPrice  *= (1 - order.getVoucher().getValue()/100);
             }
             else {
                 totaPrice -= order.getVoucher().getValue();
