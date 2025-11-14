@@ -73,4 +73,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         and p.category.active = true
         """)
     List<Product> findByActiveTrueAndCategoryActiveTrue();
+    
+    boolean existsByNameIgnoreCase(String name);
+    
+    boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
 }
