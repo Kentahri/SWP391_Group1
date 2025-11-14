@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hóa đơn thanh toán - PizzarIO</title>
+    <link rel="stylesheet" th:href="@{/css/guest_page/invoice.css}" />
+  </head>
+  <body>
+    <div class="invoice-container">
+      <div class="receipt">
+        <!-- Receipt Header -->
+        <div class="receipt-header">
+          <div class="receipt-title">HÓA ĐƠN THANH TOÁN</div>
+          <div class="restaurant-name">PizzarIO</div>
+          <div class="restaurant-address">KM29 - ĐL. Thăng Long</div>
+          <div class="restaurant-phone">ĐT: 0123456678-0987654321</div>
+          <div class="separator">**********</div>
+        </div>
+
+        <!-- Transaction Information -->
+        <div class="transaction-info">
+          <div class="date-time">
+            <span
+              th:text="${#temporals.format(payment.createdAt, 'dd-MM-yyyy')}"
+              >20-09-2025</span
+            >
+            <span th:text="${#temporals.format(payment.createdAt, 'HH:mm:ss')}"
+              >11:02:37</span
+            >
+          </div>
+          <div class="customer-info">
+            Khách hàng:
+            <span
+              th:text="${payment.customerName ?: (membership != null ? membership.name : 'Khách vãng lai')}"
+              >Phan Văn A</span
+            >
+          </div>
+          <div class="table-info" th:if="${payment.tableNumber != null}">
+            Bàn số: <span th:text="${payment.tableNumber}">05</span>
+          </div>
+          <div class="staff-info" th:if="${staff != null}">
+            Nhân viên: <span th:text="${staff.name}">Nguyễn Văn A</span>
+          </div>
+        </div>
+
+        <!-- Items Header -->
+        <div class="items-header">
+          <div>Tên món</div>
+          <div>Số lượng</div>
+          <div>Thành tiền</div>
+        </div>
+
+        <!-- Order Items -->
+        <div th:each="item : ${orderItems}" class="order-item">
+          <div
+            th:text="${item.productSize.product.name} + ' (' + ${item.productSize.size.sizeName} + ')'"
+          ></div>
+          <div th:text="${item.quantity}"></div>
+          <div
+            th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT')}"
+          >
+            245,000
+          </div>
+        </div>
+
+        <!-- Discount Information -->
+        <div class="order-item">
+          <div>Giảm giá:</div>
+          <div>-</div>
+          <div
+            th:text="${discountAmount > 0 ? '-' + #numbers.formatDecimal(discountAmount, 0, 'COMMA', 0, 'POINT') : '0'}"
+          >
+            0
+          </div>
+        </div>
+
+        <!-- Tax Information -->
+        <div class="order-item">
+          <div>Thuế (10%):</div>
+          <div>-</div>
+          <div
+            th:text="${#numbers.formatDecimal(taxAmount, 0, 'COMMA', 0, 'POINT')}"
+          >
+            94,500
+          </div>
+        </div>
+
+        <!-- Total Section -->
+        <div class="total-section">
+          <div class="total-row">
+            <span>Tổng:</span>
+            <span
+              th:text="${#numbers.formatDecimal(totalWithTax, 0, 'COMMA', 0, 'POINT')}"
+              >1,039,500</span
+            >
+          </div>
+          <div class="total-text" id="totalText">
+            (<span id="vietnameseAmount"></span>)
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+          <div class="thank-you">
+            PizzarIO xin cảm ơn và hẹn gặp lại quý khách !
+          </div>
+        </div>
+      </div>
+
+      <!-- Print Button -->
+      <div class="print-actions">
+        <button class="btn-print" onclick="window.print()">In hóa đơn</button>
+        <button class="btn-close" onclick="window.close()">Đóng</button>
+      </div>
+    </div>
+
+    <script th:inline="javascript">
+      // Convert number to Vietnamese text
+      function numberToVietnamese(num) {
+        const ones = [
+          "",
+          "một",
+          "hai",
+          "ba",
+          "bốn",
+          "năm",
+          "sáu",
+          "bảy",
+          "tám",
+          "chín",
+        ];
+        const tens = [
+          "",
+          "mười",
+          "hai mươi",
+          "ba mươi",
+          "bốn mươi",
+          "năm mươi",
+          "sáu mươi",
+          "bảy mươi",
+          "tám mươi",
+          "chín mươi",
+        ];
+        const hundreds = [
+          "",
+          "một trăm",
+          "hai trăm",
+          "ba trăm",
+          "bốn trăm",
+          "năm trăm",
+          "sáu trăm",
+          "bảy trăm",
+          "tám trăm",
+          "chín trăm",
+        ];
+
+        if (num === 0) return "không";
+        if (num < 10) return ones[num];
+        if (num < 20) {
+          if (num === 10) return "mười";
+          return "mười " + ones[num % 10];
+        }
+        if (num < 100) {
+          const ten = Math.floor(num / 10);
+          const one = num % 10;
+          if (one === 0) return tens[ten];
+          if (one === 1) return tens[ten] + " một";
+          if (one === 5) return tens[ten] + " lăm";
+          return tens[ten] + " " + ones[one];
+        }
+        if (num < 1000) {
+          const hundred = Math.floor(num / 100);
+          const remainder = num % 100;
+          if (remainder === 0) return hundreds[hundred];
+          return hundreds[hundred] + " " + numberToVietnamese(remainder);
+        }
+        if (num < 1000000) {
+          const thousand = Math.floor(num / 1000);
+          const remainder = num % 1000;
+          let result = numberToVietnamese(thousand) + " nghìn";
+          if (remainder > 0) {
+            if (remainder < 100 && thousand > 0) result += " lẻ";
+            result += " " + numberToVietnamese(remainder);
+          }
+          return result.trim();
+        }
+        return "";
+      }
+
+      // Format number and convert to Vietnamese
+      function formatVietnameseAmount(amount) {
+        const num = Math.round(amount);
+        if (num === 0) return "Không đồng";
+
+        let vietnamese = "";
+        if (num >= 1000000) {
+          const millions = Math.floor(num / 1000000);
+          const remainder = num % 1000000;
+          vietnamese = numberToVietnamese(millions) + " triệu";
+          if (remainder > 0) {
+            if (remainder < 1000) {
+              vietnamese += " lẻ " + numberToVietnamese(remainder);
+            } else {
+              vietnamese += " " + numberToVietnamese(remainder);
+            }
+          }
+          vietnamese += " đồng";
+        } else if (num >= 1000) {
+          vietnamese = numberToVietnamese(num) + " nghìn đồng";
+        } else {
+          vietnamese = numberToVietnamese(num) + " đồng";
+        }
+
+        return vietnamese.charAt(0).toUpperCase() + vietnamese.slice(1);
+      }
+
+      // Set Vietnamese amount text
+      window.onload = function () {
+        const totalAmount = /*[[${totalWithTax}]]*/ 0;
+        const vietnameseText = formatVietnameseAmount(totalAmount);
+        document.getElementById("vietnameseAmount").textContent =
+          vietnameseText;
+      };
+    </script>
+  </body>
+</html>
