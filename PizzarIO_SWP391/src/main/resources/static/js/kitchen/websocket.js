@@ -458,7 +458,6 @@ function createOrderCardElement(orderData) {
         const priorityBadge = getPriorityBadgeHTML(orderData.priority);
         const statusBadge = getStatusBadgeHTML(orderData.status);
         const totalPrice = (typeof orderData.totalPrice === 'number' && !isNaN(orderData.totalPrice)) ? orderData.totalPrice : 0;
-        const orderNote = (typeof orderData.note === 'string' && orderData.note.trim()) ? orderData.note : null;
         
         orderCard.innerHTML = `
             <div class="order-header">
@@ -470,7 +469,6 @@ function createOrderCardElement(orderData) {
                 <span class="order-table"><i class="fa fa-map-marker-alt"></i> ${tableName}</span>
                 <span class="order-time"><i class="fa fa-clock"></i> <span>Vừa xong</span></span>
             </div>
-            ${orderNote ? `<div class="order-info"><span class="order-note"><i class="fa fa-sticky-note"></i> <span>${orderNote}</span></span></div>` : ''}
             <div class="order-total"><span class="total-price">Tổng: ${formatPrice(totalPrice)} VNĐ</span></div>
             <a href="/pizzario/kitchen/order/${orderData.orderId || orderData.id || 'unknown'}" class="order-detail-btn">Xem chi tiết</a>
         `;
@@ -578,9 +576,6 @@ function upsertOrderCard(orderData) {
     const totalPrice = (typeof orderData.totalPrice === 'number' && !isNaN(orderData.totalPrice)) ? orderData.totalPrice : 0;
     const totalPriceEl = orderCard.querySelector('.total-price');
     if (totalPriceEl) totalPriceEl.textContent = `Tổng: ${formatPrice(totalPrice)} VNĐ`;
-    const orderNote = (typeof orderData.note === 'string' && orderData.note.trim()) ? orderData.note : null;
-    const noteWrapper = orderCard.querySelector('.order-info .order-note span:last-child');
-    if (noteWrapper) noteWrapper.textContent = orderNote || '';
     orderCard.classList.add('updated-order');
     setTimeout(() => orderCard.classList.remove('updated-order'), 1200);
     return;
