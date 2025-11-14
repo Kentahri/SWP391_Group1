@@ -173,9 +173,8 @@ public class CartService{
         return cartItems;
     }
 
-
     private double getCurrentPrice(ProductSize productSize) {
-        if (productSize.getFlashSaleStart() != null && productSize.getFlashSaleEnd() != null) {
+        if (productSize.getFlashSaleStart() != null && productSize.getFlashSaleEnd() != null && productSize.getFlashSalePrice() != null) {
             LocalDateTime now = LocalDateTime.now();
             if (now.isAfter(productSize.getFlashSaleStart()) && now.isBefore(productSize.getFlashSaleEnd())) {
                 return productSize.getFlashSalePrice() > 0 ? productSize.getFlashSalePrice() : productSize.getBasePrice();
