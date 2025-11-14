@@ -581,6 +581,7 @@ function updateProductVisibility(productId, isActive) {
     if (isActive) {
       // Hiển thị món ăn: xóa class inactive và hiển thị
       productCard.classList.remove("inactive");
+      productCard.setAttribute("data-active", "true");
       productCard.style.display = "";
       productCard.style.opacity = "0";
       
@@ -592,6 +593,7 @@ function updateProductVisibility(productId, isActive) {
     } else {
       // Ẩn món ăn: thêm class inactive và ẩn
       productCard.classList.add("inactive");
+      productCard.setAttribute("data-active", "false");
       productCard.style.opacity = "1";
       
       // Animation fade out
@@ -620,6 +622,10 @@ function updateProductVisibility(productId, isActive) {
         location.reload();
       }, 1000);
     }
+  }
+
+  if (typeof window.reapplyMenuFilter === "function") {
+    window.reapplyMenuFilter();
   }
 }
 
