@@ -42,7 +42,7 @@ public class DataAnalyticsReportService {
         Map<LocalDate, Double> revenueByDate = new HashMap<>();
         for (Order o : orders) {
             LocalDate day = o.getCreatedAt().toLocalDate();
-            revenueByDate.merge(day, o.getTotalPrice(), Double::sum);
+            revenueByDate.merge(day, calculateTotalPrice(o).doubleValue(), Double::sum);
         }
 
         double[] data = new double[Integer.valueOf((int) days)];
@@ -78,16 +78,18 @@ public class DataAnalyticsReportService {
             }
         }
 
-        String note = order.getNote();
-        try{
-            Long number = Long.parseLong(note);
-            System.out.println(number);
-            totaPrice = totaPrice -  (number * 10000);
-        }
-        catch(NumberFormatException e){
-            System.out.println("Note is not a number");
-        } catch(NullPointerException e){
-            System.out.println("Note is null");
+        if(order.getNote() != null && order.getNote().contains("usedPoint:")){
+            try{
+
+                String[] tokens = order.getNote().split(" ");
+
+                        Long number = Long.parseLong(tokens[tokens.length - 1]);
+                        System.out.println(number);
+                        totaPrice = totaPrice -  (number * 10000);
+
+            } catch (Exception e){
+                System.err.println("Error parsing usedPoint from note: " + e.getMessage());
+            }
         }
 
         return Math.round(totaPrice * (1 + order.getTaxRate()));
@@ -169,11 +171,15 @@ public class DataAnalyticsReportService {
         Double retentionRate = totalCustomers > 0 ? (oldCustomers * 100.0) / totalCustomers : 0.0;
 
         // ========== THÊM: LẤY SỐ LIỆU HÔM NAY ==========
-        Long todayOrders = orderRepository.countTodayOrders();
-        Double todayRevenueDouble = orderRepository.calculateTodayRevenue();
-        Long todayRevenue = todayRevenueDouble != null ? todayRevenueDouble.longValue() : 0L;
+        LocalDate today = LocalDate.now();
+        List<Order> todayOrdersList = orderRepository.findInRangeAndPaid(
+                today.atStartOfDay(),
+                today.plusDays(1).atStartOfDay()
+        );
 
-        // Đảm bảo không null
+        Long todayOrders = (long) todayOrdersList.size();
+        Long todayRevenue = calculateTotalRevenue(todayOrdersList);
+
         if (todayOrders == null) todayOrders = 0L;
         // ===============================================
 
