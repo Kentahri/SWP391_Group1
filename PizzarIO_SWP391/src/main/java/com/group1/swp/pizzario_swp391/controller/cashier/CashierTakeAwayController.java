@@ -401,6 +401,71 @@ public class CashierTakeAwayController {
         }
     }
 
+    /**
+     * Trang in hóa đơn cho đơn Take-away - hiển thị hóa đơn theo format receipt đen trắng
+     */
+    @GetMapping("/takeaway/order/{orderId}/invoice")
+    public String showTakeAwayInvoice(@PathVariable Long orderId,
+                                     Model model,
+                                     Principal principal,
+                                     RedirectAttributes redirectAttributes,
+                                     HttpServletRequest request) {
+        var order = orderService.getOrderById(orderId);
+
+        if (order == null || order.getOrderType() != Order.OrderType.TAKE_AWAY) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy đơn hàng Take-away này.");
+            return "redirect:/cashier/takeaway";
+        }
+
+        if (order.getPaymentStatus() != Order.PaymentStatus.PAID) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Đơn hàng này chưa được thanh toán.");
+            return "redirect:/cashier/takeaway/order/" + orderId + "/payment";
+        }
+
+        // Lấy session từ order
+        var session = sessionService.getSessionByOrder(order);
+        Long sessionId = session.getId();
+
+        // Lấy PaymentDTO từ PaymentService để có đầy đủ thông tin
+        PaymentDTO paymentDTO = paymentService.getPaymentConfirmationBySessionId(sessionId);
+
+        // Lấy chi tiết order items
+        var orderItems = paymentService.getOrderItemsBySessionId(sessionId);
+
+        // Lấy thông tin membership
+        var membership = paymentService.getMembershipBySessionId(sessionId);
+
+        // Tính các giá trị
+        double originalTotal = paymentService.calculateOriginalOrderTotal(sessionId);
+        double discountAmount = paymentService.calculateDiscountAmount(sessionId);
+        double finalTotal = originalTotal - discountAmount;
+        double taxAmount = finalTotal * 0.1;
+        double totalWithTax = finalTotal + taxAmount;
+
+        // Điều chỉnh PaymentDTO cho take-away
+        paymentDTO.setTableNumber(null); // Take-away không có bàn
+
+        // Lấy thông tin nhân viên từ order
+        var staff = order.getStaff();
+
+        model.addAttribute("payment", paymentDTO);
+        model.addAttribute("orderItems", orderItems);
+        model.addAttribute("orderId", orderId);
+        model.addAttribute("sessionId", sessionId);
+        model.addAttribute("tableId", null);
+
+        model.addAttribute("originalTotal", originalTotal);
+        model.addAttribute("discountAmount", discountAmount);
+        model.addAttribute("finalTotal", finalTotal);
+        model.addAttribute("taxAmount", taxAmount);
+        model.addAttribute("totalWithTax", totalWithTax);
+
+        model.addAttribute("membership", membership);
+        model.addAttribute("staff", staff);
+
+        return "guest-page/invoice";
+    }
+
 }
 
 

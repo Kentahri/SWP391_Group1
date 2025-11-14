@@ -18,7 +18,9 @@ import com.group1.swp.pizzario_swp391.dto.voucher.VoucherDTO;
 import com.group1.swp.pizzario_swp391.entity.Membership;
 import com.group1.swp.pizzario_swp391.entity.Order;
 import com.group1.swp.pizzario_swp391.entity.OrderItem;
+import com.group1.swp.pizzario_swp391.entity.Staff;
 import com.group1.swp.pizzario_swp391.service.PaymentService;
+import com.group1.swp.pizzario_swp391.service.OrderService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -30,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final OrderService orderService;
 
     /**
      * Test endpoint để kiểm tra mapping
@@ -322,6 +325,7 @@ public class PaymentController {
             model.addAttribute("discountAmount", discountAmount);
             model.addAttribute("finalTotal", finalTotal);
             model.addAttribute("redirectTarget", "guest"); // Rõ ràng: redirect về guest cho dine-in
+            model.addAttribute("isCashierFlow", false); // Đánh dấu đây là guest flow
 
             // Sau khi hiển thị xác nhận, dọn dẹp trạng thái điểm đã dùng cho session
             try {
@@ -334,6 +338,59 @@ public class PaymentController {
         } catch (Exception e) {
             e.printStackTrace();
             model.addAttribute("error", "Không thể tải thông tin xác nhận: " + e.getMessage());
+            return "error-page";
+        }
+    }
+
+    /**
+     * Trang in hóa đơn - hiển thị hóa đơn theo format receipt đen trắng
+     */
+    @GetMapping("/session/{sessionId}/invoice")
+    public String showInvoice(@PathVariable Long sessionId, 
+                             Model model, HttpServletRequest request) {
+        try {
+            // Lấy thông tin payment từ order đã thanh toán
+            PaymentDTO payment = paymentService.getPaymentConfirmationBySessionId(sessionId);
+            
+            // Lấy chi tiết các món đã order
+            List<OrderItem> orderItems = paymentService.getOrderItemsBySessionId(sessionId);
+            
+            // Lấy thông tin khách hàng
+            Membership membership = paymentService.getMembershipBySessionId(sessionId);
+            
+            // Tính các giá trị để hiển thị
+            double originalTotal = paymentService.calculateOriginalOrderTotal(sessionId);
+            double discountAmount = paymentService.calculateDiscountAmount(sessionId);
+            double finalTotal = originalTotal - discountAmount;
+            double taxAmount = finalTotal * 0.1;
+            double totalWithTax = finalTotal + taxAmount;
+            
+            // Lấy thông tin nhân viên từ order
+            Staff staff = null;
+            if (payment.getOrderId() != null) {
+                var order = orderService.getOrderById(payment.getOrderId());
+                if (order != null && order.getStaff() != null) {
+                    staff = order.getStaff();
+                }
+            }
+            
+            // Thêm thông tin vào model
+            model.addAttribute("payment", payment);
+            model.addAttribute("orderItems", orderItems);
+            model.addAttribute("membership", membership);
+            model.addAttribute("staff", staff);
+            model.addAttribute("sessionId", sessionId);
+            model.addAttribute("orderId", payment.getOrderId());
+            model.addAttribute("originalTotal", originalTotal);
+            model.addAttribute("discountAmount", discountAmount);
+            model.addAttribute("finalTotal", finalTotal);
+            model.addAttribute("taxAmount", taxAmount);
+            model.addAttribute("totalWithTax", totalWithTax);
+            
+            return "guest-page/invoice";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "Không thể tải thông tin hóa đơn: " + e.getMessage());
             return "error-page";
         }
     }

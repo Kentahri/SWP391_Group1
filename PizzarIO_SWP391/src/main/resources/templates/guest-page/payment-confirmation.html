@@ -211,7 +211,10 @@
           class="action-buttons"
           style="text-align: center; margin-top: 16px"
         >
-          <button
+          <a
+            th:if="${isCashierFlow == true}"
+            th:href="@{/cashier/takeaway/order/{orderId}/invoice(orderId=${orderId})}"
+            target="_blank"
             class="btn btn-primary"
             style="
               background: #ff9933;
@@ -220,11 +223,42 @@
               border-radius: 10px;
               padding: 10px 20px;
               box-shadow: 0 4px 12px rgba(255, 153, 51, 0.3);
+              text-decoration: none;
+              display: inline-block;
+              font-size: 14px;
+              font-weight: 500;
+              cursor: pointer;
+              margin: 0 5px;
+              vertical-align: middle;
+              line-height: 1.5;
             "
-            onclick="printReceipt()"
           >
             In hóa đơn
-          </button>
+          </a>
+          <a
+            th:unless="${isCashierFlow == true}"
+            th:href="@{/guest/payment/session/{sessionId}/invoice(sessionId=${sessionId})}"
+            target="_blank"
+            class="btn btn-primary"
+            style="
+              background: #ff9933;
+              color: #fff;
+              border: none;
+              border-radius: 10px;
+              padding: 10px 20px;
+              box-shadow: 0 4px 12px rgba(255, 153, 51, 0.3);
+              text-decoration: none;
+              display: inline-block;
+              font-size: 14px;
+              font-weight: 500;
+              cursor: pointer;
+              margin: 0 5px;
+              vertical-align: middle;
+              line-height: 1.5;
+            "
+          >
+            In hóa đơn
+          </a>
           <button
             class="btn btn-secondary"
             style="
@@ -233,6 +267,12 @@
               border: none;
               border-radius: 10px;
               padding: 10px 20px;
+              font-size: 14px;
+              font-weight: 500;
+              cursor: pointer;
+              margin: 0 5px;
+              vertical-align: middle;
+              line-height: 1.5;
             "
             onclick="goHome()"
           >
@@ -243,10 +283,6 @@
     </div>
 
     <script th:inline="javascript">
-      function printReceipt() {
-        window.print();
-      }
-
       function goHome() {
         // Cashier confirmation: chỉ đóng tab hiện tại
         attemptCloseTab();
