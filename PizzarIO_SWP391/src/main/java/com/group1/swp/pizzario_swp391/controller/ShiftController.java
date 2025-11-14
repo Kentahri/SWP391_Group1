@@ -90,8 +90,29 @@ public class ShiftController {
     // Save endpoint for modal (handles both create and update)
     @PostMapping("/shift/save")
     public String saveShift(@Valid @ModelAttribute("shiftForm") ShiftDTO shiftDTO,
+            @RequestParam(required = false) String startTimeOnly,
+            @RequestParam(required = false) String endTimeOnly,
             BindingResult bindingResult,
             RedirectAttributes redirectAttributes) {
+
+        // Auto-combine time with today's date
+        if (startTimeOnly != null && !startTimeOnly.isEmpty()) {
+            try {
+                java.time.LocalTime startTime = java.time.LocalTime.parse(startTimeOnly);
+                shiftDTO.setStartTime(java.time.LocalDate.now().atTime(startTime));
+            } catch (Exception e) {
+                bindingResult.rejectValue("startTime", "error.shiftForm", "Giờ bắt đầu không hợp lệ");
+            }
+        }
+
+        if (endTimeOnly != null && !endTimeOnly.isEmpty()) {
+            try {
+                java.time.LocalTime endTime = java.time.LocalTime.parse(endTimeOnly);
+                shiftDTO.setEndTime(java.time.LocalDate.now().atTime(endTime));
+            } catch (Exception e) {
+                bindingResult.rejectValue("endTime", "error.shiftForm", "Giờ kết thúc không hợp lệ");
+            }
+        }
 
         if (shiftDTO.getStartTime() != null && shiftDTO.getEndTime() != null) {
             if (!shiftDTO.getStartTime().isBefore(shiftDTO.getEndTime())) {

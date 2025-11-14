@@ -88,11 +88,12 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="startTime">Giờ bắt đầu</label>
+                            <label for="startTimeOnly">Giờ bắt đầu</label>
                             <input
-                                    type="datetime-local"
-                                    id="startTime"
-                                    th:field="*{startTime}"
+                                    type="time"
+                                    id="startTimeOnly"
+                                    name="startTimeOnly"
+                                    th:value="${shiftForm.startTime != null ? #temporals.format(shiftForm.startTime, 'HH:mm:ss') : ''}"
                                     step="1"
                             />
                             <span
@@ -103,11 +104,12 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="endTime">Giờ kết thúc</label>
+                            <label for="endTimeOnly">Giờ kết thúc</label>
                             <input
-                                    type="datetime-local"
-                                    id="endTime"
-                                    th:field="*{endTime}"
+                                    type="time"
+                                    id="endTimeOnly"
+                                    name="endTimeOnly"
+                                    th:value="${shiftForm.endTime != null ? #temporals.format(shiftForm.endTime, 'HH:mm:ss') : ''}"
                                     step="1"
                             />
                             <span

@@ -108,6 +108,7 @@ public class OtpEmailController {
             }
 
             if(otpEmailService.checkValid(newPassword) != null){
+                ra.addFlashAttribute("accountEmail", email);
                 ra.addFlashAttribute("errorPass", otpEmailService.checkValid(newPassword));
                 return "redirect:/missing_pass/verify";
             }
