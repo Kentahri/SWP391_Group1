@@ -44,8 +44,21 @@ public class ProdSecurityConfig {
     AuthenticationSuccessHandler roleBasedSuccessHandler(LoginService audit) {
         return (req, res, auth) -> {
             String email = auth.getName();
+            boolean hasValidShift = false;
+
             try {
-                audit.recordLoginByEmail(email);
+                hasValidShift = audit.recordLoginByEmail(email);
+
+                if(!hasValidShift &&
+                    !auth.getAuthorities().stream().anyMatch(x -> x.getAuthority().equals("ROLE_MANAGER"))
+                ){
+                    req.getSession().invalidate();
+                    req.getSession(true).setAttribute("LOGIN_ERROR_MSG", "Bạn không có ca làm việc hợp lệ hôm nay hoặc chưa tới giờ check-in. " +
+                            "Vui lòng kiểm tra lịch làm việc hoặc liên hệ quản lý.");
+                    res.sendRedirect(req.getContextPath() + "/login?error=no_shift");
+                    return;
+                }
+
             } catch (Exception ex) {
                 log.warn("Warning: " + ex);
             }
