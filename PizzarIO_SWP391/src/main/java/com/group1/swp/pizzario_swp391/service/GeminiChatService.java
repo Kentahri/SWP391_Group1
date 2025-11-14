@@ -47,9 +47,9 @@ public class GeminiChatService {
         public Map<Intent, List<String>> getSynonyms() {
             return Map.of(
                     Intent.PIZZA, List.of("pizza", "banh pizza", "mon pizza", "biza, piza"),
-                    Intent.CHEAPEST, List.of("re nhat", "gia thap nhat", "re hon", "muc gia thap", "re nhat la"),
-                    Intent.HIGHEST, List.of("dat nhat", "gia cao nhat", "dat hon", "dat nhat la"),
-                    Intent.PROMOTION, List.of("khuyen mai", "uu dai", "giam gia", "deal", "voucher"),
+                    Intent.CHEAPEST, List.of("re nhat", "gia thap nhat", "re hon", "muc gia thap", "re nhat la", "gia re"),
+                    Intent.HIGHEST, List.of("dat nhat", "gia cao nhat", "dat hon", "dat nhat la", "gia dat"),
+                    Intent.PROMOTION, List.of("khuyen mai", "uu dai", "giam gia", "deal"),
                     Intent.BEST_SELLER, List.of("ban chay", "pho bien", "hot nhat", "nhieu nguoi mua", "yeu thich", "ngon nhat"),
                     Intent.COMBO, List.of("combo")
             );
