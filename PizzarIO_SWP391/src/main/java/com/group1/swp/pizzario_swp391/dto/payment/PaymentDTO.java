@@ -15,7 +15,7 @@ import java.util.List;
 public class PaymentDTO {
     Long id;                 // sẽ giữ id của Order (sử dụng Order làm nguồn dữ liệu)
     Long orderId;            // nếu bạn muốn phân biệt, có thể map từ order.id
-    Double orderTotal;       // map từ Order.totalPrice (tổng tiền cuối cùng sau khi áp dụng voucher)
+    Double orderTotal;       // map từ Order.totalPrice
     Double originalTotal;    // tổng tiền gốc trước khi áp dụng voucher
     Double discountAmount;   // số tiền được giảm từ voucher
     Long membershipId;       // map từ order.membership.id
@@ -28,7 +28,6 @@ public class PaymentDTO {
     String paymentMethod;    // map từ order.paymentMethod
     String customerName;     // tên khách hàng
     String customerPhone;    // số điện thoại khách hàng
-    String customerEmail;    // email khách hàng
     Integer tableNumber;     // số bàn
     String orderType;        // loại order (DINE_IN, TAKE_AWAY)
     String orderStatus;      // trạng thái order

@@ -1,19 +1,16 @@
 package com.group1.swp.pizzario_swp391.service;
 
-import com.group1.swp.pizzario_swp391.entity.DiningTable;
 import com.group1.swp.pizzario_swp391.entity.Order;
 import com.group1.swp.pizzario_swp391.entity.Session;
 import com.group1.swp.pizzario_swp391.repository.OrderRepository;
 import com.group1.swp.pizzario_swp391.repository.SessionRepository;
 import com.group1.swp.pizzario_swp391.repository.TableRepository;
-import com.group1.swp.pizzario_swp391.service.TableService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
 public class SessionService {
@@ -36,40 +33,7 @@ public class SessionService {
     /**
      * Tạo session mới khi khách chọn bàn
      */
-    @Transactional
-    public Session createSession(Long tableId) {
-        // Kiểm tra xem bàn có đang được sử dụng không
-        Optional<Session> existingSession = sessionRepository.findByTableIdAndIsClosedFalse(tableId.intValue());
-        if (existingSession.isPresent()) {
-            throw new RuntimeException("Bàn đang được sử dụng");
-        }
 
-        // Tạo session mới
-        Session session = new Session();
-        session.setClosed(false);
-        session.setCreatedAt(LocalDateTime.now());
-        
-        // Lấy thông tin bàn
-        DiningTable table = tableRepository.findById(tableId.intValue())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy bàn với ID: " + tableId));
-        session.setTable(table);
-
-        // Tạo order mới cho session
-        Order order = new Order();
-        order.setSession(session);
-        order.setOrderType(Order.OrderType.DINE_IN);
-        order.setOrderStatus(Order.OrderStatus.PREPARING);
-        order.setPaymentStatus(Order.PaymentStatus.UNPAID);
-        order.setTotalPrice(0.0);
-        order.setCreatedAt(LocalDateTime.now());
-        order.setUpdatedAt(LocalDateTime.now());
-
-        // Lưu session và order
-        session = sessionRepository.save(session);
-        order = orderRepository.save(order);
-        
-        return session;
-    }
 
     /**
      * Lấy session theo ID
@@ -85,22 +49,9 @@ public class SessionService {
     public Order getOrderBySessionId(Long sessionId) {
         // Flush để đảm bảo tất cả changes được persist trước khi query
         orderRepository.flush();
-        
         // Query Order trực tiếp từ session_id để tránh vấn đề lazy load
         Order order = orderRepository.findBySessionId(sessionId);
         if (order == null) {
-            // Debug: Log để kiểm tra
-            System.err.println("DEBUG: Không tìm thấy order với sessionId: " + sessionId);
-            // Thử query tất cả orders để debug
-            var allOrders = orderRepository.findAll();
-            System.err.println("DEBUG: Tổng số orders: " + allOrders.size());
-            for (Order o : allOrders) {
-                if (o.getSession() != null) {
-                    System.err.println("DEBUG: Order #" + o.getId() + " có sessionId: " + o.getSession().getId());
-                } else {
-                    System.err.println("DEBUG: Order #" + o.getId() + " không có session");
-                }
-            }
             throw new RuntimeException("Session không có order. SessionId: " + sessionId);
         }
         return order;
@@ -155,7 +106,7 @@ public class SessionService {
             }
         }
 
-        // Giải phóng bàn về trạng thái AVAILABLE (không quan trọng, không làm fail transaction chính)
+        // Giải phóng bàn về trạng thái AVAILABLE
         try {
             tableService.releaseTable(tableId, null); // HttpSession có thể null vì đây là từ payment flow
         } catch (Exception e) {
@@ -167,9 +118,6 @@ public class SessionService {
     /**
      * Lấy session đang mở của bàn
      */
-    public Optional<Session> getOpenSessionByTableId(Long tableId) {
-        return sessionRepository.findByTableIdAndIsClosedFalse(tableId.intValue());
-    }
 
     /**
      * Tạo session cho take-away order (không có table)
