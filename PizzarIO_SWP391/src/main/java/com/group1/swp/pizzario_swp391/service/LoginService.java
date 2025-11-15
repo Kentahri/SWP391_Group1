@@ -50,7 +50,7 @@ public class LoginService {
         }
 
         Optional<StaffShift> systemRecovery = shiftsToday.stream()
-                .filter(ss -> ss.getCheckIn() != null && ss.getCheckOut() == null)
+                .filter(ss -> ss.getCheckIn() != null)
                 .filter(ss -> ss.getStatus() == StaffShift.Status.PRESENT || ss.getStatus() == StaffShift.Status.LATE)
                 .filter(ss -> {
                     LocalDateTime checkInTime = ss.getCheckIn();

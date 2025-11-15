@@ -319,7 +319,7 @@ public class PaymentService {
     }
 
     @Transactional
-    public void waitingConfirmPayment(Long sessionId, Order.PaymentMethod paymentMethod) {
+    public synchronized void waitingConfirmPayment(Long sessionId, Order.PaymentMethod paymentMethod) {
         validateSessionId(sessionId);
         if (paymentMethod == null) {
             throw new IllegalArgumentException("PaymentMethod cannot be null");

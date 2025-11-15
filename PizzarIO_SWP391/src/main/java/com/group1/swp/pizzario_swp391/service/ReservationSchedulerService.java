@@ -36,7 +36,8 @@ public class ReservationSchedulerService {
     @Autowired
     private Setting setting;
 
-    private final Map<Long, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>(); // Map để lưu những reservation cần thực hiện
+    private final Map<Long, ScheduledFuture<?>> autoLockTasks = new ConcurrentHashMap<>(); // Map lưu auto lock tasks
+    private final Map<Long, ScheduledFuture<?>> noShowTasks = new ConcurrentHashMap<>(); // Map lưu no-show tasks
 
     /**
      * Lên kế hoạch xử lý tự động khóa bàn trước thời điểm khách đặt
@@ -48,7 +49,7 @@ public class ReservationSchedulerService {
 
         // Nếu thời gian đã qua, không schedule
         if (executionTime.isBefore(LocalDateTime.now())) {
-            log.warn("Reservation {} startTime đã gần (trong {} phút), không schedule auto lock table", 
+            log.warn("Reservation {} startTime đã gần (trong {} phút), không schedule auto lock table",
                     reservationId, autoLockMinutes);
             return;
         }
@@ -60,8 +61,8 @@ public class ReservationSchedulerService {
                 scheduledInstant
         );
 
-        scheduledTasks.put(reservationId, scheduledTask);
-        log.info("Scheduled auto lock table for reservation {} at {} ({} minutes before start)", 
+        autoLockTasks.put(reservationId, scheduledTask);
+        log.info("Scheduled auto lock table for reservation {} at {} ({} minutes before start)",
                 reservationId, executionTime, autoLockMinutes);
     }
 
@@ -69,7 +70,7 @@ public class ReservationSchedulerService {
      * Hủy kế hoạch xử lý tự động khóa bàn trước thời điểm khách đặt
      */
     public void cancelAutoLockTable(Long reservationId) {
-        ScheduledFuture<?> task = scheduledTasks.remove(reservationId);
+        ScheduledFuture<?> task = autoLockTasks.remove(reservationId);
         if (task != null && !task.isDone()) {
             task.cancel(false);
             log.info("Cancelled auto lock table for reservation {}", reservationId);
@@ -91,7 +92,7 @@ public class ReservationSchedulerService {
         try {
             log.info("Executing auto lock table for reservation {}", reservationId);
             eventPublisher.publishEvent(new AutoLockTableEvent(this, reservationId));
-            scheduledTasks.remove(reservationId);
+            autoLockTasks.remove(reservationId);
         } catch (Exception e){
             log.error("Error executing auto lock table for reservation {}: {}", reservationId, e.getMessage());
         }
@@ -107,7 +108,7 @@ public class ReservationSchedulerService {
 
         // Nếu thời gian đã qua, không schedule
         if (executionTime.isBefore(LocalDateTime.now())) {
-            log.warn("Reservation {} startTime đã qua (quá {} phút), không schedule NO_SHOW check", 
+            log.warn("Reservation {} startTime đã qua (quá {} phút), không schedule NO_SHOW check",
                     reservationId, noShowWaitMinutes);
             return;
         }
@@ -119,8 +120,8 @@ public class ReservationSchedulerService {
                 scheduledInstant
         );
 
-        scheduledTasks.put(reservationId, scheduledTask);
-        log.info("Scheduled NO_SHOW check for reservation {} at {} ({} minutes after start)", 
+        noShowTasks.put(reservationId, scheduledTask);
+        log.info("Scheduled NO_SHOW check for reservation {} at {} ({} minutes after start)",
                 reservationId, executionTime, noShowWaitMinutes);
     }
 
@@ -128,7 +129,7 @@ public class ReservationSchedulerService {
      * Hủy scheduled task khi reservation bị cancel hoặc khách đã đến
      */
     public void cancelNoShowCheck(Long reservationId) {
-        ScheduledFuture<?> task = scheduledTasks.remove(reservationId);
+        ScheduledFuture<?> task = noShowTasks.remove(reservationId);
         if (task != null && !task.isDone()) {
             task.cancel(false);
             log.info("Cancelled NO_SHOW check for reservation {}", reservationId);
@@ -150,7 +151,7 @@ public class ReservationSchedulerService {
         try {
             log.info("Executing NO_SHOW check for reservation {}", reservationId);
             eventPublisher.publishEvent(new ReservationNoShowEvent(this, reservationId));
-            scheduledTasks.remove(reservationId);
+            noShowTasks.remove(reservationId);
         } catch (Exception e){
             log.error("Error executing NO_SHOW check for reservation {}: {}", reservationId, e.getMessage());
         }
