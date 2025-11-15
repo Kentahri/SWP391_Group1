@@ -1153,7 +1153,7 @@
 							>
 								<span>Tạm tính:</span>
 								<span
-										th:text="${#numbers.formatDecimal(order.totalPrice / 1.1, 0, 'COMMA', 0, 'POINT')}"
+										th:text="${#numbers.formatDecimal(order.totalPrice / 1.1 + order.discountAmount, 0, 'COMMA', 0, 'POINT')}"
 								>745,000</span
 								>
 							</div>
