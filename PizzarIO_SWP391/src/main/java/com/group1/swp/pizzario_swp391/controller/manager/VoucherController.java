@@ -1,19 +1,25 @@
 package com.group1.swp.pizzario_swp391.controller.manager;
 
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import com.group1.swp.pizzario_swp391.annotation.ManagerUrl;
-import com.group1.swp.pizzario_swp391.dto.voucher.VoucherDTO;
 import com.group1.swp.pizzario_swp391.dto.voucher.VoucherCreateDTO;
+import com.group1.swp.pizzario_swp391.dto.voucher.VoucherDTO;
+import com.group1.swp.pizzario_swp391.entity.Voucher;
+import com.group1.swp.pizzario_swp391.service.VoucherService;
+
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
-import com.group1.swp.pizzario_swp391.entity.Voucher;
-import com.group1.swp.pizzario_swp391.service.VoucherService;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @ManagerUrl
@@ -38,6 +44,8 @@ public class VoucherController {
         // Giữ lại giá trị tìm kiếm để hiển thị lại trong form
         model.addAttribute("paramKeyword", keyword);
         model.addAttribute("paramStatus", status);
+        
+        // Flash attribute errorMessage sẽ tự động được thêm vào model nếu có
 
         return "admin_page/voucher/voucher-list";
     }
@@ -52,9 +60,16 @@ public class VoucherController {
     }
 
     @GetMapping("/vouchers/edit/{id}")
-    public String editVoucher(@PathVariable Long id, Model model) {
+    public String editVoucher(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
         Voucher voucher = voucherService.getVoucherById(id)
                 .orElseThrow(() -> new RuntimeException("Voucher not found"));
+        
+        // Kiểm tra nếu voucher đã được sử dụng
+        if (voucher.getTimesUsed() > 0) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Voucher đã được sử dụng, không thể chỉnh sửa");
+            return "redirect:/manager/vouchers";
+        }
+        
         VoucherDTO voucherForm = VoucherDTO.builder()
                 .id(id)
                 .code(voucher.getCode())
@@ -108,6 +123,54 @@ public class VoucherController {
             model.addAttribute("vouchers", voucherService.getVouchersSort());
             model.addAttribute("stats", voucherService.getVoucherAnalytics());
             model.addAttribute("openModal", "create");
+            model.addAttribute("errorMessage", ex.getMessage());
+            return "admin_page/voucher/voucher-list";
+        }
+    }
+
+    @PostMapping("/vouchers/edit/{id}")
+    public String updateVoucher(@PathVariable Long id,
+            @Valid @ModelAttribute("voucherForm") VoucherDTO voucherForm,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        
+        // Kiểm tra nếu voucher đã được sử dụng
+        Voucher existingVoucher = voucherService.getVoucherById(id)
+                .orElseThrow(() -> new RuntimeException("Voucher not found"));
+        
+        if (existingVoucher.getTimesUsed() > 0) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Voucher đã được sử dụng, không thể chỉnh sửa");
+            return "redirect:/manager/vouchers";
+        }
+        
+        // Validate type & value
+        if(voucherForm.getType() == Voucher.VoucherType.PERCENTAGE && voucherForm.getValue() > 100) {
+            bindingResult.rejectValue("value", "value.invalid", "Giá trị voucher phải nhỏ hơn hoặc bằng 100");
+        }
+        if(voucherForm.getType() != Voucher.VoucherType.PERCENTAGE){
+            if(voucherForm.getValue() >= voucherForm.getMinOrderAmount()){
+                bindingResult.rejectValue("value", "value.invalid","Số tiền giảm giá không được vượt quá giá trị đơn hàng tối thiểu");
+            }
+        }
+
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("voucherTypes", Voucher.VoucherType.values());
+            model.addAttribute("vouchers", voucherService.getVouchersSort());
+            model.addAttribute("stats", voucherService.getVoucherAnalytics());
+            model.addAttribute("openModal", "edit");
+            model.addAttribute("hasErrors", true);
+            return "admin_page/voucher/voucher-list";
+        }
+
+        try {
+            voucherService.updateVoucher(id, voucherForm);
+            return "redirect:/manager/vouchers";
+        } catch (Exception ex) {
+            model.addAttribute("voucherTypes", Voucher.VoucherType.values());
+            model.addAttribute("vouchers", voucherService.getVouchersSort());
+            model.addAttribute("stats", voucherService.getVoucherAnalytics());
+            model.addAttribute("openModal", "edit");
             model.addAttribute("errorMessage", ex.getMessage());
             return "admin_page/voucher/voucher-list";
         }
