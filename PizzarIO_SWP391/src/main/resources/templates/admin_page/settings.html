@@ -74,8 +74,13 @@
 									</div>
 
 									<div class="setting-item">
-										<strong>Thời gian tối đa để nhân viên login lại sau khi logout nhầm</strong>
+										<strong>Thời gian tối đa để nhân viên login lại sau khi logout nhầm:</strong>
 										<span th:text="${setting.reLoginTimeoutMinutes} + ' phút'"></span>
+									</div>
+
+									<div class="setting-item">
+										<strong>Thời gian cho phép login lại hệ thống khi server có sự cố:</strong>
+										<span th:text="${setting.reLoginServerCollapse} + ' phút'"></span>
 									</div>
 								</div>
 							</div>
@@ -167,7 +172,7 @@
 									</div>
 
 									<div class="form-group">
-										<label for="noCheckoutCheckMinutes">Thời gian tối đa nhân viên login lại hệ thống
+										<label for="reLoginTimeoutMinutes">Thời gian tối đa nhân viên login lại hệ thống
 											(phút)</label>
 										<input
 												type="number"
@@ -179,6 +184,20 @@
 												required
 										/>
 										<small class="form-text">Thời gian tối đa nhân viên login lại hệ thống</small>
+									</div>
+
+									<div class="form-group">
+										<label for="reLoginServerCollapse">Thời gian cho phép login lại hệ thống khi server có sự cố(phút)</label>
+										<input
+												type="number"
+												id="reLoginServerCollapse"
+												th:field="*{reLoginServerCollapse}"
+												class="form-control"
+												min="1"
+												max="1440"
+												required
+										/>
+										<small class="form-text">Thời gian cho phép login lại hệ thống khi server có sự cố</small>
 									</div>
 									
 									<div class="form-actions">

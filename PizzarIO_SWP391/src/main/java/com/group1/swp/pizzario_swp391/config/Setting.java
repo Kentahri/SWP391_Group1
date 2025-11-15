@@ -20,4 +20,5 @@ public class Setting {
     int noAbsentCheckMinutes;
     int noCheckoutCheckMinutes;
     int reLoginTimeoutMinutes;
+    int reLoginServerCollapse;
 }
