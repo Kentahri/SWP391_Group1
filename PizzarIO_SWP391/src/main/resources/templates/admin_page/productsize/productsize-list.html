@@ -166,14 +166,6 @@
                     <div class="ps-actions">
                         <a th:href="@{/manager/product-sizes/edit/{id}(id=${ps.id})}"
                            class="ps-btn-icon ps-btn-edit" title="Sửa">Edit</a>
-
-                        <form th:action="@{/manager/product-sizes/delete/{id}(id=${ps.id})}"
-                              method="post" class="ps-inline-form"
-                              onsubmit="return confirm('Xóa giá này?')">
-                            <input type="hidden" th:if="${_csrf != null}"
-                                   th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                            <button type="submit" class="ps-btn-icon ps-btn-delete" title="Xóa">Delete</button>
-                        </form>
                     </div>
                 </div>
             </div>
