@@ -34,6 +34,7 @@ public class YamlService {
         leaf.put("no-absent-check-minutes", setting.getNoAbsentCheckMinutes());
         leaf.put("no-checkout-check-minutes", setting.getNoCheckoutCheckMinutes());
         leaf.put("re-login-timeout-minutes", setting.getReLoginTimeoutMinutes());
+        leaf.put("re-login-server-collapse", setting.getReLoginServerCollapse());
         return leaf;
     }
 

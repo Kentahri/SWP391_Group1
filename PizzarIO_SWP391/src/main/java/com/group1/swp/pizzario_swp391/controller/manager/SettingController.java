@@ -39,6 +39,7 @@ public class SettingController {
             setting.setNoAbsentCheckMinutes(settingForm.getNoAbsentCheckMinutes());
             setting.setNoCheckoutCheckMinutes(settingForm.getNoCheckoutCheckMinutes());
             setting.setReLoginTimeoutMinutes(settingForm.getReLoginTimeoutMinutes());
+            setting.setReLoginServerCollapse(settingForm.getReLoginServerCollapse());
             
             yamlService.persit();
             

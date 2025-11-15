@@ -1,5 +1,6 @@
 package com.group1.swp.pizzario_swp391.service;
 
+import com.group1.swp.pizzario_swp391.config.Setting;
 import com.group1.swp.pizzario_swp391.entity.Staff;
 import com.group1.swp.pizzario_swp391.entity.StaffShift;
 import com.group1.swp.pizzario_swp391.event.staff.StaffShiftUpdatedEvent;
@@ -27,6 +28,7 @@ public class LoginService {
     private final LoginRepository loginRepository;
     private final StaffShiftRepository staffShiftRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final Setting setting;
 
     public Staff findByEmail(String email) {
         return loginRepository.findByEmail(email).orElseThrow();
@@ -47,25 +49,59 @@ public class LoginService {
             return false;
         }
 
-        // ✅ Case 3: Cho phép login lại nếu bấm nhầm logout sớm (LEFT_EARLY)
-// Giống refresh token - chỉ có 5 phút để re-login
+        Optional<StaffShift> systemRecovery = shiftsToday.stream()
+                .filter(ss -> ss.getCheckIn() != null && ss.getCheckOut() == null)
+                .filter(ss -> ss.getStatus() == StaffShift.Status.PRESENT || ss.getStatus() == StaffShift.Status.LATE)
+                .filter(ss -> {
+                    LocalDateTime checkInTime = ss.getCheckIn();
+
+                    long minutesSinceCheckIn = Duration.between(checkInTime, now).toMinutes();
+
+                    if (minutesSinceCheckIn > setting.getReLoginTimeoutMinutes()) {
+                        log.warn("Staff {} đã check-in lúc {} - Đã quá {}m, không cho re-login",
+                                ss.getStaff().getName(), checkInTime, minutesSinceCheckIn);
+                        return false;
+                    }
+
+                    LocalDateTime shiftEnd = ss.getWorkDate()
+                            .atTime(ss.getShift().getEndTime().toLocalTime());
+
+                    return now.isBefore(shiftEnd.plusMinutes(30));
+                })
+                .findFirst();
+
+        if (systemRecovery.isPresent()) {
+            StaffShift ss = systemRecovery.get();
+            LocalDateTime checkInTime = ss.getCheckIn();
+            long minutesSinceCheckIn = Duration.between(checkInTime, now).toMinutes();
+
+            String noteDetail = String.format("SYSTEM RECOVERY (Check-in lúc %s - Re-login sau %dm lúc %s)\n",
+                    checkInTime.toLocalTime(), minutesSinceCheckIn, now.toLocalTime());
+            ss.setNote((ss.getNote() != null ? ss.getNote() : "") + noteDetail + " | ");
+
+            staffShiftRepository.save(ss);
+
+            log.info("✅ SYSTEM RECOVERY SUCCESS: Staff {} re-login sau {}m (check-in lúc {})",
+                    staff.getName(), minutesSinceCheckIn, checkInTime.toLocalTime());
+
+            return true;
+        }
+
         Optional<StaffShift> clickLogoutEarly = shiftsToday.stream()
                 .filter(ss -> ss.getStatus() == StaffShift.Status.LEFT_EARLY)
                 .filter(ss -> ss.getCheckIn() != null && ss.getCheckOut() != null)
                 .filter(ss -> {
                     LocalDateTime logoutTime = ss.getCheckOut();
 
-                    // ✅ CHỈ CHO PHÉP RE-LOGIN TRONG VÒNG 5 PHÚT SAU KHI LOGOUT
                     long minutesSinceLogout = Duration.between(logoutTime, now).toMinutes();
 
-                    if (minutesSinceLogout > 5) {
+                    if (minutesSinceLogout > setting.getReLoginTimeoutMinutes()) {
                         log.warn("Staff {} logout lúc {} - Đã quá 5 phút ({}m), không cho re-login",
                                 ss.getStaff().getName(), logoutTime, minutesSinceLogout);
                         return false;
                     }
 
-                    // ✅ Kiểm tra thêm: Vẫn còn trong thời gian ca làm việc
-                    LocalDateTime shiftEnd = ss.getWorkDate()
+                        LocalDateTime shiftEnd = ss.getWorkDate()
                             .atTime(ss.getShift().getEndTime().toLocalTime());
 
                     return now.isBefore(shiftEnd.plusMinutes(30)); // Cho thêm 30p buffer sau ca
@@ -88,7 +124,6 @@ public class LoginService {
 
             staffShiftRepository.save(ss);
 
-            // Trigger event để schedule lại auto-complete task
             eventPublisher.publishEvent(new StaffShiftUpdatedEvent(this, ss, true));
 
             log.info("✅ RE-LOGIN SUCCESS: Staff {} re-login sau {}m (logout lúc {})",

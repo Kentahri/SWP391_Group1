@@ -23,7 +23,6 @@ public class LoginController {
         this.loginService = loginService;
     }
 
-    // localhost808/login
     @GetMapping("/login")
     public String form(Model model, CsrfToken token) {
         model.addAttribute("_csrf", token);
