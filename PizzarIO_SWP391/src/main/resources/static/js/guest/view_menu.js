@@ -36,6 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const cardCategoryId = card.getAttribute("data-category-id");
             const nameElement = card.querySelector(".name");
             const cardName = nameElement ? nameElement.textContent.toLowerCase() : "";
+            const isInactive = card.classList.contains("inactive") || card.getAttribute("data-active") === "false";
 
             // So khớp category (nếu =0 thì là All)
             const categoryMatch = activeCategoryId === "0" || cardCategoryId === activeCategoryId;
@@ -44,9 +45,16 @@ document.addEventListener("DOMContentLoaded", () => {
             const keywordMatch = keyword === "" || cardName.includes(keyword);
 
             // Hiển thị nếu thỏa cả 2 điều kiện
+            if (isInactive) {
+                card.style.display = "none";
+                return;
+            }
+
             card.style.display = categoryMatch && keywordMatch ? "flex" : "none";
         });
     }
+
+    window.reapplyMenuFilter = filterProducts;
 
     // Khi click chọn category
     categoryBar.addEventListener("click", (e) => {

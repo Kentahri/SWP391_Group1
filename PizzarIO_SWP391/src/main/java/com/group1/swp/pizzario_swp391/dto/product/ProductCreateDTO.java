@@ -18,11 +18,12 @@ public class ProductCreateDTO{
     Long id; // null khi tạo mới, có giá trị khi cập nhật
 
     @NotBlank(message = "Tên sản phẩm không được để trống")
-    @Size(min = 1, max = 100, message = "Tên sản phẩm không được vượt quá 100 ký tự")
+    @Size(max = 255, message = "Tên sản phẩm không được vượt quá 255 ký tự")
     @Pattern(regexp = "^[^<>\"';&]*$", message = "Tên sản phẩm không được chứa ký tự đặc biệt nguy hiểm")
     String name;
 
-    @Size(max = 1000, message = "Mô tả không được vượt quá 1000 ký tự")
+    @Size(max = 500, message = "Mô tả không được vượt quá 500 ký tự")
+    @Pattern(regexp = "^[^<>\"';&]*$", message = "Mô tả không được chứa ký tự đặc biệt nguy hiểm")
     String description;
 
     @Pattern(
@@ -46,6 +47,8 @@ public class ProductCreateDTO{
 
     // === COMBO: Giá combo và danh sách thành phần (JSON) ===
     // comboPrice chỉ dùng khi danh mục là Combo
+    @jakarta.validation.constraints.DecimalMin(value = "0.0", message = "Giá combo không được âm")
+    @jakarta.validation.constraints.DecimalMax(value = "10000000.0", message = "Giá combo không được vượt quá 10,000,000")
     Double comboPrice;
     // JSON dạng: [{"productSizeId": number, "quantity": number}, ...]
     String comboItemsJson;

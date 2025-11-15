@@ -27,11 +27,10 @@ public class Membership {
         orders = new ArrayList<>();
     }
 
-    public Membership(String phoneNumber, String name, boolean isActive, LocalDateTime joinedAt, int points) {
+    public Membership(String phoneNumber, String name, LocalDateTime joinedAt, int points) {
         this();
         this.phoneNumber = phoneNumber;
         this.name = name;
-        this.isActive = isActive;
         this.joinedAt = joinedAt;
         this.points = points;
     }
@@ -45,9 +44,6 @@ public class Membership {
 
     @Column(columnDefinition = "NVARCHAR(100)")
     private String name;
-
-    @Column(name = "is_active")
-    private boolean isActive;
 
     @Column(name = "joined_at")
     private LocalDateTime joinedAt;

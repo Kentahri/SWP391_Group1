@@ -22,9 +22,13 @@ public class MembershipService {
         this.membershipMapper = membershipMapper;
     }
 
-    public Optional<MembershipDTO> verifyByPhone(String phoneNumber) {
-        return membershipRepository.findByPhoneNumber(phoneNumber)
-                .map(membershipMapper::toMembershipDTO);
+    /**
+     * Validate sessionId for membership operations
+     */
+    public void validateSessionId(Long sessionId) {
+        if (sessionId == null) {
+            throw new IllegalArgumentException("Session ID không được để trống");
+        }
     }
 
     public Optional<Membership> findEntityByPhone(String phoneNumber) {

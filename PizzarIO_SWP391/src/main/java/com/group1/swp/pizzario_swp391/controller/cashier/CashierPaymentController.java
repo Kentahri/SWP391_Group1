@@ -10,6 +10,7 @@ import com.group1.swp.pizzario_swp391.entity.Staff;
 import com.group1.swp.pizzario_swp391.service.PaymentService;
 import com.group1.swp.pizzario_swp391.service.OrderService;
 import com.group1.swp.pizzario_swp391.service.StaffService;
+import java.security.Principal;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -28,10 +29,11 @@ public class CashierPaymentController {
     @PostMapping("/confirm")
     public String confirmDineInPayment(@RequestParam("sessionId") Long sessionId,
                                        @RequestParam(value = "paymentMethod", required = true) String paymentMethod,
-                                       java.security.Principal principal,
+                                       Principal principal,
                                        RedirectAttributes redirectAttributes) {
         try {
-            Order.PaymentMethod method = Order.PaymentMethod.valueOf(paymentMethod);
+            // Validation được thực hiện trong service
+            Order.PaymentMethod method = paymentService.validatePaymentMethod(paymentMethod);
             // Attach current cashier (staff) to dine-in order before confirming, so staff_id is not null
             try {
                 if (principal != null) {
@@ -48,6 +50,9 @@ public class CashierPaymentController {
             paymentService.confirmPaymentBySessionId(sessionId, method);
 
             redirectAttributes.addFlashAttribute("successMessage", "Xác nhận thanh toán thành công cho phiên " + sessionId + ".");
+            return "redirect:/cashier";
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/cashier";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi xác nhận: " + e.getMessage());

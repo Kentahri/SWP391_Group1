@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.group1.swp.pizzario_swp391.dto.order.OrderDetailDTO;
+import com.group1.swp.pizzario_swp391.entity.*;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,9 +17,6 @@ import com.group1.swp.pizzario_swp391.dto.kitchen.KitchenOrderDTO;
 import com.group1.swp.pizzario_swp391.dto.order.OrderItemDTO;
 import com.group1.swp.pizzario_swp391.dto.order.UpdateOrderItemsDTO;
 import com.group1.swp.pizzario_swp391.dto.websocket.KitchenOrderMessage;
-import com.group1.swp.pizzario_swp391.entity.Order;
-import com.group1.swp.pizzario_swp391.entity.OrderItem;
-import com.group1.swp.pizzario_swp391.entity.ProductSize;
 import com.group1.swp.pizzario_swp391.mapper.OrderItemMapper;
 import com.group1.swp.pizzario_swp391.repository.OrderItemRepository;
 import com.group1.swp.pizzario_swp391.repository.OrderRepository;
@@ -99,16 +97,16 @@ public class OrderService {
     }
 
     @Transactional
-    public com.group1.swp.pizzario_swp391.entity.Order placeTakeAwayOrder(HttpSession session, com.group1.swp.pizzario_swp391.entity.Staff staff) {
+    public Order placeTakeAwayOrder(HttpSession session, Staff staff) {
         Map<Long, CartItemDTO> cart = cartService.getCart(session);
         if (cart.isEmpty()) {
             return null;
         }
 
-        com.group1.swp.pizzario_swp391.entity.Order order = new com.group1.swp.pizzario_swp391.entity.Order();
-        order.setOrderType(com.group1.swp.pizzario_swp391.entity.Order.OrderType.TAKE_AWAY);
-        order.setOrderStatus(com.group1.swp.pizzario_swp391.entity.Order.OrderStatus.PREPARING);
-        order.setPaymentStatus(com.group1.swp.pizzario_swp391.entity.Order.PaymentStatus.UNPAID);
+        Order order = new Order();
+        order.setOrderType(Order.OrderType.TAKE_AWAY);
+        order.setOrderStatus(Order.OrderStatus.PREPARING);
+        order.setPaymentStatus(Order.PaymentStatus.UNPAID);
         order.setTaxRate(0.1);
         order.setStaff(staff);
         order.setTotalPrice(0);
@@ -379,6 +377,68 @@ public class OrderService {
         return (order != null) ? KitchenOrderDTO.fromOrder(order) : null;
     }
 
+
+    /**
+     * Validate orderId
+     */
+    public void validateOrderId(Long orderId) {
+        if (orderId == null) {
+            throw new IllegalArgumentException("Order ID không được để trống");
+        }
+    }
+
+    /**
+     * Validate order exists and is of expected type
+     */
+    public Order validateOrderForTakeAway(Long orderId) {
+        validateOrderId(orderId);
+        Order order = getOrderById(orderId);
+        if (order == null) {
+            throw new IllegalArgumentException("Không tìm thấy đơn hàng với ID: " + orderId);
+        }
+        if (order.getOrderType() != Order.OrderType.TAKE_AWAY) {
+            throw new IllegalArgumentException("Đơn hàng này không phải đơn Take-away");
+        }
+        return order;
+    }
+
+    /**
+     * Validate order exists and is paid
+     */
+    public Order validateOrderIsPaid(Long orderId) {
+        Order order = validateOrderForTakeAway(orderId);
+        if (order.getPaymentStatus() != Order.PaymentStatus.PAID) {
+            throw new IllegalArgumentException("Đơn hàng này chưa được thanh toán");
+        }
+        return order;
+    }
+
+    /**
+     * Validate order exists and is not paid
+     */
+    public Order validateOrderIsNotPaid(Long orderId) {
+        Order order = validateOrderForTakeAway(orderId);
+        if (order.getPaymentStatus() == Order.PaymentStatus.PAID) {
+            throw new IllegalArgumentException("Đơn hàng này đã được thanh toán");
+        }
+        return order;
+    }
+
+    /**
+     * Validate order exists for history invoice
+     */
+    public Order validateOrderForHistoryInvoice(Long orderId) {
+        validateOrderId(orderId);
+        Order order = getOrderById(orderId);
+        if (order == null) {
+            throw new IllegalArgumentException("Không tìm thấy đơn hàng với ID: " + orderId);
+        }
+        if (order.getPaymentStatus() != Order.PaymentStatus.PAID) {
+            throw new IllegalArgumentException("Đơn hàng này chưa được thanh toán");
+        }
+        return order;
+    }
+
     /**
      * Lấy order theo ID
      */
@@ -434,7 +494,7 @@ public class OrderService {
                                 }
                             }
                         } catch (Exception e) {
-                            System.err.println("Error parsing usedPoints from note: " + e.getMessage());
+                            System.err.println("Lỗi khi chuyển từ note sang điểm" + e.getMessage());
                         }
                     }
 
@@ -456,9 +516,9 @@ public class OrderService {
                     if (order.getVoucher() != null && (dto.getUsedPoints() == null || dto.getUsedPoints() == 0)) {
                         dto.setVoucherCode(order.getVoucher().getCode());
                         // Calculate discount based on voucher type
-                        if (order.getVoucher().getType() == com.group1.swp.pizzario_swp391.entity.Voucher.VoucherType.FIXED_AMOUNT) {
+                        if (order.getVoucher().getType() == Voucher.VoucherType.FIXED_AMOUNT) {
                             discountAmount = order.getVoucher().getValue();
-                        } else if (order.getVoucher().getType() == com.group1.swp.pizzario_swp391.entity.Voucher.VoucherType.PERCENTAGE) {
+                        } else if (order.getVoucher().getType() == Voucher.VoucherType.PERCENTAGE) {
                             discountAmount = originalTotal * order.getVoucher().getValue() / 100;
                         }
                     }
@@ -493,7 +553,7 @@ public class OrderService {
                     }
 
                     // Convert order items (not needed for payment history display)
-                    List<com.group1.swp.pizzario_swp391.dto.order.OrderItemDTO> items = order.getOrderItems().stream()
+                    List<OrderItemDTO> items = order.getOrderItems().stream()
                             .map(orderItemMapper::toOrderItemDTO)
                             .toList();
                     dto.setItems(items);
