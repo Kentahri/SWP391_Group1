@@ -93,6 +93,7 @@
                                     type="time"
                                     id="startTimeOnly"
                                     name="startTimeOnly"
+                                    th:class="${#fields.hasErrors('startTime')} ? 'error-field' : ''"
                                     th:value="${shiftForm.startTime != null ? #temporals.format(shiftForm.startTime, 'HH:mm:ss') : ''}"
                                     step="1"
                             />
@@ -109,6 +110,7 @@
                                     type="time"
                                     id="endTimeOnly"
                                     name="endTimeOnly"
+                                    th:class="${#fields.hasErrors('endTime')} ? 'error-field' : ''"
                                     th:value="${shiftForm.endTime != null ? #temporals.format(shiftForm.endTime, 'HH:mm:ss') : ''}"
                                     step="1"
                             />

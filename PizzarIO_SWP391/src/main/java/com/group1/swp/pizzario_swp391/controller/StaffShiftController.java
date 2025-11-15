@@ -113,8 +113,14 @@ public class StaffShiftController {
             @RequestParam(required = false) Long filterStaffId,
             @RequestParam(required = false) Long filterShiftId,
             RedirectAttributes ra) {
-        staffShiftService.delete(id);
-        ra.addFlashAttribute("message", "Xóa phân công thành công");
+
+        // Kiểm tra xem ca làm có thể xóa được không
+        if (!staffShiftService.canDelete(id)) {
+            ra.addFlashAttribute("error", "Không thể xóa ca làm việc này. Ca đã bắt đầu hoặc đã hoàn thành/hủy.");
+        } else {
+            staffShiftService.delete(id);
+            ra.addFlashAttribute("message", "Xóa phân công thành công");
+        }
 
         // Build redirect URL with preserved parameters
         StringBuilder redirectUrl = new StringBuilder("redirect:/manager/staff_shifts");
@@ -174,6 +180,9 @@ public class StaffShiftController {
             @RequestParam(required = false) Long filterShiftId,
             RedirectAttributes redirectAttributes) {
         StaffShiftDTO staffShift = staffShiftService.getById(id);
+
+        // Set canDelete flag để hiển thị nút xóa trên frontend
+        staffShift.setCanDelete(staffShiftService.canDelete(id));
 
         // Always open modal for edit
         redirectAttributes.addFlashAttribute("staffShiftForm", staffShift);

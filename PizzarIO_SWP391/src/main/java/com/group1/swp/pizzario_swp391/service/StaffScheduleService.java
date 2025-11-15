@@ -290,7 +290,7 @@ public class StaffScheduleService {
         cancelAutoCompleteCheck(staffShiftId);
     }
 
-    @Scheduled(cron = "0 50 4 * * *", zone = "Asia/Bangkok")
+    @Scheduled(cron = "0 50 1 * * *", zone = "Asia/Bangkok")
     @Transactional
     public void dailyCleanup() {
         log.info("🔄 Daily cleanup: Checking for missed shifts...");

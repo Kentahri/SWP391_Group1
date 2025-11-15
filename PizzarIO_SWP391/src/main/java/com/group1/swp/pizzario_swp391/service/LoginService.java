@@ -47,6 +47,56 @@ public class LoginService {
             return false;
         }
 
+        // ✅ Case 3: Cho phép login lại nếu bấm nhầm logout sớm (LEFT_EARLY)
+// Giống refresh token - chỉ có 5 phút để re-login
+        Optional<StaffShift> clickLogoutEarly = shiftsToday.stream()
+                .filter(ss -> ss.getStatus() == StaffShift.Status.LEFT_EARLY)
+                .filter(ss -> ss.getCheckIn() != null && ss.getCheckOut() != null)
+                .filter(ss -> {
+                    LocalDateTime logoutTime = ss.getCheckOut();
+
+                    // ✅ CHỈ CHO PHÉP RE-LOGIN TRONG VÒNG 5 PHÚT SAU KHI LOGOUT
+                    long minutesSinceLogout = Duration.between(logoutTime, now).toMinutes();
+
+                    if (minutesSinceLogout > 5) {
+                        log.warn("Staff {} logout lúc {} - Đã quá 5 phút ({}m), không cho re-login",
+                                ss.getStaff().getName(), logoutTime, minutesSinceLogout);
+                        return false;
+                    }
+
+                    // ✅ Kiểm tra thêm: Vẫn còn trong thời gian ca làm việc
+                    LocalDateTime shiftEnd = ss.getWorkDate()
+                            .atTime(ss.getShift().getEndTime().toLocalTime());
+
+                    return now.isBefore(shiftEnd.plusMinutes(30)); // Cho thêm 30p buffer sau ca
+                })
+                .findFirst();
+
+        if (clickLogoutEarly.isPresent()) {
+            StaffShift ss = clickLogoutEarly.get();
+            LocalDateTime logoutTime = ss.getCheckOut();
+            long minutesSinceLogout = Duration.between(logoutTime, now).toMinutes();
+
+            // Reset checkout và status
+            LocalDateTime oldCheckOut = ss.getCheckOut();
+            ss.setCheckOut(null);
+            ss.setStatus(ss.getPenaltyPercent() > 0 ? StaffShift.Status.LATE : StaffShift.Status.PRESENT);
+
+            String noteDetail = String.format("RE-LOGIN (Logout nhầm lúc %s - Re-login sau %dm lúc %s)\n",
+                    oldCheckOut.toLocalTime(), minutesSinceLogout, now.toLocalTime());
+            ss.setNote((ss.getNote() != null ? ss.getNote() : "") + noteDetail + " | ");
+
+            staffShiftRepository.save(ss);
+
+            // Trigger event để schedule lại auto-complete task
+            eventPublisher.publishEvent(new StaffShiftUpdatedEvent(this, ss, true));
+
+            log.info("✅ RE-LOGIN SUCCESS: Staff {} re-login sau {}m (logout lúc {})",
+                    staff.getName(), minutesSinceLogout, logoutTime.toLocalTime());
+
+            return true;
+        }
+
         Optional<StaffShift> targetShift = findShiftToCheckIn(shiftsToday, now);
 
         if (targetShift.isEmpty()) {

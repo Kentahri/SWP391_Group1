@@ -130,7 +130,7 @@ public class VoucherController {
 
     @PostMapping("/vouchers/edit/{id}")
     public String updateVoucher(@PathVariable Long id,
-            @Valid @ModelAttribute("voucherForm") VoucherDTO voucherForm,
+            @Valid @ModelAttribute("voucherForm") VoucherCreateDTO voucherForm,
             BindingResult bindingResult,
             Model model,
             RedirectAttributes redirectAttributes) {

@@ -42,4 +42,7 @@ public class StaffShiftDTO {
     private String note;
 
     private Integer penaltyPercent = 0;
+
+    // Để kiểm tra xem ca làm có thể xóa được không (frontend)
+    private boolean canDelete = false;
 }
