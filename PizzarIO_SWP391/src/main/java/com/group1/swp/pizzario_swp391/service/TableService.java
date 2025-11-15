@@ -417,11 +417,7 @@ public class TableService{
             sessionRepository.save(activeSession);
         }
 
-        // Cập nhật trạng thái bàn
-        table.setTableStatus(DiningTable.TableStatus.AVAILABLE);
-        table.setUpdatedAt(LocalDateTime.now());
-        tableRepository.save(table);
-
+        // Kiểm tra pending reservation TRƯỚC KHI save
         if (pendingReservationTracker.hasPendingReservation(tableId)) {
             Long pendingReservationId = pendingReservationTracker.getPendingReservation(tableId);
 
@@ -430,7 +426,22 @@ public class TableService{
             if (isReservationActive(pendingReservationId)) {
                 log.info("🔒 Ngay lập tức khóa bàn {} cho reservation {}", tableId, pendingReservationId);
 
-                reservationService.lockTableForReservation(table, pendingReservationId);
+                // Khóa bàn luôn, không cần save AVAILABLE
+                table.setTableStatus(DiningTable.TableStatus.RESERVED);
+                table.setUpdatedAt(LocalDateTime.now());
+                tableRepository.save(table);
+
+                // Broadcast WebSocket
+                webSocketService.broadcastTableStatusToGuests(tableId, DiningTable.TableStatus.RESERVED);
+                webSocketService.broadcastTableStatusToCashier(
+                        TableStatusMessage.MessageType.TABLE_RESERVED,
+                        tableId,
+                        oldStatus,
+                        DiningTable.TableStatus.RESERVED,
+                        "SYSTEM",
+                        String.format("Tự động khóa bàn %d cho Reservation #%d", tableId, pendingReservationId)
+                );
+
                 pendingReservationTracker.removePendingReservation(tableId, pendingReservationId);
 
                 // Xóa giỏ hàng trong http session (chỉ khi session không null)
@@ -445,6 +456,11 @@ public class TableService{
                 pendingReservationTracker.removePendingReservation(tableId, pendingReservationId);
             }
         }
+
+        // Nếu không có pending reservation, mới set AVAILABLE
+        table.setTableStatus(DiningTable.TableStatus.AVAILABLE);
+        table.setUpdatedAt(LocalDateTime.now());
+        tableRepository.save(table);
 
         webSocketService.broadcastTableStatusToGuests(tableId, DiningTable.TableStatus.AVAILABLE);
         webSocketService.broadcastTableStatusToCashier(
