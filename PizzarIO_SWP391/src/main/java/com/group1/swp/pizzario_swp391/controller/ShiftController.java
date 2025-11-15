@@ -32,18 +32,15 @@ public class ShiftController {
 
     @GetMapping("/shifts")
     public String list(Model model) {
-        // Get all shifts
         List<ShiftDTO> shifts = service.getAllShift();
         model.addAttribute("shifts", shifts);
 
-        // Check which shifts can be deleted (no staff shifts)
         Map<Integer, Boolean> canDelete = new HashMap<>();
         for (ShiftDTO shift : shifts) {
             canDelete.put(shift.getId(), !service.hasStaffShifts(shift.getId()));
         }
         model.addAttribute("canDelete", canDelete);
 
-        // Add shift form and types for modal
         if (!model.containsAttribute("shiftForm")) {
             model.addAttribute("shiftForm", new ShiftDTO());
         }
@@ -56,7 +53,6 @@ public class ShiftController {
     public String create(@RequestParam(required = false, defaultValue = "staff_shifts") String returnPage,
             RedirectAttributes redirectAttributes) {
 
-        // Prepare empty form and flag to open modal in create mode
         redirectAttributes.addFlashAttribute("shiftForm", new ShiftDTO());
         redirectAttributes.addFlashAttribute("openShiftModal", "create");
 
@@ -87,7 +83,6 @@ public class ShiftController {
         }
     }
 
-    // Save endpoint for modal (handles both create and update)
     @PostMapping("/shift/save")
     public String saveShift(@Valid @ModelAttribute("shiftForm") ShiftDTO shiftDTO,
             @RequestParam(required = false) String startTimeOnly,
@@ -112,6 +107,15 @@ public class ShiftController {
             } catch (Exception e) {
                 bindingResult.rejectValue("endTime", "error.shiftForm", "Giờ kết thúc không hợp lệ");
             }
+        }
+
+        if (shiftDTO.getStartTime() == null) {
+            bindingResult.rejectValue("startTime", "error.shiftForm",
+                    "Giờ bắt đầu không được để trống");
+        }
+        if (shiftDTO.getEndTime() == null) {
+            bindingResult.rejectValue("endTime", "error.shiftForm",
+                    "Giờ kết thúc không được để trống");
         }
 
         if (shiftDTO.getStartTime() != null && shiftDTO.getEndTime() != null) {
@@ -143,11 +147,9 @@ public class ShiftController {
         return "redirect:/manager/shifts";
     }
 
-    // Xóa
     @GetMapping("/shift/delete/{id}")
     public String delete(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
 
-        // Check if shift has any staff shifts
         if (service.hasStaffShifts(id)) {
             redirectAttributes.addFlashAttribute("error",
                     "Không thể xóa ca làm việc này vì đã có nhân viên được phân công. Vui lòng xóa các phân công trước.");

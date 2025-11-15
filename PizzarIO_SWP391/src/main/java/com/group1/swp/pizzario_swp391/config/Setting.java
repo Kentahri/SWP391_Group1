@@ -19,4 +19,5 @@ public class Setting {
     int noShowWaitMinutes;
     int noAbsentCheckMinutes;
     int noCheckoutCheckMinutes;
+    int reLoginTimeoutMinutes;
 }
