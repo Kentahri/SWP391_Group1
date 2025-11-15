@@ -232,6 +232,7 @@ public class PaymentService {
         
         Order order = sessionService.getOrderBySessionId(sessionId);
 
+        // Reload voucher từ database để đảm bảo có thông tin mới nhất về timesUsed
         Voucher voucher = voucherRepository.findById(voucherId)
                 .orElseThrow(() -> new RuntimeException("Voucher not found with id: " + voucherId));
 
@@ -239,11 +240,15 @@ public class PaymentService {
         double originalTotal = calculateOriginalOrderTotal(sessionId);
 
         // Kiểm tra điều kiện áp dụng voucher dựa trên tổng gốc
+        // Đặc biệt kiểm tra timesUsed >= maxUses để đảm bảo voucher chỉ được dùng 1 lần
         if (!voucher.isActive() ||
                 voucher.getValidFrom().isAfter(LocalDateTime.now()) ||
                 voucher.getValidTo().isBefore(LocalDateTime.now()) ||
                 voucher.getTimesUsed() >= voucher.getMaxUses() ||
                 voucher.getMinOrderAmount() > originalTotal) {
+            if (voucher.getTimesUsed() >= voucher.getMaxUses()) {
+                throw new RuntimeException("Voucher đã được sử dụng hết. Vui lòng chọn voucher khác.");
+            }
             throw new RuntimeException("Voucher không thể áp dụng");
         }
 
@@ -331,6 +336,65 @@ public class PaymentService {
         order.setPaymentStatus(Order.PaymentStatus.PENDING);
         order.setUpdatedAt(LocalDateTime.now());
 
+        // Lưu voucher ngay khi khách hàng xác nhận thanh toán (trước khi cashier confirm)
+        // Đảm bảo voucher chỉ được sử dụng 1 lần
+        if (order.getVoucher() != null) {
+            try {
+                // Reload voucher từ database để đảm bảo có thông tin mới nhất về timesUsed (tránh race condition)
+                Voucher voucher = voucherRepository.findById(order.getVoucher().getId())
+                        .orElseThrow(() -> new RuntimeException("Voucher không tồn tại"));
+                
+                // Kiểm tra lại voucher có còn sử dụng được không
+                if (voucher.getTimesUsed() >= voucher.getMaxUses()) {
+                    throw new RuntimeException("Voucher đã được sử dụng hết. Vui lòng chọn voucher khác.");
+                }
+                
+                // Cập nhật số lần sử dụng voucher
+                updateVoucherUsage(voucher);
+            } catch (Exception e) {
+                System.err.println("Error updating voucher usage: " + e.getMessage());
+                throw new RuntimeException("Không thể áp dụng voucher: " + e.getMessage());
+            }
+        }
+
+        // Trừ điểm ngay khi khách hàng xác nhận thanh toán (trước khi cashier confirm)
+        // Đảm bảo không bị 2 người cùng dùng điểm khi không đủ điểm gây conflict
+        int usedPoints = getPointsUsed(sessionId);
+        if (usedPoints > 0 && order.getMembership() != null) {
+            try {
+                // Reload membership từ database để đảm bảo có thông tin mới nhất về điểm (tránh race condition)
+                Membership membership = membershipService.findEntityById(order.getMembership().getId());
+                if (membership == null) {
+                    throw new RuntimeException("Không tìm thấy thông tin thành viên");
+                }
+                
+                int currentPoints = membership.getPoints() != null ? membership.getPoints() : 0;
+                
+                // Kiểm tra điểm còn đủ không
+                if (currentPoints < usedPoints) {
+                    throw new RuntimeException("Số điểm không đủ. Bạn có " + currentPoints + " điểm, nhưng cần " + usedPoints + " điểm.");
+                }
+                
+                // Trừ điểm ngay
+                membership.setPoints(Math.max(0, currentPoints - usedPoints));
+                membershipService.save(membership);
+                
+                // Cập nhật membership trong order để đồng bộ
+                order.setMembership(membership);
+                
+                // Lưu số điểm đã sử dụng vào note để hiển thị sau này
+                String noteContent = order.getNote() != null ? order.getNote() : "";
+                if (!noteContent.isEmpty() && !noteContent.endsWith("\n")) {
+                    noteContent += "\n";
+                }
+                noteContent += "usedPoint: " + usedPoints;
+                order.setNote(noteContent);
+            } catch (Exception e) {
+                System.err.println("Error deducting points: " + e.getMessage());
+                throw new RuntimeException("Không thể sử dụng điểm: " + e.getMessage());
+            }
+        }
+
         orderRepository.save(order);
 
         // Cập nhật trạng thái bàn sang WAITING_PAYMENT và lưu DB để UI và trang chi tiết đồng bộ
@@ -389,42 +453,13 @@ public class PaymentService {
             order.setOrderStatus(Order.OrderStatus.COMPLETED);
             order.setUpdatedAt(LocalDateTime.now());
 
-            // Cập nhật số lần sử dụng voucher nếu có (không quan trọng, không làm fail transaction chính)
-            if (order.getVoucher() != null) {
-                try {
-                    updateVoucherUsage(order.getVoucher());
-                } catch (Exception e) {
-                    System.err.println("Error updating voucher usage: " + e.getMessage());
-                }
-            }
 
-            // Cập nhật điểm thành viên nếu có (không quan trọng, không làm fail transaction chính)
             if (order.getMembership() != null) {
                 try {
-                    // Deduct used points first
-                    int usedPoints = getPointsUsed(sessionId);
-                    if (usedPoints > 0) {
-                        Membership m = order.getMembership();
-                        int current = m.getPoints() != null ? m.getPoints() : 0;
-                        m.setPoints(Math.max(0, current - usedPoints));
-                        // Persist via membershipService
-                        membershipService.save(m);
-                    }
                     updateMembershipPointsInNewTransaction(order.getMembership(), finalFinalTotal);
                 } catch (Exception e) {
                     System.err.println("Error updating membership points: " + e.getMessage());
                 }
-            }
-
-            // Lưu số điểm đã sử dụng vào note
-            int usedPoints = getPointsUsed(sessionId);
-            if (usedPoints > 0) {
-                String noteContent = order.getNote() != null ? order.getNote() : "";
-                if (!noteContent.isEmpty() && !noteContent.endsWith("\n")) {
-                    noteContent += "\n";
-                }
-                noteContent += "usedPoint: " + usedPoints;
-                order.setNote(noteContent);
             }
 
             orderRepository.save(order);
@@ -481,39 +516,72 @@ public class PaymentService {
             order.setPaymentStatus(Order.PaymentStatus.PAID);
             order.setUpdatedAt(LocalDateTime.now());
 
+            // Lưu voucher cho takeaway - đảm bảo voucher chỉ được sử dụng 1 lần
+            // Tránh conflict khi guest (dine-in) và cashier (takeaway) cùng chọn voucher còn 1 lượt
             if (order.getVoucher() != null) {
                 try {
-                    updateVoucherUsage(order.getVoucher());
+                    // Reload voucher từ database để đảm bảo có thông tin mới nhất về timesUsed (tránh race condition)
+                    Voucher voucher = voucherRepository.findById(order.getVoucher().getId())
+                            .orElseThrow(() -> new RuntimeException("Voucher không tồn tại"));
+                    
+                    // Kiểm tra lại voucher có còn sử dụng được không
+                    if (voucher.getTimesUsed() >= voucher.getMaxUses()) {
+                        throw new RuntimeException("Voucher đã được sử dụng hết. Vui lòng chọn voucher khác.");
+                    }
+                    
+                    // Cập nhật số lần sử dụng voucher
+                    updateVoucherUsage(voucher);
                 } catch (Exception e) {
                     System.err.println("Error updating voucher usage: " + e.getMessage());
+                    throw new RuntimeException("Không thể áp dụng voucher: " + e.getMessage());
                 }
             }
 
+            // Trừ điểm cho takeaway - đảm bảo không bị 2 người cùng dùng điểm khi không đủ điểm gây conflict
+            // Tránh conflict khi guest (dine-in) và cashier (takeaway) cùng dùng điểm không hợp lệ
+            int usedPoints = getPointsUsed(sessionId);
+            if (usedPoints > 0 && order.getMembership() != null) {
+                try {
+                    // Reload membership từ database để đảm bảo có thông tin mới nhất về điểm (tránh race condition)
+                    Membership membership = membershipService.findEntityById(order.getMembership().getId());
+                    if (membership == null) {
+                        throw new RuntimeException("Không tìm thấy thông tin thành viên");
+                    }
+                    
+                    int currentPoints = membership.getPoints() != null ? membership.getPoints() : 0;
+                    
+                    // Kiểm tra điểm còn đủ không
+                    if (currentPoints < usedPoints) {
+                        throw new RuntimeException("Số điểm không đủ. Bạn có " + currentPoints + " điểm, nhưng cần " + usedPoints + " điểm.");
+                    }
+                    
+                    // Trừ điểm ngay
+                    membership.setPoints(Math.max(0, currentPoints - usedPoints));
+                    membershipService.save(membership);
+                    
+                    // Cập nhật membership trong order để đồng bộ
+                    order.setMembership(membership);
+                    
+                    // Lưu số điểm đã sử dụng vào note để hiển thị sau này
+                    String noteContent = order.getNote() != null ? order.getNote() : "";
+                    if (!noteContent.isEmpty() && !noteContent.endsWith("\n")) {
+                        noteContent += "\n";
+                    }
+                    noteContent += "usedPoint: " + usedPoints;
+                    order.setNote(noteContent);
+                } catch (Exception e) {
+                    System.err.println("Error deducting points: " + e.getMessage());
+                    throw new RuntimeException("Không thể sử dụng điểm: " + e.getMessage());
+                }
+            }
+
+            // Cập nhật điểm tích lũy từ đơn hàng này
             if (order.getMembership() != null) {
                 try {
-                    int usedPoints = getPointsUsed(sessionId);
-                    if (usedPoints > 0) {
-                        Membership m = order.getMembership();
-                            int current = m.getPoints() != null ? m.getPoints() : 0;
-                        m.setPoints(Math.max(0, current - usedPoints));
-                        // Persist via membershipService
-                        membershipService.save(m);
-                    }
                     updateMembershipPointsInNewTransaction(order.getMembership(), finalFinalTotal);
                 } catch (Exception e) {
                     System.err.println("Error updating membership points: " + e.getMessage());
                 }
-            }
-
-            // Lưu số điểm đã sử dụng vào note
-            int usedPoints = getPointsUsed(sessionId);
-            if (usedPoints > 0) {
-                String noteContent = order.getNote() != null ? order.getNote() : "";
-                if (!noteContent.isEmpty() && !noteContent.endsWith("\n")) {
-                    noteContent += "\n";
-                }
-                noteContent += "usedPoint: " + usedPoints;
-                order.setNote(noteContent);
             }
 
             orderRepository.save(order);
@@ -647,7 +715,12 @@ public class PaymentService {
         validateSessionId(sessionId);
         Order order = sessionService.getOrderBySessionId(sessionId);
         if (order.getMembership() == null) return 0;
-        int memberPoints = order.getMembership().getPoints() != null ? order.getMembership().getPoints() : 0;
+        
+        // Reload membership từ database để đảm bảo có thông tin mới nhất về điểm (tránh race condition)
+        Membership membership = membershipService.findEntityById(order.getMembership().getId());
+        if (membership == null) return 0;
+        
+        int memberPoints = membership.getPoints() != null ? membership.getPoints() : 0;
         double originalTotal = calculateOriginalOrderTotal(sessionId);
         int byAmountCap = (int) Math.floor(originalTotal / 10000.0);
         return Math.max(0, Math.min(memberPoints, byAmountCap));
@@ -664,15 +737,34 @@ public class PaymentService {
         if (order.getMembership() == null) {
             throw new IllegalArgumentException("Vui lòng xác thực thành viên trước khi sử dụng điểm");
         }
+        
+        // Reload membership từ database để đảm bảo có thông tin mới nhất về điểm (tránh race condition)
+        Membership membership = membershipService.findEntityById(order.getMembership().getId());
+        if (membership == null) {
+            throw new IllegalArgumentException("Không tìm thấy thông tin thành viên");
+        }
+        
         // Nếu đang có voucher, hủy voucher để điểm là phương thức giảm giá duy nhất
         if (order.getVoucher() != null) {
             order.setVoucher(null);
             orderRepository.save(order);
         }
-        int maxUsable = getMaxUsablePoints(sessionId);
+        
+        // Tính maxUsable dựa trên điểm thực tế từ database
+        int memberPoints = membership.getPoints() != null ? membership.getPoints() : 0;
+        double originalTotal = calculateOriginalOrderTotal(sessionId);
+        int byAmountCap = (int) Math.floor(originalTotal / 10000.0);
+        int maxUsable = Math.max(0, Math.min(memberPoints, byAmountCap));
+        
         if (points > maxUsable) {
-            throw new IllegalArgumentException("Số điểm vượt quá mức cho phép: tối đa " + maxUsable);
+            throw new IllegalArgumentException("Số điểm vượt quá mức cho phép: tối đa " + maxUsable + " điểm (bạn có " + memberPoints + " điểm)");
         }
+        
+        // Kiểm tra điểm còn đủ không (tránh trường hợp điểm đã bị trừ bởi order khác)
+        if (memberPoints < points) {
+            throw new IllegalArgumentException("Số điểm không đủ. Bạn có " + memberPoints + " điểm, nhưng muốn sử dụng " + points + " điểm.");
+        }
+        
         pointsUsedBySession.put(sessionId, points);
     }
 
