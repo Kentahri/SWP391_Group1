@@ -36,7 +36,6 @@ public class CashierTakeAwayController {
     CartService cartService;
     OrderService orderService;
     StaffService staffService;
-    PaymentMapper paymentMapper;
     PaymentService paymentService;
     SessionService sessionService;
     ProductSizeService productSizeService;
@@ -96,20 +95,6 @@ public class CashierTakeAwayController {
         return "redirect:/cashier/takeaway";
     }
 
-    @PostMapping("/takeaway/order/place")
-    public String placeTakeAway(HttpSession session,
-                                Principal principal,
-                                RedirectAttributes redirectAttributes) {
-        Staff staff = staffService.findByEmail(principal.getName());
-        var order = orderService.placeTakeAwayOrder(session, staff);
-        if (order == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Giỏ hàng trống.");
-            return "redirect:/cashier/takeaway";
-        }
-        redirectAttributes.addFlashAttribute("successMessage", "Đã tạo đơn Take-away #" + order.getId());
-        return "redirect:/cashier/takeaway";
-    }
-
     @PostMapping("/takeaway/order/place-and-payment")
     public String placeAndPayment(HttpSession session,
                                   Principal principal,
@@ -131,119 +116,108 @@ public class CashierTakeAwayController {
                                      RedirectAttributes redirectAttributes,
                                      HttpServletRequest request,
                                      jakarta.servlet.http.HttpServletResponse response) {
-        Staff staff = staffService.findByEmail(principal.getName());
-        var order = orderService.getOrderById(orderId);
-        if (order == null || order.getOrderType() != Order.OrderType.TAKE_AWAY) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy đơn hàng Take-away này.");
-            return "redirect:/cashier/takeaway";
-        }
-        
-        if (order.getPaymentStatus() == Order.PaymentStatus.PAID) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Đơn hàng này đã được thanh toán.");
-            return "redirect:/cashier/takeaway";
-        }
-        
-        // Tạo hoặc lấy session cho take-away order
-        var session = sessionService.getOrCreateSessionForTakeAwayOrder(order);
-        Long sessionId = session.getId();
-
-        // Validate sessionId
-        if (sessionId == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Không thể tạo session cho đơn hàng.");
-            return "redirect:/cashier/takeaway";
-        }
-
-        // Lấy PaymentDTO từ PaymentService để có đầy đủ thông tin (voucher, points, etc.)
-        PaymentDTO paymentDTO = paymentService.getPaymentBySessionId(sessionId);
-
-        // Lấy danh sách voucher có thể áp dụng
-        var availableVouchers = paymentService.getAvailableVouchersBySessionId(sessionId);
-
-        // Lấy chi tiết order items
-        var orderItems = paymentService.getOrderItemsBySessionId(sessionId);
-
-        // Lấy thông tin membership
-        var membership = paymentService.getMembershipBySessionId(sessionId);
-
-        // Tính các giá trị
-        double originalTotal = paymentService.calculateOriginalOrderTotal(sessionId);
-        double discountAmount = paymentService.calculateDiscountAmount(sessionId);
-        double finalTotal = originalTotal - discountAmount;
-
-        // Điều chỉnh PaymentDTO cho take-away
-        paymentDTO.setTableNumber(null); // Take-away không có bàn
-
-        model.addAttribute("payment", paymentDTO);
-        model.addAttribute("orderItems", orderItems);
-        model.addAttribute("order", order); // Thêm order vào model cho template
-        model.addAttribute("orderId", orderId);
-        model.addAttribute("sessionId", sessionId); // Truyền sessionId để dùng trong forms
-        model.addAttribute("tableId", null);
-
-        model.addAttribute("originalTotal", originalTotal);
-        model.addAttribute("discountAmount", discountAmount);
-        model.addAttribute("finalTotal", finalTotal);
-
-        model.addAttribute("availableVouchers", availableVouchers);
-        model.addAttribute("membership", membership);
-        model.addAttribute("pointsUsed", paymentDTO != null ? paymentDTO.getPointsUsed() : 0);
-        model.addAttribute("maxUsablePoints", paymentService.getMaxUsablePoints(sessionId));
-
-        // Get context path
-        String contextPath = request.getContextPath();
-
-        // Add context path to model for template use
-        model.addAttribute("contextPath", contextPath);
-
-        String registerReturnPath = "/cashier/takeaway/order/" + orderId + "/payment";
-        String encodedRegisterReturnPath = URLEncoder.encode(registerReturnPath, StandardCharsets.UTF_8);
-        String membershipRegisterUrl = (contextPath != null ? contextPath : "")
-            + "/guest/membership/register?sessionId=" + sessionId
-            + "&returnUrl=" + encodedRegisterReturnPath;
-        model.addAttribute("membershipRegisterUrl", membershipRegisterUrl);
-
-        // Confirm URL - sử dụng orderId cho cashier flow (không cần sessionId)
-        String paymentConfirmUrl = contextPath + "/cashier/takeaway/order/" + orderId + "/payment/confirm";
-        model.addAttribute("paymentConfirmUrl", paymentConfirmUrl);
-
-        // Action URL cho voucher/membership/points actions
-        String paymentActionUrl = contextPath + "/cashier/takeaway/order/" + orderId + "/payment/action";
-        model.addAttribute("paymentActionUrl", paymentActionUrl);
-        model.addAttribute("isCashierFlow", true); // Đánh dấu để template biết dùng paymentActionUrl
-
-        // Thông tin staff và back URL
-        model.addAttribute("staff", staff);
-        model.addAttribute("backUrl", "/cashier/takeaway");
-        model.addAttribute("orderTypeLabel", "Take-away");
-
-        // Set no-cache headers to discourage going back to previous state
         try {
-            response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
-            response.addHeader("Cache-Control", "post-check=0, pre-check=0");
-            response.setHeader("Pragma", "no-cache");
-            response.setDateHeader("Expires", 0);
-        } catch (Exception ignored) {}
+            // Validation được thực hiện trong service
+            orderService.validateOrderIsNotPaid(orderId);
+            var order = orderService.getOrderById(orderId);
+            
+            Staff staff = staffService.findByEmail(principal.getName());
+            
+            // Tạo hoặc lấy session cho take-away order
+            var session = sessionService.getOrCreateSessionForTakeAwayOrder(order);
+            Long sessionId = session.getId();
 
-        // Tái sử dụng guest payment.html
-        return "guest-page/payment";
+            // Lấy PaymentDTO từ PaymentService để có đầy đủ thông tin (voucher, points, etc.)
+            PaymentDTO paymentDTO = paymentService.getPaymentBySessionId(sessionId);
+
+            // Lấy danh sách voucher có thể áp dụng
+            var availableVouchers = paymentService.getAvailableVouchersBySessionId(sessionId);
+
+            // Lấy chi tiết order items
+            var orderItems = paymentService.getOrderItemsBySessionId(sessionId);
+
+            // Lấy thông tin membership
+            var membership = paymentService.getMembershipBySessionId(sessionId);
+
+            // Tính các giá trị
+            double originalTotal = paymentService.calculateOriginalOrderTotal(sessionId);
+            double discountAmount = paymentService.calculateDiscountAmount(sessionId);
+            double finalTotal = originalTotal - discountAmount;
+
+            // Điều chỉnh PaymentDTO cho take-away
+            paymentDTO.setTableNumber(null); // Take-away không có bàn
+
+            model.addAttribute("payment", paymentDTO);
+            model.addAttribute("orderItems", orderItems);
+            model.addAttribute("order", order); // Thêm order vào model cho template
+            model.addAttribute("orderId", orderId);
+            model.addAttribute("sessionId", sessionId); // Truyền sessionId để dùng trong forms
+            model.addAttribute("tableId", null);
+
+            model.addAttribute("originalTotal", originalTotal);
+            model.addAttribute("discountAmount", discountAmount);
+            model.addAttribute("finalTotal", finalTotal);
+
+            model.addAttribute("availableVouchers", availableVouchers);
+            model.addAttribute("membership", membership);
+            model.addAttribute("pointsUsed", paymentDTO != null ? paymentDTO.getPointsUsed() : 0);
+            model.addAttribute("maxUsablePoints", paymentService.getMaxUsablePoints(sessionId));
+
+            // Get context path
+            String contextPath = request.getContextPath();
+
+            // Add context path to model for template use
+            model.addAttribute("contextPath", contextPath);
+
+            String registerReturnPath = "/cashier/takeaway/order/" + orderId + "/payment";
+            String encodedRegisterReturnPath = URLEncoder.encode(registerReturnPath, StandardCharsets.UTF_8);
+            String membershipRegisterUrl = (contextPath != null ? contextPath : "")
+                + "/guest/membership/register?sessionId=" + sessionId
+                + "&returnUrl=" + encodedRegisterReturnPath;
+            model.addAttribute("membershipRegisterUrl", membershipRegisterUrl);
+
+            // Confirm URL - sử dụng orderId cho cashier flow (không cần sessionId)
+            String paymentConfirmUrl = contextPath + "/cashier/takeaway/order/" + orderId + "/payment/confirm";
+            model.addAttribute("paymentConfirmUrl", paymentConfirmUrl);
+
+            // Action URL cho voucher/membership/points actions
+            String paymentActionUrl = contextPath + "/cashier/takeaway/order/" + orderId + "/payment/action";
+            model.addAttribute("paymentActionUrl", paymentActionUrl);
+            model.addAttribute("isCashierFlow", true); // Đánh dấu để template biết dùng paymentActionUrl
+
+            // Thông tin staff và back URL
+            model.addAttribute("staff", staff);
+            model.addAttribute("backUrl", "/cashier/takeaway");
+            model.addAttribute("orderTypeLabel", "Take-away");
+
+            // Set no-cache headers to discourage going back to previous state
+            try {
+                response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+                response.addHeader("Cache-Control", "post-check=0, pre-check=0");
+                response.setHeader("Pragma", "no-cache");
+                response.setDateHeader("Expires", 0);
+            } catch (Exception ignored) {}
+
+            // Tái sử dụng guest payment.html
+            return "guest-page/payment";
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/cashier/takeaway";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/cashier/takeaway";
+        }
     }
 
     @PostMapping("/takeaway/order/{orderId}/payment/confirm")
     public String confirmTakeAwayPayment(@PathVariable Long orderId,
                                         @RequestParam String paymentMethod,
                                         RedirectAttributes redirectAttributes) {
-        var order = orderService.getOrderById(orderId);
-        if (order == null || order.getOrderType() != Order.OrderType.TAKE_AWAY) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy đơn hàng Take-away này.");
-            return "redirect:/cashier/takeaway";
-        }
-
-        if (order.getPaymentStatus() == Order.PaymentStatus.PAID) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Đơn hàng này đã được thanh toán.");
-            return "redirect:/cashier/takeaway";
-        }
-
         try {
+            // Validation được thực hiện trong service
+            orderService.validateOrderIsNotPaid(orderId);
+            var order = orderService.getOrderById(orderId);
+
             // Lấy hoặc tạo session cho order
             var session = sessionService.getOrCreateSessionForTakeAwayOrder(order);
             Long sessionId = session.getId();
@@ -253,7 +227,8 @@ public class CashierTakeAwayController {
                 throw new RuntimeException("Order chưa được link với session. SessionId: " + sessionId);
             }
 
-            Order.PaymentMethod method = Order.PaymentMethod.valueOf(paymentMethod);
+            // Validation được thực hiện trong service
+            Order.PaymentMethod method = paymentService.validatePaymentMethod(paymentMethod);
             paymentService.confirmPaymentTakeawayBySessionId(sessionId, method);
             
             order = orderService.getOrderById(orderId);
@@ -261,7 +236,7 @@ public class CashierTakeAwayController {
 
             return "redirect:/cashier/takeaway/order/" + orderId + "/payment/confirmation";
         } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Phương thức thanh toán không hợp lệ.");
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/cashier/takeaway/order/" + orderId + "/payment";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi thanh toán: " + e.getMessage());
@@ -279,66 +254,65 @@ public class CashierTakeAwayController {
                                                   Principal principal,
                                                   RedirectAttributes redirectAttributes,
                                                   HttpServletRequest request) {
-        var order = orderService.getOrderById(orderId);
+        try {
+            // Validation được thực hiện trong service
+            orderService.validateOrderIsPaid(orderId);
+            var order = orderService.getOrderById(orderId);
 
-        if (order == null || order.getOrderType() != Order.OrderType.TAKE_AWAY) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy đơn hàng Take-away này.");
+            // Lấy session từ order
+            var session = sessionService.getSessionByOrder(order);
+            Long sessionId = session.getId();
+
+            // Lấy PaymentDTO từ PaymentService để có đầy đủ thông tin
+            PaymentDTO paymentDTO = paymentService.getPaymentConfirmationBySessionId(sessionId);
+
+            // Lấy chi tiết order items
+            var orderItems = paymentService.getOrderItemsBySessionId(sessionId);
+
+            // Lấy thông tin membership
+            var membership = paymentService.getMembershipBySessionId(sessionId);
+
+            // Tính các giá trị
+            double originalTotal = paymentService.calculateOriginalOrderTotal(sessionId);
+            double discountAmount = paymentService.calculateDiscountAmount(sessionId);
+            double finalTotal = originalTotal - discountAmount;
+
+            // Điều chỉnh PaymentDTO cho take-away
+            paymentDTO.setTableNumber(null); // Take-away không có bàn
+
+            model.addAttribute("payment", paymentDTO);
+            model.addAttribute("orderItems", orderItems);
+            model.addAttribute("orderId", orderId);
+            model.addAttribute("sessionId", sessionId);
+            model.addAttribute("tableId", null);
+
+            model.addAttribute("originalTotal", originalTotal);
+            model.addAttribute("discountAmount", discountAmount);
+            model.addAttribute("finalTotal", finalTotal);
+
+            model.addAttribute("membership", membership);
+
+            // Thêm backUrl cho cashier flow - về trang cashier dashboard
+            // Get context path for backUrl
+            String contextPath = request.getContextPath();
+            String backUrl = contextPath + "/cashier";
+            model.addAttribute("backUrl", backUrl);
+            model.addAttribute("isCashierFlow", true); // Set boolean
+            model.addAttribute("isCashierFlowStr", "true"); // Set string for JS compatibility
+            model.addAttribute("redirectTarget", "cashier"); // Rõ ràng: redirect về cashier cho take-away
+
+
+            return "guest-page/payment-confirmation";
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            if (e.getMessage().contains("chưa được thanh toán")) {
+                return "redirect:/cashier/takeaway/order/" + orderId + "/payment";
+            }
+            return "redirect:/cashier/takeaway";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/cashier/takeaway";
         }
-
-        if (order.getPaymentStatus() != Order.PaymentStatus.PAID) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Đơn hàng này chưa được thanh toán.");
-            return "redirect:/cashier/takeaway/order/" + orderId + "/payment";
-        }
-
-        // Lấy session từ order
-        var session = sessionService.getSessionByOrder(order);
-        Long sessionId = session.getId();
-
-        // Lấy PaymentDTO từ PaymentService để có đầy đủ thông tin
-        PaymentDTO paymentDTO = paymentService.getPaymentConfirmationBySessionId(sessionId);
-
-        // Lấy chi tiết order items
-        var orderItems = paymentService.getOrderItemsBySessionId(sessionId);
-
-        // Lấy thông tin membership
-        var membership = paymentService.getMembershipBySessionId(sessionId);
-
-        // Tính các giá trị
-        double originalTotal = paymentService.calculateOriginalOrderTotal(sessionId);
-        double discountAmount = paymentService.calculateDiscountAmount(sessionId);
-        double finalTotal = originalTotal - discountAmount;
-
-        // Điều chỉnh PaymentDTO cho take-away
-        paymentDTO.setTableNumber(null); // Take-away không có bàn
-
-        model.addAttribute("payment", paymentDTO);
-        model.addAttribute("orderItems", orderItems);
-        model.addAttribute("orderId", orderId);
-        model.addAttribute("sessionId", sessionId);
-        model.addAttribute("tableId", null);
-
-        model.addAttribute("originalTotal", originalTotal);
-        model.addAttribute("discountAmount", discountAmount);
-        model.addAttribute("finalTotal", finalTotal);
-
-        model.addAttribute("membership", membership);
-
-        // Thêm backUrl cho cashier flow - về trang cashier dashboard
-        // Get context path for backUrl
-        String contextPath = request.getContextPath();
-        String backUrl = contextPath + "/cashier";
-        model.addAttribute("backUrl", backUrl);
-        model.addAttribute("isCashierFlow", true); // Set boolean
-        model.addAttribute("isCashierFlowStr", "true"); // Set string for JS compatibility
-        model.addAttribute("redirectTarget", "cashier"); // Rõ ràng: redirect về cashier cho take-away
-
-        // Debug: log values
-        System.out.println("Payment confirmation - backUrl: " + backUrl);
-        System.out.println("Payment confirmation - isCashierFlow: true");
-        System.out.println("Payment confirmation - redirectTarget: cashier");
-
-        return "guest-page/payment-confirmation";
     }
 
     /**
@@ -352,31 +326,24 @@ public class CashierTakeAwayController {
                                     @RequestParam(required = false) String phoneNumber,
                                     @RequestParam(required = false) Integer points,
                                     RedirectAttributes redirectAttributes) {
-        var order = orderService.getOrderById(orderId);
-        if (order == null || order.getOrderType() != Order.OrderType.TAKE_AWAY) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy đơn hàng Take-away này.");
-            return "redirect:/cashier/takeaway";
-        }
-
-        if (order.getPaymentStatus() == Order.PaymentStatus.PAID) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Đơn hàng này đã được thanh toán.");
-            return "redirect:/cashier/takeaway";
-        }
-
-        // Lấy hoặc tạo session cho order
-        var session = sessionService.getOrCreateSessionForTakeAwayOrder(order);
-        Long sessionId = session.getId();
-
         try {
+            // Validation được thực hiện trong service
+            orderService.validateOrderIsNotPaid(orderId);
+            var order = orderService.getOrderById(orderId);
+
+            // Lấy hoặc tạo session cho order
+            var session = sessionService.getOrCreateSessionForTakeAwayOrder(order);
+            Long sessionId = session.getId();
+
             if ("apply-voucher".equals(action) && voucherId != null) {
                 paymentService.applyVoucherBySessionId(sessionId, voucherId);
                 redirectAttributes.addFlashAttribute("successMessage", "Voucher đã được áp dụng thành công!");
             } else if ("remove-voucher".equals(action)) {
                 paymentService.removeVoucherBySessionId(sessionId);
                 redirectAttributes.addFlashAttribute("successMessage", "Voucher đã được hủy áp dụng!");
-            } else if ("verify-membership".equals(action) && phoneNumber != null && !phoneNumber.trim().isEmpty()) {
-                // Verify membership và gán vào order
-                var membership = paymentService.findMembershipByPhoneNumber(phoneNumber.trim());
+            } else if ("verify-membership".equals(action)) {
+                // Validation được thực hiện trong service
+                var membership = paymentService.findMembershipByPhoneNumber(phoneNumber);
                 if (membership != null) {
                     paymentService.assignMembershipToSession(sessionId, membership.getId());
                     redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận thành viên thành công!");
@@ -395,6 +362,9 @@ public class CashierTakeAwayController {
             }
 
             return "redirect:/cashier/takeaway/order/" + orderId + "/payment";
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/cashier/takeaway/order/" + orderId + "/payment";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
             return "redirect:/cashier/takeaway/order/" + orderId + "/payment";
@@ -410,60 +380,63 @@ public class CashierTakeAwayController {
                                      Principal principal,
                                      RedirectAttributes redirectAttributes,
                                      HttpServletRequest request) {
-        var order = orderService.getOrderById(orderId);
+        try {
+            // Validation được thực hiện trong service
+            orderService.validateOrderIsPaid(orderId);
+            var order = orderService.getOrderById(orderId);
 
-        if (order == null || order.getOrderType() != Order.OrderType.TAKE_AWAY) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy đơn hàng Take-away này.");
+            // Lấy session từ order
+            var session = sessionService.getSessionByOrder(order);
+            Long sessionId = session.getId();
+
+            // Lấy PaymentDTO từ PaymentService để có đầy đủ thông tin
+            PaymentDTO paymentDTO = paymentService.getPaymentConfirmationBySessionId(sessionId);
+
+            // Lấy chi tiết order items
+            var orderItems = paymentService.getOrderItemsBySessionId(sessionId);
+
+            // Lấy thông tin membership
+            var membership = paymentService.getMembershipBySessionId(sessionId);
+
+            // Tính các giá trị
+            double originalTotal = paymentService.calculateOriginalOrderTotal(sessionId);
+            double discountAmount = paymentService.calculateDiscountAmount(sessionId);
+            double finalTotal = originalTotal - discountAmount;
+            double taxAmount = finalTotal * 0.1;
+            double totalWithTax = finalTotal + taxAmount;
+
+            // Điều chỉnh PaymentDTO cho take-away
+            paymentDTO.setTableNumber(null); // Take-away không có bàn
+
+            // Lấy thông tin nhân viên từ order
+            var staff = order.getStaff();
+
+            model.addAttribute("payment", paymentDTO);
+            model.addAttribute("orderItems", orderItems);
+            model.addAttribute("orderId", orderId);
+            model.addAttribute("sessionId", sessionId);
+            model.addAttribute("tableId", null);
+
+            model.addAttribute("originalTotal", originalTotal);
+            model.addAttribute("discountAmount", discountAmount);
+            model.addAttribute("finalTotal", finalTotal);
+            model.addAttribute("taxAmount", taxAmount);
+            model.addAttribute("totalWithTax", totalWithTax);
+
+            model.addAttribute("membership", membership);
+            model.addAttribute("staff", staff);
+
+            return "guest-page/invoice";
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            if (e.getMessage().contains("chưa được thanh toán")) {
+                return "redirect:/cashier/takeaway/order/" + orderId + "/payment";
+            }
+            return "redirect:/cashier/takeaway";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
             return "redirect:/cashier/takeaway";
         }
-
-        if (order.getPaymentStatus() != Order.PaymentStatus.PAID) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Đơn hàng này chưa được thanh toán.");
-            return "redirect:/cashier/takeaway/order/" + orderId + "/payment";
-        }
-
-        // Lấy session từ order
-        var session = sessionService.getSessionByOrder(order);
-        Long sessionId = session.getId();
-
-        // Lấy PaymentDTO từ PaymentService để có đầy đủ thông tin
-        PaymentDTO paymentDTO = paymentService.getPaymentConfirmationBySessionId(sessionId);
-
-        // Lấy chi tiết order items
-        var orderItems = paymentService.getOrderItemsBySessionId(sessionId);
-
-        // Lấy thông tin membership
-        var membership = paymentService.getMembershipBySessionId(sessionId);
-
-        // Tính các giá trị
-        double originalTotal = paymentService.calculateOriginalOrderTotal(sessionId);
-        double discountAmount = paymentService.calculateDiscountAmount(sessionId);
-        double finalTotal = originalTotal - discountAmount;
-        double taxAmount = finalTotal * 0.1;
-        double totalWithTax = finalTotal + taxAmount;
-
-        // Điều chỉnh PaymentDTO cho take-away
-        paymentDTO.setTableNumber(null); // Take-away không có bàn
-
-        // Lấy thông tin nhân viên từ order
-        var staff = order.getStaff();
-
-        model.addAttribute("payment", paymentDTO);
-        model.addAttribute("orderItems", orderItems);
-        model.addAttribute("orderId", orderId);
-        model.addAttribute("sessionId", sessionId);
-        model.addAttribute("tableId", null);
-
-        model.addAttribute("originalTotal", originalTotal);
-        model.addAttribute("discountAmount", discountAmount);
-        model.addAttribute("finalTotal", finalTotal);
-        model.addAttribute("taxAmount", taxAmount);
-        model.addAttribute("totalWithTax", totalWithTax);
-
-        model.addAttribute("membership", membership);
-        model.addAttribute("staff", staff);
-
-        return "guest-page/invoice";
     }
 
 }

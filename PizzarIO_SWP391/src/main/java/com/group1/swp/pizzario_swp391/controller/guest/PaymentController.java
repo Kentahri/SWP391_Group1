@@ -35,22 +35,6 @@ public class PaymentController {
     private final OrderService orderService;
 
     /**
-     * Test endpoint để kiểm tra mapping
-     */
-    @GetMapping("/test")
-    public String testEndpoint() {
-        return "Test endpoint works!";
-    }
-
-    /**
-     * Test endpoint để kiểm tra session mapping
-     */
-    @GetMapping("/session/{sessionId}/test")
-    public String testSessionEndpoint(@PathVariable Long sessionId) {
-        return "Session test endpoint works! SessionId: " + sessionId;
-    }
-
-    /**
      * Xử lý trường hợp không có sessionId - redirect về trang chủ
      */
     @GetMapping
@@ -73,22 +57,8 @@ public class PaymentController {
                                          @RequestParam(required = false) String membershipRegistered,
                                          Model model,
                                          HttpServletRequest request) {
-        System.out.println("=== PaymentController Debug ===");
-        System.out.println("Received sessionId: " + sessionId);
-        System.out.println("SessionId type: " + (sessionId != null ? sessionId.getClass().getSimpleName() : "null"));
-        System.out.println("Error param: " + error);
-        System.out.println("Success param: " + success);
-        System.out.println("Request URL: " + request.getRequestURL());
-        System.out.println("Request URI: " + request.getRequestURI());
-        System.out.println("Query String: " + request.getQueryString());
-        
         try {
-            // Validate sessionId
-            if (sessionId == null) {
-                System.out.println("SessionId is null, returning error page");
-                model.addAttribute("error", "Session ID không hợp lệ");
-                return "error-page";
-            }
+            // Validation được thực hiện trong service
             // Lấy thông tin payment đầy đủ từ session
             PaymentDTO payment = paymentService.getPaymentBySessionId(sessionId);
             
@@ -124,10 +94,6 @@ public class PaymentController {
             
             // Points info for UI - đảm bảo pointsUsed luôn có giá trị (không null)
             Integer pointsUsed = payment.getPointsUsed() != null ? payment.getPointsUsed() : 0;
-            System.out.println("=== PaymentController Debug ===");
-            System.out.println("sessionId: " + sessionId);
-            System.out.println("payment.getPointsUsed(): " + payment.getPointsUsed());
-            System.out.println("pointsUsed (after null check): " + pointsUsed);
             model.addAttribute("pointsUsed", pointsUsed);
             model.addAttribute("maxUsablePoints", paymentService.getMaxUsablePoints(sessionId));
             
@@ -177,15 +143,16 @@ public class PaymentController {
                                     @RequestParam(required = false) Integer points,
                                     RedirectAttributes redirectAttributes) {
         try {
+            // Validation được thực hiện trong service
             if ("apply-voucher".equals(action) && voucherId != null) {
                 paymentService.applyVoucherBySessionId(sessionId, voucherId);
                 redirectAttributes.addFlashAttribute("successMessage", "Voucher đã được áp dụng thành công!");
             } else if ("remove-voucher".equals(action)) {
                 paymentService.removeVoucherBySessionId(sessionId);
                 redirectAttributes.addFlashAttribute("successMessage", "Voucher đã được hủy áp dụng!");
-            } else if ("verify-membership".equals(action) && phoneNumber != null && !phoneNumber.trim().isEmpty()) {
-                // Verify membership và gán vào session
-                Membership membership = paymentService.findMembershipByPhoneNumber(phoneNumber.trim());
+            } else if ("verify-membership".equals(action)) {
+                // Validation được thực hiện trong service
+                Membership membership = paymentService.findMembershipByPhoneNumber(phoneNumber);
                 if (membership != null) {
                     paymentService.assignMembershipToSession(sessionId, membership.getId());
                     redirectAttributes.addFlashAttribute("successMessage", "Đã xác nhận thành viên thành công!");
@@ -214,33 +181,25 @@ public class PaymentController {
     @PostMapping("/session/{sessionId}/confirm")
     public String waitingForCashierConfirmPayment(@PathVariable Long sessionId,
                                                   @RequestParam String paymentMethod,
-                                                  Model model,
-                                                  HttpServletRequest request){
+                                                  RedirectAttributes redirectAttributes){
 
         try {
             if (paymentMethod == null || paymentMethod.trim().isEmpty()) {
-                return "redirect:/guest/payment/session/" + sessionId + "?error=" +
-                        URLEncoder.encode("Vui lòng chọn phương thức thanh toán", StandardCharsets.UTF_8);
+                redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng chọn phương thức thanh toán");
+                return "redirect:/guest/payment/session/" + sessionId;
             }
 
-            Order.PaymentMethod method;
-            try {
-                method = Order.PaymentMethod.valueOf(paymentMethod);
-            } catch (IllegalArgumentException e) {
-                return "redirect:/guest/payment/session/" + sessionId + "?error=" +
-                        URLEncoder.encode("Phương thức thanh toán không hợp lệ: " + paymentMethod, StandardCharsets.UTF_8);
-            }
-
+            Order.PaymentMethod method = paymentService.validatePaymentMethod(paymentMethod);
             paymentService.waitingConfirmPayment(sessionId, method);
 
-            // redirect sang trang waiting
             return "redirect:/guest/payment/session/" + sessionId +"/waiting-confirm";
+
         } catch (Exception e) {
-            e.printStackTrace();
-            return "redirect:/guest/payment/session/" + sessionId + "?error=" +
-                    URLEncoder.encode("Thanh toán thất bại: " + e.getMessage(), StandardCharsets.UTF_8);
+            redirectAttributes.addFlashAttribute("errorMessage", "Thanh toán thất bại: " + e.getMessage());
+            return "redirect:/guest/payment/session/" + sessionId;
         }
     }
+
 
     @GetMapping("/session/{sessionId}/waiting-confirm")
     public String waitingPage(@PathVariable Long sessionId,
@@ -288,32 +247,24 @@ public class PaymentController {
      * Trang xác nhận thanh toán theo session với đầy đủ thông tin
      */
     @GetMapping("/session/{sessionId}/confirmation")
-    public String showPaymentConfirmationBySession(@PathVariable Long sessionId, 
+    public String showPaymentConfirmationBySession(@PathVariable Long sessionId,
                                                    Model model, HttpServletRequest request) {
-        System.out.println("=== Payment Confirmation Page Debug ===");
-        System.out.println("Received sessionId: " + sessionId);
-        System.out.println("Request URL: " + request.getRequestURL());
-        System.out.println("Request URI: " + request.getRequestURI());
         HttpSession session = request.getSession();
         try {
             // Lấy thông tin payment từ order đã thanh toán (không cần kiểm tra session mở)
             PaymentDTO payment = paymentService.getPaymentConfirmationBySessionId(sessionId);
-            System.out.println("Payment DTO: " + payment);
-            
+
             // Lấy chi tiết các món đã order
             List<OrderItem> orderItems = paymentService.getOrderItemsBySessionId(sessionId);
-            System.out.println("Order items count: " + (orderItems != null ? orderItems.size() : "null"));
-            
+
             // Lấy thông tin khách hàng
             Membership membership = paymentService.getMembershipBySessionId(sessionId);
-            System.out.println("Membership: " + membership);
-            
+
             // Tính các giá trị để hiển thị
             double originalTotal = paymentService.calculateOriginalOrderTotal(sessionId);
             double discountAmount = paymentService.calculateDiscountAmount(sessionId);
             double finalTotal = originalTotal - discountAmount;
-            System.out.println("Totals - Original: " + originalTotal + ", Discount: " + discountAmount + ", Final: " + finalTotal);
-            
+
             // Thêm thông tin vào model
             model.addAttribute("payment", payment);
             model.addAttribute("orderItems", orderItems);

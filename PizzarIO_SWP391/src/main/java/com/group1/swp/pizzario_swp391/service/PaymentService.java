@@ -23,6 +23,7 @@ import com.group1.swp.pizzario_swp391.entity.Voucher;
 import com.group1.swp.pizzario_swp391.mapper.PaymentMapper;
 import com.group1.swp.pizzario_swp391.repository.OrderRepository;
 import com.group1.swp.pizzario_swp391.repository.VoucherRepository;
+import com.group1.swp.pizzario_swp391.repository.TableRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,7 +35,7 @@ public class PaymentService {
     private final VoucherRepository voucherRepository;
     private final PaymentMapper paymentMapper;
     private final SessionService sessionService;
-    private final com.group1.swp.pizzario_swp391.repository.TableRepository tableRepository;
+    private final TableRepository tableRepository;
     private final MembershipService membershipService;
     private final WebSocketService webSocketService;
 
@@ -42,9 +43,64 @@ public class PaymentService {
     private final Map<Long, Integer> pointsUsedBySession = new ConcurrentHashMap<>();
 
     /**
+     * Validate sessionId không null
+     */
+    public void validateSessionId(Long sessionId) {
+        if (sessionId == null) {
+            throw new IllegalArgumentException("Session ID không hợp lệ");
+        }
+    }
+
+    /**
+     * Validate payment method
+     */
+    public Order.PaymentMethod validatePaymentMethod(String paymentMethod) {
+        if (paymentMethod == null || paymentMethod.trim().isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng chọn phương thức thanh toán");
+        }
+        try {
+            return Order.PaymentMethod.valueOf(paymentMethod);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Phương thức thanh toán không hợp lệ: " + paymentMethod);
+        }
+    }
+
+    /**
+     * Validate phone number for membership verification
+     */
+    public String validatePhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            throw new IllegalArgumentException("Số điện thoại không được để trống");
+        }
+        return phoneNumber.trim();
+    }
+
+    /**
+     * Validate action and parameters for payment actions
+     */
+    public void validatePaymentAction(String action, Long voucherId, String phoneNumber, Integer points) {
+        if (action == null || action.trim().isEmpty()) {
+            throw new IllegalArgumentException("Hành động không được để trống");
+        }
+        
+        if ("apply-voucher".equals(action) && voucherId == null) {
+            throw new IllegalArgumentException("Voucher ID không được để trống khi áp dụng voucher");
+        }
+        
+        if ("verify-membership".equals(action)) {
+            validatePhoneNumber(phoneNumber);
+        }
+        
+        if ("apply-points".equals(action) && points == null) {
+            throw new IllegalArgumentException("Số điểm không được để trống khi áp dụng điểm");
+        }
+    }
+
+    /**
      * Lấy thông tin payment từ session ID
      */
     public PaymentDTO getPaymentBySessionId(Long sessionId) {
+        validateSessionId(sessionId);
         // Kiểm tra session có đang mở không
         if (!sessionService.isSessionOpen(sessionId)) {
             throw new RuntimeException("Session đã được đóng");
@@ -75,13 +131,7 @@ public class PaymentService {
 
         // Set pointsUsed
         int pointsUsed = getPointsUsed(sessionId);
-        System.out.println("=== PaymentService.getPaymentBySessionId Debug ===");
-        System.out.println("sessionId: " + sessionId);
-        System.out.println("pointsUsedBySession map contains key: " + pointsUsedBySession.containsKey(sessionId));
-        System.out.println("pointsUsedBySession.get(sessionId): " + pointsUsedBySession.get(sessionId));
-        System.out.println("getPointsUsed(sessionId) returns: " + pointsUsed);
         paymentDTO.setPointsUsed(pointsUsed);
-        System.out.println("paymentDTO.getPointsUsed() after set: " + paymentDTO.getPointsUsed());
 
         return paymentDTO;
     }
@@ -90,6 +140,7 @@ public class PaymentService {
      * Lấy thông tin payment từ session ID cho trang confirmation (không cần kiểm tra session mở)
      */
     public PaymentDTO getPaymentConfirmationBySessionId(Long sessionId) {
+        validateSessionId(sessionId);
         // Lấy order từ session (không cần kiểm tra session mở vì đã thanh toán)
         Order order = sessionService.getOrderBySessionId(sessionId);
 
@@ -134,6 +185,7 @@ public class PaymentService {
      * Lấy danh sách order items cho session
      */
     public List<OrderItem> getOrderItemsBySessionId(Long sessionId) {
+        validateSessionId(sessionId);
         Order order = sessionService.getOrderBySessionId(sessionId);
         return order.getOrderItems();
     }
@@ -142,6 +194,7 @@ public class PaymentService {
      * Lấy danh sách voucher có thể áp dụng cho session
      */
     public List<VoucherDTO> getAvailableVouchersBySessionId(Long sessionId) {
+        validateSessionId(sessionId);
         // Sử dụng tổng gốc để kiểm tra điều kiện voucher
         double originalOrderTotal = calculateOriginalOrderTotal(sessionId);
 
@@ -172,6 +225,11 @@ public class PaymentService {
      */
     @Transactional(rollbackFor = Exception.class)
     public PaymentDTO applyVoucherBySessionId(Long sessionId, Long voucherId) {
+        validateSessionId(sessionId);
+        if (voucherId == null) {
+            throw new IllegalArgumentException("Voucher ID không được để trống");
+        }
+        
         Order order = sessionService.getOrderBySessionId(sessionId);
 
         Voucher voucher = voucherRepository.findById(voucherId)
@@ -225,6 +283,7 @@ public class PaymentService {
      */
     @Transactional(rollbackFor = Exception.class)
     public PaymentDTO removeVoucherBySessionId(Long sessionId) {
+        validateSessionId(sessionId);
         Order order = sessionService.getOrderBySessionId(sessionId);
 
         if (order.getVoucher() != null) {
@@ -256,16 +315,17 @@ public class PaymentService {
 
     @Transactional
     public void waitingConfirmPayment(Long sessionId, Order.PaymentMethod paymentMethod) {
+        validateSessionId(sessionId);
+        if (paymentMethod == null) {
+            throw new IllegalArgumentException("PaymentMethod cannot be null");
+        }
+        
         Order order = sessionService.getOrderBySessionId(sessionId);
         DiningTable table = order.getSession().getTable();
         DiningTable.TableStatus currentTableStatus = table.getTableStatus();
         double finalOriginalTotal = calculateOriginalOrderTotal(sessionId);
         double finalDiscountAmount = calculateDiscountAmount(sessionId);
         double finalFinalTotal = finalOriginalTotal - finalDiscountAmount;
-
-        if (paymentMethod == null) {
-            throw new IllegalArgumentException("PaymentMethod cannot be null");
-        }
 
         order.setPaymentMethod(paymentMethod);
         order.setPaymentStatus(Order.PaymentStatus.PENDING);
@@ -310,6 +370,10 @@ public class PaymentService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void confirmPaymentBySessionId(Long sessionId, Order.PaymentMethod paymentMethod) {
+        validateSessionId(sessionId);
+        if (paymentMethod == null) {
+            throw new IllegalArgumentException("PaymentMethod cannot be null");
+        }
 
         try {
             Order order = sessionService.getOrderBySessionId(sessionId);
@@ -317,10 +381,6 @@ public class PaymentService {
             double finalOriginalTotal = calculateOriginalOrderTotal(sessionId);
             double finalDiscountAmount = calculateDiscountAmount(sessionId);
             double finalFinalTotal = finalOriginalTotal - finalDiscountAmount;
-
-            if (paymentMethod == null) {
-                throw new IllegalArgumentException("PaymentMethod cannot be null");
-            }
 
             // Cập nhật trạng thái thanh toán
             // Lưu payment method thực tế vào database
@@ -405,6 +465,10 @@ public class PaymentService {
 
     @Transactional(rollbackFor = Exception.class)
     public void confirmPaymentTakeawayBySessionId(Long sessionId, Order.PaymentMethod paymentMethod) {
+        validateSessionId(sessionId);
+        if (paymentMethod == null) {
+            throw new IllegalArgumentException("PaymentMethod cannot be null");
+        }
 
         try {
             Order order = sessionService.getOrderBySessionId(sessionId);
@@ -412,10 +476,6 @@ public class PaymentService {
             double finalOriginalTotal = calculateOriginalOrderTotal(sessionId);
             double finalDiscountAmount = calculateDiscountAmount(sessionId);
             double finalFinalTotal = finalOriginalTotal - finalDiscountAmount;
-
-            if (paymentMethod == null) {
-                throw new IllegalArgumentException("PaymentMethod cannot be null");
-            }
 
             order.setPaymentMethod(paymentMethod);
             order.setPaymentStatus(Order.PaymentStatus.PAID);
@@ -469,6 +529,7 @@ public class PaymentService {
      * Lấy thông tin membership từ session
      */
     public Membership getMembershipBySessionId(Long sessionId) {
+        validateSessionId(sessionId);
         Order order = sessionService.getOrderBySessionId(sessionId);
         return order.getMembership();
     }
@@ -477,7 +538,8 @@ public class PaymentService {
      * Tìm membership theo số điện thoại
      */
     public Membership findMembershipByPhoneNumber(String phoneNumber) {
-        return membershipService.findEntityByPhone(phoneNumber).orElse(null);
+        String validatedPhone = validatePhoneNumber(phoneNumber);
+        return membershipService.findEntityByPhone(validatedPhone).orElse(null);
     }
 
     /**
@@ -485,19 +547,26 @@ public class PaymentService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void assignMembershipToSession(Long sessionId, Long membershipId) {
+        validateSessionId(sessionId);
+        if (membershipId == null) {
+            throw new IllegalArgumentException("Membership ID không được để trống");
+        }
+        
         Order order = sessionService.getOrderBySessionId(sessionId);
         // Tìm membership theo ID thay vì phone number
         Membership membership = membershipService.findEntityById(membershipId);
-        if (membership != null) {
-            order.setMembership(membership);
-            orderRepository.save(order);
+        if (membership == null) {
+            throw new IllegalArgumentException("Không tìm thấy thành viên với ID: " + membershipId);
         }
+        order.setMembership(membership);
+        orderRepository.save(order);
     }
 
     /**
      * Tính tổng giá trị order gốc từ order items (trước khi áp dụng voucher)
      */
     public double calculateOriginalOrderTotal(Long sessionId) {
+        validateSessionId(sessionId);
         Order order = sessionService.getOrderBySessionId(sessionId);
 
         // Luôn tính tổng từ order items để đảm bảo giá trị chính xác
@@ -518,6 +587,7 @@ public class PaymentService {
      * Tính số tiền giảm giá hiện tại từ voucher đã áp dụng
      */
     public double calculateDiscountAmount(Long sessionId) {
+        validateSessionId(sessionId);
         Order order = sessionService.getOrderBySessionId(sessionId);
 
         // Points discount takes precedence if used (and vouchers are mutually exclusive via validation)
@@ -556,7 +626,6 @@ public class PaymentService {
     public void updateVoucherUsage(Voucher voucher) {
         voucher.setTimesUsed(voucher.getTimesUsed() + 1);
         voucherRepository.save(voucher);
-        System.out.println("Updated voucher usage: " + voucher.getTimesUsed());
     }
 
     /**
@@ -567,7 +636,6 @@ public class PaymentService {
         // Tính điểm tích lũy (1 điểm cho mỗi 100,000 VND)
         int earnedPoints = (int) (finalTotal / 100000);
         membership.setPoints(membership.getPoints() + earnedPoints);
-        System.out.println("Updated membership points in new transaction: " + membership.getPoints());
     }
 
     // ===== Points usage APIs =====
@@ -576,6 +644,7 @@ public class PaymentService {
     }
 
     public int getMaxUsablePoints(Long sessionId) {
+        validateSessionId(sessionId);
         Order order = sessionService.getOrderBySessionId(sessionId);
         if (order.getMembership() == null) return 0;
         int memberPoints = order.getMembership().getPoints() != null ? order.getMembership().getPoints() : 0;
@@ -586,26 +655,29 @@ public class PaymentService {
 
     @Transactional(rollbackFor = Exception.class)
     public void applyPoints(Long sessionId, int points) {
+        validateSessionId(sessionId);
+        if (points < 0) {
+            throw new IllegalArgumentException("Số điểm không hợp lệ: phải >= 0");
+        }
+        
         Order order = sessionService.getOrderBySessionId(sessionId);
         if (order.getMembership() == null) {
-            throw new RuntimeException("Vui lòng xác thực thành viên trước khi sử dụng điểm");
+            throw new IllegalArgumentException("Vui lòng xác thực thành viên trước khi sử dụng điểm");
         }
         // Nếu đang có voucher, hủy voucher để điểm là phương thức giảm giá duy nhất
         if (order.getVoucher() != null) {
             order.setVoucher(null);
             orderRepository.save(order);
         }
-        if (points < 0) {
-            throw new RuntimeException("Số điểm không hợp lệ");
-        }
         int maxUsable = getMaxUsablePoints(sessionId);
         if (points > maxUsable) {
-            throw new RuntimeException("Số điểm vượt quá mức cho phép: tối đa " + maxUsable);
+            throw new IllegalArgumentException("Số điểm vượt quá mức cho phép: tối đa " + maxUsable);
         }
         pointsUsedBySession.put(sessionId, points);
     }
 
     public void removePoints(Long sessionId) {
+        validateSessionId(sessionId);
         pointsUsedBySession.remove(sessionId);
     }
 

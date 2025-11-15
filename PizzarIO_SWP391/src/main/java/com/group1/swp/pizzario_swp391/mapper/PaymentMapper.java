@@ -24,7 +24,6 @@ public interface PaymentMapper {
     @Mapping(target = "paymentMethod", source = "paymentMethod")
     @Mapping(target = "customerName", ignore = true) // Sẽ được set riêng trong service
     @Mapping(target = "customerPhone", source = "membership.phoneNumber")
-    @Mapping(target = "customerEmail", ignore = true) // Membership không có email field
     @Mapping(target = "tableNumber", source = "session.table.id")
     @Mapping(target = "orderType", source = "orderType")
     @Mapping(target = "orderStatus", source = "orderStatus")

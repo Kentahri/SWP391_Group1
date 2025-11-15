@@ -6,7 +6,6 @@ import java.util.List;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.group1.swp.pizzario_swp391.dto.table.TableDTO;
-import com.group1.swp.pizzario_swp391.entity.DiningTable;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,8 +34,6 @@ import com.group1.swp.pizzario_swp391.service.PaymentService;
 import com.group1.swp.pizzario_swp391.service.SessionService;
 import com.group1.swp.pizzario_swp391.dto.payment.PaymentDTO;
 import com.group1.swp.pizzario_swp391.entity.Order;
-import com.group1.swp.pizzario_swp391.entity.OrderItem;
-import com.group1.swp.pizzario_swp391.entity.Membership;
 import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.validation.Valid;
@@ -409,56 +406,14 @@ public class CashierDashboardController {
     }
 
     /**
-     * Xem chi tiết order từ lịch sử
-     */
-    @GetMapping("/history/{orderId}")
-    public String viewOrderDetail(@PathVariable Long orderId, Model model, Principal principal) {
-        try {
-            String email = principal.getName();
-            Staff staff = staffService.findByEmail(email);
-
-            // Lấy chi tiết order từ payment history
-            var paymentHistory = orderService.getPaymentHistory();
-            var orderDetail = paymentHistory.stream()
-                    .filter(order -> order.getOrderId().equals(orderId))
-                    .findFirst()
-                    .orElse(null);
-
-            if (orderDetail == null) {
-                model.addAttribute("error", "Không tìm thấy đơn hàng này trong lịch sử.");
-                return "error-page";
-            }
-
-            model.addAttribute("staff", staff);
-            model.addAttribute("orderDetail", orderDetail);
-            return "cashier-page/order-detail";
-        } catch (Exception e) {
-            model.addAttribute("error", "Không thể tải chi tiết đơn hàng. Vui lòng thử lại.");
-            return "error-page";
-        }
-    }
-
-    /**
-     * Trang in hóa đơn cho order từ lịch sử - hiển thị hóa đơn theo format receipt đen trắng
+     * Trang in hóa đơn cho order từ lịch sử
      */
     @GetMapping("/history/{orderId}/invoice")
     public String showHistoryOrderInvoice(@PathVariable Long orderId,
                                          Model model,
-                                         Principal principal,
-                                         RedirectAttributes redirectAttributes,
-                                         HttpServletRequest request) {
+                                         RedirectAttributes redirectAttributes) {
         try {
-            // Lấy order từ database
-            var order = orderService.getOrderById(orderId);
-            if (order == null) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy đơn hàng này.");
-                return "redirect:/cashier/history";
-            }
-
-            if (order.getPaymentStatus() != Order.PaymentStatus.PAID) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Đơn hàng này chưa được thanh toán.");
-                return "redirect:/cashier/history";
-            }
+            var order = orderService.validateOrderForHistoryInvoice(orderId);
 
             // Lấy session từ order
             var session = sessionService.getSessionByOrder(order);

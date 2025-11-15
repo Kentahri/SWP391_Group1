@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-import com.group1.swp.pizzario_swp391.dto.membership.VerifyMembershipDTO;
 import com.group1.swp.pizzario_swp391.dto.membership.MembershipRegistrationDTO;
 import com.group1.swp.pizzario_swp391.service.MembershipService;
 
@@ -27,58 +26,16 @@ public class MembershipController {
         this.membershipService = membershipService;
     }
 
-    @GetMapping
-    public String showVerifyForm(@RequestParam Long sessionId, Model model) {
-        // Bắt buộc phải có sessionId
-        if (sessionId == null) {
-            return "redirect:/guest?error=" + 
-                   URLEncoder.encode("Vui lòng chọn bàn và đặt món trước khi xác thực thành viên", StandardCharsets.UTF_8);
-        }
-        
-        model.addAttribute("verifyMembershipDTO", new VerifyMembershipDTO());
-        model.addAttribute("sessionId", sessionId);
-        return "guest-page/membership_verify";
-    }
-
-    @PostMapping
-    public String verify(@Valid VerifyMembershipDTO verifyMembershipDTO, 
-                        BindingResult bindingResult, 
-                        @RequestParam Long sessionId,
-                        Model model) {
-        // Bắt buộc phải có sessionId
-        if (sessionId == null) {
-            return "redirect:/guest?error=" + 
-                   URLEncoder.encode("Vui lòng chọn bàn và đặt món trước khi xác thực thành viên", StandardCharsets.UTF_8);
-        }
-        
-        model.addAttribute("sessionId", sessionId);
-        
-        if (bindingResult.hasErrors()) {
-            model.addAttribute("verifyMembershipDTO", verifyMembershipDTO);
-            model.addAttribute("error", "Vui lòng nhập số điện thoại hợp lệ.");
-            return "guest-page/membership_verify";
-        }
-
-        String phone = verifyMembershipDTO.getPhoneNumber().trim();
-        var opt = membershipService.verifyByPhone(phone);
-        if (opt.isPresent()) {
-            // Luôn redirect về trang payment sau khi xác thực thành công
-            return "redirect:/guest/payment/session/" + sessionId + "?membershipVerified=true";
-        } else {
-            model.addAttribute("error", "Không tìm thấy thành viên với số điện thoại: " + phone);
-        }
-        model.addAttribute("verifyMembershipDTO", new VerifyMembershipDTO());
-        return "guest-page/membership_verify";
-    }
-
-    // NEW: registration endpoints
+    // Registration endpoints
     @GetMapping("/register")
     public String showRegistrationForm(@RequestParam Long sessionId,
                                        @RequestParam(required = false) String returnUrl,
                                        Model model,
                                        HttpServletRequest request) {
-        // Bắt buộc phải có sessionId
-        if (sessionId == null) {
+        try {
+            // Validation được thực hiện trong service
+            membershipService.validateSessionId(sessionId);
+        } catch (IllegalArgumentException e) {
             return "redirect:/guest?error=" + 
                    URLEncoder.encode("Vui lòng chọn bàn và đặt món trước khi đăng ký thành viên", StandardCharsets.UTF_8);
         }
@@ -99,8 +56,10 @@ public class MembershipController {
                            @RequestParam(required = false) String returnUrl,
                            Model model,
                            HttpServletRequest request) {
-        // Bắt buộc phải có sessionId
-        if (sessionId == null) {
+        try {
+            // Validation được thực hiện trong service
+            membershipService.validateSessionId(sessionId);
+        } catch (IllegalArgumentException e) {
             return "redirect:/guest?error=" + 
                    URLEncoder.encode("Vui lòng chọn bàn và đặt món trước khi đăng ký thành viên", StandardCharsets.UTF_8);
         }
@@ -124,14 +83,14 @@ public class MembershipController {
             return "guest-page/membership_register";
         }
 
-        String phone = registrationDTO.getPhoneNumber().trim();
+        // Phone number trimming được thực hiện trong service
         var result = membershipService.register(registrationDTO);
         if (result.isPresent()) {
             // Luôn redirect về trang payment sau khi đăng ký thành công
             String redirectTarget = appendQueryParam(sanitizedReturnUrl, "membershipRegistered", "true");
             return "redirect:" + redirectTarget;
         } else {
-            model.addAttribute("error", "Số điện thoại đã tồn tại: " + phone);
+            model.addAttribute("error", "Số điện thoại đã tồn tại: " + registrationDTO.getPhoneNumber());
             model.addAttribute("registrationDTO", registrationDTO);
         }
         return "guest-page/membership_register";

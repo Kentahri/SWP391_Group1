@@ -7,12 +7,12 @@ import jakarta.validation.constraints.Size;
 
 public class MembershipRegistrationDTO {
     @NotBlank(message = "Họ và tên không được để trống")
-    @Size(max = 200, message = "Họ và tên quá dài")
+    @Size(max = 200, message = "Họ và tên không được vượt quá 200 kí tự")
     @Pattern(regexp = "^[\\p{L}\\s]+$", message = "Họ và tên chỉ được chứa chữ cái và khoảng trắng, không được chứa số và ký tự đặc biệt")
     private String fullName;
 
     @NotBlank(message = "Số điện thoại không được để trống")
-    @Pattern(regexp = "^[0-9]{10,11}$", message = "Số điện thoại không hợp lệ")
+    @Pattern(regexp = "^0\\d{9,10}$", message = "Số điện thoại phải bắt đầu bằng 0 và có 10-11 kí tự")
     private String phoneNumber;
 
     @Min(value = 0, message = "Points phải >= 0")

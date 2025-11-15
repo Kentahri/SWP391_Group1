@@ -26,6 +26,11 @@ public class CategoryService {
     static final String CATEGORY_NOT_FOUND = "Category not found";
 
     public void createCategory(CategoryCreateDTO createDTO) {
+        // Kiểm tra tên danh mục đã tồn tại chưa
+        if (categoryRepository.existsByNameIgnoreCase(createDTO.getName())) {
+            throw new RuntimeException("Tên danh mục '" + createDTO.getName() + "' đã tồn tại");
+        }
+        
         Category category = categoryMapper.toEntity(createDTO);
         LocalDateTime now = LocalDateTime.now();
         category.setCreatedAt(now);
@@ -60,6 +65,12 @@ public class CategoryService {
     public void updateCategory(Long id, CategoryUpdateDTO updateDTO) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException(CATEGORY_NOT_FOUND));
+        
+        // Kiểm tra tên danh mục đã tồn tại chưa (trừ chính nó)
+        if (categoryRepository.existsByNameIgnoreCaseAndIdNot(updateDTO.getName(), id)) {
+            throw new RuntimeException("Tên danh mục '" + updateDTO.getName() + "' đã tồn tại");
+        }
+        
         categoryMapper.updateEntity(category, updateDTO);
         category.setUpdatedAt(LocalDateTime.now());
         categoryRepository.save(category);
