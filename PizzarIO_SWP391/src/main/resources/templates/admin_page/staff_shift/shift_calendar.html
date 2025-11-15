@@ -510,17 +510,54 @@
                       ></span>
                     </div>
 
-                    <div class="modal-footer">
-                      <button type="submit" class="btn btn-primary">Lưu</button>
-                      <button
-                        type="button"
-                        class="btn btn-secondary"
-                        onclick="closeStaffShiftModal()"
-                      >
-                        Hủy
-                      </button>
+                    <div class="modal-footer" style="display: flex; justify-content: space-between;">
+                      <!-- Nút Xóa (bên trái) - chỉ hiện khi canDelete = true -->
+                      <div>
+                        <button
+                          th:if="${staffShiftForm.canDelete}"
+                          type="submit"
+                          form="deleteStaffShiftForm"
+                          class="btn btn-danger"
+                          style="background-color: #dc3545; color: white;"
+                          onclick="return confirm('Bạn có chắc chắn muốn xóa ca làm việc này không?');"
+                        >
+                          Xóa
+                        </button>
+                      </div>
+
+                      <!-- Nút Lưu và Hủy (bên phải) -->
+                      <div>
+                        <button type="submit" class="btn btn-primary">Lưu</button>
+                        <button
+                          type="button"
+                          class="btn btn-secondary"
+                          onclick="closeStaffShiftModal()"
+                        >
+                          Hủy
+                        </button>
+                      </div>
                     </div>
                   </form>
+
+                  <!-- Form xóa riêng biệt (bên ngoài form chính) -->
+                  <form
+                    id="deleteStaffShiftForm"
+                    th:if="${staffShiftForm.id != null && staffShiftForm.id > 0}"
+                    th:action="@{/manager/staff_shifts/delete/{id}(id=${staffShiftForm.id})}"
+                    method="post"
+                    style="display: none;"
+                  >
+                    <input
+                      type="hidden"
+                      th:if="${_csrf != null}"
+                      th:name="${_csrf.parameterName}"
+                      th:value="${_csrf.token}"
+                    />
+                    <input type="hidden" name="weekOffset" th:value="${param.weekOffset}" />
+                    <input type="hidden" name="filterStaffId" th:value="${selectedStaffId}" />
+                    <input type="hidden" name="filterShiftId" th:value="${selectedShiftId}" />
+                  </form>
+
                 </div>
               </div>
 
