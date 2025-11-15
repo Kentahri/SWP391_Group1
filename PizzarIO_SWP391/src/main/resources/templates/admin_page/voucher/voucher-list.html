@@ -39,6 +39,23 @@
             + Tạo voucher
           </a>
 
+          <!-- Error Message from Flash Attribute -->
+          <div
+            th:if="${errorMessage}"
+            class="error-alert"
+            style="
+              background-color: #fee;
+              border: 1px solid #fcc;
+              padding: 12px;
+              border-radius: 8px;
+              margin-bottom: 16px;
+              color: #c00;
+            "
+          >
+            <strong>❌ Lỗi:</strong>
+            <span th:text="${errorMessage}"></span>
+          </div>
+
           <!-- Stats Grid -->
           <div class="stats-grid">
             <div class="stat-card">
@@ -443,6 +460,7 @@
               <!-- Action buttons -->
               <div class="card-footer">
                 <a
+                  th:if="${voucher.timesUsed == 0}"
                   th:href="@{/manager/vouchers/edit/{id}(id=${voucher.id})}"
                   class="btn-edit"
                 >
