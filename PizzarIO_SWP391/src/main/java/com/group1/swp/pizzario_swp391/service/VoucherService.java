@@ -71,7 +71,7 @@ public class VoucherService {
         voucherRepository.deleteById(id);
     }
 
-    public void updateVoucher(Long id, VoucherDTO voucherDTO) {
+    public void updateVoucher(Long id, VoucherCreateDTO voucherDTO) {
         // Validate type & value
         if (voucherDTO.getType() == null) {
             throw new IllegalArgumentException("Bạn phải chọn loại voucher.");

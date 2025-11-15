@@ -6,196 +6,11 @@
     <title>Quản lý ca làm việc</title>
     <link rel="stylesheet" th:href="@{/css/admin_page/styles.css}" />
     <link rel="stylesheet" th:href="@{/css/admin_page/shift-management.css}" />
+    <link rel="stylesheet" th:href="@{/css/admin_page/shift-calendar-modal.css}" />
     <!-- Đảm bảo trong <head> có 3 meta này -->
     <meta name="_csrf" content="[[${_csrf.token}]]" />
     <meta name="_csrf_parameter" content="[[${_csrf.parameterName}]]" />
     <meta name="_csrf_header" content="[[${_csrf.headerName}]]" />
-
-    <style>
-      /* Enhanced Modal Styles */
-      .modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(4px);
-        z-index: 1000;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        animation: modalFadeIn 0.3s ease-out;
-      }
-
-      @keyframes modalFadeIn {
-        from {
-          opacity: 0;
-        }
-        to {
-          opacity: 1;
-        }
-      }
-
-      .modal-content {
-        animation: modalSlideIn 0.3s ease-out;
-        position: relative;
-      }
-
-      @keyframes modalSlideIn {
-        from {
-          opacity: 0;
-          transform: translateY(-30px) scale(0.95);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
-      }
-
-      /* Form Input Focus Effects */
-      #exportYear:focus,
-      #exportMonth:focus,
-      #completeCheckoutTime:focus,
-      #completePenalty:focus,
-      #completeNote:focus {
-        border-color: #2196f3 !important;
-        box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1) !important;
-        outline: none;
-      }
-
-      /* Button Hover Effects */
-      .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-      }
-
-      .btn-secondary:hover {
-        background: #5a6268 !important;
-        transform: translateY(-1px);
-      }
-
-      .btn-primary:active,
-      .btn-secondary:active {
-        transform: translateY(0);
-      }
-
-      /* Status Preview Animation */
-      #statusPreview {
-        transition: all 0.3s ease;
-      }
-
-      /* Enhanced Close Button */
-      .close {
-        font-size: 32px;
-        font-weight: 300;
-        line-height: 1;
-        opacity: 0.8;
-        transition: all 0.2s;
-      }
-
-      .close:hover {
-        opacity: 1;
-        transform: rotate(90deg);
-      }
-
-      /* Input Error Animation */
-      @keyframes shake {
-        0%,
-        100% {
-          transform: translateX(0);
-        }
-        25% {
-          transform: translateX(-10px);
-        }
-        75% {
-          transform: translateX(10px);
-        }
-      }
-
-      .form-control.error {
-        animation: shake 0.5s;
-      }
-
-      /* Loading State */
-      .btn-primary:disabled {
-        cursor: not-allowed;
-        background: #ccc !important;
-      }
-
-      /* Info Box Animations */
-      .modal-body > div[style*="background: linear-gradient"] {
-        animation: slideInUp 0.4s ease-out;
-      }
-
-      @keyframes slideInUp {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      /* Select Dropdown Styling */
-      select.form-control,
-      select[name="year"],
-      select[name="month"] {
-        cursor: pointer;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 12px center;
-        padding-right: 35px;
-      }
-
-      select.form-control:hover,
-      select[name="year"]:hover,
-      select[name="month"]:hover {
-        border-color: #2196f3;
-      }
-
-      /* Textarea Styling */
-      textarea.form-control {
-        font-family: inherit;
-      }
-
-      textarea.form-control::placeholder {
-        color: #999;
-        font-style: italic;
-      }
-
-      /* Number Input Styling */
-      input[type="number"].form-control {
-        -moz-appearance: textfield;
-      }
-
-      input[type="number"].form-control::-webkit-outer-spin-button,
-      input[type="number"].form-control::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-      }
-
-      /* Smooth Transitions */
-      .modal-content {
-        transition: all 0.3s ease;
-      }
-
-      .modal-header h2 svg {
-        animation: iconPulse 2s infinite;
-      }
-
-      @keyframes iconPulse {
-        0%,
-        100% {
-          transform: scale(1);
-        }
-        50% {
-          transform: scale(1.1);
-        }
-      }
-    </style>
   </head>
   <body>
     <div class="app">
@@ -510,17 +325,54 @@
                       ></span>
                     </div>
 
-                    <div class="modal-footer">
-                      <button type="submit" class="btn btn-primary">Lưu</button>
-                      <button
-                        type="button"
-                        class="btn btn-secondary"
-                        onclick="closeStaffShiftModal()"
-                      >
-                        Hủy
-                      </button>
+                    <div class="modal-footer" style="display: flex; justify-content: space-between;">
+                      <!-- Nút Xóa (bên trái) - chỉ hiện khi canDelete = true -->
+                      <div>
+                        <button
+                          th:if="${staffShiftForm.canDelete}"
+                          type="submit"
+                          form="deleteStaffShiftForm"
+                          class="btn btn-danger"
+                          style="background-color: #dc3545; color: white;"
+                          onclick="return confirm('Bạn có chắc chắn muốn xóa ca làm việc này không?');"
+                        >
+                          Xóa
+                        </button>
+                      </div>
+
+                      <!-- Nút Lưu và Hủy (bên phải) -->
+                      <div>
+                        <button type="submit" class="btn btn-primary">Lưu</button>
+                        <button
+                          type="button"
+                          class="btn btn-secondary"
+                          onclick="closeStaffShiftModal()"
+                        >
+                          Hủy
+                        </button>
+                      </div>
                     </div>
                   </form>
+
+                  <!-- Form xóa riêng biệt (bên ngoài form chính) -->
+                  <form
+                    id="deleteStaffShiftForm"
+                    th:if="${staffShiftForm.id != null && staffShiftForm.id > 0}"
+                    th:action="@{/manager/staff_shifts/delete/{id}(id=${staffShiftForm.id})}"
+                    method="post"
+                    style="display: none;"
+                  >
+                    <input
+                      type="hidden"
+                      th:if="${_csrf != null}"
+                      th:name="${_csrf.parameterName}"
+                      th:value="${_csrf.token}"
+                    />
+                    <input type="hidden" name="weekOffset" th:value="${param.weekOffset}" />
+                    <input type="hidden" name="filterStaffId" th:value="${selectedStaffId}" />
+                    <input type="hidden" name="filterShiftId" th:value="${selectedShiftId}" />
+                  </form>
+
                 </div>
               </div>
 
@@ -1474,271 +1326,7 @@
       </main>
     </div>
 
-    <script>
-      function exportMonthlySalary() {
-        document.getElementById("exportModal").style.display = "flex";
-      }
-
-      function closeExportModal() {
-        document.getElementById("exportModal").style.display = "none";
-      }
-
-      function confirmExport() {
-        const year = document.getElementById("exportYear").value;
-        const month = document.getElementById("exportMonth").value;
-
-        // Tạo form để submit
-        const form = document.createElement("form");
-        form.method = "POST";
-        form.action = "/pizzario/manager/staff_shifts/export";
-
-        const yearInput = document.createElement("input");
-        yearInput.type = "hidden";
-        yearInput.name = "year";
-        yearInput.value = year;
-
-        const monthInput = document.createElement("input");
-        monthInput.type = "hidden";
-        monthInput.name = "month";
-        monthInput.value = month;
-
-        form.appendChild(yearInput);
-        form.appendChild(monthInput);
-
-        // Thêm CSRF token
-        const csrfToken = document.querySelector('meta[name="_csrf"]').content;
-        const csrfInput = document.createElement("input");
-        csrfInput.type = "hidden";
-        csrfInput.name = document.querySelector(
-          'meta[name="_csrf_parameter"]'
-        ).content;
-        csrfInput.value = csrfToken;
-        form.appendChild(csrfInput);
-
-        document.body.appendChild(form);
-        form.submit();
-        document.body.removeChild(form);
-
-        closeExportModal();
-      }
-
-      // Complete Shift Modal Functions
-      let currentShiftId = null;
-      let currentShiftEndTime = null;
-
-      // Wrapper function to read data from button attributes
-      function openCompleteShiftModalFromButton(button) {
-        const shiftId = button.getAttribute("data-shift-id");
-        const staffName = button.getAttribute("data-staff-name");
-        const shiftName = button.getAttribute("data-shift-name");
-        const endTime = button.getAttribute("data-end-time");
-        const workDate = button.getAttribute("data-work-date");
-
-        openCompleteShiftModal(
-          shiftId,
-          staffName,
-          shiftName,
-          endTime,
-          workDate
-        );
-      }
-
-      function openCompleteShiftModal(
-        shiftId,
-        staffName,
-        shiftName,
-        endTime,
-        workDate
-      ) {
-        currentShiftId = shiftId;
-        currentShiftEndTime = endTime;
-
-        // Set shift info
-        document.getElementById("completeStaffName").textContent = staffName;
-        document.getElementById("completeShiftName").textContent = shiftName;
-        document.getElementById("completeWorkDate").textContent = workDate;
-
-        // Set default checkout time to shift end time
-        // Format: workDate + endTime -> datetime-local format (YYYY-MM-DDTHH:MM)
-        const defaultCheckoutTime = workDate + "T" + endTime;
-        document.getElementById("completeCheckoutTime").value =
-          defaultCheckoutTime;
-
-        // Reset form
-        document.getElementById("completePenalty").value = 0;
-        document.getElementById("completeNote").value = "";
-
-        // Update status preview
-        updateStatusPreview();
-
-        // Add event listener for checkout time change
-        document
-          .getElementById("completeCheckoutTime")
-          .addEventListener("input", updateStatusPreview);
-
-        // Show modal
-        document.getElementById("completeShiftModal").style.display = "flex";
-      }
-
-      function closeCompleteShiftModal() {
-        document.getElementById("completeShiftModal").style.display = "none";
-        currentShiftId = null;
-        currentShiftEndTime = null;
-      }
-
-      function updateStatusPreview() {
-        const checkoutTimeInput = document.getElementById(
-          "completeCheckoutTime"
-        ).value;
-        const statusPreview = document.getElementById("statusPreview");
-
-        if (!checkoutTimeInput || !currentShiftEndTime) {
-          statusPreview.textContent = "COMPLETED";
-          statusPreview.style.background = "#28a745";
-          statusPreview.style.color = "white";
-          return;
-        }
-
-        // Extract time from datetime-local input (format: YYYY-MM-DDTHH:MM)
-        const checkoutTime = checkoutTimeInput.split("T")[1]; // Get HH:MM
-
-        // Compare times
-        if (checkoutTime < currentShiftEndTime) {
-          statusPreview.textContent = "LEFT_EARLY (Về sớm)";
-          statusPreview.style.background = "#ffc107";
-          statusPreview.style.color = "#000";
-        } else {
-          statusPreview.textContent = "COMPLETED (Hoàn thành)";
-          statusPreview.style.background = "#28a745";
-          statusPreview.style.color = "white";
-        }
-      }
-
-      function submitCompleteShift() {
-        const form = document.getElementById("completeShiftForm");
-
-        // Validate required fields
-        const checkoutTime = document.getElementById(
-          "completeCheckoutTime"
-        ).value;
-        const note = document.getElementById("completeNote").value;
-        const penalty = document.getElementById("completePenalty").value;
-
-        // Validation messages with better UX
-        if (!checkoutTime) {
-          showValidationError(
-            "completeCheckoutTime",
-            "Vui lòng chọn thời gian checkout"
-          );
-          return;
-        }
-
-        // Validate checkout time is not in the future
-        const checkoutDateTime = new Date(checkoutTime);
-        const now = new Date();
-        if (checkoutDateTime > now) {
-          showValidationError(
-            "completeCheckoutTime",
-            "Thời gian checkout không thể ở tương lai"
-          );
-          return;
-        }
-
-        if (!note.trim()) {
-          showValidationError(
-            "completeNote",
-            "Vui lòng nhập lý do hoàn thành ca"
-          );
-          return;
-        }
-
-        if (note.trim().length < 10) {
-          showValidationError(
-            "completeNote",
-            "Lý do phải có ít nhất 10 ký tự để đảm bảo rõ ràng"
-          );
-          return;
-        }
-
-        if (penalty === "" || penalty < 0 || penalty > 100) {
-          showValidationError("completePenalty", "Mức phạt phải từ 0-100%");
-          return;
-        }
-
-        // Show confirmation dialog with details
-        const statusPreviewText =
-          document.getElementById("statusPreview").textContent;
-        const confirmMessage =
-          `Bạn có chắc chắn muốn hoàn thành ca này?\n\n` +
-          `Trạng thái: ${statusPreviewText}\n` +
-          `Thời gian checkout: ${formatDateTime(checkoutTime)}\n` +
-          `Mức phạt: ${penalty}%\n\n` +
-          `Lưu ý: Thao tác này không thể hoàn tác!`;
-
-        if (!confirm(confirmMessage)) {
-          return;
-        }
-
-        // Update form action with current shift ID
-        form.action =
-          "/pizzario/manager/staff_shifts/manual-complete/" + currentShiftId;
-
-        // Disable submit button to prevent double submission
-        const submitBtn = event.target;
-        submitBtn.disabled = true;
-        submitBtn.textContent = "Đang xử lý...";
-        submitBtn.style.opacity = "0.6";
-
-        // Submit form
-        form.submit();
-      }
-
-      // Helper function to show validation errors
-      function showValidationError(fieldId, message) {
-        const field = document.getElementById(fieldId);
-
-        // Highlight field with error
-        field.style.borderColor = "#f44336";
-        field.style.boxShadow = "0 0 0 3px rgba(244, 67, 54, 0.1)";
-
-        // Show alert
-        alert("❌ " + message);
-
-        // Focus on field
-        field.focus();
-
-        // Reset border after 3 seconds
-        setTimeout(() => {
-          field.style.borderColor = "#ddd";
-          field.style.boxShadow = "none";
-        }, 3000);
-      }
-
-      // Helper function to format datetime for display
-      function formatDateTime(datetimeString) {
-        const date = new Date(datetimeString);
-        const day = String(date.getDate()).padStart(2, "0");
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const year = date.getFullYear();
-        const hours = String(date.getHours()).padStart(2, "0");
-        const minutes = String(date.getMinutes()).padStart(2, "0");
-        return `${day}/${month}/${year} ${hours}:${minutes}`;
-      }
-
-      // Close modal when clicking outside
-      window.onclick = function (event) {
-        const completeModal = document.getElementById("completeShiftModal");
-        const exportModal = document.getElementById("exportModal");
-
-        if (event.target == completeModal) {
-          closeCompleteShiftModal();
-        }
-        if (event.target == exportModal) {
-          closeExportModal();
-        }
-      };
-    </script>
-
+    <script th:src="@{/js/admin/shift-calendar-modal.js}"></script>
     <script th:inline="javascript">
       window.openShiftModalFlag = /*[[${openShiftModal}]]*/ null;
       window.openStaffShiftModalFlag = /*[[${openStaffShiftModal}]]*/ null;

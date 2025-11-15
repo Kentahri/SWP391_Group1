@@ -40,6 +40,7 @@ public class StaffShiftService {
         private final ShiftRepository shiftRepository;
         private final StaffShiftManagementService staffShiftManagementService;
         private final ApplicationEventPublisher eventPublisher;
+        private final StaffScheduleService staffScheduleService;
 
         @Transactional
         public void create(StaffShiftDTO staffShiftDTO) {
@@ -47,20 +48,16 @@ public class StaffShiftService {
                 Shift shift = shiftRepository.findById(staffShiftDTO.getShiftId())
                         .orElseThrow(() -> new RuntimeException("Shift not found"));
 
-                // Tự động set lương từ shift
                 staffShiftDTO.setHourlyWage(BigDecimal.valueOf(shift.getSalaryPerShift()));
 
-                // Mặc định status là SCHEDULED
                 staffShiftDTO.setStatus("SCHEDULED");
 
-                // ✅ BUSINESS LOGIC: Convert DTO to Entity
                 StaffShift staffShift = staffShiftMapper.toStaffShift(staffShiftDTO);
 
                 staffShift.setStaff(staffRepository.findById(staffShiftDTO.getStaffId())
                         .orElseThrow(() -> new RuntimeException("Staff not found")));
                 staffShift.setShift(shift);
 
-                // ✅ SỬA: Save trực tiếp vào Repository (không có event)
                 staffShiftRepository.save(staffShift);
 
         }
@@ -91,18 +88,46 @@ public class StaffShiftService {
 
                 staffShiftRepository.save(staffShift);
 
-                // Publish event to reschedule tasks when shift is updated
                 log.info("🔄 Publishing StaffShiftUpdatedEvent for shift ID: {} to reschedule tasks", id);
                 eventPublisher.publishEvent(new StaffShiftUpdatedEvent(this, staffShift, true));
                 log.info("✅ StaffShiftUpdatedEvent published successfully for shift ID: {}", id);
         }
 
+        @Transactional
         public void delete(int id) {
 
                 StaffShift staffShift = staffShiftRepository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("STAFFSHIFT NOT FOUND"));
 
+                if (!canDelete(id)) {
+                        throw new IllegalStateException("Không thể xóa ca này");
+                }
+
+                // Hủy tất cả scheduled tasks (absent check + auto-complete) cho ca làm này
+                staffScheduleService.cancelAllTasks(id);
+                log.info("✅ Deleted shift {} and cancelled all scheduled tasks", id);
+
                 staffShiftRepository.delete(staffShift);
+        }
+
+        /**
+         * Kiểm tra xem ca làm có thể xóa được không
+         * - Chỉ cho phép xóa nếu ca chưa bắt đầu (workDate + startTime > hiện tại)
+         * - Và status không phải COMPLETED hoặc CANCELLED
+         */
+        public boolean canDelete(int id) {
+                StaffShift staffShift = staffShiftRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("STAFFSHIFT NOT FOUND"));
+
+                String status = staffShift.getStatus().name();
+                if (!"SCHEDULED".equals(status)) {
+                        return false;
+                }
+                LocalDateTime shiftStartDateTime = LocalDateTime.of(
+                                staffShift.getWorkDate(),
+                                staffShift.getShift().getStartTime().toLocalTime());
+
+                return shiftStartDateTime.isAfter(LocalDateTime.now());
         }
 
         public StatsStaffShiftDTO getAnalyticsStaffShift() {
@@ -190,12 +215,10 @@ public class StaffShiftService {
                         throw new RuntimeException("Checkout time cannot be before check-in time");
                 }
 
-                // Validate checkout time is not in the future
                 if (request.getCheckoutTime().isAfter(LocalDateTime.now())) {
                         throw new RuntimeException("Checkout time cannot be in the future");
                 }
 
-                // Set checkout time
                 staffShift.setCheckOut(request.getCheckoutTime());
 
                 // Determine status based on checkout time vs shift end time
@@ -203,21 +226,17 @@ public class StaffShiftService {
                 LocalTime shiftEndTime = staffShift.getShift().getEndTime().toLocalTime();
 
                 if (checkoutTime.isBefore(shiftEndTime)) {
-                        // Checked out before shift end -> LEFT_EARLY
                         staffShift.setStatus(StaffShift.Status.LEFT_EARLY);
                         log.info("Manual complete: Shift {} marked as LEFT_EARLY (checkout: {}, shift end: {})",
                                 id, checkoutTime, shiftEndTime);
                 } else {
-                        // Checked out at or after shift end -> COMPLETED
                         staffShift.setStatus(StaffShift.Status.COMPLETED);
                         log.info("Manual complete: Shift {} marked as COMPLETED (checkout: {}, shift end: {})",
                                 id, checkoutTime, shiftEndTime);
                 }
 
-                // Update penalty percent
                 staffShift.setPenaltyPercent(request.getPenaltyPercent());
 
-                // Append manager's note with timestamp
                 String existingNote = staffShift.getNote() != null ? staffShift.getNote() : "";
                 String manualCompleteNote = String.format(
                         "[MANUAL COMPLETE by Manager at %s] %s | Penalty: %d%%",
@@ -227,10 +246,8 @@ public class StaffShiftService {
                 );
                 staffShift.setNote(existingNote + " | " + manualCompleteNote);
 
-                // Save the shift
                 staffShiftRepository.save(staffShift);
 
-                // Publish event to cancel any scheduled tasks for this shift
                 eventPublisher.publishEvent(new StaffShiftUpdatedEvent(this, staffShift, true));
 
                 log.info("StaffShiftService: Manually completed shift {} for staff {} - Status: {}, Checkout: {}, Penalty: {}%",

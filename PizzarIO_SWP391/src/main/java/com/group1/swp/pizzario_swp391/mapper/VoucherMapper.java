@@ -12,6 +12,6 @@ public interface VoucherMapper {
     Voucher toVoucher(VoucherCreateDTO voucherDTO);
 
     @Mapping(target = "timesUsed", ignore = true)
-    void updateVoucher(@MappingTarget Voucher voucher, VoucherDTO voucherDTO);
+    void updateVoucher(@MappingTarget Voucher voucher, VoucherCreateDTO voucherDTO);
 
 }

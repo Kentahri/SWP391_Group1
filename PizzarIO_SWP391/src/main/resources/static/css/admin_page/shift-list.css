@@ -395,3 +395,25 @@
   opacity: 0.5;
   background: #9ca3af;
 }
+
+/* Validation Error Styles */
+.error-message {
+  color: #dc3545;
+  font-size: 13px;
+  margin-top: 5px;
+  display: block;
+  font-weight: 500;
+}
+
+.error-field,
+input.error-field,
+textarea.error-field,
+select.error-field {
+  border-color: #dc3545 !important;
+  background-color: #fff5f5;
+}
+
+.error-field:focus {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
