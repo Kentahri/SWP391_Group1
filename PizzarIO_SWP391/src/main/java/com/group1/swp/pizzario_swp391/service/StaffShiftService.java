@@ -40,6 +40,7 @@ public class StaffShiftService {
         private final ShiftRepository shiftRepository;
         private final StaffShiftManagementService staffShiftManagementService;
         private final ApplicationEventPublisher eventPublisher;
+        private final StaffScheduleService staffScheduleService;
 
         @Transactional
         public void create(StaffShiftDTO staffShiftDTO) {
@@ -97,12 +98,41 @@ public class StaffShiftService {
                 log.info("✅ StaffShiftUpdatedEvent published successfully for shift ID: {}", id);
         }
 
+        @Transactional
         public void delete(int id) {
 
                 StaffShift staffShift = staffShiftRepository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("STAFFSHIFT NOT FOUND"));
 
+                if (!canDelete(id)) {
+                        throw new IllegalStateException("Không thể xóa ca này");
+                }
+
+                // Hủy tất cả scheduled tasks (absent check + auto-complete) cho ca làm này
+                staffScheduleService.cancelAllTasks(id);
+                log.info("✅ Deleted shift {} and cancelled all scheduled tasks", id);
+
                 staffShiftRepository.delete(staffShift);
+        }
+
+        /**
+         * Kiểm tra xem ca làm có thể xóa được không
+         * - Chỉ cho phép xóa nếu ca chưa bắt đầu (workDate + startTime > hiện tại)
+         * - Và status không phải COMPLETED hoặc CANCELLED
+         */
+        public boolean canDelete(int id) {
+                StaffShift staffShift = staffShiftRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("STAFFSHIFT NOT FOUND"));
+
+                String status = staffShift.getStatus().name();
+                if (!"SCHEDULED".equals(status)) {
+                        return false;
+                }
+                LocalDateTime shiftStartDateTime = LocalDateTime.of(
+                                staffShift.getWorkDate(),
+                                staffShift.getShift().getStartTime().toLocalTime());
+
+                return shiftStartDateTime.isAfter(LocalDateTime.now());
         }
 
         public StatsStaffShiftDTO getAnalyticsStaffShift() {

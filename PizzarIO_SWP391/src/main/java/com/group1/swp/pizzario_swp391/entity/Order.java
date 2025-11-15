@@ -51,7 +51,7 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(columnDefinition = "NVARCHAR(256)")
+    @Column(name = "used_points", columnDefinition = "NVARCHAR(256)")
     private String note;
 
     @Column(name = "total_price")
