@@ -56,7 +56,7 @@ function setupModal(modal, form) {
     
     if (id && id.trim() !== "") {
       // Nếu có id, submit đến endpoint update
-      this.action = `/pizzario/manager/vouchers/update/${id}`;
+      this.action = `/pizzario/manager/vouchers/edit/${id}`;
     } else {
       // Nếu không có id, submit đến endpoint create
       this.action = "/pizzario/manager/vouchers/save";
