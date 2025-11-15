@@ -37,7 +37,8 @@ public class StaffUpdateDTO {
     @Size(max = 200, message = "Địa chỉ không được vượt quá 200 ký tự")
     String address;
 
-    @Pattern(regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",message = "Email không đúng định dạng")
+    @Pattern(regexp = "^(?!\\.)(?!.*\\.\\.)[A-Za-z0-9._-]+(?<!\\.)@gmail\\.com$",message = "Email không đúng định dạng")
+    @Size(max = 50, message = "Email chỉ không được vượt quá 50 ký tự")
     String email;
 
     @NotNull(message = "Vai trò không được để trống")

@@ -151,12 +151,6 @@ public class ProductSizeController{
         }
     }
 
-    @PostMapping("/product-sizes/delete/{id}")
-    public String delete(@PathVariable Long id) {
-        productSizeService.deleteProductSize(id);
-        return "redirect:/manager/product-sizes";
-    }
-
     @GetMapping("/product-sizes/search")
     @ResponseBody
     public List<ProductSizeResponseDTO> searchProductSizes(@RequestParam String query) {

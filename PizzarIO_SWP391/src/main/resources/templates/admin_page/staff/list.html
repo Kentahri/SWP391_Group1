@@ -39,13 +39,13 @@
                 </p>
             </div>
 
-          <div class="stat-card">
-            <p class="label">Tổng chi phí lương</p>
-            <h2
-              th:text="${totalSalary != null ? (#numbers.formatDecimal(totalSalary / 1000000, 1, 'POINT', 1, 'POINT') + 'M VNĐ') : '0 VNĐ'}"
-            ></h2>
-            <p class="note">tháng này</p>
-          </div>
+            <div class="stat-card">
+                <p class="label">Tổng chi phí lương</p>
+                <h2
+                        th:text="${totalSalary != null ? (#numbers.formatDecimal(totalSalary / 1000000, 1, 'POINT', 1, 'POINT') + 'M VNĐ') : '0 VNĐ'}"
+                ></h2>
+                <p class="note">tháng này</p>
+            </div>
         </div>
 
         <!-- MAIN LAYOUT: trái = bảng lương theo ca (từ DB), phải = biểu đồ chi trả lương -->
@@ -65,6 +65,18 @@
                                 <span
                                         class="shift-salary"
                                         th:text="${s.salaryPerShift != null ? #numbers.formatDecimal(s.salaryPerShift, 1, 'COMMA', 0, 'POINT') + ' VND' : '—'}"
+                                ></span>
+                            </div>
+                            <div
+                                    class="shift-time"
+                                    th:if="${s.startTime != null and s.endTime != null}"
+                            >
+                    <span
+                            th:text="${#temporals.format(s.startTime, 'HH:mm')}"
+                    ></span>
+                                <span> - </span>
+                                <span
+                                        th:text="${#temporals.format(s.endTime, 'HH:mm')}"
                                 ></span>
                             </div>
                         </div>

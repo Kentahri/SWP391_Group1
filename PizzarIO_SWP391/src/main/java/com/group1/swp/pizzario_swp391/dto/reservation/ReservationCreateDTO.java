@@ -26,7 +26,7 @@ public class ReservationCreateDTO {
     private LocalDateTime startTime;
     
     @Min(value = 1, message = "Số lượng khách không được ít hơn 1 người")
-    @Max(value = 10, message = "Số lượng khách không được vượt quá 10 người")
+    @Max(value = 20, message = "Số lượng khách không được vượt quá 20 người")
     private int capacityExpected;
     
     private String note;
