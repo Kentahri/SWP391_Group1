@@ -56,7 +56,6 @@ public class OtpEmailController {
                 + "Vui lòng không chia sẻ mã này cho bất kỳ ai.\n"
                 + "Mã OTP chỉ có hiệu lực trong 3 phút kể từ khi nhận.\n"
                 + "Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.\n");
-        ;
 
         model.addAttribute("accountEmail", staff.getEmail());
         model.addAttribute("demoOtp", otp);

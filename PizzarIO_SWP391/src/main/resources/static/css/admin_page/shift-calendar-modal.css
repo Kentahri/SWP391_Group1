@@ -1,0 +1,183 @@
+/* Enhanced Modal Styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  animation: modalSlideIn 0.3s ease-out;
+  position: relative;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Form Input Focus Effects */
+#exportYear:focus,
+#exportMonth:focus,
+#completeCheckoutTime:focus,
+#completePenalty:focus,
+#completeNote:focus {
+  border-color: #2196f3 !important;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1) !important;
+  outline: none;
+}
+
+/* Button Hover Effects */
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+.btn-secondary:hover {
+  background: #5a6268 !important;
+  transform: translateY(-1px);
+}
+
+.btn-primary:active,
+.btn-secondary:active {
+  transform: translateY(0);
+}
+
+/* Status Preview Animation */
+#statusPreview {
+  transition: all 0.3s ease;
+}
+
+/* Enhanced Close Button */
+.close {
+  font-size: 32px;
+  font-weight: 300;
+  line-height: 1;
+  opacity: 0.8;
+  transition: all 0.2s;
+}
+
+.close:hover {
+  opacity: 1;
+  transform: rotate(90deg);
+}
+
+/* Input Error Animation */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  75% {
+    transform: translateX(10px);
+  }
+}
+
+.form-control.error {
+  animation: shake 0.5s;
+}
+
+/* Loading State */
+.btn-primary:disabled {
+  cursor: not-allowed;
+  background: #ccc !important;
+}
+
+/* Info Box Animations */
+.modal-body > div[style*="background: linear-gradient"] {
+  animation: slideInUp 0.4s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Select Dropdown Styling */
+select.form-control,
+select[name="year"],
+select[name="month"] {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 35px;
+}
+
+select.form-control:hover,
+select[name="year"]:hover,
+select[name="month"]:hover {
+  border-color: #2196f3;
+}
+
+/* Textarea Styling */
+textarea.form-control {
+  font-family: inherit;
+}
+
+textarea.form-control::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+/* Number Input Styling */
+input[type="number"].form-control {
+  -moz-appearance: textfield;
+}
+
+input[type="number"].form-control::-webkit-outer-spin-button,
+input[type="number"].form-control::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Smooth Transitions */
+.modal-content {
+  transition: all 0.3s ease;
+}
+
+.modal-header h2 svg {
+  animation: iconPulse 2s infinite;
+}
+
+@keyframes iconPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
