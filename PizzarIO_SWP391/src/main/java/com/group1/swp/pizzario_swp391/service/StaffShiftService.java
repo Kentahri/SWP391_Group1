@@ -104,11 +104,15 @@ public class StaffShiftService {
                 StaffShift staffShift = staffShiftRepository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("STAFFSHIFT NOT FOUND"));
 
-                staffShiftRepository.delete(staffShift);
+                if (!canDelete(id)) {
+                        throw new IllegalStateException("Không thể xóa ca này");
+                }
 
                 // Hủy tất cả scheduled tasks (absent check + auto-complete) cho ca làm này
                 staffScheduleService.cancelAllTasks(id);
                 log.info("✅ Deleted shift {} and cancelled all scheduled tasks", id);
+
+                staffShiftRepository.delete(staffShift);
         }
 
         /**
@@ -120,13 +124,10 @@ public class StaffShiftService {
                 StaffShift staffShift = staffShiftRepository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("STAFFSHIFT NOT FOUND"));
 
-                // Không cho xóa nếu đã COMPLETED hoặc CANCELLED
                 String status = staffShift.getStatus().name();
                 if (!"SCHEDULED".equals(status)) {
                         return false;
                 }
-
-                // Kiểm tra thời gian: workDate + startTime phải > hiện tại
                 LocalDateTime shiftStartDateTime = LocalDateTime.of(
                                 staffShift.getWorkDate(),
                                 staffShift.getShift().getStartTime().toLocalTime());
