@@ -51,7 +51,16 @@ function setupModal(modal, form) {
 
   // Xử lý submit form
   form.addEventListener("submit", function (e) {
-    this.action = "/pizzario/manager/vouchers/save";
+    const idInput = this.querySelector('input[name="id"]');
+    const id = idInput ? idInput.value : null;
+    
+    if (id && id.trim() !== "") {
+      // Nếu có id, submit đến endpoint update
+      this.action = `/pizzario/manager/vouchers/update/${id}`;
+    } else {
+      // Nếu không có id, submit đến endpoint create
+      this.action = "/pizzario/manager/vouchers/save";
+    }
   });
 }
 
